@@ -1,41 +1,15 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../../../../../shared/styles/app-workspace-form.css';
 
+/* Workspace layout (2026-11-16) : the fields left, the workspace panel
+   right; the Remarks note pad fills what is left of its card */
 
-/* Canvas footer : Motor Bike Name */
-.mbk-footer
+.ws-notes > app-note-pad
 {
-    display:flex;
-    align-items:center;
-    gap:12px;
-    width:100%;
-    min-width:0;
-    padding:0 20px;
-    box-sizing:border-box;
+    flex: 1 1 auto;
 }
 
-.mbk-footer-label
+/* photo / logo beside the remarks */
+.pf-photo
 {
-    flex:none;
-    color:#64748b;
-    font-size:12px;
-    font-weight:700;
-    letter-spacing:.04em;
-    text-transform:uppercase;
-}
-
-.mbk-footer-name
-{
-    min-width:0;
-    overflow:hidden;
-    color:#0f172a;
-    font-size:15px;
-    font-weight:800;
-    white-space:nowrap;
-    text-overflow:ellipsis;
-}
-
-.mbk-footer-empty
-{
-    color:#94a3b8;
-    font-weight:600;
+    align-items: stretch;
 }

@@ -110,6 +110,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -213,6 +219,8 @@ from '../../../models/auto-accounts.model';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -485,17 +493,18 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Account Class',
             field:'AccountClassName',
-            width:'180px',
+            width:'170px',
             align:'left'
         },
         {
@@ -507,19 +516,25 @@ implements OnInit, OnDestroy
         {
             header:'Group Name',
             field:'GroupName',
-            width:'240px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Mode',
             field:'Mode',
-            width:'100px',
+            width:'110px',
+            align:'center'
+        },
+        {
+            header:'Term',
+            field:'TermText',
+            width:'120px',
             align:'center'
         },
         {
             header:'Manual Sub Group',
             field:'AllowManualSubGroup',
-            width:'170px',
+            width:'130px',
             align:'center',
             type:'boolean'
         },
@@ -527,14 +542,14 @@ implements OnInit, OnDestroy
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'120px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -571,6 +586,12 @@ implements OnInit, OnDestroy
             header:'Mode',
             field:'Mode',
             width:'100px',
+            align:'center'
+        },
+        {
+            header:'Term',
+            field:'TermText',
+            width:'120px',
             align:'center'
         },
         {
@@ -1010,6 +1031,15 @@ implements OnInit, OnDestroy
     ):
         AccountGroup
     {
+        const nonCurrent =
+            Boolean(item?.IsNonCurrent ?? item?.isNonCurrent ?? false);
+
+        const classCode =
+            String(item?.ClassCode ?? item?.classCode ?? '');
+
+        const statementType =
+            String(item?.StatementType ?? item?.statementType ?? '');
+
         return {
             AccountGroupId:
                 Number(
@@ -1094,6 +1124,16 @@ implements OnInit, OnDestroy
                     ??
                     false
                 ),
+
+            IsNonCurrent:
+                nonCurrent,
+
+            TermText:
+                nonCurrent
+                    ? 'Non-current'
+                    : hasTerm(classCode, statementType)
+                        ? 'Current'
+                        : '',
 
             Remarks:
                 item?.Remarks
@@ -2200,4 +2240,29 @@ implements OnInit, OnDestroy
         ];
     }
 
+}
+
+
+//===============================================================
+// Balance Sheet term applies to asset / liability / inventory
+// classes only
+//===============================================================
+
+function hasTerm
+(
+    classCode:
+        string,
+    statementType:
+        string
+):
+    boolean
+{
+    const code =
+        classCode.toUpperCase();
+
+    // by the class code / Statement Type, never by the class name
+    return code.startsWith('INV-')
+        || code.startsWith('WIP-')
+        || statementType === 'Asset'
+        || statementType === 'Liability';
 }

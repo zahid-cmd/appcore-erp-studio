@@ -10,7 +10,9 @@
 
         subtitle="Zones, racks, shelves and bins per warehouse"
 
-        icon="fas fa-warehouse">
+        icon="fas fa-warehouse"
+
+        art="locations">
 
         <div pageHeaderCenter>
 
@@ -164,6 +166,12 @@
 
                 [columns]="columns"
 
+                emptyArt="locations"
+
+                emptyTitle="No racks yet"
+
+                emptySubtitle="Add racks to organise the store"
+
                 [rows]="pagedRows"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -216,28 +224,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="racks"
+            art="locations"
+            note="All records">
+        </app-summary-line>
     }
 
 

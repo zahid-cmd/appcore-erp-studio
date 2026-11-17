@@ -77,6 +77,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -186,6 +192,8 @@ type OpeningStockRow =
         PaginationComponent,
         ToastComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -323,18 +331,19 @@ export class OpeningStockList
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Opening Voucher No', field:'OpeningNo', width:'260px', align:'center', sortable:true },
-        { header:'Date', field:'DateText', width:'135px', align:'center', sortable:true },
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Opening Voucher No', field:'OpeningNo', width:'160px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
         { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
-        { header:'Branch', field:'BranchName', width:'190px', align:'left', sortable:true },
-        { header:'Warehouse', field:'WarehouseName', align:'left', sortable:true },
-        { header:'Credit Ledger', field:'LedgerName', align:'left', sortable:true },
-        { header:'Lines', field:'LineCount', width:'70px', align:'right', sortable:true },
-        { header:'Quantity', field:'QuantityText', width:'95px', align:'right', sortable:true },
+        { header:'Branch', field:'BranchName', width:'160px', align:'left', sortable:true },
+        { header:'Warehouse', field:'WarehouseName', width:'160px', align:'left', sortable:true },
+        { header:'Credit Ledger', field:'LedgerName', width:'160px', align:'left', sortable:true },
+        { header:'Lines', field:'LineCount', width:'160px', align:'left', sortable:true },
+        { header:'Quantity', field:'QuantityText', width:'90px', align:'center', sortable:true },
         { header:'Value', field:'ValueText', width:'130px', align:'right', sortable:true },
-        { header:'Status', field:'Status', type:'status', width:'140px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'150px', align:'center' }
+        { header:'Status', field:'Status', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     //===========================================================
@@ -826,6 +835,43 @@ export class OpeningStockList
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.summaryCount('draft'))),
+            String(this.summaryText(this.summaryCount('posted'))),
+            String(this.summaryText(this.summaryCount('cancelled')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Draft', value:v[1], tone:'' },
+                    { label:'Posted', value:v[2], tone:'ok' },
+                    { label:'Cancelled', value:v[3], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }
 

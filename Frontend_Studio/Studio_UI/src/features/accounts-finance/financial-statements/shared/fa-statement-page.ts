@@ -640,6 +640,11 @@ export abstract class FaStatementPage
             return Math.abs(value) < 0.005 ? 'Balanced' : faTotal(value);
         }
 
+        if (line.kind === 'caption')
+        {
+            return '';
+        }
+
         return line.kind === 'node' || line.kind === 'extra'
             ? faMoney(value)
             : faTotal(value);
@@ -652,7 +657,7 @@ export abstract class FaStatementPage
     ):
         string
     {
-        return line.check ? '' : faMoney(faChange(line.amount, line.compare));
+        return line.check || line.kind === 'caption' ? '' : faMoney(faChange(line.amount, line.compare));
     }
 
     changePct
@@ -662,7 +667,7 @@ export abstract class FaStatementPage
     ):
         string
     {
-        return line.check ? '' : faPct(faChangePct(line.amount, line.compare));
+        return line.check || line.kind === 'caption' ? '' : faPct(faChangePct(line.amount, line.compare));
     }
 
     changeTone

@@ -8,9 +8,10 @@
 
         title="Card Charges"
 
-        subtitle="Manage card charges per POS account"
+        subtitle="What each card costs on each POS terminal : the bank's charge per card"
 
-        icon="fas fa-credit-card">
+        icon="fas fa-credit-card"
+        art="pos">
 
         <div pageHeaderCenter>
 
@@ -141,6 +142,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="pos"
+
+                emptyTitle="No card charges yet"
+
+                emptySubtitle="Set the charge of each card on a POS terminal : it is booked on every card sale."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -176,6 +183,21 @@
 
     </app-page-canvas>
 
+
+
+    <!-- =====================================================
+         SUMMARY (all records)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <app-summary-line
+            [items]="summaryItems"
+            noun="terminals"
+            art="pos"
+            note="All records">
+        </app-summary-line>
+    }
 
 
     <!-- =====================================================

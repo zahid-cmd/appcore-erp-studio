@@ -1,405 +1,274 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-mobile-screen-button"
-
+        art="mfs"
         [title]="pageTitle"
-
-        subtitle="Manage mfs accounts">
+        subtitle="A mobile wallet (bKash, Nagad, Rocket ...) : personal or merchant">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
-
-            [columns]="4">
-
-
-            <!-- =================================================
-                 SECTION 01 : PARENT INFORMATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Parent Information"
-
-                icon="fas fa-sitemap">
-
-
-                <!-- Branch -->
-
-                <app-search-dropdown
-
-                    label="Branch"
-
-                    [items]="branchItems"
-
-                    [(value)]="entity.Branch"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Account Sub Group (Reserved : SUB-002-002-003) -->
-
-                <app-search-dropdown
-
-                    label="Account Sub Group"
-
-                    [items]="accountSubGroupItems"
-
-                    [(value)]="entity.AccountSubGroupsId"
-
-                    [disabled]="true"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- MFS Account Name (Provider) -->
-
-                <app-search-dropdown
-
-                    label="MFS Account Name"
-
-                    [items]="mfsProviderItems"
-
-                    [(value)]="entity.MFSAccountName"
-
-                    (valueChange)="onDisplayPartChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 02 : MFS ACCOUNT INFORMATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="MFS Accounts Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- MFS Account Code -->
-
-                <app-textbox
-
-                    label="MFS Account Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.MFSAccountCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Account Type (Personal / Merchant) -->
-
-                <app-dropdown
-
-                    label="Account Type"
-
-                    [items]="accountTypeItems"
-
-                    [(value)]="entity.AccountType"
-
-                    (valueChange)="onAccountTypeChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- MFS Account Number -->
-
-                <app-textbox
-
-                    label="MFS Account Number"
-
-                    placeholder="Enter MFS account number (e.g. 01712345678)"
-
-                    [(value)]="entity.MFSAccountNumber"
-
-                    (valueChange)="onDisplayPartChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 03 : DISPLAY & CONFIGURATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Display & Configuration"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Display Name (MFS Account Name - MFS Account Number) -->
-
-                <app-textbox
-
-                    label="Display Name"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.DisplayName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Linked Bank Account (Merchant only) -->
-
-                <app-search-dropdown
-
-                    label="Linked Bank Account"
-
-                    [items]="linkedBankAccountItems"
-
-                    [(value)]="entity.LinkedBankAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving || !isMerchant"
-
-                    [required]="isMerchant">
-
-                </app-search-dropdown>
-
-
-                <!-- MFS Charges % (Merchant only) -->
-
-                <app-textbox
-
-                    label="MFS Charges (%)"
-
-                    [placeholder]="isMerchant ? 'Enter charges, e.g. 1.50' : 'Merchant accounts only'"
-
-                    [(value)]="mfsChargesText"
-
-                    (valueChange)="onMfsChargesChange()"
-
-                    [disabled]="isViewMode || isSaving || !isMerchant"
-
-                    [required]="isMerchant">
-
-                </app-textbox>
-
-
-                <!-- Collection Account -->
-
-                <app-dropdown
-
-                    label="Collection Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.CollectionAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Payment Account -->
-
-                <app-dropdown
-
-                    label="Payment Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.PaymentAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 04 : STATUS & DESCRIPTION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Status & Description"
-
-                icon="fas fa-align-left">
-
-
-                <!-- Branch Exclusive -->
-
-                <app-dropdown
-
-                    label="Branch Exclusive"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.BranchExclusive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-        </app-form-grid>
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div class="ws-step">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Branch"
+                                [items]="branchItems"
+                                [(value)]="entity.Branch"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="Account Sub Group"
+                                [items]="accountSubGroupItems"
+                                [(value)]="entity.AccountSubGroupsId"
+                                [disabled]="true"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="MFS Provider"
+                                [items]="mfsProviderItems"
+                                [(value)]="entity.MFSAccountName"
+                                (valueChange)="onDisplayPartChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-mobile-screen-button"></i>
+                            <span>Wallet</span>
+                            <small>Merchant wallets settle into a bank account</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="MFS Account Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.MFSAccountCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="Account Type"
+                                [items]="accountTypeItems"
+                                [(value)]="entity.AccountType"
+                                (valueChange)="onAccountTypeChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-textbox
+                                label="MFS Account Number"
+                                placeholder="e.g. 01712345678"
+                                [(value)]="entity.MFSAccountNumber"
+                                (valueChange)="onDisplayPartChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Display Name"
+                                placeholder="Made from the provider and number"
+                                [(value)]="entity.DisplayName"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-search-dropdown
+                                label="Linked Bank Account"
+                                [items]="linkedBankAccountItems"
+                                [(value)]="entity.LinkedBankAccount"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving || !isMerchant"
+                                [required]="isMerchant">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="MFS Charges (%)"
+                                [placeholder]="isMerchant ? 'e.g. 1.50' : 'Merchant accounts only'"
+                                [(value)]="mfsChargesText"
+                                (valueChange)="onMfsChargesChange()"
+                                [disabled]="isViewMode || isSaving || !isMerchant"
+                                [required]="isMerchant">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="mfs"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!entity.DisplayName">{{ entity.DisplayName || 'New MFS account' }}</b>
+
+                        <div class="ws-chips">
+
+                            @if (entity.MFSAccountCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.MFSAccountCode }}</span>
+                            }
+
+                            @if (entity.AccountType)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.AccountType }}</span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <app-toggle-switch
+                        label="Collection account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.CollectionAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Payment account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.PaymentAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Branch exclusive"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.BranchExclusive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-hand-holding-dollar"></i><span>Picked when a customer pays by wallet</span></li>
+                        <li><i class="fas fa-percent"></i><span>Merchant charges are booked on each collection</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
+
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

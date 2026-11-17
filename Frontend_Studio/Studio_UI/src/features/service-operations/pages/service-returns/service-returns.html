@@ -1,0 +1,276 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Service Returns"
+            subtitle="A service invoice reversed as a whole : its journal, its VAT, its receipt and its parts"
+            icon="fas fa-arrow-rotate-left">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search return, invoice, job card, customer..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="listActions"
+                    (view)="view($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Service Return History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="mode === 'add' ? 'Add Service Return' : 'View Service Return'"
+            subtitle="The whole invoice is reversed; the job card is Work Done again"
+            icon="fas fa-arrow-rotate-left">
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Return"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="add"
+                    (command1Click)="onSave()"
+                    [command1Visible]="canEdit"
+                    [command2Visible]="false"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split jc-split appcore-scrollbar">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-arrow-rotate-left"></i>
+                        <span>Service Return</span>
+                    </header>
+
+                    <div class="jc-two">
+
+                        <app-textbox
+                            label="Return No"
+                            [value]="doc ? doc.ReturnNo : 'Given when it is posted'"
+                            [disabled]="true">
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [disabled]="mode !== 'add'"
+                            [value]="$any(asDate(returnDate))"
+                            (valueChange)="onDate($event)">
+                        </app-datepicker>
+
+                    </div>
+
+                    @if (mode === 'add')
+                    {
+                        <app-search-dropdown
+                            label="Service Invoice"
+                            placeholder="Select the invoice that is returned"
+                            [items]="invoiceItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="invoicePublicId || null"
+                            [required]="true"
+                            (valueChange)="onInvoice($event)">
+                        </app-search-dropdown>
+                    }
+
+                    <app-textbox
+                        label="Reason"
+                        placeholder="Why the invoice is returned"
+                        [value]="reason"
+                        [maxLength]="500"
+                        [required]="true"
+                        [disabled]="mode !== 'add'"
+                        (valueChange)="onReason($event)">
+                    </app-textbox>
+
+                    <label class="pf-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="cancelReceipt"
+                            [disabled]="mode !== 'add' || !invoice?.ReceiptVoucherNo"
+                            (change)="onSwitch('cancelReceipt', $event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Cancel the receipt</b>
+                            <small>The money is handed back : the Receipt Voucher of the invoice is cancelled. Off : the money stays as the customer's advance</small>
+                        </span>
+                    </label>
+
+                    <label class="pf-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="returnParts"
+                            [disabled]="mode !== 'add'"
+                            (change)="onSwitch('returnParts', $event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Parts go back to the store</b>
+                            <small>Every part issued to the job is returned (Parts Returns are made). Off : the parts stay with the job, to be invoiced again</small>
+                        </span>
+                    </label>
+
+                    <span class="hp-note">A return reverses the whole invoice. After it the job card is Work Done : correct it and invoice it again, or return its parts and cancel it. An invoice whose free service is on a brand claim cannot be returned before the claim is cancelled.</span>
+
+                </section>
+
+                <section class="pf-card jc-work">
+
+                    <header class="pf-card-head jc-head">
+
+                        <span class="si-title">
+                            <i class="fas fa-file-invoice"></i>
+                            The Invoice
+                        </span>
+
+                        <span class="jc-total">
+                            <small>Amount</small>
+                            <b>{{ money(doc ? doc.Amount : (invoice?.GrandTotal ?? 0)) }}</b>
+                        </span>
+
+                    </header>
+
+                    @if (doc)
+                    {
+                        <div class="jc-two">
+                            <app-textbox label="Invoice No" [value]="doc.InvoiceNo" [disabled]="true"></app-textbox>
+                            <app-textbox label="Invoice Date" [value]="day(doc.InvoiceDate)" [disabled]="true"></app-textbox>
+                            <app-textbox label="Job Card" [value]="doc.JobCardNo" [disabled]="true"></app-textbox>
+                            <app-textbox label="Service Center" [value]="doc.BranchName" [disabled]="true"></app-textbox>
+                            <app-textbox label="Customer" [value]="doc.CustomerName" [disabled]="true"></app-textbox>
+                            <app-textbox label="Mobile" [value]="doc.Mobile" [disabled]="true"></app-textbox>
+                            <app-textbox label="Receipt" [value]="doc.ReceiptVoucherNo ? doc.ReceiptVoucherNo + (doc.ReceiptCancelled ? '  (cancelled)' : '  (kept)') : '-'" [disabled]="true"></app-textbox>
+                            <app-textbox label="Parts" [value]="doc.PartsReturned ? 'Back in the store' : 'With the job'" [disabled]="true"></app-textbox>
+                        </div>
+                    }
+                    @else if (invoice)
+                    {
+                        <div class="jc-two">
+                            <app-textbox label="Invoice No" [value]="invoice.InvoiceNo" [disabled]="true"></app-textbox>
+                            <app-textbox label="Invoice Date" [value]="day(invoice.InvoiceDate)" [disabled]="true"></app-textbox>
+                            <app-textbox label="Job Card" [value]="invoice.JobCardNo" [disabled]="true"></app-textbox>
+                            <app-textbox label="Service Center" [value]="invoice.BranchName" [disabled]="true"></app-textbox>
+                            <app-textbox label="Customer" [value]="invoice.CustomerName" [disabled]="true"></app-textbox>
+                            <app-textbox label="Mobile" [value]="invoice.Mobile" [disabled]="true"></app-textbox>
+                        </div>
+
+                        <div class="si-sum">
+                            <span>Labour</span><b>{{ money(invoice.LabourTotal) }}</b>
+                            <span>Parts</span><b>{{ money(invoice.PartsTotal) }}</b>
+                            <span>Outside work</span><b>{{ money(invoice.OutsideTotal) }}</b>
+                            <span>VAT</span><b>{{ money(invoice.VatTotal) }}</b>
+                            <span>Discount</span><b>{{ money(invoice.Discount) }}</b>
+                            <span class="si-grand">Invoice total</span><b class="si-grand">{{ money(invoice.GrandTotal) }}</b>
+                            <span>Collected{{ invoice.ReceiptVoucherNo ? '  (' + invoice.ReceiptVoucherNo + ')' : '' }}</span><b>{{ money(invoice.PaidAmount) }}</b>
+                        </div>
+
+                        @if (invoice.IsDelivered)
+                        {
+                            <span class="si-warn"><i class="fas fa-triangle-exclamation"></i> The bike of this invoice was delivered already.</span>
+                        }
+                    }
+                    @else
+                    {
+                        <div class="pfx-empty">Choose the service invoice.</div>
+                    }
+
+                    @if (doc || invoice)
+                    {
+                        <div class="jc-buttons si-buttons">
+
+                            <button
+                                type="button"
+                                class="hp-add"
+                                (click)="openInvoice()">
+                                <i class="fas fa-file-invoice"></i>
+                                Open the invoice
+                            </button>
+
+                        </div>
+                    }
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

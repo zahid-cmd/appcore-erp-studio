@@ -128,6 +128,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -217,6 +223,8 @@ from '../../../services/brand-management.service';
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -476,6 +484,7 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
 
@@ -483,7 +492,7 @@ implements OnInit, OnDestroy
 
             type:'serial',
 
-            width:'60px',
+            width:'56px',
 
             align:'center'
         },
@@ -494,7 +503,7 @@ implements OnInit, OnDestroy
 
             field:'BrandCode',
 
-            width:'180px',
+            width:'140px',
 
             align:'center'
         },
@@ -504,7 +513,7 @@ implements OnInit, OnDestroy
 
             field:'BrandName',
 
-            width:'240px',
+            width:'210px',
 
             align:'left'
         },
@@ -513,6 +522,7 @@ implements OnInit, OnDestroy
             header:'Motor Bikes Supplier',
 
             field:'MotorBikesSupplierName',
+            width:'180px',
 
 
             align:'left'
@@ -526,7 +536,7 @@ implements OnInit, OnDestroy
 
             type:'image',
 
-            width:'130px',
+            width:'110px',
 
             align:'center'
         },
@@ -535,7 +545,7 @@ implements OnInit, OnDestroy
 
             field:'Status',
 
-            width:'150px',
+            width:'130px',
 
             type:'status',
 
@@ -549,7 +559,7 @@ implements OnInit, OnDestroy
 
             type:'actions',
 
-            width:'130px',
+            width:'140px',
 
             align:'center'
         }

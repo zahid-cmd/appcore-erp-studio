@@ -161,6 +161,23 @@
 
                 <span class="lr-switchbar-title"><i class="fas fa-sliders"></i> View</span>
 
+                <span class="lr-seg" role="group" aria-label="Layout">
+                    <button
+                        type="button"
+                        [class.on]="layout === 'vertical'"
+                        title="One column : Opening balances, Receipts, Total funds available, Payments, Closing balances"
+                        (click)="setLayout('vertical')">
+                        <i class="fas fa-list"></i> Vertical
+                    </button>
+                    <button
+                        type="button"
+                        [class.on]="layout === 'tform'"
+                        title="Receipts (Dr) and Payments (Cr) side by side"
+                        (click)="setLayout('tform')">
+                        <i class="fas fa-table-columns"></i> T-form
+                    </button>
+                </span>
+
                 <span class="lr-seg tb-levels" role="group" aria-label="Level">
                     @for (item of levels; track item.value)
                     {
@@ -263,106 +280,155 @@
                     }
 
                     <div class="fa-main">
-
-                        <div class="lr-card tb-tcard fa-tcard">
-
-                            <div class="tb-scroll appcore-scrollbar fa-tform">
-
-                                <div class="fa-taccount">
-
-                                    <div class="fa-ttitle">
-                                        <b>Receipt &amp; Payment Account</b>
-                                        <span>for {{ date(report.From) }} – {{ date(report.To) }}</span>
-                                    </div>
-
-                                    <table class="lr-table fa-ttable">
-
+                        @if (layout === 'vertical')
+                        {
+                            <!-- ============ VERTICAL ============ -->
+                            <div class="lr-card tb-tcard fa-tcard">
+                                <div class="tb-scroll appcore-scrollbar">
+                                    <table class="lr-table tb-table fa-table">
                                         <colgroup>
                                             <col>
                                             <col class="c-bal">
-                                            <col>
-                                            <col class="c-bal">
                                         </colgroup>
-
                                         <thead>
                                             <tr>
-                                                <th>Dr · Receipts</th>
-                                                <th class="r">Amount</th>
-                                                <th class="fa-tcr">Cr · Payments</th>
-                                                <th class="r">Amount</th>
+                                                <th class="tb-acc-h"><span>Particulars</span></th>
+                                                <th class="r fa-col-h">
+                                                    <b>This period</b>
+                                                    <span>{{ date(report.From) }} – {{ date(report.To) }}</span>
+                                                </th>
                                             </tr>
                                         </thead>
-
                                         <tbody>
-                                            @for (pair of sideRows; track $index)
+                                            @for (row of rows; track row.key)
                                             {
-                                                <tr>
-                                                    @if (pair.dr; as item)
-                                                    {
-                                                        <td
-                                                            class="fa-tname"
-                                                            [ngClass]="'fa-tl' + item.level"
-                                                            [class.is-strong]="item.strong"
-                                                            [class.rp-cash]="!!item.cash"
-                                                            [class.lr-click]="canOpen(item)"
-                                                            [title]="canOpen(item) ? 'Open the statement (new tab)' : ''"
-                                                            (click)="itemClick(item)">
-                                                            <span class="lr-clip">{{ item.name }}</span>
-                                                            @if (showCodes && item.code)
+                                                <tr
+                                                    class="tb-row fa-row"
+                                                    [ngClass]="rowClass(row)"
+                                                    [class.rp-cash]="!!row.item?.cash"
+                                                    [class.lr-click]="!!row.item && canOpen(row.item)"
+                                                    [title]="row.item && canOpen(row.item) ? 'Open the statement (new tab)' : ''"
+                                                    (click)="rowClick(row)">
+                                                    <td class="tb-acc">
+                                                        <span class="tb-name">
+                                                            <span class="lr-clip">{{ row.name }}</span>
+                                                            @if (showCodes && row.code)
                                                             {
-                                                                <span class="lr-dim lr-mono tb-code">{{ item.code }}</span>
+                                                                <span class="lr-dim lr-mono tb-code">{{ row.code }}</span>
                                                             }
-                                                        </td>
-                                                        <td class="r lr-bal" [class.is-strong]="item.strong">{{ item.strong ? total(item.amount) : money(item.amount) }}</td>
-                                                    }
-                                                    @else
-                                                    {
-                                                        <td></td>
-                                                        <td></td>
-                                                    }
-                                                    @if (pair.cr; as item)
-                                                    {
-                                                        <td
-                                                            class="fa-tname fa-tcr"
-                                                            [ngClass]="'fa-tl' + item.level"
-                                                            [class.is-strong]="item.strong"
-                                                            [class.rp-cash]="!!item.cash"
-                                                            [class.lr-click]="canOpen(item)"
-                                                            [title]="canOpen(item) ? 'Open the statement (new tab)' : ''"
-                                                            (click)="itemClick(item)">
-                                                            <span class="lr-clip">{{ item.name }}</span>
-                                                            @if (showCodes && item.code)
-                                                            {
-                                                                <span class="lr-dim lr-mono tb-code">{{ item.code }}</span>
-                                                            }
-                                                        </td>
-                                                        <td class="r lr-bal" [class.is-strong]="item.strong">{{ item.strong ? total(item.amount) : money(item.amount) }}</td>
-                                                    }
-                                                    @else
-                                                    {
-                                                        <td class="fa-tcr"></td>
-                                                        <td></td>
-                                                    }
+                                                        </span>
+                                                    </td>
+                                                    <td class="r lr-bal">{{ row.kind === 'node' ? money(row.amount) : total(row.amount) }}</td>
                                                 </tr>
                                             }
                                         </tbody>
-
-                                        <tfoot>
-                                            <tr class="fa-ttotal">
-                                                <td class="r">Total</td>
-                                                <td class="r">{{ total(receiptsTotal) }}</td>
-                                                <td class="r fa-tcr">Total</td>
-                                                <td class="r">{{ total(paymentsTotal) }}</td>
-                                            </tr>
-                                        </tfoot>
-
                                     </table>
+                                </div>
+                            </div>
+                        }
+                        @else
+                        {
+                            <!-- ============ T-FORM ============ -->
+                            <div class="lr-card tb-tcard fa-tcard">
+
+                                <div class="tb-scroll appcore-scrollbar fa-tform">
+
+                                    <div class="fa-taccount">
+
+                                        <div class="fa-ttitle">
+                                            <b>Receipt &amp; Payment Account</b>
+                                            <span>for {{ date(report.From) }} – {{ date(report.To) }}</span>
+                                        </div>
+
+                                        <table class="lr-table fa-ttable">
+
+                                            <colgroup>
+                                                <col>
+                                                <col class="c-bal">
+                                                <col>
+                                                <col class="c-bal">
+                                            </colgroup>
+
+                                            <thead>
+                                                <tr>
+                                                    <th>Dr · Receipts</th>
+                                                    <th class="r">Amount</th>
+                                                    <th class="fa-tcr">Cr · Payments</th>
+                                                    <th class="r">Amount</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                @for (pair of sideRows; track $index)
+                                                {
+                                                    <tr>
+                                                        @if (pair.dr; as item)
+                                                        {
+                                                            <td
+                                                                class="fa-tname"
+                                                                [ngClass]="'fa-tl' + item.level"
+                                                                [class.is-strong]="item.strong"
+                                                                [class.rp-cash]="!!item.cash"
+                                                                [class.lr-click]="canOpen(item)"
+                                                                [title]="canOpen(item) ? 'Open the statement (new tab)' : ''"
+                                                                (click)="itemClick(item)">
+                                                                <span class="lr-clip">{{ item.name }}</span>
+                                                                @if (showCodes && item.code)
+                                                                {
+                                                                    <span class="lr-dim lr-mono tb-code">{{ item.code }}</span>
+                                                                }
+                                                            </td>
+                                                            <td class="r lr-bal" [class.is-strong]="item.strong">{{ item.strong ? total(item.amount) : money(item.amount) }}</td>
+                                                        }
+                                                        @else
+                                                        {
+                                                            <td></td>
+                                                            <td></td>
+                                                        }
+                                                        @if (pair.cr; as item)
+                                                        {
+                                                            <td
+                                                                class="fa-tname fa-tcr"
+                                                                [ngClass]="'fa-tl' + item.level"
+                                                                [class.is-strong]="item.strong"
+                                                                [class.rp-cash]="!!item.cash"
+                                                                [class.lr-click]="canOpen(item)"
+                                                                [title]="canOpen(item) ? 'Open the statement (new tab)' : ''"
+                                                                (click)="itemClick(item)">
+                                                                <span class="lr-clip">{{ item.name }}</span>
+                                                                @if (showCodes && item.code)
+                                                                {
+                                                                    <span class="lr-dim lr-mono tb-code">{{ item.code }}</span>
+                                                                }
+                                                            </td>
+                                                            <td class="r lr-bal" [class.is-strong]="item.strong">{{ item.strong ? total(item.amount) : money(item.amount) }}</td>
+                                                        }
+                                                        @else
+                                                        {
+                                                            <td class="fa-tcr"></td>
+                                                            <td></td>
+                                                        }
+                                                    </tr>
+                                                }
+                                            </tbody>
+
+                                            <tfoot>
+                                                <tr class="fa-ttotal">
+                                                    <td class="r">Total</td>
+                                                    <td class="r">{{ total(receiptsTotal) }}</td>
+                                                    <td class="r fa-tcr">Total</td>
+                                                    <td class="r">{{ total(paymentsTotal) }}</td>
+                                                </tr>
+                                            </tfoot>
+
+                                        </table>
+
+                                    </div>
 
                                 </div>
 
                             </div>
-
-                        </div>
+                        }
 
                     </div>
 

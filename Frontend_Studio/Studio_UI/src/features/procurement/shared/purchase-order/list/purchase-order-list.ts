@@ -118,6 +118,12 @@ from '../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../shared/components/controls/pagination/pagination';
@@ -257,6 +263,8 @@ type PurchaseOrderRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -571,54 +579,55 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'PO No',
             field:'OrderNo',
-            width:'200px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Date',
             field:'OrderDateText',
-            width:'100px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Supplier',
             field:'SupplierName',
-            width:'220px',
+            width:'160px',
             align:'left'
         },
         // How the supplier bills : DP / MRP invoice (MB : always DP)
         {
             header:'Invoice',
             field:'InvoiceText',
-            width:'80px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Expected',
             field:'ExpectedDateText',
-            width:'100px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Qty',
             field:'TotalQuantityText',
-            width:'70px',
-            align:'right'
+            width:'90px',
+            align:'center'
         },
         {
             header:'Total Payable',
             field:'TotalPayableText',
-            width:'140px',
+            width:'130px',
             align:'right'
         },
         {
@@ -626,14 +635,14 @@ implements OnInit, OnDestroy
             field:'Status',
             type:'status',
             // The pill is 110px wide : room for it and the cell padding
-            width:'140px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -1919,5 +1928,46 @@ implements OnInit, OnDestroy
             false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.countOf('Draft'))),
+            String(this.summaryText(this.countOf('Approved'))),
+            String(this.summaryText(this.countOf('Placed'))),
+            String(this.summaryText(this.countOf('Completed'))),
+            String(this.summaryText(this.countOf('Closed Short') + this.countOf('Cancelled')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Draft', value:v[1], tone:'' },
+                    { label:'Approved', value:v[2], tone:'' },
+                    { label:'Placed', value:v[3], tone:'' },
+                    { label:'Completed', value:v[4], tone:'ok' },
+                    { label:'Closed / Cancelled', value:v[5], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

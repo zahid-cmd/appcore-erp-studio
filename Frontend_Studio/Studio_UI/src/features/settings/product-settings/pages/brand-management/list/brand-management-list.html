@@ -8,9 +8,11 @@
 
         title="Brand Management"
 
-        subtitle="Manage product brands"
+        subtitle="The brands you sell : logo and the motor bike supplier"
 
-        icon="fas fa-copyright">
+        icon="fas fa-copyright"
+
+        art="brand">
 
         <div pageHeaderCenter>
 
@@ -108,6 +110,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="brand"
+
+                emptyTitle="No brand yet"
+
+                emptySubtitle="Add a brand with its logo and supplier."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -150,24 +158,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="brd-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="brd-summary-item">
-                    <span class="brd-summary-label">{{ item.label }}</span>
-                    <b
-                        class="brd-summary-value"
-                        [class.brd-ok]="item.tone === 'ok'"
-                        [class.brd-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="brd-summary-note">
-                Matching the search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="brands"
+            art="brand"
+            note="All records">
+        </app-summary-line>
     }
 
 

@@ -1,350 +1,283 @@
-<!-- PAGE-CLONED : Color Management -> Brand Management -->
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-copyright"
-
+        art="brand"
         [title]="pageTitle"
-
-        subtitle="Manage product brands">
+        subtitle="A brand you sell : its maker, logo, supplier and brand ledgers">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <!-- more than one screen : no scrolling -->
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
-
-            [columns]="4">
-
-
-            <!-- =============================================
-                 SECTION 01 : BRAND INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Brand Information"
-
-                icon="fas fa-copyright">
-
-
-                <!-- Brand Code -->
-
-                <app-textbox
-
-                    label="Brand Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.BrandCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Brand Name -->
-
-                <app-textbox
-
-                    label="Brand Name"
-
-                    placeholder="Enter brand name"
-
-                    [(value)]="entity.BrandName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Maker's Name (required) : BRTA Form-17 "Maker's
-                     name" for this brand's bikes -->
-
-                <app-textbox
-
-                    label="Maker's Name"
-
-                    placeholder="Manufacturer, e.g. Yadea Technology Group Co., Ltd."
-
-                    textCase="none"
-
-                    [value]="entity.MakerName ?? ''"
-
-                    [maxLength]="150"
-
-                    (valueChange)="entity.MakerName = '' + $event; onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Motor Bikes Supplier (optional; Supply Type Motor
-                     Bikes) : EMI reimbursement claims go to it -->
-
-                <app-search-dropdown
-
-                    label="Motor Bikes Supplier"
-
-                    placeholder="Optional"
-
-                    [items]="supplierItems"
-
-                    [value]="entity.MotorBikesSupplierCode"
-
-                    (valueChange)="onSupplierChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-search-dropdown>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 02 : BRAND LEDGERS (read only)
-                 Created on save when missing; an existing one
-                 only follows the brand's name and status.
-            ============================================== -->
-
-            <app-form-section
-
-                title="Brand Ledgers"
-
-                icon="fas fa-book">
-
-
-                <app-textbox
-
-                    label="Offer Adjustment Ledger Code"
-
-                    placeholder="Created on save"
-
-                    [value]="offerLedgerCode"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Offer Adjustment Ledger Name"
-
-                    placeholder="Follows the brand name"
-
-                    [value]="offerLedgerName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="EMI Claim Receivable Ledger Code"
-
-                    placeholder="Created on save"
-
-                    [value]="emiClaimLedgerCode"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="EMI Claim Receivable Ledger Name"
-
-                    placeholder="Follows the brand name"
-
-                    [value]="emiClaimLedgerName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                @if (ledgerMessage)
-                {
-                    <div class="brand-ledger-note">
-
-                        <i class="fas fa-circle-exclamation"></i>
-
-                        {{ ledgerMessage }}
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-copyright"></i>
+                            <span>Brand</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Brand Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.BrandCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Brand Name"
+                                placeholder="e.g. Yadea"
+                                [(value)]="entity.BrandName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Maker's Name"
+                                placeholder="e.g. Yadea Technology Group Co., Ltd."
+                                textCase="none"
+                                [value]="entity.MakerName ?? ''"
+                                [maxLength]="150"
+                                (valueChange)="entity.MakerName = '' + $event; onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-search-dropdown
+                                label="Motor Bikes Supplier"
+                                placeholder="Optional"
+                                [items]="supplierItems"
+                                [value]="entity.MotorBikesSupplierCode"
+                                (valueChange)="onSupplierChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-search-dropdown>
+
+                        </div>
+
+                    </section>
+
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'logo'">
+                    <div class="ws-pair pf-photo">
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-image"></i>
+                                <span>Logo</span>
+                            </header>
+
+                                <app-logo-studio
+                                    badge="BRAND LOGO"
+                                    [imageUrl]="imagePreview"
+                                    [name]="entity.BrandName"
+                                    [disabled]="isViewMode"
+                                    [busy]="isSaving"
+                                    (imageChange)="onImageChange($event)">
+                                </app-logo-studio>
+
+                        </section>
+
+                        <section class="ws-card ws-notes">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-note-sticky"></i>
+                                <span>Remarks</span>
+                            </header>
+
+                            <app-note-pad
+                                placeholder="Anything the team should know"
+                                note="Only for your team, never printed"
+                                [maxLength]="500"
+                                [(value)]="entity.Remarks"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-note-pad>
+
+                        </section>
 
                     </div>
-                }
 
-            </app-form-section>
+                </div>
 
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'ledgers'">
 
-            <!-- =============================================
-                 SECTION 03 : BRAND IMAGE (shared Image Hub)
-                 The picked image is previewed here and uploaded
-                 when the brand is saved.
-            ============================================== -->
+                    <section class="ws-card">
 
-            <app-form-section
+                        <header class="ws-card-head">
+                            <i class="fas fa-book"></i>
+                            <span>Brand Ledgers</span>
+                            <small>Made with the brand</small>
+                        </header>
 
-                title="Brand Image"
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Offer Adjustment Ledger Code"
+                                placeholder="Created on save"
+                                [value]="offerLedgerCode"
+                                [readonly]="true">
+                            </app-textbox>
 
-                icon="fas fa-image">
+                            <app-textbox
+                                label="Offer Adjustment Ledger Name"
+                                placeholder="Follows the brand name"
+                                [value]="offerLedgerName"
+                                [readonly]="true">
+                            </app-textbox>
 
+                            <app-textbox
+                                label="EMI Claim Receivable Ledger Code"
+                                placeholder="Created on save"
+                                [value]="emiClaimLedgerCode"
+                                [readonly]="true">
+                            </app-textbox>
 
-                <!-- Brand Image -->
-
-                <app-image-hub
-
-                    label="Brand Image"
-
-                    placeholder="No brand image selected"
-
-                    [imageUrl]="imagePreview"
-
-                    (imageChange)="onImageChange($event)"
-
-                    [disabled]="isSaving"
-
-                    [readonly]="isViewMode">
-
-                </app-image-hub>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 04 : STATUS & DESCRIPTION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Description"
-
-                icon="fas fa-sliders">
+                            <app-textbox
+                                label="EMI Claim Receivable Ledger Name"
+                                placeholder="Follows the brand name"
+                                [value]="emiClaimLedgerName"
+                                [readonly]="true">
+                            </app-textbox>
 
 
-                <!-- Status -->
+                            @if (ledgerMessage)
+                            {
+                                <div class="brand-ledger-note ws-full">
+                                    <i class="fas fa-circle-exclamation"></i>
+                                    {{ ledgerMessage }}
+                                </div>
+                            }
 
-                <app-dropdown
+                        </div>
 
-                    label="Status"
+                    </section>
 
-                    [items]="statusItems"
+                </div>
 
-                    [(value)]="entity.Status"
+            </div>
 
-                    (valueChange)="onValueChange()"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    [disabled]="isViewMode"
+            <aside class="ws-panel">
 
-                    [required]="true">
+                <div class="ws-hero">
 
-                </app-dropdown>
+                    <app-workspace-art theme="brand"></app-workspace-art>
 
+                    <div class="ws-identity">
 
-                <!-- Remarks -->
+                        <b [class.ws-new]="!entity.BrandName">{{ entity.BrandName || 'New brand' }}</b>
 
-                <app-textarea
+                        <div class="ws-chips">
 
-                    label="Remarks"
+                            @if (entity.BrandCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.BrandCode }}</span>
+                            }
 
-                    placeholder="Enter remarks"
+                        </div>
 
-                    [rows]="4"
+                    </div>
 
-                    [(value)]="entity.Remarks"
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
 
-                    (valueChange)="onValueChange()"
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-layer-group"></i><span>Product categories are made per brand</span></li>
+                        <li><i class="fas fa-globe"></i><span>The logo shows on the website and documents</span></li>
+                        <li><i class="fas fa-book"></i><span>Offer and EMI claim ledgers are kept per brand</span></li>
+                    </ul>
 
-                    [disabled]="isViewMode">
+                </div>
 
-                </app-textarea>
+            </aside>
 
-            </app-form-section>
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

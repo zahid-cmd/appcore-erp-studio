@@ -7,7 +7,8 @@
     <app-page-header
         title="Test Rides"
         subtitle="Test rides booked for sales enquiries"
-        icon="fas fa-motorcycle">
+        icon="fas fa-motorcycle"
+        art="bike">
 
         <div pageHeaderCenter>
 
@@ -102,6 +103,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="bike"
+                emptyTitle="No test rides yet"
+                emptySubtitle="Book a test ride to see it here"
                 [rows]="rows"
                 [rowActions]="rowActions"
                 (rowAction)="onRowAction($event)"
@@ -139,25 +143,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="trl-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="trl-summary-item">
-                    <span class="trl-summary-label">{{ item.label }}</span>
-                    <b
-                        class="trl-summary-value"
-                        [class.trl-ok]="item.tone === 'ok'"
-                        [class.trl-warn]="item.tone === 'warn'"
-                        [class.trl-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="trl-summary-note">
-                Matching {{ summaryNote }}
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="test rides"
+            art="bike"
+            note="Matching {{ summaryNote }}">
+        </app-summary-line>
     }
 
 

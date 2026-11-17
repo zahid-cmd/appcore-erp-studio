@@ -114,6 +114,12 @@ import
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
 
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
 
 import
 {
@@ -202,6 +208,8 @@ from '../../../services/account-class.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent
@@ -477,56 +485,68 @@ implements OnInit, OnDestroy
 
     readonly columns:
         ListTableColumn[] =
-
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Class Type',
             field:'ClassType',
-            width:'160px',
+            width:'170px',
             align:'left'
         },
         {
             header:'Class Code',
             field:'ClassCode',
-            width:'150px',
+            width:'140px',
             align:'center'
         },
         {
             header:'Class Name',
             field:'ClassName',
-            width:'240px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Mode',
             field:'Mode',
-            width:'120px',
+            width:'110px',
+            align:'center'
+        },
+        {
+            header:'Statement Type',
+            field:'StatementType',
+            width:'160px',
+            align:'left'
+        },
+        {
+            header:'Line',
+            field:'BusinessLine',
+            width:'80px',
             align:'center'
         },
         {
             header:'Class Prefix',
             field:'ClassPrefix',
-            width:'130px',
+            width:'110px',
             align:'center'
         },
         {
-            header:'Manual Group Creation',
+            header:'Manual Groups',
             field:'AllowManualGroupCreation',
-            width:'180px',
+            width:'130px',
             align:'center',
             type:'boolean'
         },
         {
             header:'Status',
             field:'IsActive',
-            width:'120px',
+            width:'130px',
             align:'center',
             type:'status'
         },
@@ -534,7 +554,7 @@ implements OnInit, OnDestroy
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -850,6 +870,20 @@ implements OnInit, OnDestroy
                 item?.Mode
                 ??
                 item?.mode
+                ??
+                '',
+
+            StatementType:
+                item?.StatementType
+                ??
+                item?.statementType
+                ??
+                '',
+
+            BusinessLine:
+                item?.BusinessLine
+                ??
+                item?.businessLine
                 ??
                 '',
 

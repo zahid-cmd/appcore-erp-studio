@@ -121,6 +121,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -233,6 +239,8 @@ type BikeModelsRow =
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -513,6 +521,7 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
 
@@ -520,7 +529,7 @@ implements OnInit, OnDestroy
 
             type:'serial',
 
-            width:'70px',
+            width:'56px',
 
             align:'center'
         },
@@ -530,7 +539,7 @@ implements OnInit, OnDestroy
 
             field:'ModelCode',
 
-            width:'160px',
+            width:'140px',
 
             align:'center'
         },
@@ -540,7 +549,7 @@ implements OnInit, OnDestroy
 
             field:'BrandName',
 
-            width:'260px',
+            width:'180px',
 
             align:'left'
         },
@@ -549,6 +558,7 @@ implements OnInit, OnDestroy
             header:'Model Name',
 
             field:'ModelName',
+            width:'210px',
 
             align:'left'
         },
@@ -558,7 +568,7 @@ implements OnInit, OnDestroy
 
             field:'BikeType',
 
-            width:'220px',
+            width:'130px',
 
             align:'center'
         },
@@ -570,7 +580,7 @@ implements OnInit, OnDestroy
 
             field:'Status',
 
-            width:'180px',
+            width:'130px',
 
             type:'status',
 
@@ -584,7 +594,7 @@ implements OnInit, OnDestroy
 
             type:'actions',
 
-            width:'150px',
+            width:'140px',
 
             align:'center'
         }

@@ -1,297 +1,222 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-location-dot"
-
+        art="locations"
         [title]="pageTitle"
-
         subtitle="Areas, thanas and upazilas used on customer addresses">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div class="ws-step">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-location-dot"></i>
+                            <span>Location</span>
+                            <small>Unique within its district</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Location Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.LocationCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-            [columns]="4">
+                            <app-textbox
+                                label="Location Name"
+                                placeholder="e.g. Mirpur"
+                                [(value)]="entity.LocationName"
+                                (valueChange)="onLocationNameChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Display Name"
+                                placeholder="Follows the name and district"
+                                [(value)]="entity.DisplayName"
+                                [readonly]="true">
+                            </app-textbox>
 
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-map"></i>
+                            <span>Geography</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Division"
+                                placeholder="Select division"
+                                [items]="divisionItems"
+                                [value]="entity.Division"
+                                (valueChange)="onDivisionChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="District"
+                                [placeholder]="entity.Division ? 'Select district' : 'Select division first'"
+                                [items]="districtItems"
+                                [value]="entity.District"
+                                (valueChange)="onDistrictChange($event)"
+                                [disabled]="isViewMode || isSaving || !entity.Division"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Postal Code"
+                                placeholder="e.g. 1216 (optional)"
+                                [value]="entity.PostalCode"
+                                (valueChange)="onPostalCodeChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
+
+                    </section>
 
+                </div>
 
-            <!-- =============================================
-                 SECTION 01
-                 LOCATION INFORMATION
-            ============================================== -->
+            </div>
 
-            <app-form-section
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                title="Location Information"
+            <aside class="ws-panel">
 
-                icon="fas fa-location-dot">
+                <div class="ws-hero">
 
+                    <app-workspace-art theme="locations"></app-workspace-art>
 
-                <!-- Location Code : LOC-0001 (central code generator) -->
+                    <div class="ws-identity">
 
-                <app-textbox
+                        <b [class.ws-new]="!entity.DisplayName || entity.LocationName">{{ entity.DisplayName || entity.LocationName || 'New location' }}</b>
 
-                    label="Location Code"
+                        <div class="ws-chips">
 
-                    placeholder="Auto generated"
+                            @if (entity.LocationCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.LocationCode }}</span>
+                            }
 
-                    [(value)]="entity.LocationCode"
+                            @if (entity.District)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.District }}</span>
+                            }
 
-                    [readonly]="true"
+                        </div>
 
-                    [required]="true">
+                    </div>
 
-                </app-textbox>
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-address-book"></i><span>Picked on customer and supplier addresses</span></li>
+                        <li><i class="fas fa-map-location-dot"></i><span>Sales and service reports can be read by area</span></li>
+                    </ul>
 
-                <!-- Location Name : typed, unique within its district -->
+                </div>
 
-                <app-textbox
+            </aside>
 
-                    label="Location Name"
-
-                    placeholder="e.g. Mirpur"
-
-                    [(value)]="entity.LocationName"
-
-                    (valueChange)="onLocationNameChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Display Name : "<Location Name>, <District>" -->
-
-                <app-textbox
-
-                    label="Display Name"
-
-                    placeholder="Follows the name and district"
-
-                    [(value)]="entity.DisplayName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 GEOGRAPHY
-            ============================================== -->
-
-            <app-form-section
-
-                title="Geography"
-
-                icon="fas fa-map">
-
-
-                <!-- Division : fixed list -->
-
-                <app-search-dropdown
-
-                    label="Division"
-
-                    placeholder="Select division"
-
-                    [items]="divisionItems"
-
-                    [value]="entity.Division"
-
-                    (valueChange)="onDivisionChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- District : districts of the selected division -->
-
-                <app-search-dropdown
-
-                    label="District"
-
-                    [placeholder]="entity.Division ? 'Select district' : 'Select division first'"
-
-                    [items]="districtItems"
-
-                    [value]="entity.District"
-
-                    (valueChange)="onDistrictChange($event)"
-
-                    [disabled]="isViewMode || isSaving || !entity.Division"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Postal Code : optional, 4 digits -->
-
-                <app-textbox
-
-                    label="Postal Code"
-
-                    placeholder="e.g. 1216 (optional)"
-
-                    [value]="entity.PostalCode"
-
-                    (valueChange)="onPostalCodeChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 REMARKS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Remarks"
-
-                icon="fas fa-note-sticky">
-
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 STATUS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status"
-
-                icon="fas fa-toggle-on">
-
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

@@ -8,9 +8,11 @@
 
         title="Spare Parts &amp; Lubricants"
 
-        subtitle="Manage spare parts and lubricants"
+        subtitle="Spare parts and lubricants : part number, unit, stock levels and shelves"
 
-        icon="fas fa-gears">
+        icon="fas fa-gears"
+
+        art="parts">
 
         <div pageHeaderCenter>
 
@@ -149,6 +151,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="parts"
+
+                emptyTitle="No spare part yet"
+
+                emptySubtitle="Add a spare part under its sub category."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -193,24 +201,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="spp-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="spp-summary-item">
-                    <span class="spp-summary-label">{{ item.label }}</span>
-                    <b
-                        class="spp-summary-value"
-                        [class.spp-ok]="item.tone === 'ok'"
-                        [class.spp-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="spp-summary-note">
-                Matching the search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="parts"
+            art="parts"
+            note="All records">
+        </app-summary-line>
     }
 
 

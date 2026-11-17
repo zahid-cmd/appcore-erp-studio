@@ -104,6 +104,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -186,6 +192,8 @@ from '../../../services/membership-cards.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -387,61 +395,62 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Card Code',
             field:'CardCode',
-            width:'110px',
+            width:'140px',
             align:'center'
         },
         {
             header:'Card Name',
             field:'CardName',
-            width:'180px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Rank',
             field:'CardRank',
-            width:'70px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Fee Ledger',
             field:'FeeLedgerCode',
-            width:'180px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Discount Ledger',
             field:'DiscountLedgerCode',
-            width:'180px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Service Value',
             field:'ServiceValueDisplay',
-            width:'120px',
+            width:'130px',
             align:'right'
         },
         {
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'100px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -1508,5 +1517,40 @@ implements OnInit, OnDestroy
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.summaryActive)),
+            String(this.summaryText(this.summaryTotal - this.summaryActive))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Active', value:v[1], tone:'ok' },
+                    { label:'Inactive', value:v[2], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

@@ -1,0 +1,1348 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Service Estimates"
+            subtitle="For a customer and a bike : Draft → Sent → Approved → Job Card"
+            icon="fas fa-file-pen"
+            art="ledger">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search estimate, job card, customer, mobile, chassis..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    command3Text="Restore"
+                    command3Icon="fas fa-trash-arrow-up"
+                    command3Permission="restore"
+                    (command3Click)="restore()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    emptyArt="ledger"
+                    emptyTitle="No estimates yet"
+                    emptySubtitle="Add the first one with Add."
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [rowActions]="rowActions"
+                    (rowAction)="onRowAction($event)"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        @if (summaryItems.length > 0)
+        {
+            <app-summary-line
+                [items]="summaryItems"
+                noun="estimates"
+                art="ledger"
+                note="All records">
+            </app-summary-line>
+        }
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Service Estimate History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <!-- =====================================================
+             FORM (the layout of the voucher pages)
+             Header : Service Center | Estimate No | status, unsaved
+             Row 1  : Estimate Information | Service Center & Notes
+             Row 2  : Bike, Customer, Add Labour / Parts | the
+                      observations, the lines, the Estimate Charge,
+                      the status
+             The page never scrolls : only the lines do
+        ====================================================== -->
+
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="Labour and parts for a customer and a bike : a job card can be made from it"
+            icon="fas fa-file-pen">
+
+            <div
+                pageHeaderCenter
+                class="se-center">
+
+                <div class="se-ribbon">
+
+                    <div class="se-chip">
+                        <span class="se-chip-icon se-chip-icon-branch"><i class="fas fa-building"></i></span>
+                        <span class="se-chip-text">
+                            <span class="se-chip-label">Service Center</span>
+                            <strong>{{ branchName || 'Not set' }}</strong>
+                        </span>
+                    </div>
+
+                    <span class="se-ribbon-sep"></span>
+
+                    <div class="se-chip">
+                        <span class="se-chip-icon se-chip-icon-no"><i class="fas fa-hashtag"></i></span>
+                        <span class="se-chip-text">
+                            <span class="se-chip-label">Estimate No</span>
+                            <strong>{{ estimateName || 'On save' }}</strong>
+                        </span>
+                    </div>
+
+                    <span class="se-ribbon-sep"></span>
+
+                    <div class="se-state">
+
+                        <span [class]="statusClass">{{ estimate ? estimate.Status : 'New Draft' }}</span>
+
+                        @if (hasChanges)
+                        {
+                            <span class="se-unsaved"><i class="fas fa-circle"></i> Unsaved</span>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <app-command-center
+                pageHeaderRight
+                [command1Text]="mode === 'edit' ? 'Update' : 'Save'"
+                command1Icon="fas fa-floppy-disk"
+                [command1Permission]="mode === 'edit' ? 'update' : 'add'"
+                (command1Click)="onSave()"
+                [command1Visible]="canEdit"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                (command2Click)="print()"
+                [command2Visible]="!!estimate"
+                command3Text="Job Card"
+                command3Icon="fas fa-clipboard-list"
+                command3Title="Create a job card from this estimate"
+                (command3Click)="createJobCard()"
+                [command3Visible]="!!estimate?.CanConvert"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the list"
+                (rightCommandClick)="goToList()">
+            </app-command-center>
+
+        </app-page-header>
+
+        <div class="se-body">
+
+            @if (loading)
+            {
+                <div class="se-loading">
+
+                    <app-orbit-loader
+                        title="Loading Service Estimate"
+                        message="Please wait while the estimate is being loaded."
+                        size="medium"
+                        [showMessage]="true"
+                        [overlay]="false">
+                    </app-orbit-loader>
+
+                </div>
+            }
+            @else if (!loadFailed)
+            {
+                @if (estimate?.JobCardNo)
+                {
+                    <div class="se-banner se-banner-info">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>
+                            Job card <strong>{{ estimate!.JobCardNo }}</strong>{{ estimate!.JobCardStatus ? ' (' + estimate!.JobCardStatus + ')' : '' }} was made from this estimate.
+                            <a (click)="openJobCard()">Open the job card</a>
+                        </span>
+                    </div>
+                }
+
+                <div class="se-grid">
+
+                    <!-- ============ ROW 1 LEFT : Estimate Information ============ -->
+
+                    <div class="se-card">
+
+                        <div class="se-card-header">
+                            <i class="fas fa-file-pen"></i>
+                            <span>Estimate Information</span>
+                        </div>
+
+                        <div class="se-fields se-fields-3 se-fields-no">
+
+                            <app-textbox
+                                class="se-no"
+                                label="Estimate No"
+                                [value]="estimateName"
+                                placeholder="Assigned on save"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-datepicker
+                                label="Date"
+                                [required]="true"
+                                [disabled]="!canEdit"
+                                [value]="$any(asDate(estimateDate))"
+                                (valueChange)="onDate('estimateDate', $event)">
+                            </app-datepicker>
+
+                            <app-datepicker
+                                label="Valid Until"
+                                [disabled]="!canEdit"
+                                [value]="$any(asDate(validUntil))"
+                                (valueChange)="onDate('validUntil', $event)">
+                            </app-datepicker>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ============ ROW 1 RIGHT : Service Center & Notes ============ -->
+
+                    <div class="se-card">
+
+                        <div class="se-card-header">
+                            <i class="fas fa-align-left"></i>
+                            <span>Service Center &amp; Notes</span>
+                        </div>
+
+                        <div class="se-fields se-fields-notes">
+
+                            <app-search-dropdown
+                                label="Service Center"
+                                placeholder="Select service center"
+                                [items]="branchItems"
+                                labelField="label"
+                                valueField="value"
+                                [value]="branchId || null"
+                                [required]="true"
+                                [disabled]="mode !== 'add'"
+                                (valueChange)="onBranch($event)">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="What The Customer Asks For"
+                                placeholder="The problem, the work wanted"
+                                [value]="basicRequirement"
+                                [maxLength]="1000"
+                                [disabled]="!canEdit"
+                                (valueChange)="onText('basicRequirement', $event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Remarks"
+                                placeholder="Optional : printed"
+                                [value]="remarks"
+                                [maxLength]="500"
+                                [disabled]="!canEdit"
+                                (valueChange)="onText('remarks', $event)">
+                            </app-textbox>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ============ ROW 2 LEFT : Customer, Bike, Add ============ -->
+
+                    <div class="se-col appcore-scrollbar">
+
+                        <!-- the customer -->
+
+                        <div class="se-card">
+
+                            <div class="se-card-header">
+                                <i class="fas fa-user"></i>
+                                <span>Customer</span>
+
+                                @if (estimate?.CustomerCode && !canEdit)
+                                {
+                                    <span class="se-count">{{ estimate!.CustomerCode }}</span>
+                                }
+
+                                <!-- search : mobile or name first; the list opens
+                                     while typing (Up / Down, Enter, Esc) -->
+
+                                @if (canEdit && !estimate?.ChargeCollected)
+                                {
+                                    <div
+                                        class="se-cust-search"
+                                        (keydown)="onHitKey($event)">
+
+                                        <app-textbox
+                                            placeholder="Search : mobile, name, registration or chassis no"
+                                            textCase="none"
+                                            [prefixIcon]="customerPicked ? 'fas fa-lock' : 'fas fa-magnifying-glass'"
+                                            [readonly]="customerPicked"
+                                            [maxLength]="60"
+                                            [value]="customerBoxText"
+                                            (valueChange)="onCustomerQuery($event)"
+                                            (enterPressed)="onHitEnter()"
+                                            (blur)="onHitBlur()">
+                                        </app-textbox>
+
+                                        @if (finding)
+                                        {
+                                            <span class="se-cust-spin">
+                                                <i class="fas fa-circle-notch fa-spin"></i>
+                                            </span>
+                                        }
+
+                                        @if (hitsOpen)
+                                        {
+                                            <div class="se-cust-results appcore-scrollbar">
+
+                                                @if (hits.length === 0)
+                                                {
+                                                    <div class="se-cust-empty">
+                                                        No customer matches "{{ customerQuery }}" : a new customer, type the name, the mobile and the bike below.
+                                                    </div>
+                                                }
+
+                                                @for (hit of hits; track hit.key; let i = $index)
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="se-cust-row"
+                                                        [class.is-active]="i === hitActive"
+                                                        (mouseenter)="hitActive = i"
+                                                        (mousedown)="$event.preventDefault(); pickHit(hit)">
+
+                                                        <span class="se-cust-main">
+                                                            <strong>{{ hit.name || 'No name' }}</strong>
+                                                            <span>{{ hit.mobile }}{{ hit.code ? ' · ' + hit.code : '' }}</span>
+                                                        </span>
+
+                                                        <span class="se-cust-side">
+                                                            <span class="se-cust-tag" [class.is-none]="!hit.bikes.length">{{ hitBikes(hit) }}</span>
+                                                            <span class="se-cust-match">{{ hitBikeText(hit) }}</span>
+                                                        </span>
+
+                                                    </button>
+                                                }
+
+                                                <div class="se-cust-hint">
+                                                    <i class="fas fa-keyboard"></i>
+                                                    Up / Down to move · Enter to pick · Esc to close
+                                                </div>
+
+                                            </div>
+                                        }
+
+                                    </div>
+                                }
+
+                                @if (canEdit && customerPicked && !estimate?.ChargeCollected)
+                                {
+                                    <button
+                                        type="button"
+                                        class="se-head-link"
+                                        (click)="changeCustomer()">
+                                        <i class="fas fa-rotate-left"></i>
+                                        Change
+                                    </button>
+                                }
+                            </div>
+
+                            <div class="se-fields se-fields-3">
+
+                                <app-textbox
+                                    label="Customer"
+                                    [value]="customerName"
+                                    [maxLength]="150"
+                                    [required]="true"
+                                    [disabled]="!canEdit || customerPicked"
+                                    (valueChange)="onText('customerName', $event)">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Mobile"
+                                    inputMode="tel"
+                                    [value]="mobile"
+                                    [maxLength]="20"
+                                    [required]="true"
+                                    [disabled]="!canEdit || customerPicked"
+                                    (valueChange)="onText('mobile', $event)">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Customer Profile"
+                                    [placeholder]="canEdit ? 'Not a profile customer' : ''"
+                                    [value]="profileText"
+                                    [disabled]="true">
+                                </app-textbox>
+
+                            </div>
+
+                        </div>
+
+                        <!-- the bike -->
+
+                        <div class="se-card">
+
+                            <div class="se-card-header">
+
+                                <i class="fas fa-motorcycle"></i>
+                                <span>Bike</span>
+
+                            </div>
+
+                            <!-- the customer has several bikes : one is chosen -->
+
+                            @if (canEdit && bikeChoices.length)
+                            {
+                                <div class="se-found appcore-scrollbar">
+
+                                    <span class="se-found-none">The bikes of the customer : choose one.</span>
+
+                                    @for (bike of bikeChoices; track $index)
+                                    {
+                                        <button
+                                            type="button"
+                                            class="se-bike"
+                                            (click)="pickBike(bike)">
+                                            <span>{{ bikeLine(bike) }}</span>
+                                            @if (bike.OpenJobCardNo)
+                                            {
+                                                <small>Open : {{ bike.OpenJobCardNo }}</small>
+                                            }
+                                        </button>
+                                    }
+
+                                    <button
+                                        type="button"
+                                        class="se-bike se-bike-new"
+                                        (click)="otherBike()">
+                                        <span><i class="fas fa-plus"></i> Another bike : type it</span>
+                                    </button>
+
+                                </div>
+                            }
+
+                            <div class="se-fields se-fields-3">
+
+                                <app-textbox
+                                    label="Registration No"
+                                    [value]="registrationNo"
+                                    [maxLength]="50"
+                                    [disabled]="!canEdit || !!serviceVehicleId"
+                                    (valueChange)="onText('registrationNo', $event)">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Chassis No"
+                                    textCase="upper"
+                                    [value]="chassisNo"
+                                    [maxLength]="50"
+                                    [disabled]="!canEdit || !!serviceVehicleId"
+                                    (valueChange)="onText('chassisNo', $event)">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Engine No"
+                                    textCase="upper"
+                                    [value]="engineNo"
+                                    [maxLength]="50"
+                                    [disabled]="!canEdit || !!serviceVehicleId"
+                                    (valueChange)="onText('engineNo', $event)">
+                                </app-textbox>
+
+                                @if (canEdit && !serviceVehicleId && !typeModel)
+                                {
+                                    <app-search-dropdown
+                                        label="Model"
+                                        placeholder="Select model"
+                                        [items]="modelItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="modelId"
+                                        [required]="true"
+                                        (valueChange)="onModel($event)">
+                                    </app-search-dropdown>
+                                }
+                                @else if (canEdit && !serviceVehicleId)
+                                {
+                                    <app-textbox
+                                        label="Model (typed)"
+                                        placeholder="Brand and model"
+                                        [value]="modelName"
+                                        [maxLength]="150"
+                                        [required]="true"
+                                        (valueChange)="onText('modelName', $event)">
+                                    </app-textbox>
+                                }
+                                @else
+                                {
+                                    <app-textbox
+                                        label="Model"
+                                        [value]="(brandName + ' ' + modelName).trim()"
+                                        [disabled]="true">
+                                    </app-textbox>
+                                }
+
+                                <app-textbox
+                                    label="Color"
+                                    [value]="colorName"
+                                    [maxLength]="60"
+                                    [disabled]="!canEdit || !!serviceVehicleId"
+                                    (valueChange)="onText('colorName', $event)">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="KM Reading"
+                                    inputMode="numeric"
+                                    [value]="kmReading"
+                                    [maxLength]="7"
+                                    [disabled]="!canEdit"
+                                    (valueChange)="onText('kmReading', $event)">
+                                </app-textbox>
+
+                            </div>
+
+                            @if (canEdit)
+                            {
+                                <div class="se-hint">
+
+                                    <i class="fas fa-circle-info"></i>
+
+                                    @if (serviceVehicleId)
+                                    {
+                                        <span>A bike the service center knows. @if (customerBikes.length > 1) { <a (click)="chooseBike()">Choose another bike of the customer</a> · } <a (click)="clearBike()">Type another bike</a></span>
+                                    }
+                                    @else if (typeModel)
+                                    {
+                                        <span>The model is typed. <a (click)="onTypeModel(false)">Choose it from the list</a></span>
+                                    }
+                                    @else
+                                    {
+                                        <span>Search the customer above, or type the bike. <a (click)="onTypeModel(true)">The model is not in the list</a></span>
+                                    }
+
+                                </div>
+                            }
+
+                        </div>
+
+                        <!-- add labour / parts -->
+
+                        @if (canEdit)
+                        {
+                            <div class="se-card">
+
+                                <div class="se-card-header">
+
+                                    <i class="fas fa-screwdriver-wrench"></i>
+                                    <span>Add Labour &amp; Parts</span>
+
+                                </div>
+
+                                <div class="se-fields se-fields-2">
+
+                                    <app-search-dropdown
+                                        label="Service / Labour"
+                                        placeholder="Add from the service charts"
+                                        [items]="serviceItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="servicePick"
+                                        (valueChange)="onServicePick($event)">
+                                    </app-search-dropdown>
+
+                                    <app-search-dropdown
+                                        label="Spare Part / Accessory"
+                                        [placeholder]="branchId ? 'Add a part' : 'Choose the service center first'"
+                                        [items]="partItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="partPick"
+                                        (valueChange)="onPartPick($event)">
+                                    </app-search-dropdown>
+
+                                </div>
+
+                            </div>
+
+                            <!-- work done outside and parts bought outside :
+                                 typed lines, not from the charts or the stock -->
+
+                            <div class="se-card se-card-head-only">
+
+                                <div class="se-card-header">
+
+                                    <i class="fas fa-truck-ramp-box"></i>
+                                    <span>Outsourcing</span>
+
+                                    @if (workPickOpen)
+                                    {
+                                        <div class="se-work-pick">
+
+                                            <app-search-dropdown
+                                                placeholder="Pick the outside work"
+                                                [items]="workItems"
+                                                labelField="label"
+                                                valueField="value"
+                                                [value]="workPick"
+                                                (valueChange)="onWorkPick($event)">
+                                            </app-search-dropdown>
+
+                                            <button
+                                                type="button"
+                                                class="se-add se-add-tight"
+                                                title="The work is not in the list : add it in Workshop Configuration"
+                                                (click)="newWork()">
+                                                <i class="fas fa-plus"></i>
+                                                New Work
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                class="se-work-x"
+                                                title="Close"
+                                                (click)="toggleWorkPick()">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+
+                                        </div>
+                                    }
+                                    @else
+                                    {
+                                    <div class="se-out-group">
+
+                                        <button
+                                            type="button"
+                                            class="se-out se-out-work"
+                                            title="A work done outside the workshop : picked from the list of Workshop Configuration"
+                                            (click)="toggleWorkPick()">
+                                            <span class="se-out-ico"><i class="fas fa-screwdriver-wrench"></i></span>
+                                            <span class="se-out-text">
+                                                <b>Outside Works</b>
+                                                <small>Done outside the workshop</small>
+                                            </span>
+                                            <span class="se-out-plus"><i class="fas fa-plus"></i></span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="se-out se-out-part"
+                                            title="A part bought from outside, not from the stock : typed, with its own rate"
+                                            (click)="addOtherPart()">
+                                            <span class="se-out-ico"><i class="fas fa-box-open"></i></span>
+                                            <span class="se-out-text">
+                                                <b>Parts Outsourcing</b>
+                                                <small>Bought outside the stock</small>
+                                            </span>
+                                            <span class="se-out-plus"><i class="fas fa-plus"></i></span>
+                                        </button>
+
+                                    </div>
+                                    }
+
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <!-- ============ ROW 2 RIGHT : lines | charge | status ============ -->
+
+                    <div class="se-slot">
+
+                        <div class="se-card se-summary">
+
+                            <div class="se-card-header se-card-header-tabs">
+
+                                <app-control-tabs
+                                    [tabs]="sectionTabs"
+                                    [selectedTab]="section"
+                                    (selectedTabChange)="onSection($event)">
+                                </app-control-tabs>
+
+                                <span class="se-count">{{ section === 'observations' ? observations.length + ' observations' : (services.length + partLines.length) + ' lines' }}</span>
+
+                            </div>
+
+                            <!-- ---------- the observations ---------- -->
+
+                            @if (section === 'observations')
+                            {
+                                @if (canEdit)
+                                {
+                                    <div class="se-obs-bar">
+
+                                        <app-search-dropdown
+                                            placeholder="Pick an observation (a problem of the bike)"
+                                            [items]="observationItems"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="observationPick"
+                                            (valueChange)="onObservationPick($event)">
+                                        </app-search-dropdown>
+
+                                        @if (canAddObservation)
+                                        {
+                                            <input
+                                                class="se-input"
+                                                maxlength="150"
+                                                placeholder="Not in the list? Type a new observation"
+                                                [value]="newObservation"
+                                                (input)="onNewObservation($event)"
+                                                (keydown.enter)="addObservation()">
+
+                                            <button
+                                                type="button"
+                                                class="se-add se-add-tight"
+                                                title="Add the new observation to the list and to this estimate"
+                                                [disabled]="isSaving"
+                                                (click)="addObservation()">
+                                                <i class="fas fa-plus"></i>
+                                                Add
+                                            </button>
+                                        }
+
+                                    </div>
+                                }
+
+                                <div class="se-table-scroll appcore-scrollbar">
+
+                                    <table class="se-table">
+
+                                        <colgroup>
+                                            <col class="se-col-sl">
+                                            <col>
+                                            <col class="se-col-diag">
+                                            <col class="se-col-obs-note">
+                                            <col class="se-col-action">
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th class="se-sl">#</th>
+                                                <th>Observation</th>
+                                                <th>Diagnosis</th>
+                                                <th>Note</th>
+                                                <th class="se-action"></th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+
+                                            @for (row of observations; track row.key; let i = $index)
+                                            {
+                                                <tr>
+                                                    <td class="se-sl">{{ i + 1 }}</td>
+                                                    <td><div class="se-item">{{ row.Observation }}</div></td>
+                                                    <td class="se-diag-cell">
+                                                        @if (!canEdit)
+                                                        {
+                                                            {{ row.Diagnosis || '-' }}
+                                                        }
+                                                        @else if (row.typing)
+                                                        {
+                                                            <div class="se-diag">
+
+                                                                <input
+                                                                    class="se-input"
+                                                                    maxlength="150"
+                                                                    placeholder="The new diagnosis"
+                                                                    [value]="row.typed"
+                                                                    (input)="onTypedDiagnosis(row, $event)"
+                                                                    (keydown.enter)="saveDiagnosis(row)">
+
+                                                                <button
+                                                                    type="button"
+                                                                    class="se-remove se-plus"
+                                                                    title="Add this diagnosis to the list"
+                                                                    [disabled]="isSaving"
+                                                                    (click)="saveDiagnosis(row)">
+                                                                    <i class="fas fa-check"></i>
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    class="se-remove"
+                                                                    title="Cancel"
+                                                                    (click)="cancelDiagnosis(row)">
+                                                                    <i class="fas fa-xmark"></i>
+                                                                </button>
+
+                                                            </div>
+                                                        }
+                                                        @else
+                                                        {
+                                                            <div class="se-diag">
+
+                                                                <app-search-dropdown
+                                                                    placeholder="What was found"
+                                                                    [items]="row.items"
+                                                                    labelField="label"
+                                                                    valueField="value"
+                                                                    [value]="row.WorkshopDiagnosisId"
+                                                                    (valueChange)="onDiagnosis(row, $event)">
+                                                                </app-search-dropdown>
+
+                                                                @if (canAddObservation)
+                                                                {
+                                                                    <button
+                                                                        type="button"
+                                                                        class="se-remove se-plus"
+                                                                        title="A new diagnosis"
+                                                                        (click)="startDiagnosis(row)">
+                                                                        <i class="fas fa-plus"></i>
+                                                                    </button>
+                                                                }
+
+                                                            </div>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            class="se-input"
+                                                            maxlength="300"
+                                                            [value]="row.Note"
+                                                            [disabled]="!canEdit"
+                                                            (input)="onObservationNote(row, $event)">
+                                                    </td>
+                                                    <td class="se-action">
+                                                        @if (canEdit)
+                                                        {
+                                                            <button
+                                                                type="button"
+                                                                class="se-remove"
+                                                                title="Remove"
+                                                                (click)="removeObservation(row)">
+                                                                <i class="fas fa-xmark"></i>
+                                                            </button>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            @if (observations.length === 0)
+                                            {
+                                                <tr>
+                                                    <td
+                                                        class="se-empty"
+                                                        colspan="5">No observation is on the estimate yet.</td>
+                                                </tr>
+                                            }
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                                <div class="se-foot se-foot-note">
+                                    <span><i class="fas fa-circle-info"></i> {{ observationHint }}</span>
+                                </div>
+                            }
+
+                            <!-- ---------- the lines ---------- -->
+
+                            @if (section === 'lines')
+                            {
+                                <div class="se-table-scroll appcore-scrollbar">
+
+                                    <table class="se-table">
+
+                                        <colgroup>
+                                            <col class="se-col-sl">
+                                            <col class="se-col-type">
+                                            <col>
+                                            <col class="se-col-note">
+                                            <col class="se-col-qty">
+                                            <col class="se-col-num">
+                                            <col class="se-col-num">
+                                            <col class="se-col-action">
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th class="se-sl">#</th>
+                                                <th>Type</th>
+                                                <th>Service / Part</th>
+                                                <th>Note</th>
+                                                <th class="se-num">Qty</th>
+                                                <th class="se-num">Rate</th>
+                                                <th class="se-num">Amount</th>
+                                                <th class="se-action"></th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+
+                                            @for (line of services; track line.key; let i = $index)
+                                            {
+                                                <tr>
+                                                    <td class="se-sl">{{ i + 1 }}</td>
+                                                    <td><span class="se-type se-type-labour">Labour</span></td>
+                                                    <td>
+                                                        @if (line.ItemKind === 'Other' && !line.ItemCode)
+                                                        {
+                                                            <input
+                                                                class="se-input"
+                                                                maxlength="200"
+                                                                placeholder="The work"
+                                                                [value]="line.ItemName"
+                                                                [disabled]="!canEdit"
+                                                                (input)="onLine(line, 'ItemName', $event)">
+                                                        }
+                                                        @else
+                                                        {
+                                                            <div class="se-item">{{ line.ItemName }}</div>
+                                                            <div class="se-sub">{{ line.ItemCode }}{{ line.IsFree ? '  Free' : '' }}</div>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            class="se-input"
+                                                            maxlength="200"
+                                                            [value]="line.Note"
+                                                            [disabled]="!canEdit"
+                                                            (input)="onLine(line, 'Note', $event)">
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            class="se-input se-input-num"
+                                                            inputmode="decimal"
+                                                            maxlength="6"
+                                                            [value]="line.Quantity"
+                                                            [disabled]="!canEdit"
+                                                            (input)="onLine(line, 'Quantity', $event)">
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            class="se-input se-input-num"
+                                                            inputmode="decimal"
+                                                            maxlength="12"
+                                                            [value]="line.Rate"
+                                                            [disabled]="!canEdit || line.ItemKind !== 'Other'"
+                                                            (input)="onLine(line, 'Rate', $event)">
+                                                    </td>
+                                                    <td class="se-num">{{ money(amount(line)) }}</td>
+                                                    <td class="se-action">
+                                                        @if (canEdit)
+                                                        {
+                                                            <button
+                                                                type="button"
+                                                                class="se-remove"
+                                                                title="Remove"
+                                                                (click)="removeService(line)">
+                                                                <i class="fas fa-xmark"></i>
+                                                            </button>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            @for (line of partLines; track line.key; let i = $index)
+                                            {
+                                                <tr>
+                                                    <td class="se-sl">{{ services.length + i + 1 }}</td>
+                                                    <td><span class="se-type se-type-part">Part</span></td>
+                                                    <td>
+                                                        @if (line.ItemKind === 'Other')
+                                                        {
+                                                            <input
+                                                                class="se-input"
+                                                                maxlength="200"
+                                                                placeholder="The part"
+                                                                [value]="line.ItemName"
+                                                                [disabled]="!canEdit"
+                                                                (input)="onLine(line, 'ItemName', $event)">
+                                                        }
+                                                        @else
+                                                        {
+                                                            <div class="se-item">{{ line.ItemName }}</div>
+                                                            <div class="se-sub">{{ line.ItemCode }}</div>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            class="se-input"
+                                                            maxlength="200"
+                                                            [value]="line.Note"
+                                                            [disabled]="!canEdit"
+                                                            (input)="onLine(line, 'Note', $event)">
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            class="se-input se-input-num"
+                                                            inputmode="decimal"
+                                                            maxlength="6"
+                                                            [value]="line.Quantity"
+                                                            [disabled]="!canEdit"
+                                                            (input)="onLine(line, 'Quantity', $event)">
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            class="se-input se-input-num"
+                                                            inputmode="decimal"
+                                                            maxlength="12"
+                                                            [value]="line.Rate"
+                                                            [disabled]="!canEdit || line.ItemKind !== 'Other'"
+                                                            (input)="onLine(line, 'Rate', $event)">
+                                                    </td>
+                                                    <td class="se-num">{{ money(amount(line)) }}</td>
+                                                    <td class="se-action">
+                                                        @if (canEdit)
+                                                        {
+                                                            <button
+                                                                type="button"
+                                                                class="se-remove"
+                                                                title="Remove"
+                                                                (click)="removePart(line)">
+                                                                <i class="fas fa-xmark"></i>
+                                                            </button>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            @if (services.length + partLines.length === 0)
+                                            {
+                                                <tr>
+                                                    <td
+                                                        class="se-empty"
+                                                        colspan="8">No labour or part is on the estimate yet.</td>
+                                                </tr>
+                                            }
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                                <div class="se-foot">
+                                    <span class="se-foot-vat"><i class="fas fa-circle-info"></i> Prices are before VAT : VAT is added on the service invoice.</span>
+                                    <span>Labour <b>{{ money(labourTotal) }}</b></span>
+                                    <span>Parts <b>{{ money(partsTotal) }}</b></span>
+                                    <span class="se-foot-total">Estimate Total <b>{{ money(labourTotal + partsTotal) }}</b></span>
+                                </div>
+                            }
+
+                            <!-- ---------- Estimate Charge ---------- -->
+
+                            @if (section === 'charge')
+                            {
+                                <div class="se-pane appcore-scrollbar">
+
+                                    @if (!charge.isSet)
+                                    {
+                                        <div class="se-empty">No Estimate Charge is set : estimates are free and can be printed at once. Select the charge in Workshop Configuration (Estimate Charge).</div>
+                                    }
+                                    @else
+                                    {
+                                        <div class="se-sum">
+                                            <span>{{ charge.name }}</span>
+                                            <b>{{ money(charge.amount) }}</b>
+                                            <span>VAT {{ charge.vatRate }}%</span>
+                                            <b>{{ money(charge.vat) }}</b>
+                                            <span class="se-grand">The customer pays</span>
+                                            <b class="se-grand">{{ money(charge.total) }}</b>
+                                        </div>
+
+                                        @if (!estimate)
+                                        {
+                                            <span class="hp-note">Save the estimate first. The charge is collected here when the customer does not take the service. No charge is collected when a job card is made from the estimate.</span>
+                                        }
+                                        @else if (estimate.ChargeCollected)
+                                        {
+                                            <span class="se-ok">
+                                                <i class="fas fa-circle-check"></i>
+                                                Collected on {{ day(estimate.ChargeCollectedDate) }} : Receipt Voucher {{ estimate.ChargeReceiptVoucherNo }}.
+                                                {{ estimate.ChargeInvoiceNo ? 'It came off service invoice ' + estimate.ChargeInvoiceNo + '.' : 'It comes off the service invoice if the customer takes the service here later.' }}
+                                            </span>
+                                        }
+                                        @else if (estimate.JobCardNo)
+                                        {
+                                            <span class="hp-note">Job card {{ estimate.JobCardNo }} was made from this estimate : no Estimate Charge is collected.</span>
+                                        }
+                                        @else if (estimate.CanCollect && mode === 'edit')
+                                        {
+                                            <div class="se-date">
+
+                                                <app-datepicker
+                                                    label="Collection Date"
+                                                    [required]="true"
+                                                    [value]="$any(asDate(collectDate))"
+                                                    (valueChange)="onCollectDate($event)">
+                                                </app-datepicker>
+
+                                            </div>
+
+                                            @for (pay of payments; track pay.key)
+                                            {
+                                                <div class="se-pay">
+
+                                                    <app-search-dropdown
+                                                        placeholder="Mode"
+                                                        [items]="modeItems"
+                                                        labelField="label"
+                                                        valueField="value"
+                                                        [value]="pay.Mode"
+                                                        (valueChange)="onPayMode(pay, $event)">
+                                                    </app-search-dropdown>
+
+                                                    <app-search-dropdown
+                                                        [placeholder]="'The ' + pay.Mode + ' account'"
+                                                        [items]="ledgerItems(pay.Mode)"
+                                                        labelField="label"
+                                                        valueField="value"
+                                                        [value]="pay.LedgerCode || null"
+                                                        (valueChange)="onPayLedger(pay, $event)">
+                                                    </app-search-dropdown>
+
+                                                    <input
+                                                        class="se-input se-input-num"
+                                                        inputmode="decimal"
+                                                        maxlength="12"
+                                                        placeholder="Amount"
+                                                        [value]="pay.Amount"
+                                                        (input)="onPay(pay, 'Amount', $event)">
+
+                                                    <button
+                                                        type="button"
+                                                        class="se-remove"
+                                                        title="Remove"
+                                                        (click)="removePayment(pay)">
+                                                        <i class="fas fa-xmark"></i>
+                                                    </button>
+
+                                                    @if (pay.Mode === 'MFS')
+                                                    {
+                                                        <input
+                                                            class="se-input se-ref"
+                                                            maxlength="100"
+                                                            placeholder="Transaction ID"
+                                                            [value]="pay.TransactionRef"
+                                                            (input)="onPay(pay, 'TransactionRef', $event)">
+                                                    }
+
+                                                </div>
+                                            }
+
+                                            <div class="se-buttons">
+
+                                                <button
+                                                    type="button"
+                                                    class="se-btn se-btn-light"
+                                                    (click)="addPayment()">
+                                                    <i class="fas fa-plus"></i>
+                                                    Another collection line
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    class="se-btn se-btn-primary"
+                                                    [disabled]="isSaving"
+                                                    (click)="collect()">
+                                                    <i class="fas fa-hand-holding-dollar"></i>
+                                                    Collect {{ money(estimate.ChargeTotal) }}
+                                                </button>
+
+                                            </div>
+
+                                            <span class="hp-note">Collected when the customer takes the estimate but not the service. A Receipt Voucher is posted, and the estimate can be printed. The charge is posted to the customer's ledger : pick the Customer Profile on the estimate first.</span>
+                                        }
+                                        @else
+                                        {
+                                            <span class="hp-note">The Estimate Charge is not collected.</span>
+                                        }
+
+                                        @if (estimate && !estimate.CanPrint)
+                                        {
+                                            <span class="se-warn"><i class="fas fa-triangle-exclamation"></i> This estimate is printed only when the Estimate Charge is collected, or a job card is made from it.</span>
+                                        }
+                                    }
+
+                                </div>
+                            }
+
+                            <!-- ---------- Status ---------- -->
+
+                            @if (section === 'status')
+                            {
+                                <div class="se-pane appcore-scrollbar">
+
+                                    @if (!estimate)
+                                    {
+                                        <div class="se-empty">A new estimate is a Draft when it is saved. It is sent and approved from there.</div>
+                                    }
+                                    @else
+                                    {
+                                        <div class="se-sum se-sum-status">
+                                            <span>Status</span>
+                                            <b>{{ estimate.Status }}</b>
+                                            <span>Since</span>
+                                            <b>{{ dateTime(estimate.StatusDate) }}</b>
+                                            @if (estimate.StatusNote)
+                                            {
+                                                <span>Note</span>
+                                                <b>{{ estimate.StatusNote }}</b>
+                                            }
+                                        </div>
+
+                                        @if (mode === 'edit' && (estimate.NextStatuses.length > 0 || estimate.CanRevise || estimate.CanConvert))
+                                        {
+                                            @if (estimate.NextStatuses.length > 0)
+                                            {
+                                                <app-textbox
+                                                    label="Note"
+                                                    placeholder="Needed to reject; optional otherwise"
+                                                    [value]="statusNote"
+                                                    [maxLength]="300"
+                                                    (valueChange)="onText('statusNote', $event)">
+                                                </app-textbox>
+                                            }
+
+                                            <div class="se-buttons">
+
+                                                @for (status of estimate.NextStatuses; track status)
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="se-btn"
+                                                        [class.se-btn-primary]="status !== 'Rejected'"
+                                                        [class.se-btn-danger]="status === 'Rejected'"
+                                                        [disabled]="isSaving"
+                                                        (click)="changeStatus(status)">
+                                                        <i [class]="statusIcon(status)"></i>
+                                                        {{ status }}
+                                                    </button>
+                                                }
+
+                                                @if (estimate.CanRevise)
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="se-btn se-btn-light"
+                                                        [disabled]="isSaving"
+                                                        (click)="revise()">
+                                                        <i class="fas fa-code-branch"></i>
+                                                        Revise
+                                                    </button>
+                                                }
+
+                                                @if (estimate.CanConvert)
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="se-btn se-btn-light"
+                                                        [disabled]="isSaving"
+                                                        (click)="createJobCard()">
+                                                        <i class="fas fa-clipboard-list"></i>
+                                                        Create Job Card
+                                                    </button>
+                                                }
+
+                                            </div>
+                                        }
+
+                                        @switch (estimate.Status)
+                                        {
+                                            @case ('Draft')
+                                            {
+                                                <span class="hp-note">Save the changes first. Sent : the customer has the estimate. Create Job Card : the customer takes the service, a job card starts with the labour and the parts of this estimate.</span>
+                                            }
+                                            @case ('Sent')
+                                            {
+                                                <span class="hp-note">Waiting for the customer. Approved : the customer agreed. Revise : a new version to change. Create Job Card : the work starts here.</span>
+                                            }
+                                            @case ('Approved')
+                                            {
+                                                <span class="hp-note">The customer approved this estimate. Create Job Card : the job card starts with its labour and parts. More work or parts found? Revise : a new version for the customer to approve.</span>
+                                            }
+                                            @case ('Rejected')
+                                            {
+                                                <span class="hp-note">The customer rejected this estimate. The Estimate Charge can still be collected. Revise : a new version to change and send again.</span>
+                                            }
+                                            @case ('Revised')
+                                            {
+                                                <span class="hp-note">A newer version of this estimate was made. This one is kept for the record only.</span>
+                                            }
+                                            @case ('Converted')
+                                            {
+                                                <span class="hp-note">Job card {{ estimate.JobCardNo }} was made from this estimate. The work, the parts and the invoice go on from the job card.</span>
+                                            }
+                                        }
+                                    }
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

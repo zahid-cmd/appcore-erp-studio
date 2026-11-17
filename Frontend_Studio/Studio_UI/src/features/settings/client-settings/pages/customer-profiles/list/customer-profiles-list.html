@@ -7,7 +7,8 @@
     <app-page-header
         title="Customer Profiles"
         subtitle="Inbound (bike) and Outside (service) customers"
-        icon="fas fa-id-card">
+        icon="fas fa-id-card"
+        art="people">
 
         <div pageHeaderCenter>
 
@@ -102,6 +103,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="people"
+                emptyTitle="No customer yet"
+                emptySubtitle="Add a customer, or they are added from a sales counter."
                 [rows]="customers"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -138,24 +142,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="cp-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="cp-summary-item">
-                    <span class="cp-summary-label">{{ item.label }}</span>
-                    <b
-                        class="cp-summary-value"
-                        [class.cp-ok]="item.tone === 'ok'"
-                        [class.cp-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="cp-summary-note">
-                Matching the location and search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="customers"
+            art="people"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================
@@ -180,4 +172,4 @@
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

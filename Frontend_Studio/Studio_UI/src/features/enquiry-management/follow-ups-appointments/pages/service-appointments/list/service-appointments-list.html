@@ -7,7 +7,8 @@
     <app-page-header
         title="Service Appointments"
         subtitle="Workshop visits booked for Service enquiries"
-        icon="fas fa-calendar-check">
+        icon="fas fa-calendar-check"
+        art="parts">
 
         <div pageHeaderCenter>
 
@@ -102,6 +103,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="parts"
+                emptyTitle="No service appointments yet"
+                emptySubtitle="Book a service slot to see it here"
                 [rows]="rows"
                 [rowActions]="rowActions"
                 (rowAction)="onRowAction($event)"
@@ -139,25 +143,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="sap-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="sap-summary-item">
-                    <span class="sap-summary-label">{{ item.label }}</span>
-                    <b
-                        class="sap-summary-value"
-                        [class.sap-ok]="item.tone === 'ok'"
-                        [class.sap-warn]="item.tone === 'warn'"
-                        [class.sap-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="sap-summary-note">
-                Matching {{ summaryNote }}
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="appointments"
+            art="parts"
+            note="Matching {{ summaryNote }}">
+        </app-summary-line>
     }
 
 

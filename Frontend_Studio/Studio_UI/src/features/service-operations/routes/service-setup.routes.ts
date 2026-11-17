@@ -153,7 +153,22 @@ Routes =
                 m =>
                     m.ChartOfServicesRoutes
             )
-    }
+    },
 
-    // workshop-configuration : added when the page is built
+    // Workshop Configuration (hand-written; tables made by
+    // ServiceOperations_Workshop_Engine.sql)
+    {
+        path:'workshop-configuration',
+
+        data:
+        {
+            breadcrumb:'Workshop Configuration'
+        },
+
+        children:
+        [
+            { path:'', pathMatch:'full', loadComponent:() => import('../pages/workshop-configuration/workshop-configuration').then(m => m.WorkshopConfigurationPage) },
+            { path:'list', loadComponent:() => import('../pages/workshop-configuration/workshop-configuration').then(m => m.WorkshopConfigurationPage) }
+        ]
+    }
 ];

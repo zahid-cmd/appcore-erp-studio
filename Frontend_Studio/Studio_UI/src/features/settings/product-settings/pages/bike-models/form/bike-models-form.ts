@@ -75,9 +75,46 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
+
+import
+{
+    LogoStudioComponent
+}
+from '../../../../../../shared/components/controls/logo-studio/logo-studio';
 
 import
 {
@@ -203,13 +240,16 @@ from '../../../services/bike-models.service';
 
         CommandCenterComponent,
 
-        ControlTabsComponent,
-
         PageCanvasComponent,
 
-        FormGridComponent,
+        WorkspaceArtComponent,
 
-        FormSectionComponent,
+        StepTabsComponent,
+
+        ToggleSwitchComponent,
+
+        NotePadComponent,
+
 
 
         //=======================================================
@@ -217,8 +257,6 @@ from '../../../services/bike-models.service';
         //=======================================================
 
         TextboxComponent,
-
-        TextareaComponent,
 
         DropdownComponent,
 
@@ -319,6 +357,19 @@ implements OnInit, OnDestroy
     selectedTab:
         string =
         'general';
+
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
 
 
 

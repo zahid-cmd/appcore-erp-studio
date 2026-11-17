@@ -9,9 +9,12 @@
 
         icon="fas fa-puzzle-piece"
 
+
+        art="helmet"
+
         [title]="pageTitle"
 
-        subtitle="Manage accessories">
+        subtitle="An accessory : stock levels, shelves and ledgers">
 
         <app-command-center
 
@@ -51,15 +54,20 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <!-- three screens : no scrolling -->
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
 
         <!-- Add Storage Location (opens the modal) -->
@@ -93,511 +101,385 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
-
-            [columns]="4">
-
-
-            <!-- =============================================
-                 SECTION 01 : PARENT INFORMATION
-                 Category (Accessories type only) → Sub Category
-                 (the model), both locked after saving; Brand
-                 follows the category; Remarks.
-            ============================================== -->
-
-            <app-form-section
-
-                title="Parent Information"
-
-                icon="fas fa-sitemap">
-
-
-                <!-- Product Category -->
-
-                <app-search-dropdown
-
-                    label="Product Category"
-
-                    [items]="categoryItems"
-
-                    [(value)]="entity.ProductCategoryId"
-
-                    (valueChange)="onCategoryChange($event)"
-
-                    [disabled]="!isAddMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Product Sub Category -->
-
-                <app-search-dropdown
-
-                    label="Product Sub Category"
-
-                    [items]="subCategoryItems"
-
-                    [(value)]="entity.ProductSubCategoryId"
-
-                    (valueChange)="onSubCategoryChange($event)"
-
-                    [disabled]="!isAddMode || isSaving || !entity.ProductCategoryId"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Brand (from the category) -->
-
-                <app-textbox
-
-                    label="Brand"
-
-                    placeholder="Follows the product category"
-
-                    [value]="brandName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="2"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 02 : ACCESSORY INFORMATION
-                 Part Number is optional; when given it is unique
-                 within the brand, ignoring spaces, hyphens, dots
-                 and case.
-            ============================================== -->
-
-            <app-form-section
-
-                title="Accessory Information"
-
-                icon="fas fa-puzzle-piece">
-
-
-                <!-- Part Number (optional) -->
-
-                <app-textbox
-
-                    label="Part Number"
-
-                    placeholder="Optional"
-
-                    [(value)]="entity.PartNumber"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-
-                <!-- Accessory Name -->
-
-                <app-textbox
-
-                    label="Accessory Name"
-
-                    placeholder="Enter accessory name"
-
-                    [(value)]="entity.AccessoryName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Unit -->
-
-                <app-dropdown
-
-                    label="Unit"
-
-                    [items]="unitItems"
-
-                    [(value)]="entity.Unit"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Product Code -->
-
-                <app-textbox
-
-                    label="Product Code"
-
-                    placeholder="Select a product sub category"
-
-                    [(value)]="entity.ProductCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Accessory Image (optional; shared Image Hub; uploaded on save) -->
-
-                <app-image-hub
-
-                    label="Accessory Image (optional)"
-
-                    placeholder="No image : the accessory icon is shown"
-
-                    [imageUrl]="imagePreview"
-
-                    (imageChange)="onImageChange($event)"
-
-                    [disabled]="isSaving"
-
-                    [readonly]="isViewMode">
-
-                </app-image-hub>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 03 : LEDGERS & STATUS
-                 General Ledgers created with the accessory.
-                 Names : "<INV / WIP / COGS> - <Part No.> - <Accessory Name>"
-                 (no Part No. : "<INV / WIP / COGS> - <Product Code> - <Accessory Name>")
-            ============================================== -->
-
-            <app-form-section
-
-                title="Ledgers & Status"
-
-                icon="fas fa-book">
-
-
-                <!-- Inventory Ledger Code -->
-
-                <app-textbox
-
-                    label="Inventory Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.InventoryLedgerCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- WIP Ledger Code -->
-
-                <app-textbox
-
-                    label="WIP Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.WipLedgerCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- COGS Ledger Code -->
-
-                <app-textbox
-
-                    label="COGS Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.CogsLedgerCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Sales Ledger Code (CLS-005 / 006 / 008) -->
-
-                <app-textbox
-
-                    label="Sales Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [value]="entity.SalesLedgerCode ?? ''"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 04 : STOCK & STORAGE
-                 Stock levels, the movement class and the
-                 storage locations (one bin per warehouse).
-            ============================================== -->
-
-            <app-form-section
-
-                title="Stock & Storage"
-
-                icon="fas fa-boxes-stacked">
-
-
-                <!-- Re-order Level -->
-
-                <app-textbox
-
-                    label="Re-order Level"
-
-                    placeholder="0"
-
-                    [value]="reorderLevelText"
-
-                    (valueChange)="onReorderLevelChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-
-                <!-- Red Level -->
-
-                <app-textbox
-
-                    label="Red Level"
-
-                    placeholder="0"
-
-                    [value]="redLevelText"
-
-                    (valueChange)="onRedLevelChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-                <!-- Max Stock Level -->
-
-                <app-textbox
-
-                    label="Max Stock Level"
-
-                    placeholder="0 = not set"
-
-                    [value]="maxStockLevelText"
-
-                    (valueChange)="onMaxStockLevelChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-
-                <!-- Movement Class (default Slow Moving) -->
-
-                <app-dropdown
-
-                    label="Movement Class"
-
-                    [items]="movementClassItems"
-
-                    [value]="entity.MovementClass"
-
-                    (valueChange)="onMovementClassChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- =========================================
-                     STORAGE LOCATIONS
-                     One per warehouse. Added from the page
-                     toolbar (Add Location) in a modal; click a
-                     row to edit it. Optional.
-                ========================================== -->
-
-                <div class="ac-locations">
-
-                    <div class="ac-locations-title">
-
-                        <i class="fas fa-warehouse"></i>
-
-                        Storage Locations
-
-                        @if (entity.Locations?.length)
-                        {
-                            <span class="ac-locations-count">
-
-                                {{ entity.Locations.length }}
-
-                            </span>
-                        }
-
-                    </div>
-
-
-                    @if (!entity.Locations?.length)
-                    {
-                        <div class="ac-locations-empty">
-
-                            No storage location added.
-
-                            @if (!isViewMode)
-                            {
-                                Use <b>Add Location</b> in the toolbar.
-                            }
-
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields, three screens ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                            <small>Fixed once saved</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Product Category"
+                                [items]="categoryItems"
+                                [(value)]="entity.ProductCategoryId"
+                                (valueChange)="onCategoryChange($event)"
+                                [disabled]="!isAddMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="Product Sub Category"
+                                [items]="subCategoryItems"
+                                [(value)]="entity.ProductSubCategoryId"
+                                (valueChange)="onSubCategoryChange($event)"
+                                [disabled]="!isAddMode || isSaving || !entity.ProductCategoryId"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Brand"
+                                placeholder="Follows the product category"
+                                [value]="brandName"
+                                [readonly]="true">
+                            </app-textbox>
                         </div>
-                    }
 
+                    </section>
 
-                    @if (entity.Locations?.length)
-                    {
-                        <div class="ac-locations-list appcore-scrollbar">
+                    <section class="ws-card">
 
-                            @for (location of entity.Locations; track $index; let i = $index)
-                            {
-                                <div
-                                    class="ac-location-row"
-                                    [class.ac-location-row-editable]="!isViewMode"
-                                    [class.ac-location-row-revoked]="locationLabels[i]?.revoked"
-                                    (click)="openEditLocation(i)">
+                        <header class="ws-card-head">
+                            <i class="fas fa-puzzle-piece"></i>
+                            <span>Accessory</span>
+                        </header>
 
-                                    <div class="ac-location-main">
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Part Number"
+                                placeholder="Optional"
+                                [(value)]="entity.PartNumber"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
 
-                                        <div class="ac-location-warehouse">
+                            <app-textbox
+                                label="Accessory Name"
+                                placeholder="Enter accessory name"
+                                [(value)]="entity.AccessoryName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
 
-                                            {{ locationLabels[i]?.warehouse }}
+                            <app-dropdown
+                                label="Unit"
+                                [items]="unitItems"
+                                [(value)]="entity.Unit"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-dropdown>
 
-                                            @if (locationLabels[i]?.revoked)
-                                            {
-                                                <span
-                                                    class="ac-location-revoked"
-                                                    title="This branch no longer runs the Accessories business. Move this item to another warehouse.">
-
-                                                    <i class="fas fa-ban"></i>
-
-                                                    Access revoked
-
-                                                </span>
-                                            }
-
-                                        </div>
-
-                                        <div class="ac-location-place">
-
-                                            {{ locationLabels[i]?.rack }}
-
-                                            <span
-                                                class="ac-location-shelf"
-                                                [title]="locationLabels[i]?.title">
-
-                                                <i class="fas fa-box-archive"></i>
-
-                                                {{ locationLabels[i]?.bin }}
-
-                                            </span>
-
-                                        </div>
-
-                                    </div>
-
-                                    @if (!isViewMode)
-                                    {
-                                        <button
-                                            type="button"
-                                            class="ac-location-remove"
-                                            title="Remove location"
-                                            [disabled]="isSaving"
-                                            (click)="$event.stopPropagation(); removeLocation(i)">
-
-                                            <i class="fas fa-trash"></i>
-
-                                        </button>
-                                    }
-
-                                </div>
-                            }
-
+                            <app-textbox
+                                label="Product Code"
+                                placeholder="Select a product sub category"
+                                [(value)]="entity.ProductCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
                         </div>
-                    }
+
+                    </section>
 
                 </div>
 
-            </app-form-section>
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'stock'">
 
-        </app-form-grid>
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-boxes-stacked"></i>
+                            <span>Stock Levels</span>
+                            <small>Warnings when stock runs low</small>
+                        </header>
+
+                        <div class="ws-grid pf-cols-4">
+                            <app-textbox
+                                label="Re-order Level"
+                                placeholder="0"
+                                [value]="reorderLevelText"
+                                (valueChange)="onReorderLevelChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Red Level"
+                                placeholder="0"
+                                [value]="redLevelText"
+                                (valueChange)="onRedLevelChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Max Stock Level"
+                                placeholder="0 = not set"
+                                [value]="maxStockLevelText"
+                                (valueChange)="onMaxStockLevelChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="Movement Class"
+                                [items]="movementClassItems"
+                                [value]="entity.MovementClass"
+                                (valueChange)="onMovementClassChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card pf-locs">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-warehouse"></i>
+                            <span>Storage Locations</span>
+                            <small>Warehouse → Rack → Shelf → Bin</small>
+                        </header>
+
+                        <div class="ac-locations">
+                            <div class="ac-locations-title">
+                                <i class="fas fa-warehouse"></i>
+                                Storage Locations
+                                @if (entity.Locations?.length)
+                                {
+                                    <span class="ac-locations-count">
+                                        {{ entity.Locations.length }}
+                                    </span>
+                                }
+                            </div>
+                            @if (!entity.Locations?.length)
+                            {
+                                <div class="ac-locations-empty">
+                                    No storage location added.
+                                    @if (!isViewMode)
+                                    {
+                                        Use <b>Add Location</b> in the toolbar.
+                                    }
+                                </div>
+                            }
+                            @if (entity.Locations?.length)
+                            {
+                                <div class="ac-locations-list appcore-scrollbar">
+                                    @for (location of entity.Locations; track $index; let i = $index)
+                                    {
+                                        <div
+                                            class="ac-location-row"
+                                            [class.ac-location-row-editable]="!isViewMode"
+                                            [class.ac-location-row-revoked]="locationLabels[i]?.revoked"
+                                            (click)="openEditLocation(i)">
+                                            <div class="ac-location-main">
+                                                <div class="ac-location-warehouse">
+                                                    {{ locationLabels[i]?.warehouse }}
+                                                    @if (locationLabels[i]?.revoked)
+                                                    {
+                                                        <span
+                                                            class="ac-location-revoked"
+                                                            title="This branch no longer runs the Accessories business. Move this item to another warehouse.">
+                                                            <i class="fas fa-ban"></i>
+                                                            Access revoked
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <div class="ac-location-place">
+                                                    {{ locationLabels[i]?.rack }}
+                                                    <span
+                                                        class="ac-location-shelf"
+                                                        [title]="locationLabels[i]?.title">
+                                                        <i class="fas fa-box-archive"></i>
+                                                        {{ locationLabels[i]?.bin }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            @if (!isViewMode)
+                                            {
+                                                <button
+                                                    type="button"
+                                                    class="ac-location-remove"
+                                                    title="Remove location"
+                                                    [disabled]="isSaving"
+                                                    (click)="$event.stopPropagation(); removeLocation(i)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'ledgers'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-book"></i>
+                            <span>Ledgers</span>
+                            <small>Made on save, renamed with the item</small>
+                        </header>
+
+                        <div class="ws-grid pf-cols-4">
+                            <app-textbox
+                                label="Inventory Ledger Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.InventoryLedgerCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="WIP Ledger Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.WipLedgerCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="COGS Ledger Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.CogsLedgerCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Sales Ledger Code"
+                                placeholder="Auto generated"
+                                [value]="entity.SalesLedgerCode ?? ''"
+                                [readonly]="true">
+                            </app-textbox>
+                        </div>
+
+                    </section>
+
+                    <div class="ws-pair pf-photo">
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-image"></i>
+                                <span>Photo</span>
+                            </header>
+
+                                <app-logo-studio
+                                    badge="ACCESSORY PHOTO"
+                                    [imageUrl]="imagePreview"
+                                    [name]="entity.AccessoryName"
+                                    [disabled]="isViewMode"
+                                    [busy]="isSaving"
+                                    (imageChange)="onImageChange($event)">
+                                </app-logo-studio>
+
+                        </section>
+
+                        <section class="ws-card ws-notes">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-note-sticky"></i>
+                                <span>Remarks</span>
+                            </header>
+
+                            <app-note-pad
+                                placeholder="Anything the team should know"
+                                note="Only for your team, never printed"
+                                [maxLength]="500"
+                                [(value)]="entity.Remarks"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving">
+                            </app-note-pad>
+
+                        </section>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="helmet"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!entity.AccessoryName">{{ entity.AccessoryName || 'New accessory' }}</b>
+
+                        <div class="ws-chips">
+
+                            @if (entity.ProductCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.ProductCode }}</span>
+                            }
+
+                            @if (entity.PartNumber)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.PartNumber }}</span>
+                            }
+
+                            @if (brandName)
+                            {
+                                <span
+                                    class="ws-chip">{{ brandName }}</span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-cart-shopping"></i><span>Bought, received, sold and priced as one product</span></li>
+                        <li><i class="fas fa-warehouse"></i><span>Its storage locations guide picking and receiving</span></li>
+                        <li><i class="fas fa-bell"></i><span>Re-order and red levels warn when stock runs low</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
+
+        </div>
 
     </app-page-canvas>
 
@@ -924,4 +806,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

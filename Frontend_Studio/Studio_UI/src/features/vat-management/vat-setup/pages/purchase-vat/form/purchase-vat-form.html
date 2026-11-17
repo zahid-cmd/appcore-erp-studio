@@ -9,6 +9,8 @@
 
         icon="fas fa-percent"
 
+        art="ledger"
+
         [title]="pageTitle"
 
         subtitle="VAT rates on purchases, by VAT type and date">
@@ -57,15 +59,32 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
+        <app-step-tabs
 
             pageToolbarLeft
 
-            [tabs]="tabs"
+            [steps]="formSteps"
 
-            [(selectedTab)]="selectedTab">
+            [current]="selectedTab"
 
-        </app-control-tabs>
+            (currentChange)="onTabChange($event)">
+
+        </app-step-tabs>
+
+
+        <!-- more than one screen : no scrolling -->
+
+        <app-step-nav
+
+            pageToolbarRight
+
+            [steps]="formSteps"
+
+            [current]="selectedTab"
+
+            (currentChange)="onTabChange($event)">
+
+        </app-step-nav>
 
     </app-page-toolbar>
 
@@ -75,243 +94,201 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
 
-        <app-form-grid
+        [config]="formConfig">
 
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields (2026-11-16 workspace layout) ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-receipt"></i>
+                            <span>VAT Information</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Code"
+                                placeholder="Auto generated"
+                                [value]="entity.VatCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="VAT Type"
+                                [items]="typeItems"
+                                [value]="entity.VatType"
+                                (valueChange)="onTypeChange($event)"
+                                [disabled]="!isAddMode || isSaving"
+                                [required]="true">
+                            </app-dropdown>
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-percent"></i>
+                            <span>Rate</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="VAT Rate (%)"
+                                placeholder="e.g. 15"
+                                inputMode="decimal"
+                                [value]="rateText"
+                                (valueChange)="onRateText($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
 
-            [columns]="4">
+                        <header class="ws-card-head">
+                            <i class="fas fa-calendar-days"></i>
+                            <span>Period</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-datepicker
+                                label="Effective From"
+                                [required]="true"
+                                [value]="$any(effectiveFromDate)"
+                                (valueChange)="onEffectiveFrom($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-datepicker>
+
+                            <app-datepicker
+                                label="Valid To"
+                                [required]="true"
+                                [value]="$any(validToDate)"
+                                [minDate]="$any(effectiveFromDate)"
+                                (valueChange)="onValidTo($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-datepicker>
+
+                            <app-textbox
+                                label="Rate State"
+                                placeholder="Current / Expiring / Expired / Upcoming / Old"
+                                [value]="rateStateText"
+                                [readonly]="true">
+                            </app-textbox>
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'step2'">
+
+                    <section class="ws-card">
 
+                        <header class="ws-card-head">
+                            <i class="fas fa-book"></i>
+                            <span>Ledger & Status</span>
+                        </header>
 
-            <!-- =================================================
-                 SECTION 01 : VAT INFORMATION
-            ================================================== -->
+                        <div class="ws-grid ws-cols-2">
+                            <app-search-dropdown
+                                label="VAT Current Account (Posting Setup)"
+                                [items]="ledgerItems"
+                                [value]="entity.LedgerCode"
+                                (valueChange)="onLedgerChange($event)"
+                                [disabled]="true"
+                                [required]="true">
+                            </app-search-dropdown>
+                        </div>
 
-            <app-form-section
+                    </section>
 
-                title="VAT Information"
+                    <section class="ws-card ws-notes">
 
-                icon="fas fa-receipt">
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
 
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="1000"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
 
-                <!-- Code (generated by the server) -->
+                    </section>
 
-                <app-textbox
+                </div>
 
-                    label="Code"
+            </div>
 
-                    placeholder="Auto generated"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    [value]="entity.VatCode"
+            <aside class="ws-panel">
 
-                    [readonly]="true"
+                <div class="ws-hero">
 
-                    [required]="true">
+                    <app-workspace-art theme="ledger"></app-workspace-art>
 
-                </app-textbox>
+                    <div class="ws-identity">
 
+                        <b [class.ws-new]="!pageTitle">{{ pageTitle || 'New VAT rate' }}</b>
 
-                <!-- VAT Type (locked after saving) -->
+                        <div class="ws-chips">
 
-                <app-dropdown
+                        </div>
 
-                    label="VAT Type"
+                    </div>
 
-                    [items]="typeItems"
+                    <app-toggle-switch
+                        label="Input Credit Allowed"
+                        onText="Yes"
+                        offText="No"
+                        [value]="entity.InputCreditAllowed"
+                        (valueChange)="onFlagChange($event)"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                    [value]="entity.VatType"
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-file-invoice"></i><span>Applied on purchases invoices</span></li>
+                        <li><i class="fas fa-book"></i><span>Posts to the VAT ledger</span></li>
+                        <li><i class="fas fa-scale-balanced"></i><span>Feeds the VAT 6.3 return</span></li>
+                    </ul>
 
-                    (valueChange)="onTypeChange($event)"
+                </div>
 
-                    [disabled]="!isAddMode || isSaving"
+            </aside>
 
-                    [required]="true">
+        </div>
 
-                </app-dropdown>
-
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="3"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 02 : RATE
-            ================================================== -->
-
-            <app-form-section
-
-                title="Rate"
-
-                icon="fas fa-percent">
-
-
-                <app-textbox
-
-                    label="VAT Rate (%)"
-
-                    placeholder="e.g. 15"
-
-                    inputMode="decimal"
-
-                    [value]="rateText"
-
-                    (valueChange)="onRateText($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <app-dropdown
-
-                    label="Input Credit Allowed"
-
-                    [items]="flagItems"
-
-                    [value]="entity.InputCreditAllowed"
-
-                    (valueChange)="onFlagChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 03 : PERIOD
-                 Valid To defaults to 30 June (financial year end).
-                 Same rate next period : Extend (header).
-            ================================================== -->
-
-            <app-form-section
-
-                title="Period"
-
-                icon="fas fa-calendar-days">
-
-
-                <app-datepicker
-
-                    label="Effective From"
-
-                    [required]="true"
-
-                    [value]="$any(effectiveFromDate)"
-
-                    (valueChange)="onEffectiveFrom($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-datepicker>
-
-
-                <app-datepicker
-
-                    label="Valid To"
-
-                    [required]="true"
-
-                    [value]="$any(validToDate)"
-
-                    [minDate]="$any(effectiveFromDate)"
-
-                    (valueChange)="onValidTo($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-datepicker>
-
-
-                <app-textbox
-
-                    label="Rate State"
-
-                    placeholder="Current / Expiring / Expired / Upcoming / Old"
-
-                    [value]="rateStateText"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 04 : LEDGER & STATUS
-            ================================================== -->
-
-            <app-form-section
-
-                title="Ledger & Status"
-
-                icon="fas fa-book">
-
-
-                <!-- VAT Current Account : set on Posting Setup
-                     (Settings › Account Settings), read-only here -->
-
-                <app-search-dropdown
-
-                    label="VAT Current Account (Posting Setup)"
-
-                    [items]="ledgerItems"
-
-                    [value]="entity.LedgerCode"
-
-                    (valueChange)="onLedgerChange($event)"
-
-                    [disabled]="true"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-        </app-form-grid>
 
     </app-page-canvas>
 
@@ -326,4 +303,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

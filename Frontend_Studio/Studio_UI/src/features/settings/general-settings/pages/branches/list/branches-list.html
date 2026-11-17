@@ -9,9 +9,11 @@
 
         title="Branch"
 
-        subtitle="Manage branches"
+        subtitle="Showrooms and service points : each sells, stocks and prints in its own name"
 
-        icon="fas fa-code-branch">
+        icon="fas fa-code-branch"
+
+        art="branches">
 
         <div pageHeaderCenter>
 
@@ -155,6 +157,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="branches"
+
+                emptyTitle="No branch yet"
+
+                emptySubtitle="Add a branch : sales, stock, cash and vouchers are kept per branch."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -197,24 +205,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="brn-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="brn-summary-item">
-                    <span class="brn-summary-label">{{ item.label }}</span>
-                    <b
-                        class="brn-summary-value"
-                        [class.brn-ok]="item.tone === 'ok'"
-                        [class.brn-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="brn-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="branches"
+            art="branches"
+            note="All records">
+        </app-summary-line>
     }
 
 

@@ -1,0 +1,177 @@
+/* Same frame as the Trial Balance (which loads the Ledger
+   Statements look and the statement presentation), plus the
+   final-accounts parts */
+@import '../trial-balance/trial-balance.css';
+@import '../shared/final-accounts.css';
+
+
+/* ---------------------------------------------------------------
+   Head tiles : ROI (main), ROCE, ROE, ROA with their icons and the
+   change in points under the figure
+   --------------------------------------------------------------- */
+
+.roi-page .lr-figs > div[data-ratio='roi']::before { content: '\f201'; }
+.roi-page .lr-figs > div[data-ratio='roce']::before { content: '\f19c'; background: #e8eefc; color: #16307a; }
+.roi-page .lr-figs > div[data-ratio='roe']::before { content: '\f007'; background: #fdeee3; color: #9a4a12; }
+.roi-page .lr-figs > div[data-ratio='roa']::before { content: '\f1ad'; background: #e7f6ee; color: #146c3c; }
+
+.roi-page .lr-figs > div > em
+{
+    grid-column: 2;
+    justify-self: center;
+    color: #475569;
+    font-size: 11.5px;
+    font-style: normal;
+    font-weight: 700;
+}
+
+.roi-page .lr-figs > div > em.is-up
+{
+    color: #1d4ed8;
+}
+
+.roi-page .lr-figs .lr-fig-main > em,
+.roi-page .lr-figs .lr-fig-main > em.is-up
+{
+    color: #f3c79b;
+}
+
+.roi-page .lr-figs > div
+{
+    grid-template-rows: auto auto auto;
+}
+
+
+/* ---------------------------------------------------------------
+   Statement : three tables in one card
+   --------------------------------------------------------------- */
+
+.roi-page .roi-table + .roi-table
+{
+    margin-top: 18px;
+}
+
+.roi-page .roi-note
+{
+    margin-left: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.roi-page .roi-avg,
+.roi-page .roi-avg-h b
+{
+    color: #9a4a12;
+    font-weight: 800;
+}
+
+.roi-page col.roi-c-ratio
+{
+    width: 110px;
+}
+
+.roi-page .roi-formula
+{
+    color: #334155;
+    font-size: 13px;
+}
+
+.roi-page tr.roi-head-row td
+{
+    background: #fbf6f1;
+}
+
+
+/* ---------------------------------------------------------------
+   Side panel : stock return by business line
+   --------------------------------------------------------------- */
+
+.roi-page .roi-sub
+{
+    margin-top: -6px;
+    color: #475569;
+    font-size: 12.5px;
+}
+
+.roi-page .roi-line
+{
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 11px 13px;
+    border: 1px solid #e3e9f3;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.roi-page .roi-line.is-nostock
+{
+    border-style: dashed;
+    border-color: #cbd5e1;
+}
+
+.roi-page .roi-line-top
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.roi-page .roi-line-top b
+{
+    color: #0f172a;
+    font-size: 13.5px;
+}
+
+.roi-page .roi-line-top strong
+{
+    color: #0b1d52;
+    font-size: 19px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.roi-page .roi-line.is-best .roi-line-top strong
+{
+    color: #b8692f;
+}
+
+.roi-page .roi-bar
+{
+    height: 8px;
+    border-radius: 4px;
+    background: #e8edf7;
+    overflow: hidden;
+}
+
+.roi-page .roi-bar > i
+{
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: #16307a;
+}
+
+.roi-page .roi-line.is-best .roi-bar > i
+{
+    background: #b8692f;
+}
+
+.roi-page .roi-line-foot
+{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: #475569;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.roi-page .roi-line > em
+{
+    color: #9a5523;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 700;
+}

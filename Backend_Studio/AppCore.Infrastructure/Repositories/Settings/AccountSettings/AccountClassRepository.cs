@@ -163,6 +163,12 @@ public class AccountClassRepository : IAccountClassRepository
                         // Configuration
                         //===================================================
 
+                        StatementType =
+                            x.StatementType,
+
+                        BusinessLine =
+                            x.BusinessLine,
+
                         Remarks =
                             x.Remarks,
 
@@ -438,6 +444,42 @@ public class AccountClassRepository : IAccountClassRepository
         {
             throw new InvalidOperationException(
                 "Class Prefix must be 2 to 5 letters (A–Z), e.g. CLS, INV, WIP, COGS.");
+        }
+
+        return value;
+    }
+
+
+    //===========================================================
+    // Statement Type
+    //
+    // What the class is for the financial statements. The inventory
+    // family has a fixed one (Inventory, Work In Progress : Asset;
+    // Cost of Goods Sold : Cost of Goods Sold); an Account class
+    // must choose it. The statements go by it, never by the name.
+    //===========================================================
+
+    private static string ResolveStatementType
+    (
+        string classType,
+        string? statementType
+    )
+    {
+        string fixedType =
+            AppCore.Domain.Platform.Accounting.StatementTypes.FixedOf(classType);
+
+        if (fixedType.Length > 0)
+        {
+            return fixedType;
+        }
+
+        string value =
+            AppCore.Domain.Platform.Accounting.StatementTypes.Normalize(statementType);
+
+        if (value.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "Statement Type is required : Asset, Liability, Equity, Income, Other Income, Cost of Goods Sold or Expense.");
         }
 
         return value;
@@ -901,6 +943,13 @@ public class AccountClassRepository : IAccountClassRepository
                 // Configuration
                 //=======================================================
 
+                // What the class is for the financial statements
+                StatementType =
+                    ResolveStatementType(classType, dto.StatementType),
+
+                BusinessLine =
+                    AppCore.Domain.Platform.Accounting.BusinessLines.Normalize(dto.BusinessLine),
+
                 Remarks =
                     dto.Remarks?.Trim()
                     ??
@@ -1121,6 +1170,13 @@ public class AccountClassRepository : IAccountClassRepository
         //===========================================================
         // Configuration
         //===========================================================
+
+        // What the class is for the financial statements
+        entity.StatementType =
+            ResolveStatementType(entity.ClassType, dto.StatementType);
+
+        entity.BusinessLine =
+            AppCore.Domain.Platform.Accounting.BusinessLines.Normalize(dto.BusinessLine);
 
         entity.Remarks =
             dto.Remarks?.Trim()

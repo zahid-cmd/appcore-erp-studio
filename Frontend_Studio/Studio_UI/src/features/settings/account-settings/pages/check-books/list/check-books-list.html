@@ -7,7 +7,8 @@
     <app-page-header
         title="Check Books"
         subtitle="The check books of our bank accounts : every leaf and where it went"
-        icon="fas fa-money-check">
+        icon="fas fa-money-check"
+        art="cheques">
 
         <div pageHeaderCenter>
             <app-search-box
@@ -92,6 +93,9 @@
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
+                emptyArt="cheques"
+                emptyTitle="No check book yet"
+                emptySubtitle="Add a check book with its first and last check number : its leaves are issued from payments."
                 (view)="view($event)"
                 (edit)="edit($event)"
                 (delete)="delete($event)"
@@ -116,24 +120,13 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="cbl-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="cbl-summary-item">
-                    <span class="cbl-summary-label">{{ item.label }}</span>
-                    <b
-                        class="cbl-summary-value"
-                        [class.cbl-ok]="item.tone === 'ok'"
-                        [class.cbl-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="cbl-summary-note">
-                Leaves are issued from Payment Voucher and Fund Transfer
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="leaves"
+            art="cheques"
+            note="Search and account applied"
+            noteDetail="Leaves are issued from Payment Voucher and Fund Transfer">
+        </app-summary-line>
     }
 
     <app-history-drawer

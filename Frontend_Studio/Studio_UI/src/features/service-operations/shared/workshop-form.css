@@ -1,0 +1,1367 @@
+/*===============================================================
+  Workshop forms (Service Estimates, Job Cards)
+
+  The layout of the Service Estimate form, shared so the Job Card
+  form looks the same (2026-11-17) : a ribbon in the header,
+  floating cards, the rows in a summary card on the right. The page
+  never scrolls : only the rows do.
+
+  Copied from service-estimates.css; the estimate keeps its own
+  copy (its rules come after this file, so they win there).
+===============================================================*/
+
+@import '../../../shared/styles/voucher-page.css';
+
+.se-body
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 2px 6px 8px;
+}
+
+.se-loading
+{
+    /* the loader of the list pages (app-list-page.css) is absolute :
+       it fills this box, so it sits in the middle of the canvas and
+       not of the window */
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 260px;
+}
+
+/* Row 1 : information | notes. Row 2 : entry | lines */
+.se-grid
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 8fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px 18px;
+    align-items: stretch;
+}
+
+.se-col
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+    /* a short screen : the cards scroll inside, never the page */
+    overflow-y: auto;
+    padding: 0 2px 4px 0;
+}
+
+.se-col > .se-card
+{
+    flex: 0 0 auto;
+}
+
+.se-col > .se-card-last
+{
+    flex: 1 0 auto;
+}
+
+/* The slot takes the height of the left column; the card fills it */
+.se-slot
+{
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+}
+
+.se-summary
+{
+    position: absolute;
+    inset: 0;
+}
+
+@media (max-width: 1100px)
+{
+    .se-body
+    {
+        overflow-y: auto;
+    }
+
+    .se-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+    }
+
+    .se-col
+    {
+        overflow: visible;
+    }
+
+    .se-summary
+    {
+        position: static;
+        min-height: 420px;
+    }
+}
+
+
+/*---------------------------------------------------------------
+  Header center : floating ribbon
+---------------------------------------------------------------*/
+
+.se-center
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+}
+
+.se-ribbon
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    padding: 6px 8px;
+    border: 1px solid #dbe4f3;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%);
+    box-shadow:
+        0 10px 24px -12px rgba(30, 58, 138, 0.35),
+        0 2px 6px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+    white-space: nowrap;
+}
+
+.se-ribbon-sep
+{
+    width: 1px;
+    align-self: stretch;
+    margin: 4px 6px;
+    background: #e2e8f0;
+}
+
+.se-chip
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: 2px 10px 2px 4px;
+    border-radius: 999px;
+}
+
+.se-chip-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    font-size: 14px;
+}
+
+.se-chip-icon-branch
+{
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.se-chip-icon-no
+{
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.se-chip-text
+{
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.se-chip-label
+{
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.se-chip-text strong
+{
+    font-size: 14px;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.se-state
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 0 4px;
+    white-space: nowrap;
+}
+
+.se-unsaved
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #b45309;
+}
+
+.se-unsaved i
+{
+    font-size: 7px;
+}
+
+.se-status
+{
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.se-status-draft,
+.se-status-new
+{
+    background: #e0e7ff;
+    color: #1e3a8a;
+}
+
+.se-status-sent
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.se-status-approved
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.se-status-converted
+{
+    background: #cffafe;
+    color: #155e75;
+}
+
+.se-status-rejected
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+
+/*---------------------------------------------------------------
+  Banner
+---------------------------------------------------------------*/
+
+.se-banner
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.se-banner-info
+{
+    background: #ecfeff;
+    border: 1px solid #a5f3fc;
+    color: #155e75;
+}
+
+.se-banner a,
+.se-hint a
+{
+    margin-left: 6px;
+    color: #1d4ed8;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+
+/*---------------------------------------------------------------
+  Card
+---------------------------------------------------------------*/
+
+.se-card
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 10px 24px -16px rgba(30, 58, 138, 0.28);
+}
+
+.se-summary
+{
+    overflow: hidden;
+}
+
+.se-card-header
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 36px;
+    padding: 3px 20px;
+    border-bottom: 1px solid #e6ecf5;
+    border-radius: 14px 14px 0 0;
+    background:
+        linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #1e293b;
+}
+
+.se-card-header > i
+{
+    color: #2563eb;
+}
+
+.se-card-header-tabs
+{
+    padding-left: 10px;
+}
+
+.se-count
+{
+    margin-left: auto;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* + Add (header right) : the look of the voucher + Add */
+.se-add
+{
+    margin-left: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 14px;
+    border: 1px solid #1d4ed8;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 6px 14px -8px rgba(37, 99, 235, 0.7);
+}
+
+/* Outsourcing : a card that is its header only (two buttons) */
+
+.se-card-head-only > .se-card-header
+{
+    border-bottom: none;
+    border-radius: 14px;
+}
+
+.se-add-tight
+{
+    margin-left: 0;
+}
+
+/* Outsourcing buttons (2026-11-17) : two tiles, each with its own
+   colour, an icon badge, a short line under the name and a + chip
+   - copper : Outside Works      - teal : Parts Outsourcing */
+
+.se-out-group
+{
+    margin-left: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.se-out
+{
+    --out: #b8692f;
+    --out-deep: #9a4a12;
+    --out-soft: #fdf3ea;
+    --out-line: #f0d2b8;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 6px 0 6px;
+    border: 1px solid var(--out-line);
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, var(--out-soft) 100%);
+    color: var(--out-deep);
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.se-out-part
+{
+    --out: #0f766e;
+    --out-deep: #115e59;
+    --out-soft: #e8f6f3;
+    --out-line: #b7e3db;
+}
+
+.se-out-ico
+{
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--out);
+    color: #ffffff;
+    font-size: 14px;
+    box-shadow: 0 4px 10px -4px var(--out);
+}
+
+.se-out-text
+{
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1.15;
+}
+
+.se-out-text b
+{
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--out-deep);
+}
+
+.se-out-text small
+{
+    font-size: 11px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.se-out-plus
+{
+    flex: none;
+    width: 26px;
+    height: 26px;
+    margin-left: 4px;
+    border-radius: 8px;
+    border: 1px dashed var(--out);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--out);
+    font-size: 11px;
+    transition: background .15s ease, color .15s ease;
+}
+
+.se-out:hover
+{
+    transform: translateY(-1px);
+    border-color: var(--out);
+    box-shadow: 0 8px 18px -10px var(--out);
+}
+
+.se-out:hover .se-out-plus
+{
+    border-style: solid;
+    background: var(--out);
+    color: #ffffff;
+}
+
+.se-out:active
+{
+    transform: translateY(0);
+}
+
+.se-out:focus-visible
+{
+    outline: 2px solid var(--out);
+    outline-offset: 2px;
+}
+
+.se-out:disabled
+{
+    opacity: .55;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.se-add:disabled
+{
+    border-color: #cbd5e1;
+    background: #e2e8f0;
+    color: #64748b;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Find Bike : in the header of the Bike card */
+.se-find
+{
+    margin-left: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 330px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 400;
+    outline: none;
+}
+
+.se-find:focus
+{
+    border-color: #2563eb;
+}
+
+.se-found
+{
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 132px;
+    overflow-y: auto;
+    padding: 8px 44px 8px 20px;
+    border-bottom: 1px solid #e6ecf5;
+    background: #f8fafc;
+}
+
+.se-bike
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 10px;
+    border: 1px solid #dbe4f3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.se-bike:hover
+{
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+.se-bike small
+{
+    flex: 0 0 auto;
+    color: #b45309;
+    font-weight: 600;
+}
+
+/* Customer search : like the one of the sales invoice */
+
+.se-head-link
+{
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: #2563eb;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.se-head-link:hover
+{
+    text-decoration: underline;
+}
+
+/* in the header of the Customer card : no row of its own, so the
+   left column fits without scrolling. The list floats under it. */
+
+.se-cust-search
+{
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 440px;
+    margin: 3px 0 3px auto;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+.se-cust-search app-textbox
+{
+    display: block;
+}
+
+.se-cust-spin
+{
+    position: absolute;
+    top: 9px;
+    right: 12px;
+    color: #2563eb;
+    font-size: 14px;
+}
+
+.se-cust-results
+{
+    position: absolute;
+    z-index: 40;
+    top: 100%;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 230px;
+    overflow-y: auto;
+    margin-top: 4px;
+    padding: 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+}
+
+.se-cust-row
+{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    text-align: left;
+    cursor: pointer;
+}
+
+.se-cust-row.is-active
+{
+    border-color: #bfdbfe;
+    background: #eff6ff;
+}
+
+.se-cust-main,
+.se-cust-side
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.se-cust-main strong
+{
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.se-cust-main span,
+.se-cust-match
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.se-cust-side
+{
+    flex: 0 0 auto;
+    align-items: flex-end;
+}
+
+.se-cust-tag
+{
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.se-cust-tag.is-none
+{
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.se-cust-empty
+{
+    padding: 8px 10px;
+    color: #64748b;
+    font-size: 13.5px;
+}
+
+.se-cust-hint
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 2px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+/* a row that is not a bike on record */
+
+.se-bike-new
+{
+    border-style: dashed;
+    color: #1d4ed8;
+}
+
+.se-found-none
+{
+    color: #64748b;
+    font-size: 14px;
+}
+
+.se-found-x
+{
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    cursor: pointer;
+}
+
+
+/*---------------------------------------------------------------
+  Field grid
+---------------------------------------------------------------*/
+
+.se-fields
+{
+    display: grid;
+    gap: 6px 18px;
+    padding: 8px 20px 10px;
+}
+
+.se-fields-2
+{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.se-fields-3
+{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Estimate No gets more room (EST-010101-2627-11-00001) */
+.se-fields-no
+{
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+:host ::ng-deep .se-no .textbox input
+{
+    font-size: 13px;
+    letter-spacing: -0.1px;
+    padding-left: 10px;
+    padding-right: 8px;
+    text-overflow: clip;
+}
+
+/* Service Center | What the customer asks for | Remarks */
+.se-fields-notes
+{
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
+}
+
+.se-span-2
+{
+    grid-column: span 2;
+}
+
+@media (max-width: 560px)
+{
+    .se-fields-2,
+    .se-fields-3,
+    .se-fields-no,
+    .se-fields-notes
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Card footer : a hint */
+.se-hint
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: auto 0 0;
+    padding: 5px 20px;
+    border-top: 1px solid #e6ecf5;
+    border-radius: 0 0 14px 14px;
+    background:
+        linear-gradient(120deg, #edf3ff 0%, #f5f8fd 55%, #fafbfd 100%);
+    color: #475569;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+/*---------------------------------------------------------------
+  The lines (the summary card) : rows scroll, the header sticks
+---------------------------------------------------------------*/
+
+.se-summary
+{
+    display: flex;
+    flex-direction: column;
+}
+
+.se-table-scroll
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+.se-table
+{
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 15px;
+}
+
+.se-col-sl
+{
+    width: 46px;
+}
+
+.se-col-type
+{
+    width: 82px;
+}
+
+.se-col-note
+{
+    width: 20%;
+}
+
+.se-col-qty
+{
+    width: 74px;
+}
+
+.se-col-num
+{
+    width: 118px;
+}
+
+.se-col-action
+{
+    width: 46px;
+}
+
+.se-table th,
+.se-table td
+{
+    padding: 6px 8px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: left;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.se-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    background: #f6f8fc;
+    color: #475569;
+    font-size: 14.5px;
+    font-weight: 600;
+}
+
+.se-table .se-sl
+{
+    padding-left: 14px;
+    color: #64748b;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.se-table .se-num
+{
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    padding-right: 12px;
+}
+
+.se-table td.se-num
+{
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.se-table .se-action
+{
+    text-align: center;
+    padding-left: 4px;
+    padding-right: 8px;
+}
+
+.se-item
+{
+    font-weight: 600;
+    color: #1e293b;
+    white-space: normal;
+}
+
+.se-sub
+{
+    margin-top: 1px;
+    font-size: 12.5px;
+    color: #64748b;
+}
+
+.se-type
+{
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.se-type-labour
+{
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.se-type-part
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.se-input
+{
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 15px;
+    outline: none;
+}
+
+.se-input:focus
+{
+    border-color: #2563eb;
+}
+
+.se-input:disabled
+{
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.se-input-num
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.se-remove
+{
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #dc2626;
+    cursor: pointer;
+}
+
+/* a round button that adds (a new diagnosis) */
+.se-remove.se-plus
+{
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+/* Observations : the picker and the new one, above the rows */
+.se-obs-bar
+{
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid #e6ecf5;
+}
+
+.se-obs-bar > app-search-dropdown:only-child
+{
+    grid-column: 1 / -1;
+}
+
+.se-col-diag
+{
+    width: 36%;
+}
+
+.se-col-obs-note
+{
+    width: 22%;
+}
+
+.se-diag
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.se-diag > app-search-dropdown,
+.se-diag > .se-input
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.se-diag > .se-remove
+{
+    flex: 0 0 auto;
+}
+
+.se-foot-note
+{
+    justify-content: flex-start;
+    font-size: 14px;
+}
+
+.se-foot-note i
+{
+    margin-right: 6px;
+    color: #2563eb;
+}
+
+.se-empty
+{
+    padding: 26px 16px !important;
+    text-align: center !important;
+    color: #94a3b8;
+    font-size: 15px;
+}
+
+/* Totals : always visible under the rows */
+.se-foot
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 26px;
+    padding: 9px 20px;
+    border-top: 2px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 15px;
+}
+
+/* the VAT note, at the left of the totals */
+.se-foot-vat
+{
+    margin-right: auto;
+    color: #64748b;
+    font-size: 13.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.se-foot-vat i
+{
+    margin-right: 6px;
+    color: #2563eb;
+}
+
+.se-foot b
+{
+    margin-left: 8px;
+    color: #1e293b;
+    font-variant-numeric: tabular-nums;
+}
+
+.se-foot-total
+{
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: #f0fdf4;
+    color: #166534;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.se-foot-total b
+{
+    color: #166534;
+}
+
+
+/*---------------------------------------------------------------
+  Estimate Charge and Status (inside the summary card)
+---------------------------------------------------------------*/
+
+.se-pane
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 20px 16px;
+}
+
+.se-sum
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 10px 14px;
+    border: 1px solid #d6e4fb;
+    border-radius: 10px;
+    background: #f7faff;
+    color: #0f2a44;
+    font-size: 15px;
+}
+
+.se-sum b
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.se-sum .se-grand
+{
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid #d6e4fb;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.se-sum-status
+{
+    grid-template-columns: 90px minmax(0, 1fr);
+}
+
+.se-sum-status b
+{
+    text-align: left;
+}
+
+.se-date
+{
+    max-width: 240px;
+}
+
+/* mode | account | amount | x */
+.se-pay
+{
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr) 130px 30px;
+    align-items: center;
+    gap: 8px;
+}
+
+.se-ref
+{
+    grid-column: 1 / span 3;
+}
+
+.se-buttons
+{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.se-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.se-btn:disabled
+{
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.se-btn-light:hover:not(:disabled)
+{
+    background: #f1f5f9;
+}
+
+.se-btn-primary
+{
+    border-color: #1d4ed8;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+}
+
+.se-btn-danger
+{
+    border-color: #b91c1c;
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    color: #ffffff;
+}
+
+.se-ok,
+.se-warn
+{
+    display: block;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14.5px;
+    line-height: 1.45;
+}
+
+.se-ok
+{
+    border: 1px solid #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.se-warn
+{
+    border: 1px solid #fde68a;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.se-pane .hp-note
+{
+    font-size: 14px;
+}
+
+/* Outside Works (2026-11-17) : the list to pick from takes the place
+   of the two tiles, in the header (no extra height) */
+
+.se-work-pick
+{
+    margin-left: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.se-work-pick > app-search-dropdown
+{
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.se-work-x
+{
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.se-work-x:hover
+{
+    background: #f1f5f9;
+    color: #0f172a;
+}

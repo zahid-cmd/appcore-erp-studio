@@ -83,9 +83,40 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
 
 
 import
@@ -216,17 +247,21 @@ from '../../../services/account-class.service';
         PageHeaderComponent,
         PageToolbarComponent,
         CommandCenterComponent,
-        ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
+
+        WorkspaceArtComponent,
+
+        StepTabsComponent,
+
+        ToggleSwitchComponent,
+
+        NotePadComponent,
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-        TextareaComponent,
         DropdownComponent,
 
         //=======================================================
@@ -331,6 +366,19 @@ implements OnInit, OnDestroy
         string =
 
         'general';
+
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
 
 
     //===========================================================
@@ -440,6 +488,47 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
+    // Statement Type Items
+    //
+    // What the class is for the financial statements. The
+    // statements go by this, never by the class name.
+    //===========================================================
+
+
+    statementTypeItems:
+        any[]
+    =
+
+    [
+        { label:'Asset', value:'Asset' },
+        { label:'Liability', value:'Liability' },
+        { label:'Equity', value:'Equity' },
+        { label:'Income', value:'Income' },
+        { label:'Other Income', value:'Other Income' },
+        { label:'Cost of Goods Sold', value:'Cost of Goods Sold' },
+        { label:'Expense', value:'Expense' }
+    ];
+
+
+    //===========================================================
+    // Business Line Items
+    //===========================================================
+
+
+    businessLineItems:
+        any[]
+    =
+
+    [
+        { label:'None', value:'' },
+        { label:'Motor Bikes', value:'MB' },
+        { label:'Spare Parts', value:'SP' },
+        { label:'Accessories', value:'AC' },
+        { label:'Service', value:'SV' }
+    ];
+
+
+    //===========================================================
     // Manual Group Creation Items
     //===========================================================
 
@@ -506,6 +595,10 @@ implements OnInit, OnDestroy
         ClassPrefix:'ACC',
 
         AllowManualGroupCreation:false,
+
+        StatementType:'',
+
+        BusinessLine:'',
 
         Remarks:'',
 
@@ -766,6 +859,10 @@ implements OnInit, OnDestroy
             ClassPrefix:'',
 
             AllowManualGroupCreation:true,
+
+            StatementType:'',
+
+            BusinessLine:'',
 
             Remarks:'',
 
@@ -1038,6 +1135,43 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
+    // Statement Type Change
+    //
+    // Sets the usual side : liability, equity and income are
+    // credit, the rest debit. The Mode can still be changed.
+    //===========================================================
+
+
+    onStatementTypeChange():
+        void
+    {
+        if
+        (
+            this.isViewMode
+        )
+        {
+            return;
+        }
+
+
+        if
+        (
+            this.entity.StatementType
+        )
+        {
+            this.entity.Mode =
+                ['Liability', 'Equity', 'Income', 'Other Income']
+                    .includes(this.entity.StatementType)
+                    ? 'Credit'
+                    : 'Debit';
+        }
+
+
+        this.onValueChange();
+    }
+
+
+    //===========================================================
     // Class Type Change
     //===========================================================
 
@@ -1067,11 +1201,24 @@ implements OnInit, OnDestroy
             // Inventory, WIP and COGS are debit-balance accounts
             this.entity.Mode =
                 'Debit';
+
+            // Their statement type is fixed; their business line
+            // comes from the Product Category
+            this.entity.StatementType =
+                this.entity.ClassType === 'Cost of Goods Sold'
+                    ? 'Cost of Goods Sold'
+                    : 'Asset';
+
+            this.entity.BusinessLine =
+                '';
         }
         else
         {
             this.entity.AllowManualGroupCreation =
                 true;
+
+            this.entity.StatementType =
+                '';
         }
 
 
@@ -1183,6 +1330,20 @@ implements OnInit, OnDestroy
                                 ??
                                 false
                             ),
+
+                        StatementType:
+                            response?.StatementType
+                            ??
+                            response?.statementType
+                            ??
+                            '',
+
+                        BusinessLine:
+                            response?.BusinessLine
+                            ??
+                            response?.businessLine
+                            ??
+                            '',
 
                         Remarks:
                             response?.Remarks
@@ -1577,6 +1738,22 @@ implements OnInit, OnDestroy
         }
 
 
+        if
+        (
+            !this.isInventoryClass
+            &&
+            !this.entity.StatementType
+        )
+        {
+            this.toast.error(
+                'Validation',
+                'Statement Type is required.'
+            );
+
+            return;
+        }
+
+
         //=======================================================
         // Add
         //=======================================================
@@ -1629,6 +1806,12 @@ implements OnInit, OnDestroy
 
             AllowManualGroupCreation:
                 this.entity.AllowManualGroupCreation,
+
+            StatementType:
+                this.entity.StatementType,
+
+            BusinessLine:
+                this.entity.BusinessLine,
 
             Remarks:
                 this.entity.Remarks?.trim()
@@ -1743,6 +1926,12 @@ implements OnInit, OnDestroy
 
             AllowManualGroupCreation:
                 this.entity.AllowManualGroupCreation,
+
+            StatementType:
+                this.entity.StatementType,
+
+            BusinessLine:
+                this.entity.BusinessLine,
 
             Remarks:
                 this.entity.Remarks?.trim()

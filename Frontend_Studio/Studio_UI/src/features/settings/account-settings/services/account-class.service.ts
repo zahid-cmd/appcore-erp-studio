@@ -144,6 +144,20 @@ export class AccountClassService
                                     ??
                                     '',
 
+                                StatementType:
+                                    accountClass.StatementType
+                                    ??
+                                    accountClass.statementType
+                                    ??
+                                    '',
+
+                                BusinessLine:
+                                    accountClass.BusinessLine
+                                    ??
+                                    accountClass.businessLine
+                                    ??
+                                    '',
+
                                 Mode:
                                     accountClass.Mode
                                     ??
@@ -407,6 +421,20 @@ export class AccountClassService
                                     accountClass.ClassName
                                     ??
                                     accountClass.className
+                                    ??
+                                    '',
+
+                                StatementType:
+                                    accountClass.StatementType
+                                    ??
+                                    accountClass.statementType
+                                    ??
+                                    '',
+
+                                BusinessLine:
+                                    accountClass.BusinessLine
+                                    ??
+                                    accountClass.businessLine
                                     ??
                                     '',
 

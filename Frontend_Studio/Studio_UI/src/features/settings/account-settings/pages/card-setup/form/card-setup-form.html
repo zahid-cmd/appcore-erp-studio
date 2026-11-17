@@ -1,257 +1,191 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-credit-card"
-
+        art="card"
         [title]="pageTitle"
-
-        subtitle="Manage card setup">
+        subtitle="A card customers pay with, and the bank that issues it">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
 
-            [columns]="4">
+            <!-- ================= LEFT : the fields ================= -->
 
+            <div class="ws-steps">
 
-            <!-- =================================================
-                 SECTION 01 : CARD INFORMATION
-            ================================================== -->
+                <div class="ws-step">
 
-            <app-form-section
+                    <section class="ws-card">
 
-                title="Card Information"
+                        <header class="ws-card-head">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Card</span>
+                        </header>
 
-                icon="fas fa-credit-card">
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Card Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.CardCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
+                            <app-textbox
+                                label="Card Name"
+                                placeholder="e.g. Visa Platinum"
+                                [(value)]="entity.CardName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
 
-                <!-- Card Code -->
+                            <app-textbox
+                                label="Short Name"
+                                placeholder="e.g. VISA"
+                                [(value)]="entity.ShortName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
 
-                <app-textbox
+                            <app-search-dropdown
+                                label="Issuing Bank"
+                                [items]="issuingBankItems"
+                                [(value)]="entity.IssuingBank"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
 
-                    label="Card Code"
+                        </div>
 
-                    placeholder="Auto generated"
+                    </section>
 
-                    [(value)]="entity.CardCode"
+                    <section class="ws-card ws-notes">
 
-                    [readonly]="true"
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
 
-                    [required]="true">
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
 
-                </app-textbox>
+                    </section>
 
+                </div>
 
-                <!-- Card Name -->
+            </div>
 
-                <app-textbox
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    label="Card Name"
+            <aside class="ws-panel">
 
-                    placeholder="Enter card name"
+                <div class="ws-hero">
 
-                    [(value)]="entity.CardName"
+                    <app-workspace-art theme="card"></app-workspace-art>
 
-                    (valueChange)="onValueChange()"
+                    <div class="ws-identity">
 
-                    [disabled]="isViewMode || isSaving"
+                        <b [class.ws-new]="!entity.CardName">{{ entity.CardName || 'New card' }}</b>
 
-                    [required]="true">
+                        <div class="ws-chips">
 
-                </app-textbox>
+                            @if (entity.CardCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.CardCode }}</span>
+                            }
 
-            </app-form-section>
+                            @if (entity.ShortName)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.ShortName }}</span>
+                            }
 
+                        </div>
 
+                    </div>
 
-            <!-- =================================================
-                 SECTION 02 : ISSUER
-            ================================================== -->
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-            <app-form-section
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-credit-card"></i><span>Picked when a customer pays by card</span></li>
+                        <li><i class="fas fa-percent"></i><span>Card charges are set per card</span></li>
+                    </ul>
 
-                title="Issuer"
+                </div>
 
-                icon="fas fa-building-columns">
+            </aside>
 
-
-                <!-- Short Name -->
-
-                <app-textbox
-
-                    label="Short Name"
-
-                    placeholder="Enter short name"
-
-                    [(value)]="entity.ShortName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-
-                <!-- Issuing Bank (Any Bank + Bank Setup) -->
-
-                <app-search-dropdown
-
-                    label="Issuing Bank"
-
-                    [items]="issuingBankItems"
-
-                    [(value)]="entity.IssuingBank"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 03 : STATUS
-            ================================================== -->
-
-            <app-form-section
-
-                title="Status"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 04 : DESCRIPTION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Description"
-
-                icon="fas fa-align-left">
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

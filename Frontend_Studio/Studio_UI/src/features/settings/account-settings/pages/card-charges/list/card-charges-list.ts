@@ -110,6 +110,13 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -236,6 +243,8 @@ function readField
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent
@@ -349,6 +358,11 @@ implements OnInit, OnDestroy
         CardCharges[] =
         [];
 
+    // Summary tiles under the canvas (all records, 2026-11-16)
+    summaryItems:
+        SummaryLineItem[] =
+        [];
+
     //===========================================================
     // Status Filter (POS Account status)
     //===========================================================
@@ -435,17 +449,18 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'60px',
+            width:'56px',
             align:'center'
         },
         {
             header:'POS Account Code',
             field:'POSAccountCode',
-            width:'220px',
+            width:'140px',
             align:'center'
         },
         {
@@ -457,26 +472,27 @@ implements OnInit, OnDestroy
         {
             header:'Cards',
             field:'CardNames',
+            width:'300px',
             align:'left'
         },
         {
             header:'No. of Cards',
             field:'CardCount',
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'150px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'120px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -610,9 +626,30 @@ implements OnInit, OnDestroy
     // Apply Filters (Status + Search)
     //===========================================================
 
+    private buildSummary():
+        void
+    {
+        const all = this.cardCharges;
+        const count = (n: number) => n.toLocaleString('en-US');
+        const active = all.filter(x => x.Status === true).length;
+        const cards = all.reduce((s, x) => s + (Number((x as any).CardCount) || 0), 0);
+
+        this.summaryItems =
+            all.length === 0
+                ? []
+                : [
+                    { label:'Terminals', value:count(all.length) },
+                    { label:'Active', value:count(active), tone:'ok' },
+                    { label:'Inactive', value:count(all.length - active), tone:'bad' },
+                    { label:'Card charges', value:count(cards), icon:'fas fa-credit-card', share:false }
+                ];
+    }
+
     applyFilters():
         void
     {
+        this.buildSummary();
+
         const keyword:
             string =
             this.searchText

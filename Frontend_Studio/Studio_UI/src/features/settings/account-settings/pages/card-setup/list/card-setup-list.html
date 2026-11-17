@@ -8,9 +8,11 @@
 
         title="Card Setup"
 
-        subtitle="Manage card setup"
+        subtitle="The cards customers pay with and the bank that issues each"
 
-        icon="fas fa-credit-card">
+        icon="fas fa-credit-card"
+
+        art="card">
 
         <div pageHeaderCenter>
 
@@ -131,6 +133,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="card"
+
+                emptyTitle="No card yet"
+
+                emptySubtitle="Add the cards you accept, e.g. Visa, Mastercard, Amex."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -172,24 +180,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="cds-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="cds-summary-item">
-                    <span class="cds-summary-label">{{ item.label }}</span>
-                    <b
-                        class="cds-summary-value"
-                        [class.cds-ok]="item.tone === 'ok'"
-                        [class.cds-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="cds-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="cards"
+            art="card"
+            note="All records">
+        </app-summary-line>
     }
 
 

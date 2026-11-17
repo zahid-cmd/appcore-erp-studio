@@ -7,7 +7,8 @@
     <app-page-header
         title="Fund Transfer"
         subtitle="Transfer : Draft → Approved → Posted"
-        icon="fas fa-right-left">
+        icon="fas fa-right-left"
+        art="ledger">
 
         <div pageHeaderCenter>
 
@@ -87,6 +88,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="ledger"
+                emptyTitle="No transfers yet"
+                emptySubtitle="Add the first one with Add."
                 [rows]="fundTransfers"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -122,25 +126,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="ft-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="ft-summary-item">
-                    <span class="ft-summary-label">{{ item.label }}</span>
-                    <b
-                        class="ft-summary-value"
-                        [class.ft-ok]="item.tone === 'ok'"
-                        [class.ft-bad]="item.tone === 'bad'"
-                        [class.ft-muted]="item.tone === 'muted'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="ft-summary-note">
-                Matching the transfer type and search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="transfers"
+            art="ledger"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================

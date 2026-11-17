@@ -5,7 +5,6 @@
    zone modal (shared Form Modal)
 ===================================================== */
 
-
 /* Toolbar right : the notice, then the count */
 .rk-toolbar-right
 {
@@ -17,7 +16,6 @@
 
     min-width:0;
 }
-
 
 .rk-count
 {
@@ -36,14 +34,12 @@
     white-space:nowrap;
 }
 
-
 .rk-count i
 {
     color:#64748b;
 
     font-size:12px;
 }
-
 
 /* What an action did (this page shows no toasts) */
 .rk-notice
@@ -75,7 +71,6 @@
     animation:rk-notice-in .18s ease-out;
 }
 
-
 .rk-notice span
 {
     min-width:0;
@@ -87,7 +82,6 @@
     white-space:nowrap;
 }
 
-
 .rk-notice-ok
 {
     border-color:#a7f3d0;
@@ -97,7 +91,6 @@
     color:#065f46;
 }
 
-
 .rk-notice-error
 {
     border-color:#fecaca;
@@ -106,7 +99,6 @@
 
     color:#b42318;
 }
-
 
 .rk-notice-x
 {
@@ -127,12 +119,10 @@
     cursor:pointer;
 }
 
-
 .rk-notice-x:hover
 {
     background:rgba(15, 23, 42, .08);
 }
-
 
 @keyframes rk-notice-in
 {
@@ -140,7 +130,6 @@
 
     to   { opacity:1; transform:none; }
 }
-
 
 /* -----------------------------------------------------
    ZONE MODAL
@@ -157,14 +146,12 @@
     align-items:end;
 }
 
-
 .rk-zone-wide
 {
     grid-column:1 / -1;
 
     min-width:0;
 }
-
 
 .rk-zone-grid ::ng-deep app-search-dropdown,
 .rk-zone-grid ::ng-deep app-dropdown,
@@ -177,7 +164,6 @@
 
     min-width:0;
 }
-
 
 .rk-zone-racks
 {
@@ -196,12 +182,10 @@
     font-weight:500;
 }
 
-
 .rk-zone-racks i
 {
     color:#64748b;
 }
-
 
 .rk-modal-error
 {
@@ -218,72 +202,4 @@
     font-weight:600;
 }
 
-
-/* Summary line below the canvas : plain text, no chips,
-   light blue gradient */
-
-.ics-summary
-{
-    display: flex;
-    flex: 0 0 auto;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px 0;
-    min-height: 50px;
-    padding: 12px 22px;
-    box-sizing: border-box;
-    border: 1px solid #d6e4fb;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
-    font-size: 14.5px;
-}
-
-.ics-summary-item
-{
-    display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 0 20px;
-}
-
-.ics-summary-item:first-child
-{
-    padding-left: 0;
-}
-
-.ics-summary-item + .ics-summary-item
-{
-    border-left: 1px solid #c9daf5;
-}
-
-.ics-summary-label
-{
-    color: #475569;
-    font-weight: 500;
-}
-
-.ics-summary-value
-{
-    color: #1e293b;
-    font-size: 15.5px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-.ics-summary-value.ics-ok
-{
-    color: #047857;
-}
-
-.ics-summary-value.ics-bad
-{
-    color: #be123c;
-}
-
-.ics-summary-note
-{
-    margin-left: auto;
-    color: #64748b;
-    font-size: 13px;
-}
+/* The summary line is the shared app-summary-line (2026-11-16) */

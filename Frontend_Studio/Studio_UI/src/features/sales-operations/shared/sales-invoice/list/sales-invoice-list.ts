@@ -109,6 +109,12 @@ from '../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../shared/components/controls/pagination/pagination';
@@ -236,6 +242,8 @@ type SalesInvoiceRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -456,18 +464,19 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Invoice No',
             field:'InvoiceNo',
-            width:'200px',
-            align:'center',
+            width:'160px',
+            align:'left',
             // MB : a Corporate sale (several chassis)
             flagField:'IsCorporate',
             flagText:'Corporate'
@@ -475,13 +484,13 @@ implements OnInit
         {
             header:'Date',
             field:'InvoiceDateText',
-            width:'105px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Customer',
             field:'CustomerText',
-            width:'260px',
+            width:'160px',
             align:'left',
             flagField:'IsWalkIn',
             flagText:'Walk-in',
@@ -490,8 +499,8 @@ implements OnInit
         {
             header:'Items',
             field:'LineCountText',
-            width:'70px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Invoice Total',
@@ -502,27 +511,27 @@ implements OnInit
         {
             header:'Paid',
             field:'PaidText',
-            width:'120px',
-            align:'right'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Due',
             field:'DueText',
-            width:'120px',
-            align:'right'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'140px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'110px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -1498,5 +1507,44 @@ implements OnInit
             false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.countOf('Draft'))),
+            String(this.summaryText(this.countOf('Approved'))),
+            String(this.summaryText(this.countOf('Posted'))),
+            String(this.summaryText(this.countOf('Cancelled')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Draft', value:v[1], tone:'' },
+                    { label:'Approved', value:v[2], tone:'' },
+                    { label:'Posted', value:v[3], tone:'ok' },
+                    { label:'Cancelled', value:v[4], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

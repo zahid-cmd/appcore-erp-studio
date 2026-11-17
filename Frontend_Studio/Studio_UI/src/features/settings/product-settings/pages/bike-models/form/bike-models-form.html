@@ -1,269 +1,197 @@
-<!-- PAGE-CLONED : Color Management -> Bike Models -->
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-motorcycle"
-
+        art="bike"
         [title]="pageTitle"
-
-        subtitle="Manage bike models">
+        subtitle="A bike model of a brand, e.g. Revoo C32">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
 
-            [columns]="4">
+            <div class="ws-steps">
+
+                <div class="ws-step">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-motorcycle"></i>
+                            <span>Model</span>
+                        </header>
 
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Model Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.ModelCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="Brand"
+                                placeholder="Select brand"
+                                [items]="brandItems"
+                                [(value)]="entity.BrandManagementId"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-dropdown>
 
-            <!-- =============================================
-                 MODEL INFORMATION
-            ============================================== -->
+                            <app-dropdown
+                                label="Bike Type"
+                                placeholder="Select bike type"
+                                [items]="bikeTypeItems"
+                                [(value)]="entity.BikeType"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-dropdown>
 
-            <app-form-section
+                            <app-textbox
+                                class="ws-full"
+                                label="Model Name"
+                                placeholder="e.g. C32"
+                                [(value)]="entity.ModelName"
+                                [maxLength]="150"
+                                textCase="upper"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
 
-                title="Model Information"
+                        </div>
 
-                icon="fas fa-motorcycle">
+                    </section>
 
+                    <section class="ws-card ws-notes">
 
-                <!-- Model Code (generated by the server) -->
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
 
-                <app-textbox
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-note-pad>
 
-                    label="Model Code"
+                    </section>
 
-                    placeholder="Auto generated"
+                </div>
 
-                    [(value)]="entity.ModelCode"
+            </div>
 
-                    [readonly]="true"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    [required]="true">
+            <aside class="ws-panel">
 
-                </app-textbox>
+                <div class="ws-hero">
 
+                    <app-workspace-art theme="bike"></app-workspace-art>
 
-                <!-- Brand -->
+                    <div class="ws-identity">
 
-                <app-dropdown
+                        <b [class.ws-new]="!entity.ModelName">{{ entity.ModelName || 'New bike model' }}</b>
 
-                    label="Brand"
+                        <div class="ws-chips">
 
-                    placeholder="Select brand"
+                            @if (entity.ModelCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.ModelCode }}</span>
+                            }
 
-                    [items]="brandItems"
+                            @if (entity.BikeType)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.BikeType }}</span>
+                            }
 
-                    [(value)]="entity.BrandManagementId"
+                        </div>
 
-                    (valueChange)="onValueChange()"
+                    </div>
 
-                    [disabled]="isViewMode"
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
 
-                    [required]="true">
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-layer-group"></i><span>Sub categories and bikes are made per model</span></li>
+                        <li><i class="fas fa-list-check"></i><span>Specifications are kept per model</span></li>
+                    </ul>
 
-                </app-dropdown>
+                </div>
 
+            </aside>
 
-            </app-form-section>
-
-
-            <!-- =============================================
-                 MODEL DETAILS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Model Details"
-
-                icon="fas fa-tags">
-
-
-                <!-- Model Name -->
-
-                <app-textbox
-
-                    label="Model Name"
-
-                    placeholder="Enter model name"
-
-                    [(value)]="entity.ModelName"
-
-                    [maxLength]="150"
-
-                    textCase="upper"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Bike Type -->
-
-                <app-dropdown
-
-                    label="Bike Type"
-
-                    placeholder="Select bike type"
-
-                    [items]="bikeTypeItems"
-
-                    [(value)]="entity.BikeType"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 STATUS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status"
-
-                icon="fas fa-sliders">
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 REMARKS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Remarks"
-
-                icon="fas fa-comment-dots">
-
-
-                <!-- Remarks (optional) -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    [maxLength]="1000"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-            </app-form-section>
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

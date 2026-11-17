@@ -113,6 +113,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -195,6 +201,8 @@ from '../../../services/supplier-profiles.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -482,68 +490,69 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Supplier Code',
             field:'SupplierCode',
-            width:'130px',
+            width:'140px',
             align:'center'
         },
         {
             header:'Supplier Name',
             field:'SupplierName',
-            width:'240px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Type',
             field:'SupplierType',
-            width:'150px',
+            width:'110px',
             align:'center'
         },
         {
             header:'Supply Type',
             field:'SupplyType',
-            width:'130px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Phone 1',
             field:'Phone1',
-            width:'130px',
+            width:'150px',
             align:'center'
         },
         {
             header:'Brand',
             field:'BrandName',
-            width:'140px',
+            width:'160px',
             align:'left'
         },
         {
             header:'Payable Ledger',
             field:'PayableLedgerCode',
-            width:'190px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Status',
 
             field:'IsActive',
             type:'status',
-            width:'100px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -1663,4 +1672,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

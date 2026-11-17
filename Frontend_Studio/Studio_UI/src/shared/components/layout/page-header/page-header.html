@@ -7,10 +7,19 @@
     <div class="page-header-left">
 
         <div
-            *ngIf="icon"
-            class="page-header-icon">
+            *ngIf="icon || art"
+            class="page-header-icon"
+            [class.page-header-art]="!!art">
 
-            <i [class]="icon"></i>
+            <app-workspace-art
+                *ngIf="art; else fontIcon"
+                [theme]="art"
+                size="tile">
+            </app-workspace-art>
+
+            <ng-template #fontIcon>
+                <i [class]="icon"></i>
+            </ng-template>
 
         </div>
 
@@ -21,6 +30,10 @@
                 class="page-header-title">
 
                 {{ title }}
+
+                <ng-container *ngIf="titleMark">
+                    - <span class="page-header-title-mark">{{ titleMark }}</span>
+                </ng-container>
 
             </div>
 
@@ -60,4 +73,4 @@
 
     </div>
 
-</div>
+</div>

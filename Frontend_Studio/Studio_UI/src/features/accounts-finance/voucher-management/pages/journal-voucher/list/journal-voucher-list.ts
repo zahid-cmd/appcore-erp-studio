@@ -130,6 +130,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -235,6 +241,8 @@ type JournalVoucherRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -332,7 +340,7 @@ implements OnInit, OnDestroy
         {
             label:string;
             value:string;
-            tone:'' | 'ok' | 'bad' | 'muted';
+            tone:'' | 'ok' | 'bad' | 'warn';
         }[] =
     [];
 
@@ -494,6 +502,7 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths : the party / particulars column gets the room (2026-11-16)
         {
             header:'#',
             field:'serial',
@@ -504,25 +513,25 @@ implements OnInit, OnDestroy
         {
             header:'Voucher No',
             field:'VoucherNo',
-            width:'210px',
-            align:'center'
+            width:'190px',
+            align:'left'
         },
         {
             header:'Date',
             field:'VoucherDateText',
-            width:'100px',
+            width:'110px',
             align:'center'
         },
         {
             header:'Branch',
             field:'BranchName',
-            width:'140px',
+            width:'160px',
             align:'left'
         },
         {
             header:'Particulars',
             field:'PartyText',
-            width:'280px',
+            width:'380px',
             align:'left'
         },
         {
@@ -534,21 +543,21 @@ implements OnInit, OnDestroy
         {
             header:'Groups',
             field:'GroupCountText',
-            width:'170px',
-            align:'left'
+            width:'90px',
+            align:'center'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'100px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'130px',
             align:'center'
         }
     ];
@@ -989,7 +998,7 @@ implements OnInit, OnDestroy
         this.summaryItems =
         [
             { label:'Total',     value:value('Total'),     tone:'' },
-            { label:'Draft',     value:value('Draft'),     tone:'muted' },
+            { label:'Draft',     value:value('Draft'),     tone:'' },
             { label:'Approved',  value:value('Approved'),  tone:'' },
             { label:'Posted',    value:value('Posted'),    tone:'ok' },
             { label:'Cancelled', value:value('Cancelled'), tone:'bad' }

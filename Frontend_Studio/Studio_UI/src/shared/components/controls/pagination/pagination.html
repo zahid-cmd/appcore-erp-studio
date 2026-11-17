@@ -1,260 +1,114 @@
-<div class="pagination-bar">
+<div class="pg">
 
+    <!-- LEFT : the range -->
 
-    <!-- =====================================================
-         LEFT : RECORD SUMMARY
-    ====================================================== -->
+    <div class="pg-left">
 
-    <div class="pagination-left">
+        <span class="pg-range">{{ startRecord }} – {{ endRecord }}</span>
 
-        <div class="record-info">
-
-
-            <div class="record-icon">
-
-                <i class="fas fa-table-list"></i>
-
-            </div>
-
-
-            <div class="record-summary">
-
-                <span class="record-label">
-                    Showing
-                </span>
-
-
-                <strong>
-                    {{ startRecord }}
-                </strong>
-
-
-                <span class="record-label">
-                    to
-                </span>
-
-
-                <strong>
-                    {{ endRecord }}
-                </strong>
-
-
-                <span class="record-label">
-                    of
-                </span>
-
-
-                <strong>
-                    {{ totalRecords }}
-                </strong>
-
-
-                <span class="record-label">
-                    records
-                </span>
-
-            </div>
-
-
-        </div>
+        <span class="pg-of">of <b>{{ totalRecords }}</b> {{ noun }}</span>
 
     </div>
 
+    <!-- CENTRE : the pages -->
 
+    <div class="pg-center">
 
-
-    <!-- =====================================================
-         CENTER : PAGE NAVIGATION
-    ====================================================== -->
-
-
-    <div class="pagination-center">
-
-
-        <div class="pagination-box">
-
-
-            <!-- FIRST -->
+        <div class="pg-track">
 
             <button
                 type="button"
-                class="page-btn nav-btn"
+                class="pg-btn pg-nav"
+                title="First page"
                 [disabled]="!hasPrevious"
                 (click)="goToPage(1)">
-
                 <i class="fas fa-angles-left"></i>
-
             </button>
-
-
-
-            <!-- PREVIOUS -->
 
             <button
                 type="button"
-                class="page-btn nav-btn"
+                class="pg-btn pg-nav"
+                title="Previous page"
                 [disabled]="!hasPrevious"
                 (click)="previous()">
-
                 <i class="fas fa-angle-left"></i>
-
             </button>
 
+            <span class="pg-sep"></span>
 
-
-            <!-- PAGE NUMBERS -->
-
-            @for (page of visiblePages; track page)
+            @for (item of pages; track item)
             {
-
-                <button
-                    type="button"
-                    class="page-btn"
-
-                    [class.active]="
-                        page === currentPage
-                    "
-
-                    (click)="goToPage(page)">
-
-                    {{ page }}
-
-                </button>
-
+                @if (isPage(item))
+                {
+                    <button
+                        type="button"
+                        class="pg-btn"
+                        [class.pg-on]="item === currentPage"
+                        (click)="goToPage(item)">
+                        {{ item }}
+                    </button>
+                }
+                @else
+                {
+                    <span class="pg-gap">…</span>
+                }
             }
 
-
-
-
-            <!-- LAST PAGE -->
-
-            @if (
-                totalPages > 3
-                &&
-                visiblePages[visiblePages.length - 1] < totalPages
-            )
-            {
-
-                <span class="dots">
-
-                    ...
-
-                </span>
-
-
-                <button
-                    type="button"
-                    class="page-btn"
-
-                    (click)="goToPage(totalPages)">
-
-                    {{ totalPages }}
-
-                </button>
-
-            }
-
-
-
-
-            <!-- NEXT -->
+            <span class="pg-sep"></span>
 
             <button
                 type="button"
-                class="page-btn nav-btn"
-
+                class="pg-btn pg-nav"
+                title="Next page"
                 [disabled]="!hasNext"
-
                 (click)="next()">
-
                 <i class="fas fa-angle-right"></i>
-
             </button>
-
-
-
-
-            <!-- LAST -->
 
             <button
                 type="button"
-                class="page-btn nav-btn"
-
+                class="pg-btn pg-nav"
+                title="Last page"
                 [disabled]="!hasNext"
-
                 (click)="goToPage(totalPages)">
-
                 <i class="fas fa-angles-right"></i>
-
             </button>
 
-
         </div>
-
 
     </div>
 
+    <!-- RIGHT : rows per page -->
 
+    <div class="pg-right">
 
+        <span class="pg-rows">Rows</span>
 
+        <div class="pg-sizes">
 
-    <!-- =====================================================
-         RIGHT : PAGE SIZE
-    ====================================================== -->
+            @if (autoRows > 0)
+            {
+                <button
+                    type="button"
+                    [class.pg-on]="autoActive"
+                    title="As many as fit the screen"
+                    (click)="choose(0)">
+                    Auto ({{ autoRows }})
+                </button>
+            }
 
-
-    <div class="pagination-right">
-
-
-        <div class="page-size-container">
-
-
-            <span class="page-size-label">
-
-                Rows per page
-
-            </span>
-
-
-
-            <select
-
-                [value]="autoActive && autoRows > 0 ? 'auto' : pageSize"
-
-                (change)="changePageSize($event)">
-
-                @if (autoRows > 0)
-                {
-
-                    <option
-                        value="auto"
-                        [selected]="autoActive">
-
-                        Auto ({{ autoRows }})
-
-                    </option>
-
-                }
-
-                @for (size of pageSizeOptions; track size)
-                {
-
-                    <option
-                        [value]="size">
-
-                        {{ size }}
-
-                    </option>
-
-                }
-
-            </select>
-
+            @for (size of sizes; track size)
+            {
+                <button
+                    type="button"
+                    [class.pg-on]="!autoActive && size === pageSize"
+                    (click)="choose(size)">
+                    {{ size }}
+                </button>
+            }
 
         </div>
 
-
     </div>
 
-
-</div>
+</div>

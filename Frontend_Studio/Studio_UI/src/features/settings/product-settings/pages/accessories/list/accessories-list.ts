@@ -157,6 +157,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -264,6 +270,8 @@ from '../../../../../../shared/components/controls/search-dropdown/search-dropdo
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -792,6 +800,7 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
 
@@ -800,7 +809,7 @@ implements OnInit, OnDestroy
             type:'serial',
 
             // Room for three-digit row numbers (131 …)
-            width:'64px',
+            width:'56px',
 
             align:'center'
         },
@@ -810,7 +819,7 @@ implements OnInit, OnDestroy
 
             field:'ProductCode',
 
-            width:'170px',
+            width:'140px',
 
             align:'center'
         },
@@ -820,7 +829,7 @@ implements OnInit, OnDestroy
 
             field:'PartNumber',
 
-            width:'200px',
+            width:'160px',
 
             align:'left'
         },
@@ -830,7 +839,7 @@ implements OnInit, OnDestroy
 
             field:'AccessoryName',
 
-            width:'190px',
+            width:'210px',
 
             align:'left'
         },
@@ -840,7 +849,7 @@ implements OnInit, OnDestroy
 
             field:'SubCategoryName',
 
-            width:'240px',
+            width:'180px',
 
             // "shared" pill : fits other models / linked here
             flagField:'IsShared',
@@ -857,7 +866,7 @@ implements OnInit, OnDestroy
 
             field:'AccessoryUseText',
 
-            width:'120px',
+            width:'130px',
 
             sortable:false,
 
@@ -869,7 +878,7 @@ implements OnInit, OnDestroy
 
             field:'Unit',
 
-            width:'80px',
+            width:'90px',
 
             align:'center'
         },
@@ -891,6 +900,7 @@ implements OnInit, OnDestroy
             header:'Locations',
 
             field:'LocationsText',
+            width:'180px',
             sortable:false,
 
             align:'left'
@@ -901,7 +911,7 @@ implements OnInit, OnDestroy
 
             field:'ReorderLevel',
 
-            width:'100px',
+            width:'90px',
 
             align:'center'
         },
@@ -911,7 +921,7 @@ implements OnInit, OnDestroy
 
             field:'RedLevel',
 
-            width:'80px',
+            width:'90px',
 
             align:'center'
         },
@@ -921,7 +931,7 @@ implements OnInit, OnDestroy
 
             field:'MaxStockLevel',
 
-            width:'80px',
+            width:'90px',
 
             align:'center'
         },
@@ -956,7 +966,7 @@ implements OnInit, OnDestroy
 
             field:'IsActive',
 
-            width:'150px',
+            width:'130px',
 
             type:'status',
 
@@ -970,7 +980,7 @@ implements OnInit, OnDestroy
 
             type:'actions',
 
-            width:'150px',
+            width:'140px',
 
             align:'center'
         }

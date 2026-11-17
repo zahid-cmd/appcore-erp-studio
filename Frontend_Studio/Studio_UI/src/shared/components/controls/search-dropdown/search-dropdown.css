@@ -775,3 +775,59 @@
     margin:
         0 10px 0 8px;
 }
+
+
+/* =====================================================
+   TWO-LINE ROWS (2026-11-16)
+   the name on top (wraps up to two lines, never cut
+   short), the code under it in small grey letters; the
+   list may be wider than the box (panelMinWidth)
+===================================================== */
+
+.dropdown-option
+{
+    min-height: 40px;
+    padding: 6px 10px;
+}
+
+.dropdown-option-label
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: visible;
+    white-space: normal;
+    line-height: 1.35;
+}
+
+.dropdown-option-name
+{
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.dropdown-option-code
+{
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dropdown-option.selected .dropdown-option-code
+{
+    color: #3b82f6;
+}
+
+.dropdown-options
+{
+    max-height: 320px;
+}
+

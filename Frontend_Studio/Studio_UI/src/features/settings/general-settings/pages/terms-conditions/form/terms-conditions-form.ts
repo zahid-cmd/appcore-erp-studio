@@ -28,7 +28,7 @@ import { PageHeaderComponent } from '../../../../../../shared/components/layout/
 import { PageCanvasComponent } from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { TextboxComponent } from '../../../../../../shared/components/controls/textbox/textbox';
-import { DropdownComponent } from '../../../../../../shared/components/controls/dropdown/dropdown';
+import { ToggleSwitchComponent } from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
 import { SearchDropdownComponent } from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
@@ -76,7 +76,7 @@ from '../../../services/terms-conditions.service';
         PageCanvasComponent,
         CommandCenterComponent,
         TextboxComponent,
-        DropdownComponent,
+        ToggleSwitchComponent,
         SearchDropdownComponent,
         ToastComponent,
         ConfirmDialogComponent,

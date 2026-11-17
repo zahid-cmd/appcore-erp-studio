@@ -8,9 +8,12 @@
 
         title="Financial Years"
 
-        subtitle="Manage financial years"
+        subtitle="The accounting years : dates, the current year and which years are closed"
 
-        icon="fas fa-calendar-days">
+        icon="fas fa-calendar-days"
+
+
+        art="financial-years">
 
         <div pageHeaderCenter>
 
@@ -162,6 +165,13 @@
 
                 [error]="loadFailed"
 
+
+                emptyArt="financial-years"
+
+                emptyTitle="No financial year yet"
+
+                emptySubtitle="Add the first financial year : vouchers, stock and reports are dated within it."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -203,24 +213,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="fyr-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="fyr-summary-item">
-                    <span class="fyr-summary-label">{{ item.label }}</span>
-                    <b
-                        class="fyr-summary-value"
-                        [class.fyr-ok]="item.tone === 'ok'"
-                        [class.fyr-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="fyr-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="years"
+            art="financial-years"
+            note="All records">
+        </app-summary-line>
     }
 
 

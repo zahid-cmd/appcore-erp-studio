@@ -48,6 +48,19 @@ public class UpdateDepartmentDto
 
 
     //===========================================================
+    // The wing the department belongs to (null : none). Hand-added
+    // 2026-11-16 : the technicians of Workshop Configuration are the
+    // employees of the departments under the Service Center wing.
+    //===========================================================
+
+    public long? WingId
+    {
+        get;
+        set;
+    }
+
+
+    //===========================================================
     // Configuration
     //===========================================================
 

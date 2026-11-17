@@ -116,6 +116,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -198,6 +204,8 @@ from '../../../services/membership-status.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -469,78 +477,79 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Membership No',
             field:'MembershipNo',
-            width:'120px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Card',
             field:'CardName',
-            width:'130px',
+            width:'160px',
             align:'left'
         },
         {
             header:'Customer',
             field:'CustomerName',
-            width:'230px',
+            width:'160px',
             align:'left'
         },
         {
             header:'Motor Bike',
             field:'MotorBikeName',
-            width:'190px',
+            width:'160px',
             align:'left'
         },
         {
             header:'Chassis No',
             field:'ChassisNo',
-            width:'150px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Start',
             field:'StartDisplay',
-            width:'105px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Expiry',
             field:'ExpiryDisplay',
-            width:'105px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Fee',
             field:'FeeDisplay',
-            width:'100px',
-            align:'right'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Free Services',
             field:'FreeServiceDisplay',
-            width:'120px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Status',
             field:'Status',
-            width:'100px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -1702,5 +1711,42 @@ implements OnInit, OnDestroy
             this.memberships;
 
         this.updatePagination();
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.summaryCount('pending'))),
+            String(this.summaryText(this.summaryCount('active'))),
+            String(this.summaryText(this.summaryCount('expired')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Pending', value:v[1], tone:'' },
+                    { label:'Active', value:v[2], tone:'ok' },
+                    { label:'Expired', value:v[3], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

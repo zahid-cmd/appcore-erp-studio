@@ -79,6 +79,12 @@ import
     ListTableColumn
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
 import
 {
     PaginationComponent
@@ -140,6 +146,8 @@ from '../../../services/designation.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ToastComponent
     ],
@@ -267,35 +275,36 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Code',
             field:'DesignationCode',
-            width:'100px',
+            width:'140px',
             align:'center'
         },
         {
             header:'Designation Name',
             field:'DesignationName',
-            width:'320px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Short Name',
             field:'DesignationShortName',
-            width:'160px',
-            align:'center'
+            width:'150px',
+            align:'left'
         },
         {
             header:'Status',
             field:'IsActive',
-            width:'110px',
+            width:'130px',
             align:'center',
             type:'status'
         },
@@ -303,7 +312,7 @@ implements OnInit
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'120px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -1140,5 +1149,34 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const key = String(this.summaryText(this.summaryTotal)) + '|' + String(this.summaryText(this.summaryActive)) + '|' + String(this.summaryText(this.summaryTotal - this.summaryActive));
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:this.summaryText(this.summaryTotal), tone:'' },
+                    { label:'Active', value:this.summaryText(this.summaryActive), tone:'ok' },
+                    { label:'Inactive', value:this.summaryText(this.summaryTotal - this.summaryActive), tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

@@ -77,6 +77,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -183,6 +189,8 @@ type ProductPricingRow =
         PaginationComponent,
         ToastComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -320,15 +328,16 @@ export class ProductPricingList
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Price Change No', field:'PricingNo', width:'190px', align:'center', sortable:true },
-        { header:'Effective Date', field:'DateText', width:'140px', align:'center', sortable:true },
-        { header:'Product Type', field:'TypeText', width:'200px', align:'left', sortable:true },
-        { header:'Products', field:'ProductCount', width:'100px', align:'right', sortable:true },
-        { header:'Batches', field:'BatchCount', width:'100px', align:'right', sortable:true },
-        { header:'Remarks', field:'Remarks', align:'left', sortable:true },
-        { header:'Status', field:'Status', type:'status', width:'140px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'150px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Price Change No', field:'PricingNo', width:'130px', align:'right', sortable:true },
+        { header:'Effective Date', field:'DateText', width:'130px', align:'center', sortable:true },
+        { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
+        { header:'Products', field:'ProductCount', width:'160px', align:'left', sortable:true },
+        { header:'Batches', field:'BatchCount', width:'160px', align:'left', sortable:true },
+        { header:'Remarks', field:'Remarks', width:'260px', align:'left', sortable:true },
+        { header:'Status', field:'Status', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     //===========================================================
@@ -819,6 +828,43 @@ export class ProductPricingList
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.summaryCount('draft'))),
+            String(this.summaryText(this.summaryCount('posted'))),
+            String(this.summaryText(this.summaryCount('cancelled')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Draft', value:v[1], tone:'' },
+                    { label:'Posted', value:v[2], tone:'ok' },
+                    { label:'Cancelled', value:v[3], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }
 

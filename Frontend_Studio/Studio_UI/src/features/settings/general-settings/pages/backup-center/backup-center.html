@@ -7,7 +7,8 @@
     <app-page-header
         title="Backup Center"
         subtitle="Your data is backed up every night"
-        icon="fa-solid fa-shield-halved">
+        icon="fa-solid fa-shield-halved"
+        art="backup">
 
         <div pageHeaderRight>
 
@@ -88,71 +89,23 @@
 
         <app-page-canvas [config]="canvasConfig">
 
-            <div canvasBody class="bc-canvas-body">
+            <div canvasBody>
 
-                @if (loading)
-                {
-                    <div class="bc-center">
-                        <app-orbit-loader title="Loading" message="Reading the backups..." size="medium" [overlay]="false"></app-orbit-loader>
-                    </div>
-                }
-                @else if (backups.length === 0)
-                {
-                    <div class="bc-center bc-empty">
-                        <i class="fa-regular fa-folder-open"></i>
-                        <span>No backup yet.</span>
-                    </div>
-                }
-                @else
-                {
-                    <div class="bc-table-wrap appcore-scrollbar">
-                        <table class="bc-table">
-                            <thead>
-                                <tr>
-                                    <th class="bc-c bc-sl">#</th>
-                                    <th>Taken</th>
-                                    <th>Kind</th>
-                                    <th>Note</th>
-                                    <th class="bc-r">Size</th>
-                                    <th>By</th>
-                                    <th class="bc-c">Copies</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (item of pagedBackups; track item.FileName; let i = $index)
-                                {
-                                    <tr>
-                                        <td class="bc-c bc-sl">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
-                                        <td class="bc-main">{{ formatDateTime(item.TakenDate) }}</td>
-                                        <td>
-                                            <span class="bc-kind" [class.bc-kind-auto]="item.Kind === 'Nightly' || item.Kind === 'Weekly' || item.Kind === 'Monthly'">
-                                                {{ item.Kind }}
-                                            </span>
-                                        </td>
-                                        <td class="bc-sub">{{ item.Note || '-' }}</td>
-                                        <td class="bc-r bc-mono">{{ formatBytes(item.SizeBytes) }}</td>
-                                        <td>{{ item.TakenBy || '-' }}</td>
-                                        <td class="bc-c">
-                                            @if (item.OnThisPc && item.OnOtherPc)
-                                            {
-                                                <span class="bc-ok"><i class="fa-solid fa-circle-check"></i> 2 PCs</span>
-                                            }
-                                            @else
-                                            {
-                                                <span class="bc-warn"><i class="fa-solid fa-circle-exclamation"></i> 1 PC</span>
-                                            }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    emptyArt="backup"
+                    emptyTitle="No backup yet"
+                    emptySubtitle="The first nightly backup appears here; take one now with Backup.">
+                </app-list-table>
 
             </div>
 
             <app-pagination
                 canvasFooter
+                noun="backups"
                 [totalRecords]="backups.length"
                 [currentPage]="currentPage"
                 [pageSize]="pageSize"
@@ -161,6 +114,21 @@
             </app-pagination>
 
         </app-page-canvas>
+
+        <!-- =================================================
+             SUMMARY
+        ================================================== -->
+
+        @if (summaryItems.length > 0)
+        {
+            <app-summary-line
+                [items]="summaryItems"
+                noun="backups"
+                art="backup"
+                note="Last backups"
+                noteDetail="Read only : restores are done by AppCore support">
+            </app-summary-line>
+        }
     }
 
     <!-- =====================================================

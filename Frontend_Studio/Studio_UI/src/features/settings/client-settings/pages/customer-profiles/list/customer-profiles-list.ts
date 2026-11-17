@@ -113,6 +113,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -195,6 +201,8 @@ from '../../../services/customer-profiles.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -454,17 +462,18 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Customer Code',
             field:'CustomerCode',
-            width:'170px',
+            width:'140px',
             align:'center',
             // Corporate / Institution (Inbound)
             flagField:'IsCorporate',
@@ -474,7 +483,7 @@ implements OnInit, OnDestroy
         {
             header:'Customer Name',
             field:'CustomerName',
-            width:'220px',
+            width:'210px',
             align:'left',
             flagField:'IsWalkIn',
             flagText:'Walk-in',
@@ -483,34 +492,34 @@ implements OnInit, OnDestroy
         {
             header:'Phone 1',
             field:'Phone1',
-            width:'130px',
+            width:'150px',
             align:'center'
         },
         {
             header:'Location',
             field:'LocationName',
-            width:'200px',
+            width:'160px',
             align:'left'
         },
         {
             header:'Receivable Ledger',
             field:'ReceivableLedgerCode',
-            width:'190px',
-            align:'center'
+            width:'160px',
+            align:'left'
         },
         {
             header:'Status',
 
             field:'IsActive',
             type:'status',
-            width:'100px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -1632,4 +1641,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

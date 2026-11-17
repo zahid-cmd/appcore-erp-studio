@@ -1,0 +1,903 @@
+/* =====================================================================
+   STATEMENT PRESENTATION (2026-11-16, owner approved the mockup)
+   One corporate look for every financial statement page :
+     - the filter is a bar over the statement (not a left panel), so
+       the statement gets the full width
+     - the head card is a letterhead : serif title, navy rule, the key
+       figures as tiles
+     - the statement table reads like a printed report : navy header,
+       copper section labels, totals with a double rule
+   Scoped to .lr-page.tb-page (statement pages only; the accounting
+   registers that share ledger-registers.css are not touched).
+   Imported LAST by each statement page's stylesheet.
+   ===================================================================== */
+
+
+/* ---------------------------------------------------------------
+   Page frame : filter bar on top, the statement under it
+   --------------------------------------------------------------- */
+
+.lr-page.tb-page .lr-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lr-page.tb-page .lr-canvas
+{
+    flex: 1 1 0;
+    min-height: 0;
+    border-radius: 16px;
+}
+
+
+/* ---------------------------------------------------------------
+   Filter bar
+   --------------------------------------------------------------- */
+
+.lr-page.tb-page .lr-filter
+{
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 16px;
+    padding: 10px 16px;
+    border-radius: 16px;
+    overflow: visible;
+}
+
+/* the panel title and the long explanations do not fit a bar */
+.lr-page.tb-page .lr-filter-head,
+.lr-page.tb-page .lr-filter .lr-hint,
+.lr-page.tb-page .lr-filter .tb-rules,
+.lr-page.tb-page .lr-filter .lr-sep,
+.lr-page.tb-page .tb-opts > b
+{
+    display: none;
+}
+
+.lr-page.tb-page .lr-filter-body
+{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 16px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    overflow: visible;
+}
+
+.lr-page.tb-page .lr-filter .lr-field
+{
+    flex: 0 1 auto;
+    min-width: 170px;
+    gap: 6px;
+}
+
+.lr-page.tb-page .lr-filter .lr-field > label
+{
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+/* dates compact, dropdowns a steady width */
+.lr-page.tb-page .lr-filter .lr-date
+{
+    width: 160px;
+}
+
+.lr-page.tb-page .lr-filter .lr-dd
+{
+    /* the dropdown's own flex-basis is its width : inside the column
+       of a field it would become its height, so it is reset here */
+    flex: 0 0 auto;
+    width: 230px;
+    --dropdown-width: 230px;
+}
+
+/* compare / basis choices : one segmented row */
+.lr-page.tb-page .lr-filter .fa-choices
+{
+    flex-direction: row;
+    gap: 2px;
+    padding: 3px;
+    border-color: #e3e9f2;
+    border-radius: 11px;
+    background: #f1f5fb;
+}
+
+.lr-page.tb-page .lr-filter .fa-choice
+{
+    flex: 0 0 auto;
+    width: auto;
+    justify-content: center;
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.lr-page.tb-page .lr-filter .fa-choice i
+{
+    display: none;
+}
+
+.lr-page.tb-page .lr-filter .fa-choice.on
+{
+    border-color: transparent;
+    background: #ffffff;
+    color: #16307a;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .12);
+}
+
+/* display switches : inline, after the fields */
+.lr-page.tb-page .tb-opts
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin: 0;
+    padding: 0 0 8px;
+    border: 0;
+    background: transparent;
+}
+
+.lr-page.tb-page .tb-opts .lr-switch
+{
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.lr-page.tb-page .tb-opts .lr-switch em
+{
+    display: none;
+}
+
+/* foot : the "how the figures work" note shrinks to its icon (full
+   text on hover) and Submit sits at the end of the bar */
+.lr-page.tb-page .lr-filter-foot
+{
+    flex: 0 0 auto;
+    margin-left: auto;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.lr-page.tb-page .lr-filter-foot .fa-foot-note
+{
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafd;
+    cursor: help;
+}
+
+.lr-page.tb-page .lr-filter-foot .fa-foot-note i
+{
+    margin: 0;
+    font-size: 14px;
+}
+
+.lr-page.tb-page .lr-filter-foot .fa-foot-note span
+{
+    display: none;
+}
+
+.lr-page.tb-page .lr-filter-foot .lr-btn-primary
+{
+    height: 38px;
+    padding: 0 24px;
+    border-color: #b8692f;
+    border-radius: 10px;
+    background: #b8692f;
+    font-weight: 700;
+}
+
+.lr-page.tb-page .lr-filter-foot .lr-btn-primary:hover:not(:disabled)
+{
+    background: #9c5824;
+}
+
+/* filter messages (error / note) take their own row */
+.lr-page.tb-page .lr-filter .lr-note
+{
+    flex: 1 1 100%;
+    margin: 0;
+}
+
+
+/* ---------------------------------------------------------------
+   Switch bar (view level etc.)
+   --------------------------------------------------------------- */
+
+.lr-page.tb-page .lr-switchbar
+{
+    min-height: 48px;
+    background: #ffffff;
+}
+
+.lr-page.tb-page .lr-seg button.on
+{
+    background: #16307a;
+}
+
+
+/* ---------------------------------------------------------------
+   Letterhead (the head card)
+   --------------------------------------------------------------- */
+
+.lr-page.tb-page .lr-view
+{
+    gap: 14px;
+    padding: 16px;
+    background: #f1f4fa;
+}
+
+.lr-page.tb-page .lr-head
+{
+    gap: 18px;
+    padding: 16px 22px;
+    border: 1px solid #e3e9f3;
+    border-bottom: 3px solid #16307a;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #f7f9fe 0%, #ffffff 100%);
+    box-shadow: 0 16px 34px -28px rgba(22, 48, 122, .55);
+}
+
+.lr-page.tb-page .lr-head-title b
+{
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-size: 23px;
+    font-weight: 700;
+    color: #0b1d52;
+    letter-spacing: -.01em;
+}
+
+.lr-page.tb-page .lr-head-info::before
+{
+    content: 'Financial statement';
+    color: #b8692f;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.lr-page.tb-page .lr-head-sub
+{
+    color: #475569;
+    font-size: 13px;
+}
+
+.lr-page.tb-page .lr-pill
+{
+    background: #e8eefc;
+    color: #16307a;
+}
+
+/* key figures : tiles */
+.lr-page.tb-page .lr-figs
+{
+    gap: 10px;
+}
+
+.lr-page.tb-page .lr-figs > div
+{
+    min-width: 150px;
+    gap: 4px;
+    padding: 9px 14px;
+    border-color: #e3e9f3;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.lr-page.tb-page .lr-figs span
+{
+    color: #475569;
+    font-size: 11px;
+    letter-spacing: .06em;
+}
+
+.lr-page.tb-page .lr-figs b
+{
+    color: #0b1d52;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.lr-page.tb-page .lr-figs .lr-fig-main
+{
+    border-color: #16307a;
+    background: #16307a;
+}
+
+.lr-page.tb-page .lr-figs .lr-fig-main span
+{
+    color: #c7d2f0;
+}
+
+.lr-page.tb-page .lr-figs .lr-fig-main b
+{
+    color: #ffffff;
+}
+
+.lr-page.tb-page .lr-head-period b
+{
+    color: #0b1d52;
+    font-size: 15px;
+}
+
+@media (max-width: 1500px)
+{
+    .lr-page.tb-page .lr-head
+    {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .lr-page.tb-page .lr-figs
+    {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        flex-wrap: wrap;
+    }
+
+    .lr-page.tb-page .lr-figs > div
+    {
+        flex: 1 1 150px;
+    }
+}
+
+
+/* ---------------------------------------------------------------
+   The statement : a printed report
+   --------------------------------------------------------------- */
+
+.lr-page.tb-page .tb-tcard,
+.lr-page.tb-page .fa-tcard,
+.lr-page.tb-page .lr-tcard
+{
+    border-radius: 14px;
+    box-shadow: 0 18px 40px -30px rgba(22, 48, 122, .5);
+}
+
+.lr-page.tb-page .tb-table thead th,
+.lr-page.tb-page .lr-table thead th
+{
+    background: #f4f7fc;
+    color: #334155;
+    border-bottom: 2px solid #16307a;
+    letter-spacing: .07em;
+}
+
+.lr-page.tb-page .tb-table thead th.tb-grp
+{
+    color: #16307a;
+    box-shadow: inset 0 -2px 0 #b8692f;
+}
+
+/* section rows (ASSETS / EQUITY AND LIABILITIES ...) */
+.lr-page.tb-page .lr-table tbody tr.fa-section td
+{
+    height: 44px;
+    border-top: 0;
+    background: #ffffff;
+    color: #b8692f;
+    font-weight: 800;
+}
+
+.lr-page.tb-page .lr-table tbody tr.fa-section .lr-clip
+{
+    font-size: 12.5px;
+    letter-spacing: .16em;
+}
+
+/* first level under a section : the group heading */
+.lr-page.tb-page .lr-table tbody tr.tb-l1 td
+{
+    border-top: 1px solid #e8eef8;
+    background: #fbfcff;
+    color: #0b1d52;
+    font-weight: 700;
+}
+
+.lr-page.tb-page .lr-table tbody tr.tb-row td
+{
+    border-bottom-color: #f1f4f9;
+}
+
+/* results (Gross Profit, Net Profit, Total ...) : double rule */
+.lr-page.tb-page .lr-table tbody tr.fa-result td
+{
+    height: 48px;
+    border-top: 1px solid #94a3b8;
+    border-bottom: 3px double #0b1d52;
+    background: #eef2fb;
+    color: #0b1d52;
+    letter-spacing: .02em;
+}
+
+/* the totals bar under the table */
+.lr-page.tb-page .tb-foot
+{
+    background: #eef2fb;
+    box-shadow: inset 0 2px 0 #16307a, 0 -8px 16px -12px rgba(15, 42, 90, .3);
+}
+
+.lr-page.tb-page .tb-foot .lr-table tr.lr-close td
+{
+    color: #0b1d52;
+    font-weight: 800;
+}
+
+.lr-page.tb-page .tb-foot .lr-table tr.lr-close td:first-child
+{
+    color: #b8692f;
+}
+
+.lr-page.tb-page .tb-foot .lr-table tr.lr-close td.r
+{
+    text-decoration: underline double #0b1d52;
+    text-underline-offset: 5px;
+}
+
+/* side panels (business lines, insights) : the same card look */
+.lr-page.tb-page .fa-lines,
+.lr-page.tb-page .fs-insights
+{
+    border-radius: 14px;
+}
+
+.lr-page.tb-page .fa-lines-head
+{
+    background: #ffffff;
+    box-shadow: inset 0 -2px 0 #16307a;
+}
+
+.lr-page.tb-page .fa-lines-foot
+{
+    background: #0b1d52;
+    box-shadow: none;
+}
+
+.lr-page.tb-page .fa-lines-foot span
+{
+    color: #f3c79b;
+}
+
+.lr-page.tb-page .fa-lines-foot b
+{
+    color: #ffffff;
+}
+
+.lr-page.tb-page .fa-lines-foot em
+{
+    color: #c7d2f0;
+}
+
+
+/* ---------------------------------------------------------------
+   Insights panel (Balance Sheet) : composition and key ratios
+   --------------------------------------------------------------- */
+
+.fs-insights
+{
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 340px;
+    gap: 14px;
+    min-height: 0;
+    padding: 16px 18px;
+    border: 1px solid #e3e9f3;
+    background: #ffffff;
+    overflow: auto;
+    box-shadow: 0 18px 40px -30px rgba(22, 48, 122, .5);
+}
+
+.fs-ins-title
+{
+    margin: 0;
+    color: #0b1d52;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.fs-mix
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fs-mix > span
+{
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fs-bar
+{
+    display: flex;
+    height: 14px;
+    border-radius: 999px;
+    background: #eef2f8;
+    overflow: hidden;
+}
+
+.fs-bar > i
+{
+    display: block;
+    height: 100%;
+}
+
+.fs-leg
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: #334155;
+    font-size: 13px;
+}
+
+.fs-leg > i
+{
+    flex: 0 0 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.fs-leg > span
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fs-leg > b
+{
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.fs-ratios
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.fs-ratio
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 11px 12px;
+    border: 1px solid #e8eef8;
+    border-radius: 12px;
+    background: #f7f9fe;
+}
+
+.fs-ratio > span
+{
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.fs-ratio > b
+{
+    color: #0b1d52;
+    font-size: 19px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.fs-ratio > em
+{
+    color: #64748b;
+    font-size: 11.5px;
+    font-style: normal;
+}
+
+.fs-result
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #0b1d52;
+    color: #ffffff;
+}
+
+.fs-result > span
+{
+    color: #f3c79b;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.fs-result > b
+{
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.fs-result.is-loss > b
+{
+    color: #fca5a5;
+}
+
+.fs-result > em
+{
+    color: #c7d2f0;
+    font-size: 12.5px;
+    font-style: normal;
+}
+
+@media (max-width: 1280px)
+{
+    .fa-main.has-insights
+    {
+        flex-direction: column;
+        flex: 0 0 auto;
+    }
+
+    .fa-main.has-insights > .fa-tcard
+    {
+        flex: 0 0 auto;
+        max-height: 70vh;
+    }
+
+    .fs-insights
+    {
+        flex: 0 0 auto;
+    }
+}
+
+/* ---------------------------------------------------------------
+   Owner 2026-11-16 (2) : the level buttons (Class / Group / Sub
+   Group / Ledger) sit at the right of the switch bar; the figure
+   tiles have an icon on the left and their label and amount
+   centred (owner : the figure centre aligned)
+   --------------------------------------------------------------- */
+
+.lr-page.tb-page .lr-switchbar .tb-levels
+{
+    margin-left: auto;
+}
+
+.lr-page.tb-page .lr-figs > div
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 2px;
+    min-width: 190px;
+    padding: 10px 16px 10px 12px;
+    text-align: center;
+}
+
+.lr-page.tb-page .lr-figs > div > span,
+.lr-page.tb-page .lr-figs > div > b
+{
+    grid-column: 2;
+    justify-self: center;
+}
+
+.lr-page.tb-page .lr-figs > div::before
+{
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: #e8eefc;
+    color: #16307a;
+    font-family: 'Font Awesome 6 Free';
+    font-size: 16px;
+    font-weight: 900;
+    /* default : a figure */
+    content: '\e473';
+}
+
+/* first tile (Dr / Assets / Receipts ...) and second (Cr / Liabilities
+   & Equity / Payments ...) */
+.lr-page.tb-page .lr-figs > div:nth-child(1)::before
+{
+    content: '\f0ab';
+}
+
+.lr-page.tb-page .lr-figs > div:nth-child(2)::before
+{
+    content: '\f0aa';
+    background: #fdeee3;
+    color: #9a4a12;
+}
+
+/* the balance check */
+.lr-page.tb-page .lr-figs > div.tb-check::before
+{
+    content: '\f24e';
+}
+
+.lr-page.tb-page .lr-figs > div.tb-check.is-ok::before
+{
+    background: #e7f6ee;
+    color: #146c3c;
+}
+
+.lr-page.tb-page .lr-figs > div.tb-check.is-bad::before
+{
+    background: #fdecec;
+    color: #b42318;
+}
+
+.lr-page.tb-page .lr-figs .lr-fig-main::before
+{
+    background: rgba(255, 255, 255, .14);
+    color: #ffffff;
+}
+
+/* ---------------------------------------------------------------
+   Insights panel : compact, fits the height without a scroll
+   (owner 2026-11-16) : legends in two columns, thinner bars,
+   one-line ratio hints, smaller result card
+   --------------------------------------------------------------- */
+
+.lr-page.tb-page .fs-insights
+{
+    flex: 0 0 360px;
+    gap: 10px;
+    padding: 12px 14px;
+}
+
+.lr-page.tb-page .fs-ins-title
+{
+    font-size: 14px;
+}
+
+.lr-page.tb-page .fs-mix
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 14px;
+}
+
+.lr-page.tb-page .fs-mix > span,
+.lr-page.tb-page .fs-mix > .fs-bar
+{
+    grid-column: 1 / -1;
+}
+
+.lr-page.tb-page .fs-mix > .fs-bar
+{
+    height: 10px;
+    margin: 2px 0 2px;
+}
+
+.lr-page.tb-page .fs-leg
+{
+    gap: 6px;
+    font-size: 12px;
+}
+
+.lr-page.tb-page .fs-leg > i
+{
+    flex: 0 0 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+.lr-page.tb-page .fs-ratios
+{
+    gap: 8px;
+}
+
+.lr-page.tb-page .fs-ratio
+{
+    gap: 1px;
+    padding: 8px 10px;
+    border-radius: 10px;
+}
+
+.lr-page.tb-page .fs-ratio > span
+{
+    font-size: 11.5px;
+}
+
+.lr-page.tb-page .fs-ratio > b
+{
+    font-size: 17px;
+}
+
+.lr-page.tb-page .fs-ratio > em
+{
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lr-page.tb-page .fs-result
+{
+    gap: 2px;
+    margin-top: auto;
+    padding: 10px 14px;
+    border-radius: 12px;
+}
+
+.lr-page.tb-page .fs-result > span
+{
+    font-size: 10.5px;
+}
+
+.lr-page.tb-page .fs-result > b
+{
+    font-size: 18px;
+}
+
+.lr-page.tb-page .fs-result > em
+{
+    font-size: 11.5px;
+}
+
+/* statement and side panel : the same height (a card keeps a bottom
+   margin unless it is the last child, which made the statement card
+   14px shorter than the panel beside it) */
+.lr-page.tb-page .fa-main > .lr-card
+{
+    margin: 0;
+}
+
+.lr-page.tb-page .fa-main
+{
+    align-items: stretch;
+}
+
+/* Balance Sheet Net assets view : "Presented by" caption (no figure) */
+.lr-page.tb-page .lr-table tbody tr.fa-caption td
+{
+    height: 40px;
+    padding-top: 14px;
+    border-top: 0;
+    background: #ffffff;
+    color: #0b1d52;
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.lr-page.tb-page .lr-table tbody tr.fa-caption:hover td
+{
+    background: #ffffff;
+}

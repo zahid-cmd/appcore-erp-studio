@@ -39,6 +39,12 @@ import { SearchDropdownComponent } from '../../../../../../shared/components/con
 import { SearchBoxComponent } from '../../../../../../shared/components/utilities/search-box/search-box';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn } from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
@@ -122,6 +128,8 @@ const STATUS_COLORS:
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ToastComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
@@ -219,15 +227,16 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Code', field:'Code', width:'100px', align:'center' },
-        { header:'Employee', field:'EmployeeText', width:'260px', align:'left' },
-        { header:'Leave', field:'LeaveText', width:'190px', align:'left' },
-        { header:'From', field:'FromText', width:'120px', align:'center' },
-        { header:'To', field:'ToText', width:'120px', align:'center' },
-        { header:'Days', field:'DaysText', width:'70px', align:'center' },
-        { header:'Status', field:'Status', width:'130px', align:'left', dotField:'StatusColor' },
-        { header:'Actions', field:'actions', type:'actions', width:'120px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Code', field:'Code', width:'140px', align:'center' },
+        { header:'Employee', field:'EmployeeText', width:'160px', align:'left' },
+        { header:'Leave', field:'LeaveText', width:'160px', align:'left' },
+        { header:'From', field:'FromText', width:'160px', align:'left' },
+        { header:'To', field:'ToText', width:'160px', align:'left' },
+        { header:'Days', field:'DaysText', width:'160px', align:'left' },
+        { header:'Status', field:'Status', width:'160px', align:'left', dotField:'StatusColor' },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     ngOnInit():

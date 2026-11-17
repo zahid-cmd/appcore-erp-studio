@@ -82,6 +82,18 @@ public class DepartmentRepository : IDepartmentRepository
                         DepartmentShortName =
                             x.DepartmentShortName,
 
+                        WingId =
+                            x.WingId,
+
+                        WingName =
+                            _context
+                                .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Wings>()
+                                .Where(w => w.WingId == x.WingId)
+                                .Select(w => w.WingName)
+                                .FirstOrDefault()
+                            ??
+                            string.Empty,
+
 
                         //===================================================
                         // Configuration
@@ -218,6 +230,22 @@ public class DepartmentRepository : IDepartmentRepository
 
 
     //===========================================================
+    // The wings a department can belong to (active ones)
+    //===========================================================
+
+    public async Task<List<DepartmentWingDto>> GetWingsAsync()
+    {
+        return await _context
+            .Set<global::AppCore.Domain.Entities.Settings.GeneralSettings.Wings>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.IsActive)
+            .OrderBy(x => x.WingCode)
+            .Select(x => new DepartmentWingDto { WingId = x.WingId, WingCode = x.WingCode, WingName = x.WingName })
+            .ToListAsync();
+    }
+
+
+    //===========================================================
     // Get Defaults
     //===========================================================
 
@@ -279,6 +307,9 @@ public class DepartmentRepository : IDepartmentRepository
                 //=======================================================
                 // Configuration
                 //=======================================================
+
+                WingId =
+                    dto.WingId > 0 ? dto.WingId : null,
 
                 Remarks =
                     dto.Remarks?.Trim()
@@ -416,6 +447,9 @@ public class DepartmentRepository : IDepartmentRepository
         //===========================================================
         // Configuration
         //===========================================================
+
+        entity.WingId =
+            dto.WingId > 0 ? dto.WingId : null;
 
         entity.Remarks =
             dto.Remarks?.Trim()

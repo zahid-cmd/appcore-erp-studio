@@ -470,6 +470,83 @@ export function buildReceiptPayment
 
 
 //===============================================================
+// Receipt & Payment Account (vertical : one column)
+//
+//   Opening balances
+//   Add : Receipts            (Add : Contra)
+//   Total funds available
+//   Less : Payments           (Less : Contra)
+//   Closing balances          (cash and bank ledgers under it)
+//===============================================================
+
+export type RpLayout =
+    'vertical' | 'tform';
+
+export interface RpRow
+{
+    key:string;
+    kind:'section' | 'node' | 'result';
+    level:number;
+    code:string;
+    name:string;
+    amount:number;
+    item?:RpItem;
+}
+
+const RP_VERTICAL_NAMES:
+    Record<string, string> =
+{
+    'r|open':'Opening balances',
+    'r|in':'Add : Receipts',
+    'r|contra':'Add : Contra (transfers between cash and bank)',
+    'p|out':'Less : Payments',
+    'p|contra':'Less : Contra (transfers between cash and bank)',
+    'p|close':'Closing balances'
+};
+
+export function receiptPaymentVertical
+(
+    sides:
+        ReceiptPayment
+):
+    RpRow[]
+{
+    const row =
+        (item: RpItem): RpRow =>
+            item.strong
+                ? {
+                    key:item.key,
+                    kind:item.key === 'p|close' ? 'result' : 'section',
+                    level:0,
+                    code:'',
+                    name:RP_VERTICAL_NAMES[item.key] ?? item.name,
+                    amount:item.amount
+                }
+                : {
+                    key:item.key,
+                    kind:'node',
+                    level:item.cash ? 2 : item.level,
+                    code:item.code,
+                    name:item.name,
+                    amount:item.amount,
+                    item
+                };
+
+    return [
+        ...sides.receipts.map(row),
+        {
+            key:'v|available',
+            kind:'result',
+            level:0,
+            code:'',
+            name:'Total funds available',
+            amount:sides.receiptsTotal
+        },
+        ...sides.payments.map(row)
+    ];
+}
+
+//===============================================================
 // Cash Flow Statement (direct method)
 //===============================================================
 
@@ -926,6 +1003,7 @@ export interface FlowPrintRequest
     search:string;
     // Receipt & Payment
     showTransfers?:boolean;
+    layout?:RpLayout;
     showCashLedgers?:boolean;
     // Changes in Equity
     showLedgers?:boolean;

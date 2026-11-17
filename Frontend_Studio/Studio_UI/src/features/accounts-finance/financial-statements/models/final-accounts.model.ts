@@ -65,6 +65,8 @@ export interface FaRow
     SubGroupName:string;
     IsActive:boolean;
     IsRetainedEarnings:boolean;
+    // Balance Sheet : the Account Group is non-current
+    IsNonCurrent?:boolean;
     Section:FaSection;
     Line:FaBusinessLineKey;
     Amount:number;
@@ -168,6 +170,12 @@ export const BALANCE_SHEET_COMPARE:
 export type ProfitLossLayout =
     'vertical' | 'tform';
 
+// Balance Sheet : vertical (report form), net assets (Total
+// Assets − Current Liabilities, presented by Equity + Non-current
+// Liabilities) or T-form (account form)
+export type BalanceSheetLayout =
+    'vertical' | 'net-assets' | 'tform';
+
 export const BUSINESS_LINES:
     { key:FaBusinessLineKey; name:string; icon:string }[] =
 [
@@ -201,8 +209,9 @@ export const SECTION_TITLES:
 //           date under Equity)
 // result  : Gross Profit, Net Profit, Total Liabilities & Equity,
 //           the balance check
+// caption : a heading with no figure (Presented by)
 export type FaLineKind =
-    'section' | 'node' | 'extra' | 'result';
+    'section' | 'node' | 'extra' | 'result' | 'caption';
 
 export interface FaLine
 {
@@ -606,9 +615,14 @@ export interface FaSideItem
 export interface FaTAccount
 {
     title:string;
+    // Side headings (default : Dr / Cr · Particulars)
+    drTitle?:string;
+    crTitle?:string;
     dr:FaSideItem[];
     cr:FaSideItem[];
+    // Cr side total (and the Dr side's when drTotal is not set)
     total:number;
+    drTotal?:number;
 }
 
 function sideItems
@@ -848,23 +862,22 @@ export function buildBusinessLines
 // Balance Sheet lines
 //===============================================================
 
-export function buildBalanceSheetLines
+// Rows with the profit / loss for the year to date inside
+// Retained Earnings, the "Profit for the year to date" line, and a
+// section builder (shared by the three Balance Sheet views)
+function balanceSheetParts
 (
     report:
         BalanceSheet,
     options:
         FaOptions
-):
-    FaLine[]
+)
 {
     const t =
         report.Totals;
 
     const c =
         report.CompareTotals;
-
-    const lines:
-        FaLine[] = [];
 
     // The profit / loss for the year to date sits inside Retained
     // Earnings (as the earlier years' result does in the Trial
@@ -906,14 +919,21 @@ export function buildBalanceSheetLines
             upIs:''
         };
 
+    // One section : its heading and tree. "take" narrows the rows
+    // (Net assets view : current / non-current)
     const section =
-        (key: FaSection, amount: number, compare: number) =>
+        (
+            key: FaSection,
+            sectionKey: string,
+            amount: number,
+            compare: number,
+            name?: string,
+            take?: (row: FaRow) => boolean
+        ):
+            FaLine[] =>
         {
-            const sectionKey =
-                `x|${key}`;
-
             const children =
-                buildSectionLines(rows, key, sectionKey, options);
+                buildSectionLines(take ? rows.filter(take) : rows, key, sectionKey, options);
 
             const out:
                 FaLine[] = [];
@@ -944,57 +964,266 @@ export function buildBalanceSheetLines
                 out.push(
                     {
                         ...profit,
+                        key:`${sectionKey}|profit`,
                         parentKeys:[sectionKey],
                         hint:`${profit.hint}; Retained Earnings is not set on Posting Setup`
                     });
             }
 
-            lines.push(
-                sectionLine(key, sectionKey, amount, compare, ledgerCount(children)),
-                ...out);
+            return [
+                sectionLine(key, sectionKey, amount, compare, ledgerCount(children), name),
+                ...out
+            ];
         };
 
-    section('asset', t.Assets, c.Assets);
+    return { t, c, rows, section };
+}
 
-    section('liability', t.Liabilities, c.Liabilities);
+function resultLine
+(
+    key:
+        string,
+    name:
+        string,
+    hint:
+        string,
+    amount:
+        number,
+    compare:
+        number
+):
+    FaLine
+{
+    return {
+        key,
+        kind:'result',
+        level:0,
+        parentKeys:[],
+        code:'',
+        name,
+        hint,
+        count:0,
+        amount,
+        compare,
+        tone:'',
+        upIs:''
+    };
+}
 
-    section(
-        'equity',
-        round2(t.Equity + t.ProfitToDate),
-        round2(c.Equity + c.ProfitToDate));
+function checkLine
+(
+    name:
+        string,
+    hint:
+        string,
+    amount:
+        number,
+    compare:
+        number
+):
+    FaLine
+{
+    return {
+        key:'r|check',
+        kind:'result',
+        level:0,
+        parentKeys:[],
+        code:'',
+        name,
+        hint,
+        count:0,
+        amount,
+        compare,
+        tone:isZero(amount) ? 'good' : 'bad',
+        upIs:'',
+        check:true
+    };
+}
 
-    lines.push(
+// Vertical (report form) : Assets, Total Assets, Liabilities,
+// Equity, Total Liabilities & Equity, the balance check
+export function buildBalanceSheetLines
+(
+    report:
+        BalanceSheet,
+    options:
+        FaOptions
+):
+    FaLine[]
+{
+    const { t, c, section } =
+        balanceSheetParts(report, options);
+
+    return [
+        ...section('asset', 'x|asset', t.Assets, c.Assets),
+        resultLine('r|assets', 'Total Assets', 'Every asset ledger on the date', t.Assets, c.Assets),
+        ...section('liability', 'x|liability', t.Liabilities, c.Liabilities),
+        ...section(
+            'equity',
+            'x|equity',
+            round2(t.Equity + t.ProfitToDate),
+            round2(c.Equity + c.ProfitToDate)),
+        resultLine('r|le', 'Total Liabilities & Equity', 'Liabilities + Equity + Profit for the year to date', t.LiabilitiesAndEquity, c.LiabilitiesAndEquity),
+        checkLine('Assets − (Liabilities + Equity)', 'Must be 0 : the same difference as the Trial Balance', t.Difference, c.Difference)
+    ];
+}
+
+// Current / non-current split (Account Group term) of the whole
+// report, not only the rows the search leaves
+export interface BalanceSheetTerms
+{
+    nonCurrentAssets:number;
+    currentAssets:number;
+    currentLiabilities:number;
+    nonCurrentLiabilities:number;
+    equity:number;
+    netAssets:number;
+    presented:number;
+}
+
+export function balanceSheetTerms
+(
+    report:
+        BalanceSheet,
+    compare:
+        boolean
+):
+    BalanceSheetTerms
+{
+    const value =
+        (row: FaRow) => compare ? row.CompareAmount : row.Amount;
+
+    const sum =
+        (section: FaSection, nonCurrent: boolean) =>
+            round2(
+                report.Rows
+                    .filter(x => x.Section === section && !!x.IsNonCurrent === nonCurrent)
+                    .reduce((total, x) => total + value(x), 0));
+
+    const totals =
+        compare ? report.CompareTotals : report.Totals;
+
+    const nonCurrentAssets =
+        sum('asset', true);
+
+    const currentLiabilities =
+        sum('liability', false);
+
+    const nonCurrentLiabilities =
+        sum('liability', true);
+
+    const equity =
+        round2(totals.Equity + totals.ProfitToDate);
+
+    return {
+        nonCurrentAssets,
+        currentAssets:round2(totals.Assets - nonCurrentAssets),
+        currentLiabilities,
+        nonCurrentLiabilities,
+        equity,
+        netAssets:round2(totals.Assets - currentLiabilities),
+        presented:round2(equity + nonCurrentLiabilities)
+    };
+}
+
+// Net assets : Non-current + Current assets = Total Assets, less
+// Current liabilities = Net Assets; Presented by : Equity +
+// Non-current liabilities
+export function buildBalanceSheetNetAssets
+(
+    report:
+        BalanceSheet,
+    options:
+        FaOptions
+):
+    FaLine[]
+{
+    const { section } =
+        balanceSheetParts(report, options);
+
+    const n =
+        balanceSheetTerms(report, false);
+
+    const p =
+        balanceSheetTerms(report, true);
+
+    const t =
+        report.Totals;
+
+    const c =
+        report.CompareTotals;
+
+    return [
+        ...section('asset', 'n|nca', n.nonCurrentAssets, p.nonCurrentAssets, 'Non-current Assets', x => !!x.IsNonCurrent),
+        ...section('asset', 'n|ca', n.currentAssets, p.currentAssets, 'Current Assets', x => !x.IsNonCurrent),
+        resultLine('n|assets', 'Total Assets', 'Non-current + current assets', t.Assets, c.Assets),
+        ...section('liability', 'n|cl', n.currentLiabilities, p.currentLiabilities, 'Less : Current Liabilities', x => !x.IsNonCurrent),
+        resultLine('n|net', 'Net Assets', 'Total Assets − Current Liabilities', n.netAssets, p.netAssets),
         {
-            key:'r|le',
-            kind:'result',
+            key:'n|by',
+            kind:'caption',
             level:0,
             parentKeys:[],
             code:'',
-            name:'Total Liabilities & Equity',
-            hint:'Liabilities + Equity + Profit for the year to date',
+            name:'Presented by',
             count:0,
-            amount:t.LiabilitiesAndEquity,
-            compare:c.LiabilitiesAndEquity,
-            tone:'',
-            upIs:''
+            amount:0,
+            compare:0
         },
-        {
-            key:'r|check',
-            kind:'result',
-            level:0,
-            parentKeys:[],
-            code:'',
-            name:'Assets − (Liabilities + Equity)',
-            hint:'Must be 0 : the same difference as the Trial Balance',
-            count:0,
-            amount:t.Difference,
-            compare:c.Difference,
-            tone:isZero(t.Difference) ? 'good' : 'bad',
-            upIs:'',
-            check:true
-        });
+        ...section('equity', 'n|equity', n.equity, p.equity),
+        ...section('liability', 'n|ncl', n.nonCurrentLiabilities, p.nonCurrentLiabilities, 'Non-current Liabilities', x => !!x.IsNonCurrent),
+        resultLine('n|presented', 'Total Equity & Non-current Liabilities', 'Equity + Profit for the year to date + Non-current Liabilities', n.presented, p.presented),
+        checkLine('Net Assets − (Equity + Non-current Liabilities)', 'Must be 0 : the same difference as the Trial Balance', round2(n.netAssets - n.presented), round2(p.netAssets - p.presented))
+    ];
+}
 
-    return lines;
+// T-form (account form) : Liabilities & Equity | Assets
+export function buildBalanceSheetTForm
+(
+    report:
+        BalanceSheet,
+    options:
+        FaOptions
+):
+    FaTAccount
+{
+    const { t, section } =
+        balanceSheetParts(report, options);
+
+    const side =
+        (lines: FaLine[]): FaSideItem[] =>
+            lines
+                // "incl. profit" notes under Retained Earnings would
+                // read as a second amount on a T side
+                .filter(line => !(line.kind === 'extra' && line.level > 4))
+                .map
+            (
+                line =>
+                ({
+                    key:line.key,
+                    level:line.kind === 'section' ? 0 : line.level,
+                    code:line.kind === 'node' ? line.code : '',
+                    name:line.name,
+                    amount:line.amount,
+                    strong:line.kind === 'section',
+                    row:line.row
+                })
+            );
+
+    return {
+        title:'Balance Sheet',
+        drTitle:'Liabilities & Equity',
+        crTitle:'Assets',
+        dr:
+            side([
+                ...section('equity', 't|equity', round2(t.Equity + t.ProfitToDate), 0),
+                ...section('liability', 't|liability', t.Liabilities, 0)
+            ]),
+        cr:
+            side(section('asset', 't|asset', t.Assets, 0)),
+        drTotal:t.LiabilitiesAndEquity,
+        total:t.Assets
+    };
 }
 
 
@@ -1132,6 +1361,7 @@ export interface BalanceSheetPrintRequest
     branchId:number;
     showCancelled:boolean;
     compare:FaCompare;
+    layout?:BalanceSheetLayout;
     level:FaLevel;
     showCodes:boolean;
     showZero:boolean;

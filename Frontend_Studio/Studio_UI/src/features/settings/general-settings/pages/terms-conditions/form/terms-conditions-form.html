@@ -6,6 +6,7 @@
 
     <app-page-header
         icon="fas fa-file-contract"
+        art="terms"
         [title]="pageTitle"
         subtitle="Numbered terms for one document : English and Bangla">
 
@@ -57,14 +58,14 @@
                             [readonly]="true">
                         </app-textbox>
 
-                        <app-dropdown
+                        <app-toggle-switch
                             label="Status"
-                            [items]="statusItems"
+                            onText="Active"
+                            offText="Inactive"
                             [value]="entity.IsActive"
                             (valueChange)="onStatus($event)"
-                            [disabled]="isViewMode"
-                            [required]="true">
-                        </app-dropdown>
+                            [disabled]="isViewMode">
+                        </app-toggle-switch>
 
                     </div>
 

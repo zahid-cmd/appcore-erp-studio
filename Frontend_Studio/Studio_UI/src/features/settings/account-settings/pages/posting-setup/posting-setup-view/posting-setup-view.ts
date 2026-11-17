@@ -9,6 +9,7 @@ import
     ChangeDetectorRef,
     HostListener,
     OnDestroy,
+    ElementRef,
     inject
 }
 from '@angular/core';
@@ -203,6 +204,16 @@ export class PostingSetupView implements OnInit, OnDestroy
 
     private readonly cdr =
         inject(ChangeDetectorRef);
+
+    private readonly hostRef =
+        inject(ElementRef);
+
+    // Padding on the dialog backdrop so the dialog sits in the
+    // centre of the page canvas (not the whole window : the
+    // sidebar and top bar are left out); the dim still covers
+    // the window
+    dialogPad =
+        '16px';
 
     private readonly router =
         inject(Router);
@@ -537,7 +548,7 @@ export class PostingSetupView implements OnInit, OnDestroy
             }
 
             let group =
-                result.find(x => x.name === row.groupName);
+                result.find(x => x.name === (row.groupName || 'Other'));
 
             if (!group)
             {
@@ -555,6 +566,19 @@ export class PostingSetupView implements OnInit, OnDestroy
         }
 
         return result;
+    }
+
+    // The group list is rebuilt on every check; without a key
+    // Angular redrew the cards, so the first click on Change
+    // (the one that also blurs the search box) hit a card that
+    // had just been replaced and was lost
+    trackByGroup(
+        _index: number,
+        group: PostingGroupView
+    ):
+        string
+    {
+        return group.name;
     }
 
     trackByCode(
@@ -876,6 +900,9 @@ export class PostingSetupView implements OnInit, OnDestroy
             });
         }
 
+        this.dialogPad =
+            this.canvasPad();
+
         this.editing =
             row;
 
@@ -890,6 +917,36 @@ export class PostingSetupView implements OnInit, OnDestroy
 
         this.editError =
             '';
+    }
+
+    private canvasPad():
+        string
+    {
+        const page =
+            (this.hostRef.nativeElement as HTMLElement)
+                .querySelector('.ps-page') as HTMLElement | null;
+
+        if (!page || window.innerWidth <= 760)
+        {
+            return '16px';
+        }
+
+        const r =
+            page.getBoundingClientRect();
+
+        const top =
+            Math.max(16, Math.round(r.top));
+
+        const left =
+            Math.max(16, Math.round(r.left));
+
+        const right =
+            Math.max(16, Math.round(window.innerWidth - r.right));
+
+        const bottom =
+            Math.max(16, Math.round(window.innerHeight - Math.min(r.bottom, window.innerHeight)));
+
+        return `${top}px ${right}px ${bottom}px ${left}px`;
     }
 
     closeChange():

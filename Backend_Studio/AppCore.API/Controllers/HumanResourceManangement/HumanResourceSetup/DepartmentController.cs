@@ -80,6 +80,19 @@ public class DepartmentController : ControllerBase
 
 
     //===============================================================
+    // The wings a department can belong to
+    //===============================================================
+
+    [HttpGet("wings")]
+
+    public async Task<ActionResult<List<DepartmentWingDto>>> GetWings()
+    {
+        return Ok(
+            await _repository.GetWingsAsync());
+    }
+
+
+    //===============================================================
     // Get Defaults
     //===============================================================
 

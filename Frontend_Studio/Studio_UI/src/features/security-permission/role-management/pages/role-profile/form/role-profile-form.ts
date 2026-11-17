@@ -62,7 +62,8 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
@@ -153,6 +154,30 @@ import
 }
 from '../../../services/role-profile.service';
 
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
+
 
 //===============================================================
 // Component
@@ -181,13 +206,14 @@ from '../../../services/role-profile.service';
 
         CommandCenterComponent,
 
-        ControlTabsComponent,
 
         PageCanvasComponent,
+        NotePadComponent,
+        ToggleSwitchComponent,
+        StepTabsComponent,
+        WorkspaceArtComponent,
 
-        FormGridComponent,
 
-        FormSectionComponent,
 
 
         //=======================================================
@@ -196,9 +222,7 @@ from '../../../services/role-profile.service';
 
         TextboxComponent,
 
-        TextareaComponent,
 
-        DropdownComponent,
 
 
         //=======================================================
@@ -296,6 +320,19 @@ implements OnInit
     selectedTab:
         string =
         'general';
+
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
 
 
 

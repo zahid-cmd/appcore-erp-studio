@@ -1,4 +1,4 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../../../../../shared/styles/app-workspace-form.css';
 
 /* =====================================================
    ACCESSORIES FORM
@@ -863,4 +863,52 @@
     color:#94a3b8;
 
     font-size:12.5px;
+}
+
+
+/* =====================================================
+   WORKSPACE LAYOUT (2026-11-16) : three screens (Part ·
+   Stock & Storage · Ledgers, Photo & Remarks), the panel
+   right with the status switch
+===================================================== */
+
+.pf-cols-4
+{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px)
+{
+    .pf-cols-4
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.ws-grid > .fit-box
+{
+    min-width: 0;
+}
+
+/* the locations card : the list fills it, no extra rule above */
+.pf-locs .ac-locations
+{
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.pf-locs .ac-locations-title
+{
+    display: none;
+}
+
+.ws-notes > app-note-pad
+{
+    flex: 1 1 auto;
+}
+
+.pf-photo
+{
+    align-items: stretch;
 }

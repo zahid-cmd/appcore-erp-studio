@@ -55,6 +55,200 @@ export const serviceOperationsRoutes:
     },
 
     //===========================================================
+    // Workshop Management (hand-written; tables made by
+    // ServiceOperations_Workshop_Engine.sql). Job Cards : one
+    // component for list / add / edit / view
+    //===========================================================
+
+    {
+        path:'workshop-management',
+
+        data:
+        {
+            breadcrumb:'Workshop Management'
+        },
+
+        children:
+        [
+            { path:'', redirectTo:'job-cards', pathMatch:'full' },
+            {
+                path:'job-cards',
+                data:{ breadcrumb:'Job Cards' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Job Cards' }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    { path:'add', data:{ breadcrumb:'New Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    { path:'edit/:id', data:{ breadcrumb:'Edit Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    // stage 2 : the Assignment page
+                    { path:'assign/:id', data:{ breadcrumb:'Assign Job Card' }, loadComponent:() => import('../pages/job-card-assign/job-card-assign').then(m => m.JobCardAssignPage) }
+                ]
+            },
+            // The desks of the job card stages : the same page, opened
+            // as one stage (each its own menu entry and permission)
+            {
+                path:'job-card-opening',
+                data:{ breadcrumb:'Job Card Opening' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Job Card Opening' }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    { path:'add', data:{ breadcrumb:'New Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    { path:'edit/:id', data:{ breadcrumb:'Edit Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) }
+                ]
+            },
+            {
+                path:'job-card-assignment',
+                data:{ breadcrumb:'Job Card Assignment' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Job Card Assignment' }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    { path:'add', data:{ breadcrumb:'New Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
+                    { path:'edit/:id', data:{ breadcrumb:'Assign Job Card' }, loadComponent:() => import('../pages/job-card-assign/job-card-assign').then(m => m.JobCardAssignPage) },
+                    { path:'assign/:id', data:{ breadcrumb:'Assign Job Card' }, loadComponent:() => import('../pages/job-card-assign/job-card-assign').then(m => m.JobCardAssignPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) }
+                ]
+            },
+            {
+                path:'service-estimates',
+                data:{ breadcrumb:'Service Estimates' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Service Estimates' }, loadComponent:() => import('../pages/service-estimates/service-estimates').then(m => m.ServiceEstimatesPage) },
+                    { path:'add', data:{ breadcrumb:'Add Service Estimate' }, loadComponent:() => import('../pages/service-estimates/service-estimates').then(m => m.ServiceEstimatesPage) },
+                    { path:'edit/:id', data:{ breadcrumb:'Edit Service Estimate' }, loadComponent:() => import('../pages/service-estimates/service-estimates').then(m => m.ServiceEstimatesPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Service Estimate' }, loadComponent:() => import('../pages/service-estimates/service-estimates').then(m => m.ServiceEstimatesPage) }
+                ]
+            },
+            {
+                path:'parts-requisitions',
+                data:{ breadcrumb:'Parts Requisitions' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Parts Requisitions' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
+                    { path:'add', data:{ breadcrumb:'Add Parts Requisition' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
+                    { path:'edit/:id', data:{ breadcrumb:'Edit Parts Requisition' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Parts Requisition' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) }
+                ]
+            },
+            {
+                path:'parts-issues',
+                data:{ breadcrumb:'Parts Issues' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Parts Issues' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
+                    { path:'add', data:{ breadcrumb:'Add Parts Issue' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Parts Issue' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) }
+                ]
+            },
+            {
+                path:'parts-returns',
+                data:{ breadcrumb:'Parts Returns' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Parts Returns' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
+                    { path:'add', data:{ breadcrumb:'Add Parts Return' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Parts Return' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) }
+                ]
+            },
+            { path:'workshop-dashboard', data:{ breadcrumb:'Workshop Dashboard' }, loadComponent:() => import('../pages/workshop-dashboard/workshop-dashboard').then(m => m.WorkshopDashboardPage) },
+            {
+                path:'parts-back-orders',
+                data:{ breadcrumb:'Parts Back-Orders' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Parts Back-Orders' }, loadComponent:() => import('../pages/parts-back-orders/parts-back-orders').then(m => m.PartsBackOrdersPage) }
+                ]
+            }
+        ]
+    },
+
+    //===========================================================
+    // Service Billing (hand-written; tables made by
+    // ServiceOperations_Billing_Engine.sql)
+    //===========================================================
+
+    {
+        path:'service-billing',
+
+        data:
+        {
+            breadcrumb:'Service Billing'
+        },
+
+        children:
+        [
+            { path:'', redirectTo:'service-invoices', pathMatch:'full' },
+            {
+                path:'service-invoices',
+                data:{ breadcrumb:'Service Invoices' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Service Invoices' }, loadComponent:() => import('../pages/service-invoices/service-invoices').then(m => m.ServiceInvoicesPage) },
+                    { path:'add', data:{ breadcrumb:'Add Service Invoice' }, loadComponent:() => import('../pages/service-invoices/service-invoices').then(m => m.ServiceInvoicesPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Service Invoice' }, loadComponent:() => import('../pages/service-invoices/service-invoices').then(m => m.ServiceInvoicesPage) }
+                ]
+            },
+            {
+                path:'service-returns',
+                data:{ breadcrumb:'Service Returns' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Service Returns' }, loadComponent:() => import('../pages/service-returns/service-returns').then(m => m.ServiceReturnsPage) },
+                    { path:'add', data:{ breadcrumb:'Add Service Return' }, loadComponent:() => import('../pages/service-returns/service-returns').then(m => m.ServiceReturnsPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Service Return' }, loadComponent:() => import('../pages/service-returns/service-returns').then(m => m.ServiceReturnsPage) }
+                ]
+            },
+            {
+                path:'free-service-claims',
+                data:{ breadcrumb:'Free Service Claims' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Free Service Claims' }, loadComponent:() => import('../pages/free-service-claims/free-service-claims').then(m => m.FreeServiceClaimsPage) },
+                    { path:'add', data:{ breadcrumb:'Add Free Service Claim' }, loadComponent:() => import('../pages/free-service-claims/free-service-claims').then(m => m.FreeServiceClaimsPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Free Service Claim' }, loadComponent:() => import('../pages/free-service-claims/free-service-claims').then(m => m.FreeServiceClaimsPage) }
+                ]
+            }
+        ]
+    },
+
+    //===========================================================
+    // Service Reports (read-only; menu made by
+    // ServiceOperations_Reports_Navigation.sql). One component for
+    // the five reports
+    //===========================================================
+
+    {
+        path:'service-reports',
+
+        data:
+        {
+            breadcrumb:'Service Reports'
+        },
+
+        children:
+        [
+            { path:'', redirectTo:'job-card-register', pathMatch:'full' },
+            { path:'service-history', data:{ breadcrumb:'Service History' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) },
+            { path:'job-card-register', data:{ breadcrumb:'Job Card Register' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) },
+            { path:'technician-performance', data:{ breadcrumb:'Technician Performance' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) },
+            { path:'parts-consumption', data:{ breadcrumb:'Parts Consumption' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) },
+            { path:'service-due-list', data:{ breadcrumb:'Service Due List' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) }
+        ]
+    },
+
+    //===========================================================
     // Booking Management : Bookings - SP (moved from Sales
     // Operations 2026-11-15; the files stay there)
     //===========================================================

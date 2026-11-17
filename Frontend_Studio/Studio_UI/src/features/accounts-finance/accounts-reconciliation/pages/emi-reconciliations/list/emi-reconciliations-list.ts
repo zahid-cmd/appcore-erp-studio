@@ -93,6 +93,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -172,6 +178,9 @@ from '../../../services/emi-reconciliations.service';
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -387,6 +396,7 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
 
@@ -394,7 +404,7 @@ implements OnInit
 
             type:'serial',
 
-            width:'60px',
+            width:'56px',
 
             align:'center'
         },
@@ -404,7 +414,7 @@ implements OnInit
 
             field:'code',
 
-            width:'180px',
+            width:'140px',
 
             align:'center'
         },
@@ -412,7 +422,7 @@ implements OnInit
         {
             header:'Name',
 
-            field:'name',
+            field:'name', width:'210px',
 
             align:'left'
         },
@@ -424,7 +434,7 @@ implements OnInit
 
             type:'status',
 
-            width:'120px',
+            width:'130px',
 
             align:'center'
         },
@@ -436,7 +446,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'140px',
 
             align:'center'
         }
@@ -1251,5 +1261,33 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+    // The items of the shared summary line; the same array is
+    // given back while the counts do not change
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const key = this.summaryTotal + '|' + this.summaryActive;
+
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:this.summaryText(this.summaryTotal), tone:'' },
+                    { label:'Active', value:this.summaryText(this.summaryActive), tone:'ok' },
+                    { label:'Inactive', value:this.summaryText(this.summaryTotal - this.summaryActive), tone:'bad' }
+                ]
+            };
+        }
+
+        return this.summaryCache.items;
     }
 }

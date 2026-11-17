@@ -34,6 +34,18 @@ export interface AccountClass
         boolean;
 
 
+    // What the class is for the financial statements : Asset /
+    // Liability / Equity / Income / Other Income / Cost of Goods
+    // Sold / Expense. The statements go by this, never by the name.
+    StatementType?:
+        string;
+
+
+    // Business line of its ledgers : MB / SP / AC / SV ('' : none)
+    BusinessLine?:
+        string;
+
+
     //===========================================================
     // Configuration
     //===========================================================
@@ -80,6 +92,18 @@ export interface CreateAccountClass
 
     AllowManualGroupCreation:
         boolean;
+
+
+    // What the class is for the financial statements : Asset /
+    // Liability / Equity / Income / Other Income / Cost of Goods
+    // Sold / Expense. The statements go by this, never by the name.
+    StatementType?:
+        string;
+
+
+    // Business line of its ledgers : MB / SP / AC / SV ('' : none)
+    BusinessLine?:
+        string;
 
 
     //===========================================================
@@ -132,6 +156,18 @@ export interface UpdateAccountClass
 
     AllowManualGroupCreation:
         boolean;
+
+
+    // What the class is for the financial statements : Asset /
+    // Liability / Equity / Income / Other Income / Cost of Goods
+    // Sold / Expense. The statements go by this, never by the name.
+    StatementType?:
+        string;
+
+
+    // Business line of its ledgers : MB / SP / AC / SV ('' : none)
+    BusinessLine?:
+        string;
 
 
     //===========================================================

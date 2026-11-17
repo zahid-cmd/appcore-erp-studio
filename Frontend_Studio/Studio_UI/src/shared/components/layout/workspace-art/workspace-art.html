@@ -1,0 +1,628 @@
+@if (size === 'tile')
+{
+    <!-- =============================================================
+         TILE : a small white glyph for the page header's icon tile
+    ============================================================== -->
+
+    <svg
+        viewBox="0 0 48 48"
+        class="wa-svg">
+
+        @switch (drawn)
+        {
+            @case ('company')
+            {
+                <path class="wa-line" d="M8 40 H40" />
+                <rect class="wa-line" x="15" y="12" width="14" height="28" rx="1.5" />
+                <rect class="wa-line" x="29" y="22" width="9" height="18" rx="1.5" />
+                @for (p of panes(18, 16, 2, 4, 3, 3, 2.2, 2.6); track $index)
+                {
+                    <rect class="wa-fill" [attr.x]="p.x" [attr.y]="p.y" width="3" height="3" rx=".6" />
+                }
+                <path class="wa-line" d="M22 12 V5" />
+                <path class="wa-accent-fill" d="M22 5 L28 7 L22 9 Z" />
+            }
+            @case ('wings')
+            {
+                <rect class="wa-line" x="18" y="7" width="12" height="9" rx="1.5" />
+                <path class="wa-line" d="M24 16 V22 M10 22 H38 M10 22 V28 M24 22 V28 M38 22 V28" />
+                <rect class="wa-line" x="5" y="28" width="10" height="12" rx="1.5" />
+                <rect class="wa-line" x="19" y="28" width="10" height="12" rx="1.5" />
+                <rect class="wa-line" x="33" y="28" width="10" height="12" rx="1.5" />
+                <circle class="wa-accent-fill" cx="24" cy="11.5" r="2" />
+            }
+            @case ('branches')
+            {
+                <path class="wa-line" d="M6 12 L17 8 L31 12 L42 8 V36 L31 40 L17 36 L6 40 Z" />
+                <path class="wa-line" d="M17 8 V36 M31 12 V40" />
+                <path class="wa-accent-fill" d="M24 30 C18 24 18 16 24 16 C30 16 30 24 24 30 Z" />
+                <circle class="wa-fill" cx="24" cy="21" r="2" />
+            }
+            @case ('warehouses')
+            {
+                <path class="wa-line" d="M6 20 L24 9 L42 20" />
+                <path class="wa-line" d="M9 19 V40 H39 V19" />
+                <rect class="wa-line" x="17" y="26" width="14" height="14" rx="1" />
+                <path class="wa-line" d="M17 30.5 H31 M17 35 H31" />
+                <rect class="wa-accent-fill" x="21" y="15" width="6" height="5" rx="1" />
+            }
+            @case ('locations')
+            {
+                <path class="wa-line" d="M24 42 C14 31 12 25 12 19 A12 12 0 0 1 36 19 C36 25 34 31 24 42 Z" />
+                <circle class="wa-accent-fill" cx="24" cy="19" r="4.5" />
+                <path class="wa-line" d="M8 42 H40" />
+            }
+            @case ('financial-years')
+            {
+                <rect class="wa-line" x="8" y="11" width="32" height="29" rx="3" />
+                <path class="wa-line" d="M8 19 H40 M16 7 V14 M32 7 V14" />
+                <rect class="wa-accent-fill" x="13" y="24" width="22" height="5" rx="1.5" />
+                <path class="wa-line" d="M14 34 H20 M26 34 H34" />
+            }
+            @case ('backup')
+            {
+                <path class="wa-line" d="M24 6 L39 11 V22 C39 31 32 38 24 42 C16 38 9 31 9 22 V11 Z" />
+                <path class="wa-accent-line" d="M17 24 L22 29 L31 19" />
+            }
+            @case ('terms')
+            {
+                <path class="wa-line" d="M12 6 H30 L37 13 V42 H12 Z" />
+                <path class="wa-line" d="M30 6 V13 H37" />
+                <path class="wa-line" d="M17 20 H32 M17 26 H32 M17 32 H26" />
+                <circle class="wa-accent-fill" cx="31" cy="35" r="4" />
+            }
+            @case ('accounts')
+            {
+                <rect class="wa-line" x="18" y="6" width="12" height="9" rx="1.5" />
+                <path class="wa-line" d="M24 15 V20 M12 20 H36 M12 20 V25 M36 20 V25 M12 33 V37 H20 M36 33 V37 H28" />
+                <rect class="wa-line" x="6" y="25" width="12" height="8" rx="1.5" />
+                <rect class="wa-line" x="30" y="25" width="12" height="8" rx="1.5" />
+                <rect class="wa-accent-fill" x="20" y="34" width="8" height="7" rx="1.5" />
+            }
+            @case ('ledger')
+            {
+                <path class="wa-line" d="M24 12 C19 9 12 9 7 10 V38 C12 37 19 37 24 40 C29 37 36 37 41 38 V10 C36 9 29 9 24 12 Z" />
+                <path class="wa-line" d="M24 12 V40" />
+                <path class="wa-line" d="M12 18 H19 M12 24 H19 M29 18 H36 M29 24 H36" />
+                <path class="wa-accent-line" d="M29 30 H36" />
+            }
+            @case ('cash')
+            {
+                <rect class="wa-line" x="5" y="14" width="34" height="20" rx="2.5" />
+                <circle class="wa-line" cx="22" cy="24" r="5" />
+                <path class="wa-line" d="M9 38 H43 V18" />
+                <circle class="wa-accent-fill" cx="22" cy="24" r="2" />
+            }
+            @case ('bank')
+            {
+                <path class="wa-line" d="M6 18 L24 8 L42 18 Z" />
+                <path class="wa-line" d="M10 22 V36 M18 22 V36 M30 22 V36 M38 22 V36 M6 40 H42" />
+                <circle class="wa-accent-fill" cx="24" cy="14.5" r="2.2" />
+            }
+            @case ('mfs')
+            {
+                <rect class="wa-line" x="14" y="5" width="20" height="38" rx="3.5" />
+                <path class="wa-line" d="M21 9 H27 M22 38 H26" />
+                <rect class="wa-accent-fill" x="18" y="16" width="12" height="9" rx="2" />
+                <path class="wa-line" d="M18 30 H30" />
+            }
+            @case ('pos')
+            {
+                <path class="wa-line" d="M14 6 H34 V42 H14 Z" />
+                <rect class="wa-line" x="18" y="10" width="12" height="9" rx="1" />
+                <path class="wa-line" d="M19 25 H21 M23 25 H25 M27 25 H29 M19 30 H21 M23 30 H25 M27 30 H29 M19 35 H21 M23 35 H25" />
+                <rect class="wa-accent-fill" x="27" y="34" width="3" height="3" rx=".6" />
+            }
+            @case ('card')
+            {
+                <rect class="wa-line" x="6" y="12" width="32" height="21" rx="3" />
+                <path class="wa-line" d="M6 18 H38" />
+                <rect class="wa-accent-fill" x="10" y="23" width="7" height="5" rx="1" />
+                <path class="wa-line" d="M14 37 H42 V17" />
+            }
+            @case ('cheques')
+            {
+                <rect class="wa-line" x="5" y="13" width="38" height="22" rx="2.5" />
+                <path class="wa-line" d="M10 20 H24 M10 28 H20" />
+                <path class="wa-accent-line" d="M26 29 C29 25 31 31 34 27 C36 25 37 28 39 27" />
+                <path class="wa-line" d="M9 39 H39" />
+            }
+            @case ('catalog')
+            {
+                <rect class="wa-line" x="7" y="22" width="16" height="16" rx="2" />
+                <rect class="wa-line" x="25" y="22" width="16" height="16" rx="2" />
+                <rect class="wa-line" x="16" y="6" width="16" height="16" rx="2" />
+                <path class="wa-accent-line" d="M21 13 H27" />
+                <path class="wa-line" d="M5 42 H43" />
+            }
+            @case ('bike')
+            {
+                <circle class="wa-line" cx="12" cy="31" r="7" />
+                <circle class="wa-line" cx="36" cy="31" r="7" />
+                <path class="wa-line" d="M12 31 L20 19 H29 L36 31 M20 19 L24 31 H30 M27 13 H32 L35 19" />
+                <circle class="wa-accent-fill" cx="24" cy="31" r="2" />
+            }
+            @case ('parts')
+            {
+                <circle class="wa-line" cx="18" cy="20" r="9" />
+                <circle class="wa-accent-fill" cx="18" cy="20" r="3" />
+                <path class="wa-line" d="M18 7 V11 M18 29 V33 M5 20 H9 M27 20 H31" />
+                <path class="wa-line" d="M28 30 L40 42 M36 26 L44 34" />
+            }
+            @case ('helmet')
+            {
+                <path class="wa-line" d="M8 32 C8 18 16 10 26 10 C36 10 42 18 42 28 V34 H22 L18 32 Z" />
+                <path class="wa-line" d="M26 18 H40 V26 H26 Z" />
+                <path class="wa-accent-line" d="M12 26 C14 20 18 16 22 15" />
+            }
+            @case ('palette')
+            {
+                <path class="wa-line" d="M24 6 C12 6 6 15 6 24 C6 33 13 42 22 42 C26 42 27 39 25 36 C23 33 25 30 29 30 H34 C39 30 42 27 42 22 C42 13 34 6 24 6 Z" />
+                <circle class="wa-accent-fill" cx="15" cy="20" r="3" />
+                <circle class="wa-fill" cx="24" cy="14" r="3" />
+                <circle class="wa-fill" cx="33" cy="19" r="3" />
+            }
+            @case ('brand')
+            {
+                <path class="wa-line" d="M6 8 H24 L42 26 L26 42 L6 22 Z" />
+                <circle class="wa-accent-fill" cx="15" cy="17" r="3.5" />
+            }
+            @case ('people')
+            {
+                <circle class="wa-line" cx="18" cy="16" r="6" />
+                <path class="wa-line" d="M7 38 C7 29 12 25 18 25 C24 25 29 29 29 38" />
+                <circle class="wa-accent-fill" cx="33" cy="19" r="5" />
+                <path class="wa-line" d="M30 27 C37 27 41 31 41 38" />
+            }
+            @case ('truck')
+            {
+                <rect class="wa-line" x="5" y="14" width="24" height="18" rx="2" />
+                <path class="wa-line" d="M29 20 H37 L43 27 V32 H29 Z" />
+                <circle class="wa-line" cx="13" cy="35" r="4" />
+                <circle class="wa-accent-fill" cx="35" cy="35" r="4" />
+            }
+            @default
+            {
+                <rect class="wa-line" x="9" y="10" width="30" height="20" rx="2.5" />
+                <path class="wa-line" d="M24 30 V36 M17 37 H31" />
+                <path class="wa-accent-line" d="M14 23 L20 18 L25 21 L33 14" />
+            }
+        }
+    </svg>
+}
+@else
+{
+    <!-- =============================================================
+         PANEL / EMPTY : the full drawing
+    ============================================================== -->
+
+    <svg
+        viewBox="0 0 260 170"
+        class="wa-svg">
+
+        <!-- the soft backdrop : a disc and the ground shadow -->
+        <circle class="wa-soft" cx="186" cy="54" r="40" />
+        <circle class="wa-soft wa-soft-2" cx="62" cy="66" r="22" />
+        <ellipse class="wa-soft" cx="130" cy="152" rx="112" ry="9" />
+
+        @switch (drawn)
+        {
+            @case ('company')
+            {
+                <!-- clouds -->
+                <path class="wa-thin" d="M30 44 h22 a7 7 0 0 0 -11 -8 a9 9 0 0 0 -11 8 z" />
+                <path class="wa-thin" d="M206 28 h20 a6 6 0 0 0 -10 -7 a8 8 0 0 0 -10 7 z" />
+
+                <!-- left wing : low block with a canopy -->
+                <rect class="wa-body" x="40" y="98" width="46" height="50" rx="3" />
+                @for (p of panes(47, 106, 3, 3, 8, 7, 5, 6); track $index)
+                {
+                    <rect class="wa-pane" [attr.x]="p.x" [attr.y]="p.y" width="8" height="7" rx="1.2" />
+                }
+
+                <!-- main tower -->
+                <rect class="wa-body" x="86" y="36" width="66" height="112" rx="4" />
+                <path class="wa-line" d="M86 50 H152" />
+                @for (p of panes(95, 58, 4, 6, 8, 8, 5.5, 5.2); track $index)
+                {
+                    <rect class="wa-pane" [attr.x]="p.x" [attr.y]="p.y" width="8" height="8" rx="1.4" />
+                }
+                <rect class="wa-door" x="108" y="126" width="22" height="22" rx="2" />
+                <path class="wa-line" d="M119 126 V148" />
+                <path class="wa-line" d="M100 126 H138" />
+
+                <!-- the flag on the roof (copper) -->
+                <path class="wa-line" d="M119 36 V14" />
+                <path class="wa-accent-fill" d="M119 14 L134 18.5 L119 23 Z" />
+
+                <!-- right block -->
+                <rect class="wa-body" x="152" y="76" width="50" height="72" rx="3" />
+                @for (p of panes(160, 86, 3, 4, 8, 8, 5, 6.5); track $index)
+                {
+                    <rect class="wa-pane" [attr.x]="p.x" [attr.y]="p.y" width="8" height="8" rx="1.4" />
+                }
+
+                <!-- tree -->
+                <circle class="wa-leaf" cx="220" cy="126" r="13" />
+                <path class="wa-line" d="M220 139 V148" />
+
+                <!-- bench and lamp -->
+                <path class="wa-thin" d="M24 148 V128 M20 128 H28" />
+                <circle class="wa-accent-fill" cx="24" cy="126" r="2.4" />
+
+                <!-- ground -->
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('wings')
+            {
+                <!-- wings : the head office and its three wings -->
+                <path class="wa-thin" d="M30 40 h22 a7 7 0 0 0 -11 -8 a9 9 0 0 0 -11 8 z" />
+                <rect class="wa-body" x="104" y="22" width="52" height="40" rx="4" />
+                @for (p of panes(112, 30, 4, 2, 7, 7, 4, 6); track $index)
+                {
+                    <rect class="wa-pane" [attr.x]="p.x" [attr.y]="p.y" width="7" height="7" rx="1.2" />
+                }
+                <path class="wa-line" d="M130 22 V8" />
+                <path class="wa-accent-fill" d="M130 8 L142 11.5 L130 15 Z" />
+
+                <path class="wa-line" d="M130 62 V78 M58 78 H202 M58 78 V94 M130 78 V94 M202 78 V94" />
+                <circle class="wa-accent-fill" cx="130" cy="78" r="3.2" />
+
+                @for (x of [36, 108, 180]; track x)
+                {
+                    <rect class="wa-body" [attr.x]="x" y="94" width="44" height="54" rx="3" />
+                    @for (p of panes(x + 7, 102, 3, 3, 7, 7, 4, 6); track $index)
+                    {
+                        <rect class="wa-pane" [attr.x]="p.x" [attr.y]="p.y" width="7" height="7" rx="1.2" />
+                    }
+                }
+
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('branches')
+            {
+                <!-- branches : a folded map with the branch pins -->
+                <path class="wa-body" d="M34 46 L92 34 L160 46 L222 34 V134 L160 146 L92 134 L34 146 Z" />
+                <path class="wa-thin" d="M92 34 V134 M160 46 V146" />
+                <path class="wa-line" d="M44 120 C74 104 92 118 116 98 S168 80 210 64" />
+                <path class="wa-thin" d="M58 60 C80 76 110 62 140 80 S190 112 214 106" />
+
+                @for (pin of [[70, 104], [128, 88], [196, 70]]; track $index)
+                {
+                    <path class="wa-body" [attr.d]="pinPath(pin[0], pin[1], 12)" />
+                    <circle class="wa-pane" [attr.cx]="pin[0]" [attr.cy]="pin[1] - 17" r="4" />
+                }
+                <path class="wa-accent-fill" [attr.d]="pinPath(128, 88, 12)" />
+                <circle class="wa-fill-white" cx="128" cy="71" r="4" />
+            }
+            @case ('warehouses')
+            {
+                <!-- warehouses : the store with its shutter and boxes -->
+                <path class="wa-line" d="M30 72 L130 34 L230 72" />
+                <rect class="wa-body" x="42" y="70" width="176" height="78" rx="2" />
+                <rect class="wa-pane" x="112" y="52" width="36" height="12" rx="2" />
+                <rect class="wa-body" x="98" y="96" width="64" height="52" rx="2" />
+                @for (y of [104, 112, 120, 128, 136]; track y)
+                {
+                    <path class="wa-thin" [attr.d]="'M98 ' + y + ' H162'" />
+                }
+                <!-- boxes left -->
+                <rect class="wa-pane" x="54" y="124" width="20" height="24" rx="1.5" />
+                <rect class="wa-pane" x="74" y="130" width="16" height="18" rx="1.5" />
+                <rect class="wa-pane" x="58" y="106" width="16" height="18" rx="1.5" />
+                <!-- shelf right -->
+                <path class="wa-line" d="M172 92 V148 M206 92 V148 M172 110 H206 M172 128 H206" />
+                <rect class="wa-accent-fill" x="178" y="98" width="10" height="12" rx="1.2" />
+                <rect class="wa-pane" x="190" y="116" width="10" height="12" rx="1.2" />
+                <rect class="wa-pane" x="178" y="134" width="12" height="14" rx="1.2" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('locations')
+            {
+                <!-- locations : the map of areas with one big pin -->
+                <path class="wa-body" d="M40 56 L96 44 L160 56 L220 44 V136 L160 148 L96 136 L40 148 Z" />
+                <path class="wa-thin" d="M96 44 V136 M160 56 V148" />
+                <path class="wa-thin" d="M50 80 H86 M50 92 H80 M106 70 H150 M106 118 H140 M170 128 H210 M170 116 H200" />
+                <path class="wa-accent-line" d="M60 126 C90 124 100 104 130 106" stroke-dasharray="4 5" />
+                <path class="wa-body" [attr.d]="pinPath(150, 106, 22)" />
+                <circle class="wa-accent-fill" cx="150" cy="75" r="8" />
+                <ellipse class="wa-pane" cx="150" cy="108" rx="12" ry="3.5" />
+            }
+            @case ('financial-years')
+            {
+                <!-- financial years : a wall calendar, the year marked -->
+                <rect class="wa-body" x="62" y="30" width="136" height="116" rx="8" />
+                <rect class="wa-pane" x="62" y="30" width="136" height="24" rx="8" />
+                <path class="wa-line" d="M62 54 H198" />
+                <path class="wa-line" d="M92 20 V40 M168 20 V40" />
+                @for (p of panes(74, 64, 7, 5, 11, 9, 6, 6.5); track $index)
+                {
+                    <rect class="wa-pane" [attr.x]="p.x" [attr.y]="p.y" width="11" height="9" rx="1.6" />
+                }
+                <rect class="wa-accent-fill" x="74" y="79.5" width="113" height="9" rx="4.5" opacity=".85" />
+                <path class="wa-thin" d="M30 60 h20 a6 6 0 0 0 -10 -7 a8 8 0 0 0 -10 7 z" />
+                <!-- hourglass -->
+                <path class="wa-line" d="M212 112 H232 M212 146 H232 M215 112 C215 126 229 132 229 146 M229 112 C229 126 215 132 215 146" />
+                <path class="wa-accent-fill" d="M218 142 L226 142 L222 136 Z" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('backup')
+            {
+                <!-- backup : a database under a shield, a copy beside it -->
+                <path class="wa-body" d="M130 18 L176 34 V74 C176 108 154 130 130 142 C106 130 84 108 84 74 V34 Z" />
+                <ellipse class="wa-pane" cx="130" cy="58" rx="22" ry="7" />
+                <path class="wa-line" d="M108 58 V96 C108 100 118 104 130 104 C142 104 152 100 152 96 V58" />
+                <path class="wa-line" d="M108 71 C108 75 118 79 130 79 C142 79 152 75 152 71 M108 84 C108 88 118 92 130 92 C142 92 152 88 152 84" />
+                <ellipse class="wa-body" cx="130" cy="58" rx="22" ry="7" />
+                <circle class="wa-accent-fill" cx="168" cy="112" r="13" />
+                <path class="wa-fill-white-line" d="M162 112 L166.5 116.5 L174 108" />
+                <!-- second PC -->
+                <rect class="wa-body" x="196" y="96" width="40" height="28" rx="3" />
+                <path class="wa-line" d="M216 124 V134 M206 136 H226" />
+                <path class="wa-thin" d="M182 104 C188 96 192 96 196 102" stroke-dasharray="3 4" />
+                <rect class="wa-body" x="24" y="96" width="40" height="28" rx="3" />
+                <path class="wa-line" d="M44 124 V134 M34 136 H54" />
+                <path class="wa-thin" d="M64 104 C72 96 78 96 88 100" stroke-dasharray="3 4" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('terms')
+            {
+                <!-- terms : a numbered document with a seal and a pen -->
+                <path class="wa-body" d="M78 18 H162 L186 42 V148 H78 Z" />
+                <path class="wa-line" d="M162 18 V42 H186" />
+                <path class="wa-line" d="M96 40 H146" />
+                @for (y of [62, 80, 98, 116]; track y)
+                {
+                    <circle class="wa-pane" cx="99" [attr.cy]="y" r="5" />
+                    <path class="wa-thin" [attr.d]="'M110 ' + y + ' H168'" />
+                }
+                <circle class="wa-accent-fill" cx="172" cy="132" r="14" />
+                <circle class="wa-fill-white" cx="172" cy="132" r="7" />
+                <path class="wa-accent-fill" d="M164 144 L160 158 L167 154 L171 160 L172 146 Z" />
+                <!-- pen -->
+                <path class="wa-line" d="M206 60 L222 44 L230 52 L214 68 L204 70 Z" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('accounts')
+            {
+                <!-- accounts : the chart of accounts as a tree -->
+                <rect class="wa-body" x="104" y="16" width="52" height="28" rx="5" />
+                <path class="wa-thin" d="M114 26 H146 M114 34 H136" />
+                <path class="wa-line" d="M130 44 V58 M54 58 H206 M54 58 V70 M130 58 V70 M206 58 V70" />
+                @for (x of [30, 106, 182]; track x)
+                {
+                    <rect class="wa-body" [attr.x]="x" y="70" width="48" height="26" rx="4" />
+                    <path class="wa-thin" [attr.d]="'M' + (x + 8) + ' 80 H' + (x + 40) + ' M' + (x + 8) + ' 87 H' + (x + 30)" />
+                }
+                <path class="wa-line" d="M130 96 V108 M100 108 H160 M100 108 V118 M160 108 V118" />
+                <rect class="wa-pane" x="80" y="118" width="40" height="22" rx="4" />
+                <rect class="wa-accent-fill" x="140" y="118" width="40" height="22" rx="4" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('ledger')
+            {
+                <!-- ledger : an open book of accounts with a pen -->
+                <path class="wa-body" d="M130 44 C112 34 86 32 58 36 V136 C86 132 112 134 130 144 C148 134 174 132 202 136 V36 C174 32 148 34 130 44 Z" />
+                <path class="wa-line" d="M130 44 V144" />
+                @for (y of [56, 70, 84, 98, 112]; track y)
+                {
+                    <path class="wa-thin" [attr.d]="'M72 ' + y + ' H118 M142 ' + y + ' H188'" />
+                }
+                <path class="wa-accent-line" d="M142 122 H170" />
+                <path class="wa-line" d="M206 70 L226 50 L234 58 L214 78 L203 81 Z" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('cash')
+            {
+                <!-- cash : notes, coins and a cash box -->
+                <rect class="wa-body" x="40" y="54" width="120" height="66" rx="6" />
+                <rect class="wa-body" x="52" y="42" width="120" height="66" rx="6" />
+                <circle class="wa-pane" cx="112" cy="75" r="17" />
+                <circle class="wa-accent-fill" cx="112" cy="75" r="7" />
+                <path class="wa-line" d="M64 54 H80 M144 96 H160" />
+                <!-- coins -->
+                <ellipse class="wa-body" cx="206" cy="134" rx="22" ry="7" />
+                <path class="wa-line" d="M184 122 V134 M228 122 V134" />
+                <ellipse class="wa-body" cx="206" cy="122" rx="22" ry="7" />
+                <path class="wa-line" d="M184 110 V122 M228 110 V122" />
+                <ellipse class="wa-accent-fill" cx="206" cy="110" rx="22" ry="7" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('bank')
+            {
+                <!-- bank : the pillared building -->
+                <path class="wa-body" d="M40 62 L130 22 L220 62 Z" />
+                <circle class="wa-accent-fill" cx="130" cy="47" r="7" />
+                <rect class="wa-body" x="48" y="62" width="164" height="10" rx="2" />
+                @for (x of [62, 96, 130, 164, 198]; track x)
+                {
+                    <path class="wa-line" [attr.d]="'M' + x + ' 76 V132'" />
+                    <rect class="wa-pane" [attr.x]="x - 6" y="76" width="12" height="56" rx="2" opacity=".7" />
+                }
+                <rect class="wa-body" x="40" y="132" width="180" height="8" rx="2" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('mfs')
+            {
+                <!-- mfs : a phone wallet sending money -->
+                <rect class="wa-body" x="96" y="14" width="68" height="132" rx="12" />
+                <path class="wa-line" d="M120 24 H140 M124 136 H136" />
+                <rect class="wa-pane" x="106" y="36" width="48" height="56" rx="6" />
+                <circle class="wa-accent-fill" cx="130" cy="58" r="12" />
+                <path class="wa-fill-white-line" d="M124 58 H136 M131 53 L136 58 L131 63" />
+                <path class="wa-thin" d="M110 104 H150 M110 114 H140" />
+                <path class="wa-accent-line" d="M60 70 C72 56 84 54 92 60" stroke-dasharray="4 5" />
+                <path class="wa-accent-line" d="M168 92 C180 100 190 100 202 88" stroke-dasharray="4 5" />
+                <circle class="wa-body" cx="52" cy="78" r="12" />
+                <circle class="wa-body" cx="212" cy="80" r="12" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('pos')
+            {
+                <!-- pos : the card terminal printing a slip -->
+                <path class="wa-body" d="M98 40 H162 L170 146 H90 Z" />
+                <rect class="wa-pane" x="108" y="52" width="44" height="28" rx="3" />
+                @for (y of [92, 106, 120]; track y)
+                {
+                    @for (x of [110, 126, 142]; track x)
+                    {
+                        <rect class="wa-pane" [attr.x]="x" [attr.y]="y" width="10" height="8" rx="2" />
+                    }
+                }
+                <rect class="wa-accent-fill" x="142" y="120" width="10" height="8" rx="2" />
+                <path class="wa-body" d="M112 40 V14 H148 V40" />
+                <path class="wa-thin" d="M118 22 H142 M118 30 H136" />
+                <!-- card -->
+                <rect class="wa-body" x="176" y="96" width="56" height="36" rx="5" transform="rotate(-14 204 114)" />
+                <rect class="wa-accent-fill" x="184" y="110" width="12" height="9" rx="2" transform="rotate(-14 204 114)" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('card')
+            {
+                <!-- card : a fan of payment cards -->
+                <rect class="wa-body" x="62" y="56" width="104" height="66" rx="8" transform="rotate(-10 114 89)" />
+                <rect class="wa-body" x="86" y="48" width="104" height="66" rx="8" />
+                <path class="wa-line" d="M86 64 H190" />
+                <rect class="wa-accent-fill" x="98" y="76" width="18" height="14" rx="3" />
+                <path class="wa-thin" d="M98 100 H142 M150 100 H176" />
+                <circle class="wa-pane" cx="170" cy="82" r="8" />
+                <circle class="wa-pane" cx="180" cy="82" r="8" opacity=".7" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('cheques')
+            {
+                <!-- cheques : a check book with a leaf being signed -->
+                <rect class="wa-body" x="46" y="58" width="150" height="72" rx="6" />
+                <rect class="wa-body" x="54" y="50" width="150" height="72" rx="6" />
+                <rect class="wa-body" x="62" y="42" width="150" height="72" rx="6" />
+                <path class="wa-thin" d="M84 42 V114" stroke-dasharray="3 4" />
+                <path class="wa-line" d="M96 58 H150 M96 72 H186 M96 86 H140" />
+                <rect class="wa-pane" x="160" y="80" width="40" height="14" rx="3" />
+                <path class="wa-accent-line" d="M120 102 C128 92 134 108 142 98 C148 92 152 102 160 98" />
+                <path class="wa-line" d="M200 120 L226 94 L234 102 L208 128 L196 132 Z" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('catalog')
+            {
+                <!-- catalog : product boxes on a shelf, tagged -->
+                <path class="wa-line" d="M36 120 H224 M36 120 V136 M224 120 V136" />
+                <rect class="wa-body" x="52" y="72" width="48" height="48" rx="4" />
+                <path class="wa-line" d="M52 86 H100 M76 72 V86" />
+                <rect class="wa-body" x="106" y="52" width="58" height="68" rx="4" />
+                <path class="wa-line" d="M106 70 H164 M135 52 V70" />
+                <rect class="wa-pane" x="116" y="84" width="38" height="10" rx="2" />
+                <rect class="wa-body" x="170" y="84" width="40" height="36" rx="4" />
+                <path class="wa-line" d="M170 96 H210 M190 84 V96" />
+                <!-- tag -->
+                <path class="wa-accent-fill" d="M150 22 H178 L188 32 L178 42 H150 Z" />
+                <circle class="wa-fill-white" cx="180" cy="32" r="3" />
+                <path class="wa-thin" d="M150 32 C136 34 132 42 135 52" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('bike')
+            {
+                <!-- bike : a motorcycle side view -->
+                <circle class="wa-body" cx="70" cy="118" r="26" />
+                <circle class="wa-pane" cx="70" cy="118" r="10" />
+                <circle class="wa-body" cx="192" cy="118" r="26" />
+                <circle class="wa-pane" cx="192" cy="118" r="10" />
+                <path class="wa-line" d="M70 118 L104 80 H158 L192 118" />
+                <path class="wa-body" d="M98 80 C108 64 128 60 150 64 L166 72 L158 82 H104 Z" />
+                <rect class="wa-accent-fill" x="114" y="86" width="34" height="22" rx="4" />
+                <path class="wa-line" d="M150 64 L170 44 H184 M166 72 L192 118" />
+                <path class="wa-line" d="M78 80 H100" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('parts')
+            {
+                <!-- parts : a gear, a spanner and an oil can -->
+                <circle class="wa-body" cx="96" cy="78" r="38" />
+                @for (a of [0, 45, 90, 135, 180, 225, 270, 315]; track a)
+                {
+                    <rect class="wa-body" x="90" y="32" width="12" height="12" rx="2" [attr.transform]="'rotate(' + a + ' 96 78)'" />
+                }
+                <circle class="wa-body" cx="96" cy="78" r="38" />
+                <circle class="wa-pane" cx="96" cy="78" r="18" />
+                <circle class="wa-accent-fill" cx="96" cy="78" r="7" />
+                <path class="wa-line" d="M148 132 L196 84 M188 70 C196 62 210 64 214 74 L204 80 L206 90 L216 92 C212 102 198 104 190 96" />
+                <path class="wa-body" d="M40 132 V116 C40 110 44 106 50 106 H66 L74 98 L80 104 L72 112 V132 Z" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('helmet')
+            {
+                <!-- helmet : a riding helmet with gloves -->
+                <path class="wa-body" d="M70 120 C66 72 92 40 132 40 C172 40 196 68 196 104 V124 H118 L104 116 Z" />
+                <path class="wa-body" d="M132 66 H192 C194 76 194 88 192 98 H132 Z" />
+                <path class="wa-pane" d="M136 70 H188 C189 78 189 86 188 94 H136 Z" />
+                <path class="wa-accent-line" d="M84 96 C88 76 102 60 120 54" />
+                <path class="wa-line" d="M104 116 H196" />
+                <path class="wa-body" d="M210 138 V112 C210 106 214 104 218 104 C222 104 224 108 224 112 V126 L232 120 C236 118 240 122 238 126 L228 138 Z" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('palette')
+            {
+                <!-- palette : colour swatches fanned out -->
+                <rect class="wa-pane" x="118" y="34" width="26" height="100" rx="6" transform="rotate(-36 131 130)" />
+                <rect class="wa-body" x="118" y="34" width="26" height="100" rx="6" transform="rotate(-18 131 130)" />
+                <rect class="wa-pane" x="118" y="34" width="26" height="100" rx="6" />
+                <rect class="wa-body" x="118" y="34" width="26" height="100" rx="6" transform="rotate(20 131 130)" />
+                <rect class="wa-accent-fill" x="118" y="34" width="26" height="100" rx="6" transform="rotate(40 131 130)" />
+                <circle class="wa-fill-white" cx="131" cy="122" r="5" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('brand')
+            {
+                <!-- brand : a badge with a ribbon and a tag -->
+                <circle class="wa-body" cx="118" cy="72" r="44" />
+                <circle class="wa-pane" cx="118" cy="72" r="32" />
+                <path class="wa-accent-fill" d="M118 50 L124 64 L139 65 L127 74 L131 89 L118 81 L105 89 L109 74 L97 65 L112 64 Z" />
+                <path class="wa-body" d="M94 110 L84 146 L100 138 L108 150 L114 116" />
+                <path class="wa-body" d="M142 110 L152 146 L136 138 L128 150 L122 116" />
+                <path class="wa-body" d="M176 64 H204 L218 78 L204 92 H176 Z" />
+                <circle class="wa-accent-fill" cx="206" cy="78" r="3.5" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('people')
+            {
+                <!-- people : a customer card with two people -->
+                <rect class="wa-body" x="40" y="34" width="120" height="96" rx="10" />
+                <circle class="wa-pane" cx="76" cy="72" r="16" />
+                <path class="wa-line" d="M54 112 C56 96 66 90 76 90 C86 90 96 96 98 112" />
+                <path class="wa-thin" d="M110 64 H146 M110 76 H140 M110 88 H132" />
+                <circle class="wa-body" cx="192" cy="70" r="18" />
+                <path class="wa-body" d="M162 136 C164 112 176 100 192 100 C208 100 220 112 222 136 Z" />
+                <circle class="wa-accent-fill" cx="192" cy="70" r="7" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @case ('truck')
+            {
+                <!-- truck : a delivery truck with boxes -->
+                <rect class="wa-body" x="34" y="54" width="120" height="70" rx="5" />
+                <rect class="wa-pane" x="48" y="66" width="28" height="22" rx="2" />
+                <rect class="wa-pane" x="82" y="66" width="28" height="22" rx="2" />
+                <rect class="wa-accent-fill" x="116" y="66" width="26" height="22" rx="2" />
+                <path class="wa-body" d="M154 74 H192 L218 102 V124 H154 Z" />
+                <path class="wa-pane" d="M162 82 H188 L206 102 H162 Z" />
+                <circle class="wa-body" cx="70" cy="126" r="14" />
+                <circle class="wa-body" cx="186" cy="126" r="14" />
+                <circle class="wa-pane" cx="70" cy="126" r="5" />
+                <circle class="wa-pane" cx="186" cy="126" r="5" />
+                <path class="wa-line" d="M16 148 H244" />
+            }
+            @default
+            {
+                <!-- workspace : a desk with a screen, a chart and a plant -->
+                <rect class="wa-body" x="76" y="46" width="108" height="70" rx="6" />
+                <rect class="wa-pane" x="86" y="56" width="88" height="50" rx="3" />
+                <path class="wa-accent-line" d="M94 96 L112 80 L126 88 L148 68 L166 74" />
+                <path class="wa-line" d="M130 116 V130 M110 132 H150" />
+                <path class="wa-line" d="M44 134 H216" />
+                <path class="wa-line" d="M58 134 V148 M202 134 V148" />
+                <rect class="wa-body" x="190" y="114" width="16" height="20" rx="3" />
+                <circle class="wa-leaf" cx="198" cy="104" r="11" />
+                <rect class="wa-body" x="60" y="118" width="34" height="16" rx="2" />
+                <path class="wa-thin" d="M66 124 H88 M66 129 H80" />
+            }
+        }
+    </svg>
+}

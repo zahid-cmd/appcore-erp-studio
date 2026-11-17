@@ -9,9 +9,11 @@
 
         title="Warehouse"
 
-        subtitle="Manage warehouses"
+        subtitle="Where the stock is kept : each branch has its own, more can be added"
 
-        icon="fas fa-warehouse">
+        icon="fas fa-warehouse"
+
+        art="warehouses">
 
         <div pageHeaderCenter>
 
@@ -180,6 +182,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="warehouses"
+
+                emptyTitle="No warehouse yet"
+
+                emptySubtitle="A warehouse is made with every branch; add more for extra stores."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -222,24 +230,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="whs-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="whs-summary-item">
-                    <span class="whs-summary-label">{{ item.label }}</span>
-                    <b
-                        class="whs-summary-value"
-                        [class.whs-ok]="item.tone === 'ok'"
-                        [class.whs-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="whs-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="warehouses"
+            art="warehouses"
+            note="All records">
+        </app-summary-line>
     }
 
 

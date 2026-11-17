@@ -7,7 +7,8 @@
     <app-page-header
         title="Price &amp; Stock Adjustment"
         subtitle="Pricing &amp; Labels : a price circular revalues the stock on hand on its cut-off date"
-        icon="fas fa-scale-unbalanced">
+        icon="fas fa-scale-unbalanced"
+        art="catalog">
 
         <div pageHeaderCenter>
 
@@ -120,6 +121,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="catalog"
+                emptyTitle="No price adjustments yet"
+                emptySubtitle="Price changes you make will appear here"
                 [rows]="pagedRows"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -155,33 +159,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Draft</span>
-                <b class="ics-summary-value">{{ summaryText(countOf('draft')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Posted</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(countOf('posted')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Cancelled</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(countOf('cancelled')) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                {{ summaryNote }}
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="adjustments"
+            art="catalog"
+            note="{{ summaryNote }}">
+        </app-summary-line>
     }
 
 

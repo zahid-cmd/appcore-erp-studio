@@ -124,6 +124,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -242,6 +248,8 @@ extends Branches
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -569,76 +577,78 @@ implements OnInit, OnDestroy
         ListTableColumn[] =
 
     [
+        // balanced widths, one scheme for every Settings list
+        // (# 56, codes 130, names 200-240, Status 130, Actions 140)
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
-        },
-
-        {
-            header:'Company',
-            field:'CompanyName',
-            width:'200px',
-            align:'left'
-        },
-
-        {
-            header:'Wing',
-            field:'WingName',
-            width:'160px',
-            align:'left'
         },
 
         {
             header:'Branch Code',
             field:'BranchCode',
-            width:'180px',
+            width:'130px',
             align:'center'
         },
 
         {
             header:'Branch Name',
             field:'BranchName',
-            width:'240px',
+            width:'220px',
             align:'left'
         },
 
         {
             header:'Short Name',
             field:'ShortName',
-            width:'180px',
+            width:'150px',
+            align:'left'
+        },
+
+        {
+            header:'Wing',
+            field:'WingName',
+            width:'150px',
+            align:'left'
+        },
+
+        {
+            header:'Company',
+            field:'CompanyName',
+            width:'190px',
             align:'left'
         },
 
         {
             header:'Mobile',
             field:'Mobile',
-            width:'160px',
-            align:'left'
+            width:'150px',
+            align:'center'
         },
 
         {
             header:'Email',
             field:'Email',
-            width:'240px',
+            width:'220px',
             align:'left'
         },
 
         {
             header:'Status',
             field:'IsActive',
-            width:'150px',
-            align:'center',
-            type:'status'
+            type:'status',
+            width:'130px',
+            align:'center'
         },
 
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'150px',
+            width:'140px',
             align:'center'
         }
     ];

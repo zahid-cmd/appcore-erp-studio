@@ -7,7 +7,8 @@
     <app-page-header
         title="Employee Profiles"
         subtitle="Staff records : personal, job and salary structure"
-        icon="fas fa-users">
+        icon="fas fa-users"
+        art="people">
 
         <div pageHeaderCenter>
             <app-search-box
@@ -90,6 +91,9 @@
         <div canvasBody>
             <app-list-table
                 [columns]="columns"
+                emptyArt="people"
+                emptyTitle="No employee yet"
+                emptySubtitle="Add an employee : attendance, leave and payroll follow."
                 [rows]="rows"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -118,24 +122,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="empl-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="empl-summary-item">
-                    <span class="empl-summary-label">{{ item.label }}</span>
-                    <b
-                        class="empl-summary-value"
-                        [class.empl-ok]="item.tone === 'ok'"
-                        [class.empl-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="empl-summary-note">
-                Make an employee who has left Inactive : the record is kept
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="employees"
+            art="people"
+            note="All records">
+        </app-summary-line>
     }
 
     <app-history-drawer

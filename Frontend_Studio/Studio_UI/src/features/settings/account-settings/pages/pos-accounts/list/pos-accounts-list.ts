@@ -118,6 +118,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -280,6 +286,8 @@ function readField
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent
@@ -553,67 +561,68 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'60px',
+            width:'56px',
             align:'center'
         },
         {
             header:'POS Account Code',
             field:'POSAccountCode',
-            width:'220px',
+            width:'140px',
             align:'center'
         },
         {
             header:'POS Account Name',
             field:'POSAccountName',
-            width:'220px',
+            width:'240px',
             align:'left'
         },
         {
             header:'Linked Bank Account',
             field:'LinkedBankAccountName',
-            width:'280px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Branch',
             field:'Branch',
-            width:'200px',
+            width:'170px',
             align:'left'
         },
         {
             header:'Collection',
             field:'CollectionAccountText',
-            width:'120px',
+            width:'110px',
             align:'center'
         },
         {
             header:'Payment',
             field:'PaymentAccountText',
-            width:'120px',
+            width:'110px',
             align:'center'
         },
         {
             header:'Br. Exclusive',
             field:'BranchExclusiveText',
-            width:'120px',
+            width:'110px',
             align:'center'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'120px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'120px',
+            width:'140px',
             align:'center'
         }
     ];

@@ -7,7 +7,8 @@
     <app-page-header
         title="Membership Cards"
         subtitle="Membership cards with their fee, discount and complimentary service ledgers"
-        icon="fas fa-id-card">
+        icon="fas fa-id-card"
+        art="card">
 
         <div pageHeaderCenter>
 
@@ -87,6 +88,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="card"
+                emptyTitle="No membership cards yet"
+                emptySubtitle="Create a card tier to start enrolling members"
                 [rows]="pagedMembershipCards"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -122,28 +126,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="cards"
+            art="card"
+            note="All records">
+        </app-summary-line>
     }
 
 

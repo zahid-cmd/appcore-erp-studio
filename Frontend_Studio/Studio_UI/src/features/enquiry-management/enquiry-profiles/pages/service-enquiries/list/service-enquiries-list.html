@@ -10,7 +10,9 @@
 
         subtitle="Service bookings and spare parts requests, until the service is taken or the parts are sold"
 
-        icon="fas fa-screwdriver-wrench">
+        icon="fas fa-screwdriver-wrench"
+
+        art="parts">
 
         <div pageHeaderCenter>
 
@@ -238,6 +240,12 @@
 
                 [columns]="tableColumns"
 
+                emptyArt="parts"
+
+                emptyTitle="No service enquiries yet"
+
+                emptySubtitle="Service enquiries from customers will appear here"
+
                 [rows]="tableRows"
 
                 [rowActions]="tableRowActions"
@@ -290,38 +298,12 @@
 
     @if (!isBikes && summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Open</span>
-                <b class="ics-summary-value">{{ summaryText(countOf('Open')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Due</span>
-                <b class="ics-summary-value">{{ summaryText(countOf('Due')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Converted</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(countOf('Converted')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Suspended</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(countOf('Suspended')) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                {{ summaryNote }}
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="enquiries"
+            art="parts"
+            note="{{ summaryNote }}">
+        </app-summary-line>
     }
 
 

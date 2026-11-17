@@ -111,6 +111,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -336,6 +342,8 @@ function monthsBetween
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent
@@ -587,67 +595,77 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'60px',
+            width:'56px',
             align:'center'
         },
+
         {
             header:'Code',
             field:'FinancialYearCode',
-            width:'140px',
+            width:'130px',
             align:'center'
         },
+
         {
             header:'Financial Year',
             field:'FinancialYearName',
             width:'200px',
             align:'left'
         },
+
         {
             header:'Start Date',
             field:'StartDateText',
-            width:'150px',
+            width:'140px',
             align:'center'
         },
+
         {
             header:'End Date',
             field:'EndDateText',
-            width:'150px',
+            width:'140px',
             align:'center'
         },
+
         {
             header:'Duration',
             field:'DurationText',
-            width:'120px',
+            width:'130px',
             align:'center'
         },
+
         {
             header:'Current',
             field:'CurrentText',
             width:'110px',
             align:'center'
         },
+
         {
             header:'Year Status',
             field:'YearStatus',
             width:'130px',
             align:'center'
         },
+
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'120px',
+            width:'130px',
             align:'center'
         },
+
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'120px',
+            width:'140px',
             align:'center'
         }
     ];

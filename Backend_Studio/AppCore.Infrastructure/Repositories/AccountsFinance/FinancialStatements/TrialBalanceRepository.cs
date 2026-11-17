@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.AccountsFinance.FinancialStatements;
 using AppCore.Application.Platform.Accounting;
+using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.Persistence;
 using AppCore.Infrastructure.Platform.Accounting;
 
@@ -86,31 +87,6 @@ public class TrialBalanceRepository
     private const string RetainedEarningsPurpose = "RETAINED-EARNINGS";
 
     private const string NotInChart = "Not in the chart";
-
-    // Class words of income / expense (nominal) ledgers
-    private static readonly string[] NominalWords =
-    {
-        "income",
-        "revenue",
-        "sale",
-        "expense",
-        "expenditure",
-        "cost"
-    };
-
-    // Class words of credit-side ledgers (when no mode is set)
-    private static readonly string[] CreditWords =
-    {
-        "liabilit",
-        "equity",
-        "capital",
-        "income",
-        "revenue",
-        "sale",
-        "payable",
-        "reserve"
-    };
-
 
     public TrialBalanceRepository(
         AppDbContext context,
@@ -201,19 +177,6 @@ public class TrialBalanceRepository
         }
 
         return string.Empty;
-    }
-
-
-    private static bool HasWord
-    (
-        string[] words,
-        params string?[] texts
-    )
-    {
-        string text =
-            string.Join(" ", texts).ToLowerInvariant();
-
-        return words.Any(word => text.Contains(word));
     }
 
 
@@ -452,7 +415,7 @@ public class TrialBalanceRepository
                 .Set<AccountClassEntity>()
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted)
-                .Select(x => new { x.ClassCode, x.ClassName, x.ClassType, x.Mode })
+                .Select(x => new { x.ClassCode, x.ClassName, x.ClassType, x.Mode, x.StatementType, x.BusinessLine })
                 .ToListAsync())
             .Where(x => !string.IsNullOrWhiteSpace(x.ClassCode))
             .GroupBy(x => x.ClassCode.Trim().ToUpperInvariant())
@@ -463,7 +426,7 @@ public class TrialBalanceRepository
                 .Set<AccountGroupEntity>()
                 .AsNoTracking()
                 .Where(x => !x.IsDeleted)
-                .Select(x => new { x.GroupCode, x.GroupName, x.Mode })
+                .Select(x => new { x.GroupCode, x.GroupName, x.Mode, x.CashFlowActivity })
                 .ToListAsync())
             .Where(x => !string.IsNullOrWhiteSpace(x.GroupCode))
             .GroupBy(x => x.GroupCode!.Trim().ToUpperInvariant())
@@ -479,6 +442,18 @@ public class TrialBalanceRepository
             .Where(x => !string.IsNullOrWhiteSpace(x.LedgerCode))
             .GroupBy(x => x.LedgerCode!.Trim().ToUpperInvariant())
             .ToDictionary(g => g.Key, g => g.First().Mode ?? string.Empty);
+
+        // A General Ledger may have a business line of its own
+        Dictionary<string, string> glLines =
+            (await _context
+                .Set<GeneralLedgersEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && x.BusinessLine != "")
+                .Select(x => new { x.LedgerCode, x.BusinessLine })
+                .ToListAsync())
+            .Where(x => !string.IsNullOrWhiteSpace(x.LedgerCode))
+            .GroupBy(x => x.LedgerCode!.Trim().ToUpperInvariant())
+            .ToDictionary(g => g.Key, g => BusinessLines.Normalize(g.First().BusinessLine));
 
         //=======================================================
         // Retained Earnings (Posting Setup)
@@ -532,13 +507,27 @@ public class TrialBalanceRepository
             var grp =
                 groups.GetValueOrDefault(groupKey);
 
+            // What the ledger is : the setting of its Account Class
+            // (the inventory family is fixed by its Class Type).
+            // Never from a name. Not in the chart : by its side.
+            string savedMode =
+                NormalMode(glModes.GetValueOrDefault(code), grp?.Mode, cls?.Mode);
+
+            string statementType =
+                cls == null
+                    ? string.Empty
+                    : StatementTypes.Resolve(cls.ClassType, cls.StatementType, savedMode);
+
             bool nominal =
-                HasWord(NominalWords, cls?.ClassType, cls?.ClassName);
+                StatementTypes.IsNominal(statementType);
 
             string mode =
-                NormalMode(glModes.GetValueOrDefault(code), grp?.Mode, cls?.Mode) is { Length: > 0 } chosen
-                    ? chosen
-                    : HasWord(CreditWords, cls?.ClassType, cls?.ClassName) ? Cr : Dr;
+                savedMode.Length > 0
+                    ? savedMode
+                    : StatementTypes.IsCredit(statementType) ? Cr : Dr;
+
+            string ownLine =
+                glLines.GetValueOrDefault(code) ?? string.Empty;
 
             TrialBalanceRowDto row =
                 new()
@@ -554,6 +543,9 @@ public class TrialBalanceRepository
                     SubGroupName = Clean(ledger.SubGroupName).Length > 0 ? Clean(ledger.SubGroupName) : Clean(ledger.SubGroupCode),
                     Mode = mode,
                     IsNominal = nominal,
+                    StatementType = statementType,
+                    BusinessLine = ownLine.Length > 0 ? ownLine : BusinessLines.Normalize(cls?.BusinessLine),
+                    CashFlowActivity = CashFlowActivities.Normalize(grp?.CashFlowActivity),
                     IsActive = ledger.IsActive
                 };
 

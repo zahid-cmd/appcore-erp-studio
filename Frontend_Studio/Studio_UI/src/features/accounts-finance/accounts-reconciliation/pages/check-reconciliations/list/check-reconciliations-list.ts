@@ -156,6 +156,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     HistoryDrawerComponent
 }
 from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
@@ -390,6 +396,7 @@ interface StatusChip
         TextareaComponent,
         ListTableComponent,
         HistoryDrawerComponent,
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent
@@ -2315,5 +2322,84 @@ implements OnInit
         number
     {
         return row.PaymentId;
+    }
+
+
+    //===========================================================
+    // Status filter + Summary Line (2026-11-16 : the status chips
+    // row became a toolbar dropdown and the summary tiles)
+    //===========================================================
+
+    private chipSource:
+        StatusChip[] | null =
+        null;
+
+    private chipItems:
+        { label:string; value:string }[] =
+        [];
+
+    private chipSummary:
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] =
+        [];
+
+    private syncChips():
+        void
+    {
+        if (this.chipSource === this.statusChips)
+        {
+            return;
+        }
+
+        this.chipSource =
+            this.statusChips;
+
+        this.chipItems =
+            this.statusChips.map(
+                chip =>
+                    ({ label: chip.label + ' (' + chip.count + ')', value: chip.id }));
+
+        const all =
+            this.statusChips.find(chip => chip.id === 'all');
+
+        const total =
+            all
+                ? all.count
+                : this.statusChips.reduce((sum, chip) => chip.id === 'open' ? sum : sum + chip.count, 0);
+
+        const tone =
+            (id: string): '' | 'ok' | 'bad' | 'warn' =>
+                /clear|settl/i.test(id)
+                    ? 'ok'
+                    : /dishon|void|reject/i.test(id)
+                        ? 'bad'
+                        : /pending|deposit/i.test(id)
+                            ? 'warn'
+                            : '';
+
+        this.chipSummary =
+        [
+            { label:'Total', value:String(total), tone:'' },
+            ...this.statusChips
+                .filter(chip => chip.id !== 'all' && chip.id !== 'open')
+                .map(chip => ({ label: chip.label, value: String(chip.count), tone: tone(chip.id) }))
+        ];
+    }
+
+    get statusFilterItems():
+        { label:string; value:string }[]
+    {
+        this.syncChips();
+
+        return this.chipItems;
+    }
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        this.syncChips();
+
+        return this.statusChips.length > 0
+            ? this.chipSummary
+            : [];
     }
 }

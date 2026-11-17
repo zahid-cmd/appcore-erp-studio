@@ -102,9 +102,6 @@ public class ServiceCategoryRepository :
     private const string AccountClassType =
         "Account";
 
-    private const string IncomeClassName =
-        "income";
-
     private const int MaxNameLength =
         200;
 
@@ -501,7 +498,9 @@ public class ServiceCategoryRepository :
         }
 
         //=======================================================
-        // 2. First use : an 'Account' class named "...income..."
+        // 2. First use : an 'Account' class whose Statement Type is
+        //    Income; the one of the business line Service first.
+        //    (By the settings of the class, never by its name.)
         //=======================================================
 
         if
@@ -522,8 +521,8 @@ public class ServiceCategoryRepository :
                             x.ClassType ==
                             AccountClassType
                             &&
-                            x.ClassName.ToLower().Contains(
-                                IncomeClassName)
+                            x.StatementType ==
+                            AppCore.Domain.Platform.Accounting.StatementTypes.Income
                     )
                     .ToListAsync();
 
@@ -532,10 +531,8 @@ public class ServiceCategoryRepository :
                     .OrderByDescending
                     (
                         x =>
-                            (x.ClassName ?? string.Empty)
-                                .Contains(
-                                    "service",
-                                    StringComparison.OrdinalIgnoreCase)
+                            x.BusinessLine ==
+                            AppCore.Domain.Platform.Accounting.BusinessLines.Service
                     )
                     .ThenBy
                     (
@@ -552,8 +549,8 @@ public class ServiceCategoryRepository :
         )
         {
             throw new InvalidOperationException(
-                "No income Account Class found. Create an 'Account' class with 'Income' in its name " +
-                "(e.g. 'Service Income') on the Account Classes page first.");
+                "No income Account Class found. Create an 'Account' class with Statement Type Income " +
+                "(and Business Line Service) on the Account Classes page first.");
         }
 
         if

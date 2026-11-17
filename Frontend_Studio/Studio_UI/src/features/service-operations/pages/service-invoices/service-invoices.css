@@ -1,0 +1,156 @@
+@import '../job-cards/job-cards.css';
+
+/* Service Invoices, Service Returns, Free Service Claims : the form
+   is the job card form (left the head, right the lines); only what
+   differs is here */
+
+.si-title
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f2a44;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.si-subhead
+{
+    margin-top: 6px;
+}
+
+.si-buttons
+{
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+/* the totals */
+
+.si-sum
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 10px 12px;
+    border: 1px solid #d6e4fb;
+    border-radius: 10px;
+    background: #f7faff;
+    color: #0f2a44;
+    font-size: 12.5px;
+}
+
+.si-sum b
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.si-sum .si-grand
+{
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px solid #d6e4fb;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.si-sum .si-due
+{
+    color: #b91c1c;
+    font-weight: 800;
+}
+
+/* what the server says about the invoice */
+
+.si-warn
+{
+    display: block;
+    padding: 7px 10px;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.si-warn.si-block
+{
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+/* a line : # | item | qty | rate | amount | VAT | total */
+
+.si-row
+{
+    display: grid;
+    grid-template-columns: 30px minmax(180px, 1.4fr) 60px 100px 110px 90px 110px;
+    align-items: center;
+    gap: 8px;
+}
+
+/* outside work : # | work | vendor | cost | billed | x */
+
+.si-out
+{
+    display: grid;
+    grid-template-columns: 30px minmax(160px, 1.3fr) minmax(120px, 1fr) 120px 120px 30px;
+    align-items: center;
+    gap: 8px;
+}
+
+.si-group
+{
+    margin: 10px 0 4px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.si-none
+{
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.si-num
+{
+    text-align: right;
+}
+
+/* a collection line : mode | account | amount | x, the MFS
+   transaction id under it */
+
+.si-pay
+{
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) 110px 30px;
+    align-items: center;
+    gap: 8px;
+}
+
+.si-ref
+{
+    grid-column: 1 / span 3;
+}
+
+/* Free Service Claims : tick | invoice | date | job card | customer | service | amount */
+
+.si-claim
+{
+    display: grid;
+    grid-template-columns: 30px 170px 100px 100px minmax(140px, 1fr) minmax(140px, 1fr) 110px;
+    align-items: center;
+    gap: 8px;
+}
+
+.si-claim input[type='checkbox']
+{
+    width: 16px;
+    height: 16px;
+}

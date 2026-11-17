@@ -11,6 +11,12 @@ import
 }
 from '@angular/common';
 
+import
+{
+    WorkspaceArtComponent
+}
+from '../workspace-art/workspace-art';
+
 @Component({
     selector: 'app-page-header',
 
@@ -18,7 +24,8 @@ from '@angular/common';
 
     imports:
     [
-        CommonModule
+        CommonModule,
+        WorkspaceArtComponent
     ],
 
     // "title" is an input; without this the browser also keeps it as
@@ -43,9 +50,19 @@ export class PageHeaderComponent
     @Input()
     title = '';
 
+    // A short name after the title, in deep green :
+    // "Return on Investment - ROI" (2026-11-17)
+    @Input()
+    titleMark = '';
+
     @Input()
     subtitle = '';
 
     @Input()
     icon = '';
-}
+
+    // A workspace art theme (company, branches ...) : the icon tile
+    // shows that drawing instead of the font icon (2026-11-15)
+    @Input()
+    art = '';
+}

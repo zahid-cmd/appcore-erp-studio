@@ -8,9 +8,11 @@
 
         title="MFS Accounts"
 
-        subtitle="Manage MFS accounts"
+        subtitle="bKash, Nagad, Rocket ... personal and merchant wallets"
 
-        icon="fas fa-mobile-screen-button">
+        icon="fas fa-mobile-screen-button"
+
+        art="mfs">
 
         <div pageHeaderCenter>
 
@@ -167,6 +169,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="mfs"
+
+                emptyTitle="No MFS account yet"
+
+                emptySubtitle="Add a mobile wallet that takes or pays money."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -208,24 +216,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="mfa-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="mfa-summary-item">
-                    <span class="mfa-summary-label">{{ item.label }}</span>
-                    <b
-                        class="mfa-summary-value"
-                        [class.mfa-ok]="item.tone === 'ok'"
-                        [class.mfa-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="mfa-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="accounts"
+            art="mfs"
+            note="All records">
+        </app-summary-line>
     }
 
 

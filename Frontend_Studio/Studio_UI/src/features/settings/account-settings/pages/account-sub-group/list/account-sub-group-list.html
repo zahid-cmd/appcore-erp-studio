@@ -8,9 +8,11 @@
 
         title="Account Sub Group"
 
-        subtitle="Manage account sub groups"
+        subtitle="Sub groups inside a group : the level ledgers are made under"
 
-        icon="fas fa-layer-group">
+        icon="fas fa-layer-group"
+
+        art="accounts">
 
         <div pageHeaderCenter>
 
@@ -148,6 +150,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="accounts"
+
+                emptyTitle="No account sub group yet"
+
+                emptySubtitle="Add a sub group under an account group."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -190,24 +198,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="asg-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="asg-summary-item">
-                    <span class="asg-summary-label">{{ item.label }}</span>
-                    <b
-                        class="asg-summary-value"
-                        [class.asg-ok]="item.tone === 'ok'"
-                        [class.asg-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="asg-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="sub groups"
+            art="accounts"
+            note="All records">
+        </app-summary-line>
     }
 
 

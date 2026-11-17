@@ -12,7 +12,7 @@
 
         icon="fa-solid fa-sliders">
 
-        <div pageHeaderCenter>
+        <div pageHeaderCenter class="ps-search">
 
             <app-search-box
 
@@ -281,7 +281,7 @@
 
         <section
 
-            *ngFor="let group of groups"
+            *ngFor="let group of groups; trackBy: trackByGroup"
 
             class="ps-group">
 
@@ -679,6 +679,8 @@
     *ngIf="editing"
 
     class="ps-backdrop"
+
+    [style.padding]="dialogPad"
 
     (click)="closeChange()">
 

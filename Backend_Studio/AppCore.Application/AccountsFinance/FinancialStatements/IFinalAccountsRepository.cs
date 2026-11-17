@@ -38,4 +38,14 @@ public interface IFinalAccountsRepository
         long branchId,
         bool showCancelled,
         string? compare);
+
+    // Return on Investment : from empty = start of the financial
+    // year of To; to empty = today; compare : none / last-year
+    Task<ReturnOnInvestmentDto> GetReturnOnInvestmentAsync(
+        long userId,
+        string? from,
+        string? to,
+        long branchId,
+        bool showCancelled,
+        string? compare);
 }

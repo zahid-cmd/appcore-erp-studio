@@ -1,0 +1,112 @@
+<div class="app-list-page">
+
+    <app-page-header
+        [title]="words.title"
+        [subtitle]="words.subtitle"
+        [icon]="words.icon">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                [placeholder]="words.search"
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="load()"
+                [command2Visible]="false"
+                [command3Visible]="false">
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <div
+            pageToolbarLeft
+            class="sr-filters">
+
+            <span class="sr-label">From</span>
+
+            <app-datepicker
+                class="sr-date"
+                [value]="$any(asDate(from))"
+                (valueChange)="onFrom($event)">
+            </app-datepicker>
+
+            <span class="sr-label">To</span>
+
+            <app-datepicker
+                class="sr-date"
+                [value]="$any(asDate(to))"
+                (valueChange)="onTo($event)">
+            </app-datepicker>
+
+            <app-search-dropdown
+                class="sr-branch"
+                placeholder="All service centers"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchId"
+                (valueChange)="onBranch($event)">
+            </app-search-dropdown>
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="sr-totals">
+
+            @if (cut)
+            {
+                <span class="sr-cut">Only the first rows are shown : narrow the period</span>
+            }
+
+            <b>{{ totalsText }}</b>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas
+        [config]="listConfig">
+
+        <div canvasBody>
+
+            <app-list-table
+                [columns]="columns"
+                [rows]="rows"
+                [serialOffset]="(currentPage - 1) * pageSize"
+                [loading]="loading"
+                [error]="loadFailed"
+                [actions]="listActions"
+                emptyTitle="Nothing to show"
+                [emptySubtitle]="words.empty">
+            </app-list-table>
+
+        </div>
+
+        <app-pagination
+            canvasFooter
+            [totalRecords]="totalRecords"
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)">
+        </app-pagination>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+
+</div>

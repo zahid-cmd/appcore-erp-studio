@@ -7,7 +7,8 @@
     <app-page-header
         title="Supplier Profiles"
         subtitle="Brand distributors, local vendors and service providers"
-        icon="fas fa-truck-field">
+        icon="fas fa-truck-field"
+        art="truck">
 
         <div pageHeaderCenter>
 
@@ -117,6 +118,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="truck"
+                emptyTitle="No supplier yet"
+                emptySubtitle="Add a supplier : purchases and payments are kept against it."
                 [rows]="suppliers"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -153,24 +157,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="sp-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="sp-summary-item">
-                    <span class="sp-summary-label">{{ item.label }}</span>
-                    <b
-                        class="sp-summary-value"
-                        [class.sp-ok]="item.tone === 'ok'"
-                        [class.sp-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="sp-summary-note">
-                Matching the supply type, brand and search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="suppliers"
+            art="truck"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================
@@ -195,4 +187,4 @@
 
     <app-progress-dialog></app-progress-dialog>
 
-</div>
+</div>

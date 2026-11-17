@@ -540,3 +540,12 @@
         max-width: none;
     }
 }
+
+
+/* Status dropdown (2026-11-16 : replaces the chips row) and narrower
+   filters so the tabs keep their room */
+app-search-dropdown[pageToolbarRight],
+.crc-status
+{
+    --dropdown-width: 190px;
+}

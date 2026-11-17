@@ -1,0 +1,194 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Sales Warranty Records"
+            subtitle="One record per delivered bike : its policy, its end date and km limit, and whether it is still under warranty"
+            icon="fa-solid fa-certificate">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search customer, mobile, chassis, invoice, policy..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Refresh"
+                    command1Icon="fas fa-rotate-right"
+                    (command1Click)="loadList()"
+                    [command2Visible]="false"
+                    [command3Visible]="false">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="listActions"
+                    emptyTitle="No warranty records"
+                    emptySubtitle="A record is made when a bike is delivered (Bike Deliveries) and a warranty policy covers its brand."
+                    (view)="view($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+    }
+    @else
+    {
+        <app-page-header
+            title="View Sales Warranty Record"
+            subtitle="The warranty of one delivered bike"
+            icon="fa-solid fa-certificate">
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    [command1Visible]="false"
+                    [command2Visible]="false"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split jc-split appcore-scrollbar">
+
+                @if (doc)
+                {
+                    <section class="pf-card">
+
+                        <header class="pf-card-head">
+                            <i class="fa-solid fa-certificate"></i>
+                            <span>Warranty Record</span>
+                            <span
+                                class="jc-status"
+                                [style.background]="color(doc.state)">{{ doc.state }}</span>
+                        </header>
+
+                        <div class="jc-two">
+                            <app-textbox label="Record No" [value]="doc.code" [disabled]="true"></app-textbox>
+                            <app-textbox label="Sales Center" [value]="doc.branchName" [disabled]="true"></app-textbox>
+                            <app-textbox label="Customer" [value]="doc.customerName" [disabled]="true"></app-textbox>
+                            <app-textbox label="Mobile" [value]="doc.customerPhone" [disabled]="true"></app-textbox>
+                            <app-textbox label="Bike" [value]="doc.productName" [disabled]="true"></app-textbox>
+                            <app-textbox label="Sales Invoice" [value]="doc.salesInvoiceNo" [disabled]="true"></app-textbox>
+                            <app-textbox label="Chassis No" [value]="doc.chassisNo" [disabled]="true"></app-textbox>
+                            <app-textbox label="Engine No" [value]="doc.engineNo" [disabled]="true"></app-textbox>
+                            <app-textbox label="Policy" [value]="doc.policyCode + '  ' + doc.policyName" [disabled]="true"></app-textbox>
+                            <app-textbox label="Km Limit" [value]="doc.kmLimit ? '' + doc.kmLimit : 'No limit'" [disabled]="true"></app-textbox>
+                            <app-textbox label="Starts" [value]="day(doc.startDate)" [disabled]="true"></app-textbox>
+                            <app-textbox label="Ends" [value]="doc.expiryDate ? day(doc.expiryDate) : 'No end date'" [disabled]="true"></app-textbox>
+                        </div>
+
+                        @if (doc.voidReason)
+                        {
+                            <app-textbox label="Void Reason" [value]="doc.voidReason" [disabled]="true"></app-textbox>
+                        }
+
+                        <span class="hp-note">The record is made when the bike is delivered, from the warranty policy of its brand and model valid on that day. The warranty ends at the end date or the km limit, whichever comes first.</span>
+
+                    </section>
+
+                    <section class="pf-card jc-work">
+
+                        <header class="pf-card-head jc-head">
+                            <span class="swr-title">
+                                <i class="fas fa-gears"></i>
+                                Part Coverages
+                            </span>
+                        </header>
+
+                        @if (doc.parts.length > 0)
+                        {
+                            <div class="swr-row jc-cols">
+                                <span></span>
+                                <span>Part</span>
+                                <span>Covered Until</span>
+                                <span class="jc-right">Km Limit</span>
+                                <span>Notes</span>
+                                <span>State</span>
+                            </div>
+                        }
+
+                        @for (part of doc.parts; track $index; let i = $index)
+                        {
+                            <div class="swr-row jc-item">
+                                <span class="jc-no">{{ i + 1 }}</span>
+                                <b>{{ part.partName }}</b>
+                                <span>{{ part.expiryDate ? day(part.expiryDate) : 'No end date' }}</span>
+                                <span class="jc-amount">{{ part.kmLimit || '' }}</span>
+                                <span>{{ part.notes }}</span>
+                                <span class="swr-state">
+                                    <i [style.background]="color(part.state)"></i>
+                                    {{ part.state }}
+                                </span>
+                            </div>
+                        }
+                        @empty
+                        {
+                            <div class="pfx-empty">The policy has no part coverages : only the whole-bike warranty applies.</div>
+                        }
+
+                    </section>
+                }
+                @else
+                {
+                    <div class="pfx-empty">{{ loading ? 'Reading the record...' : 'The warranty record could not be loaded.' }}</div>
+                }
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+
+</div>

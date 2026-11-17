@@ -102,6 +102,12 @@ from '../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../shared/components/controls/pagination/pagination';
@@ -209,6 +215,8 @@ const MONTHS =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent,
@@ -296,16 +304,17 @@ export class SalesReturnList
 
     readonly columns: ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'45px', align:'center' },
-        { header:'Return No', field:'ReturnNo', width:'200px', align:'left', sortable:true },
-        { header:'Date', field:'DateText', width:'100px', align:'center', sortable:true },
-        { header:'Invoice', field:'InvoiceText', width:'200px', align:'left', sortable:true },
-        { header:'Customer', field:'CustomerName', width:'190px', align:'left', sortable:true },
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Return No', field:'ReturnNo', width:'160px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
+        { header:'Invoice', field:'InvoiceText', width:'160px', align:'left', sortable:true },
+        { header:'Customer', field:'CustomerName', width:'160px', align:'left', sortable:true },
         { header:this.page.pageType === 'MB' ? 'Bikes' : 'Items', field:'ItemsText', width:'240px', align:'left', sortable:true, priority:2 },
-        { header:'Qty', field:'QtyText', width:'60px', align:'right', sortable:true, priority:3 },
-        { header:'Credit (Tk)', field:'TotalText', width:'115px', align:'right', sortable:true },
-        { header:'Status', field:'Status', type:'status', width:'105px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'220px', align:'center' }
+        { header:'Qty', field:'QtyText', width:'90px', align:'center', sortable:true, priority:3 },
+        { header:'Credit (Tk)', field:'TotalText', width:'160px', align:'left', sortable:true },
+        { header:'Status', field:'Status', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     readonly rowActions: ListTableRowAction[] =
@@ -814,5 +823,42 @@ export class SalesReturnList
         this.historyOpened = false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.countOf('Draft')),
+            String(this.countOf('Approved')),
+            String(this.countOf('Posted')),
+            String(this.money(this.postedTotal))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Draft', value:v[0], tone:'' },
+                    { label:'Approved', value:v[1], tone:'warn' },
+                    { label:'Posted', value:v[2], tone:'ok' },
+                    { label:'Credited (posted)', value:v[3], tone:'' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

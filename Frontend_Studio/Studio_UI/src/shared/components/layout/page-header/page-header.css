@@ -229,6 +229,14 @@
     line-height: 1.2;
 }
 
+/* the short name after the title ("- ROI") : deep green */
+.page-header-title-mark
+{
+    color: #14532d;
+
+    font-weight: 800;
+}
+
 /* =====================================================
    SUBTITLE
 ===================================================== */
@@ -308,4 +316,21 @@
     {
         display: none;
     }
+}
+
+/* =====================================================
+   ICON TILE WITH WORKSPACE ART (2026-11-15) : the page's
+   drawing in white on the blue tile
+===================================================== */
+
+.page-header-icon.page-header-art
+{
+    background:
+        radial-gradient(90% 90% at 80% 10%, rgba(243,179,133,.28) 0%, transparent 55%),
+        linear-gradient(
+            135deg,
+            #0f2a44 0%,
+            #1e3a8a 45%,
+            #2563eb 100%
+        );
 }

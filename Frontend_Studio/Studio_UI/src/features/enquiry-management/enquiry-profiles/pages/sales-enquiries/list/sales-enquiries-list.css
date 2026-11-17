@@ -1,6 +1,5 @@
 @import '../../../../../../shared/styles/app-list-page.css';
 
-
 /* =====================================================
    INTEREST CHIPS (toolbar right)
    Each chip carries its level colour in --chip.
@@ -18,7 +17,6 @@
 
     justify-content:flex-end;
 }
-
 
 .se-interest-title
 {
@@ -40,7 +38,6 @@
 
     text-transform:uppercase;
 }
-
 
 .se-chip
 {
@@ -77,14 +74,12 @@
         box-shadow .18s ease;
 }
 
-
 .se-chip:hover
 {
     border-color:var(--chip);
 
     color:var(--chip);
 }
-
 
 .se-chip-dot
 {
@@ -98,7 +93,6 @@
 
     box-shadow:0 0 0 3px color-mix(in srgb, var(--chip) 18%, transparent);
 }
-
 
 .se-chip-count
 {
@@ -123,7 +117,6 @@
     text-align:center;
 }
 
-
 /* Chosen chip : filled with its colour */
 .se-chip-on
 {
@@ -136,12 +129,10 @@
     box-shadow:0 6px 14px -6px color-mix(in srgb, var(--chip) 70%, transparent);
 }
 
-
 .se-chip-on:hover
 {
     color:#ffffff;
 }
-
 
 .se-chip-on .se-chip-dot
 {
@@ -150,14 +141,12 @@
     box-shadow:none;
 }
 
-
 .se-chip-on .se-chip-count
 {
     background:rgba(255,255,255,.22);
 
     color:#ffffff;
 }
-
 
 /* =====================================================
    TOOLBAR : status tabs (left) · website group (centre)
@@ -175,7 +164,6 @@
 
     min-width:0;
 }
-
 
 /* Centre group : a glass pill with two live buttons */
 .se-inbox
@@ -205,7 +193,6 @@
         inset 0 1px 0 rgba(255,255,255,.9),
         0 4px 14px -8px rgba(30,58,138,.35);
 }
-
 
 .se-inbox-btn
 {
@@ -248,7 +235,6 @@
         transform .15s ease;
 }
 
-
 .se-inbox-ride
 {
     --tone:#f59e0b;
@@ -256,14 +242,12 @@
     --tone-2:#ea580c;
 }
 
-
 .se-inbox-btn:hover
 {
     background:rgba(255,255,255,.9);
 
     box-shadow:0 2px 8px -4px rgba(15,23,42,.25);
 }
-
 
 .se-inbox-icon
 {
@@ -285,7 +269,6 @@
 
     transition:background .2s ease, color .2s ease;
 }
-
 
 .se-inbox-count
 {
@@ -310,7 +293,6 @@
     text-align:center;
 }
 
-
 /* Waiting items : coloured count and a pulsing dot */
 .se-inbox-live .se-inbox-count
 {
@@ -320,7 +302,6 @@
 
     box-shadow:0 4px 10px -4px var(--tone);
 }
-
 
 .se-inbox-live::after
 {
@@ -345,7 +326,6 @@
     animation:se-pulse 1.8s ease-out infinite;
 }
 
-
 /* Chosen : filled with its colour */
 .se-inbox-on
 {
@@ -356,12 +336,10 @@
     box-shadow:0 8px 18px -10px var(--tone-2);
 }
 
-
 .se-inbox-on:hover
 {
     background:linear-gradient(135deg, var(--tone), var(--tone-2));
 }
-
 
 .se-inbox-on .se-inbox-icon
 {
@@ -369,7 +347,6 @@
 
     color:#ffffff;
 }
-
 
 .se-inbox-on .se-inbox-count
 {
@@ -380,7 +357,6 @@
     box-shadow:none;
 }
 
-
 .se-inbox-on.se-inbox-live::after
 {
     background:#ffffff;
@@ -388,14 +364,12 @@
     border-color:var(--tone-2);
 }
 
-
 @keyframes se-pulse
 {
     0%   { box-shadow:0 0 0 0 color-mix(in srgb, var(--tone) 60%, transparent); }
 
     100% { box-shadow:0 0 0 8px transparent; }
 }
-
 
 @media (prefers-reduced-motion: reduce)
 {
@@ -405,7 +379,6 @@
     }
 }
 
-
 /* Test Rides view : "Book Test Ride" needs a wider first button */
 .se-cc-wide ::ng-deep .command-center-left .command-button:first-child
 {
@@ -414,71 +387,4 @@
     padding:0 18px;
 }
 
-/* Summary line below the canvas : plain text, no chips,
-   light blue gradient */
-
-.ics-summary
-{
-    display: flex;
-    flex: 0 0 auto;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px 0;
-    min-height: 50px;
-    padding: 12px 22px;
-    box-sizing: border-box;
-    border: 1px solid #d6e4fb;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #f7fbff 0%, #eef5ff 55%, #e3eeff 100%);
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
-    font-size: 14.5px;
-}
-
-.ics-summary-item
-{
-    display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 0 20px;
-}
-
-.ics-summary-item:first-child
-{
-    padding-left: 0;
-}
-
-.ics-summary-item + .ics-summary-item
-{
-    border-left: 1px solid #c9daf5;
-}
-
-.ics-summary-label
-{
-    color: #475569;
-    font-weight: 500;
-}
-
-.ics-summary-value
-{
-    color: #1e293b;
-    font-size: 15.5px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-.ics-summary-value.ics-ok
-{
-    color: #047857;
-}
-
-.ics-summary-value.ics-bad
-{
-    color: #be123c;
-}
-
-.ics-summary-note
-{
-    margin-left: auto;
-    color: #64748b;
-    font-size: 13px;
-}
+/* The summary line is the shared app-summary-line (2026-11-16) */

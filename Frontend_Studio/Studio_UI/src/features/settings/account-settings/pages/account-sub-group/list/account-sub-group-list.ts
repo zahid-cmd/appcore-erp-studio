@@ -116,6 +116,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -225,6 +231,8 @@ from '../../../models/auto-accounts.model';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -518,41 +526,42 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Account Class',
             field:'AccountClassName',
-            width:'180px',
+            width:'160px',
             align:'left'
         },
         {
             header:'Group Code',
             field:'GroupCode',
-            width:'130px',
-            align:'left'
+            width:'150px',
+            align:'center'
         },
         {
             header:'Group Name',
             field:'AccountGroupName',
-            width:'220px',
+            width:'190px',
             align:'left'
         },
         {
             header:'Sub Group Code',
             field:'SubGroupCode',
             width:'180px',
-            align:'left'
+            align:'center'
         },
         {
             header:'Sub Group Name',
             field:'SubGroupName',
-            width:'240px',
+            width:'230px',
             align:'left'
         },
         {
@@ -565,21 +574,27 @@ implements OnInit, OnDestroy
             header:'Ledger Creation',
             field:'AllowManualLedger',
             type:'boolean',
-            width:'130px',
+            width:'150px',
+            align:'center'
+        },
+        {
+            header:'Finance Cost',
+            field:'FinanceCostText',
+            width:'120px',
             align:'center'
         },
         {
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'120px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];
@@ -1009,6 +1024,12 @@ implements OnInit, OnDestroy
                     ??
                     false
                 ),
+
+            IsFinanceCost:
+                Boolean(item?.IsFinanceCost ?? item?.isFinanceCost ?? false),
+
+            FinanceCostText:
+                Boolean(item?.IsFinanceCost ?? item?.isFinanceCost ?? false) ? 'Yes' : '—',
 
             Remarks:
                 item?.Remarks

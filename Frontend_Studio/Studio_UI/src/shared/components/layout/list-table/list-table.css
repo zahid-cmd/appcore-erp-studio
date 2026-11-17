@@ -643,16 +643,70 @@ td.right .action-buttons
 
 
 /* =====================================================
+   VIEW / EDIT / DELETE : premium (owner 2026-11-16)
+   White tiles with a fine border and a soft shadow, the
+   icon in its colour; on hover the tile takes a soft
+   tint of that colour with a matching ring.
+===================================================== */
+
+.action-btn.view,
+.action-btn.edit,
+.action-btn.delete
+{
+    width: 30px;
+    height: 30px;
+    border: 1px solid #e3e9f3;
+    border-radius: 9px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafd 100%);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, .9) inset,
+        0 1px 2px rgba(15, 23, 42, .06),
+        0 3px 8px -4px rgba(15, 23, 42, .14);
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+}
+
+.action-btn.view i,
+.action-btn.edit i,
+.action-btn.delete i
+{
+    font-size: 13.5px;
+    transition: transform .18s ease;
+}
+
+.action-btn.view:hover i,
+.action-btn.edit:hover i,
+.action-btn.delete:hover i
+{
+    transform: scale(1.12);
+}
+
+.action-btn.view:active,
+.action-btn.edit:active,
+.action-btn.delete:active
+{
+    transform: translateY(0);
+}
+
+/* =====================================================
    VIEW
 ===================================================== */
 
 .action-btn.view
 {
-    background: #edf4ff;
-
-    color: #2563eb;
+    color: #1f6bff;
 }
 
+.action-btn.view:hover
+{
+    border-color: #b9d0fb;
+    background: #eef4ff;
+    box-shadow: 0 0 0 3px rgba(31, 107, 255, .12), 0 6px 14px -6px rgba(31, 107, 255, .45);
+}
 
 /* =====================================================
    EDIT
@@ -660,11 +714,15 @@ td.right .action-buttons
 
 .action-btn.edit
 {
-    background: #fff8e5;
-
-    color: #c58b00;
+    color: #c2780a;
 }
 
+.action-btn.edit:hover
+{
+    border-color: #f5d79a;
+    background: #fff8e8;
+    box-shadow: 0 0 0 3px rgba(217, 140, 10, .12), 0 6px 14px -6px rgba(217, 140, 10, .45);
+}
 
 /* =====================================================
    DELETE
@@ -672,9 +730,14 @@ td.right .action-buttons
 
 .action-btn.delete
 {
-    background: #ffecec;
+    color: #e11d48;
+}
 
-    color: #dc2626;
+.action-btn.delete:hover
+{
+    border-color: #fbc4cf;
+    background: #fff1f3;
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, .12), 0 6px 14px -6px rgba(225, 29, 72, .45);
 }
 
 
@@ -1427,4 +1490,205 @@ td.right .action-buttons
 .list-table-grid tbody tr.lt-row-click
 {
     cursor:pointer;
+}
+
+/* =====================================================
+   EMPTY LIST WITH THE PAGE'S WORKSPACE ART (2026-11-15)
+===================================================== */
+
+.table-empty-art
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 18px 16px;
+    text-align: center;
+}
+
+.table-empty-art > app-workspace-art
+{
+    margin-bottom: 8px;
+    opacity: .92;
+}
+
+.table-empty-art > b
+{
+    color: #1e293b;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.table-empty-art > span
+{
+    max-width: 420px;
+    color: #64748b;
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+
+/* =====================================================
+   SOFT GRID (owner 2026-11-17, mockup A)
+   Soft row and column lines, a pale header with a navy
+   rule, a quiet zebra, the hovered row marked in copper,
+   codes in a chip, status with a dot, tinted action
+   tiles. No lines under the last row (owner).
+   Placed last : it wins over the rules above.
+===================================================== */
+
+.list-table-header
+{
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(180deg, #f6f8fd 0%, #eef3fb 100%);
+    border-top: none;
+    border-bottom: 2px solid #16307a;
+    box-shadow: none;
+}
+
+.list-table-grid thead th
+{
+    background: transparent;
+    border-top: none;
+    border-bottom: none;
+    color: #334a7a;
+    font-size: 12px;
+    letter-spacing: .08em;
+}
+
+.list-table-grid thead th + th
+{
+    border-left: 1px solid #e3e9f3;
+}
+
+.list-table-grid thead th.sortable:hover
+{
+    background: rgba(22, 48, 122, .05);
+    color: #16307a;
+}
+
+/* the header's own table is white : let the header band show */
+
+.list-table-header .list-table-grid
+{
+    background: transparent;
+}
+
+/* rows */
+
+.list-table-row
+{
+    background: #ffffff;
+}
+
+.list-table-row:nth-child(even)
+{
+    background: #fafbfe;
+}
+
+.list-table-row:hover
+{
+    background: #eef4ff;
+}
+
+.list-table-grid tbody td
+{
+    border-bottom: 1px solid #e6ecf5;
+}
+
+.list-table-grid tbody td + td
+{
+    border-left: 1px solid #eef2f8;
+}
+
+.list-table-row:hover > td:first-child
+{
+    box-shadow: inset 3px 0 0 #b8692f;
+}
+
+/* the serial */
+
+.list-table-grid tbody td.lt-serial
+{
+    color: #64748b;
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* a code column : the value in a small chip */
+
+.lt-code-chip
+{
+    display: inline-block;
+    max-width: 100%;
+    padding: 0 9px;
+    border: 1px solid #e1e8f5;
+    border-radius: 7px;
+    background: #f1f5fc;
+    color: #16307a;
+    font-family: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 22px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+/* status : a dot in its own colour */
+
+.status::before
+{
+    content: '';
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* view / edit / delete : tinted tiles */
+
+.action-btn.view,
+.action-btn.edit,
+.action-btn.delete
+{
+    box-shadow: none;
+}
+
+.action-btn.view
+{
+    border-color: #dbe5f6;
+    background: #f5f8ff;
+    color: #2563eb;
+}
+
+.action-btn.edit
+{
+    border-color: #f3dcc6;
+    background: #fdf6ef;
+    color: #b8692f;
+}
+
+.action-btn.delete
+{
+    border-color: #f6d3d3;
+    background: #fff5f5;
+    color: #dc2626;
+}
+
+/* sticky columns (wide tables) follow the same row colours */
+
+:host(.lt-scroll) .list-table-row:hover td.lt-stick-left,
+:host(.lt-scroll) .list-table-row:hover td.lt-stick-right
+{
+    background-color: #eef4ff;
+}
+
+:host(.lt-scroll) thead th.lt-stick-left,
+:host(.lt-scroll) thead th.lt-stick-right
+{
+    background: #f1f5fc;
 }

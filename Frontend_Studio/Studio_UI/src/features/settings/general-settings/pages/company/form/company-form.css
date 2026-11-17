@@ -1,1 +1,33 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../../../../../shared/styles/app-workspace-form.css';
+
+/* Company form : workspace layout (2026-11-15). Left : Company,
+   Registration, Contact. Right : the workspace panel (art, identity,
+   where it is used), Logo, Remarks. */
+
+/* Logo & Remarks : the logo studio left, the Remarks card right; both
+   cards as tall as the step (and the panel); inside the Remarks card the
+   note pad takes half the height (owner 2026-11-15) */
+
+.cf-brand
+{
+    align-items: stretch;
+}
+
+.cf-half
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+
+.cf-remarks
+{
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.cf-remarks > app-note-pad
+{
+    flex: 0 0 50%;
+}

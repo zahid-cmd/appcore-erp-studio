@@ -58,135 +58,76 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR : TAB + SCOPED STATS | STATUS
+         LEVEL RAIL (redesign 2026-11-17) : one slim tile per
+         level, counted in the selection; a tile opens its level
     ====================================================== -->
 
-    <app-page-toolbar>
+    <div
+        class="cos-rail"
+        aria-label="Counts in scope">
 
-        <div
+        @for (t of rail; track t.n)
+        {
+            <button
+                type="button"
+                class="cos-rail-tile"
+                [class.cos-rail-on]="t.on"
+                [disabled]="!t.step"
+                [attr.title]="t.step ? 'Show ' + t.step.label : null"
+                (click)="onRailClick(t)">
 
-            pageToolbarLeft
+                <span class="cos-rail-badge">L{{ t.n }}</span>
 
-            class="cos-toolbar-left">
+                <span class="cos-rail-label">{{ t.label }}</span>
 
-            <app-control-tabs
+                <span class="cos-rail-value">{{ t.value }}</span>
 
-                [tabs]="tabs"
+                <span class="cos-rail-of">{{ t.of }}</span>
 
-                [(selectedTab)]="selectedTab">
+                @if (t.pick)
+                {
+                    <span class="cos-rail-pick">{{ t.pick }}</span>
+                }
 
-            </app-control-tabs>
+            </button>
+        }
 
+        <!-- LINK CHECK : green when clean, amber with a count -->
 
-            <!-- STAT STRIP (one capsule, four readings) -->
+        @if (issues.length > 0)
+        {
+            <button
+                type="button"
+                class="cos-rail-check cos-rail-check-warn"
+                [title]="issuesOpen ? 'Back to the chart' : 'Show items that are linked wrongly'"
+                (click)="toggleIssues()">
 
-            <div class="cos-stats" aria-label="Counts in scope">
+                <span class="cos-rail-check-text">
+                    <span class="cos-rail-check-dot"></span>
+                    {{ issues.length }} link {{ issues.length === 1 ? 'issue' : 'issues' }}
+                </span>
 
-                <div class="cos-stat" title="Category types in scope">
-                    <i class="fas fa-layer-group"></i>
-                    <span class="cos-stat-value">{{ countTypes }}</span>
-                    <span class="cos-stat-label">Category Types</span>
-                </div>
+                <span class="cos-rail-check-sub">{{ issuesOpen ? 'Back to the chart' : 'Review' }}</span>
 
-                <div class="cos-stat" title="Service categories in scope">
-                    <i class="fas fa-folder-tree"></i>
-                    <span class="cos-stat-value">{{ countCategories }}</span>
-                    <span class="cos-stat-label">Categories</span>
-                </div>
+            </button>
+        }
+        @else
+        {
+            <div
+                class="cos-rail-check"
+                title="The link check found nothing wrong">
 
-                <div class="cos-stat" title="Service sub categories in scope">
-                    <i class="fas fa-folder-open"></i>
-                    <span class="cos-stat-value">{{ countSubCategories }}</span>
-                    <span class="cos-stat-label">Sub Categories</span>
-                </div>
+                <span class="cos-rail-check-text">
+                    <span class="cos-rail-check-dot"></span>
+                    Links checked
+                </span>
 
-                <div class="cos-stat cos-stat-accent" title="Services in scope">
-                    <i class="fas fa-screwdriver-wrench"></i>
-                    <span class="cos-stat-value">{{ countServices }}</span>
-                    <span class="cos-stat-label">Services</span>
-                </div>
+                <span class="cos-rail-check-sub">0 issues</span>
 
             </div>
+        }
 
-            <!-- LINK ISSUES : shown only when the link check finds some -->
-
-            @if (issues.length > 0)
-            {
-                <button
-
-                    type="button"
-
-                    class="cos-scope"
-
-                    style="border-color:#f59e0b; color:#b45309; background:#fffbeb"
-
-                    [title]="issuesOpen ? 'Back to the chart' : 'Show items that are linked wrongly'"
-
-                    (click)="toggleIssues()">
-
-                    <i class="fas fa-triangle-exclamation"></i>
-
-                    <span class="cos-scope-value">
-                        {{ issues.length }} Link {{ issues.length === 1 ? 'Issue' : 'Issues' }}
-                    </span>
-
-                    @if (issuesOpen)
-                    {
-                        <i class="fas fa-xmark cos-scope-x"></i>
-                    }
-
-                </button>
-            }
-
-            @if (scopeLabel)
-            {
-                <button
-
-                    type="button"
-
-                    class="cos-scope"
-
-                    title="Show the whole chart"
-
-                    (click)="clearSelection()">
-
-                    <i class="fas fa-crosshairs"></i>
-
-                    <span class="cos-scope-value">{{ scopeLabel }}</span>
-
-                    <i class="fas fa-xmark cos-scope-x"></i>
-
-                </button>
-            }
-
-        </div>
-
-
-        <div
-
-            pageToolbarRight
-
-            style="width:200px">
-
-            <app-search-dropdown
-
-                placeholder="All Status"
-
-                [items]="statusFilterItems"
-
-                labelField="label"
-
-                valueField="value"
-
-                [value]="selectedStatus"
-
-                (valueChange)="onStatusFilterChange($event)">
-
-            </app-search-dropdown>
-
-        </div>
-
-    </app-page-toolbar>
+    </div>
 
 
 
@@ -461,6 +402,72 @@
                  PREVIEW
             ================================================ -->
 
+            <div class="cos-right">
+
+            <!-- ===============================================
+                 FOCUS : the selected node (redesign 2026-11-17)
+            ================================================ -->
+
+            <div class="cos-focus">
+
+                <div class="cos-focus-main">
+
+                    <nav
+                        class="cos-focus-trail"
+                        aria-label="Path">
+
+                        @for (step of focus.trail; track $index)
+                        {
+                            <button
+                                type="button"
+                                class="cos-focus-step"
+                                (click)="onPathClick(step)">
+                                {{ step.label }}
+                            </button>
+
+                            <i class="fas fa-chevron-right cos-focus-sep"></i>
+                        }
+
+                        <span class="cos-focus-kind">{{ focus.kind }}</span>
+
+                    </nav>
+
+                    <div class="cos-focus-title-row">
+
+                        <span class="cos-focus-title">{{ focus.title }}</span>
+
+                        @if (focus.code)
+                        {
+                            <span class="cos-focus-code">{{ focus.code }}</span>
+                        }
+
+                    </div>
+
+                    <span class="cos-focus-hint">{{ focus.hint }}</span>
+
+                </div>
+
+                <div class="cos-focus-facts">
+
+                    <div class="cos-fact">
+                        <span class="cos-fact-label">Total</span>
+                        <span class="cos-fact-value">{{ focus.total }}</span>
+                    </div>
+
+                    <div class="cos-fact cos-fact-on">
+                        <span class="cos-fact-label">Active</span>
+                        <span class="cos-fact-value">{{ focus.active }}</span>
+                    </div>
+
+                    <div class="cos-fact cos-fact-off">
+                        <span class="cos-fact-label">Inactive</span>
+                        <span class="cos-fact-value">{{ focus.inactive }}</span>
+                    </div>
+
+                </div>
+
+            </div>
+
             <section class="cos-preview">
 
                 <!-- PREVIEW HEAD : one compact bar, same height as the navigator head
@@ -484,37 +491,41 @@
 
                             </span>
 
-                            <!-- PATH : where this list sits -->
-
-                            <nav class="cos-path" aria-label="Path">
-
-                                @for (step of path; track $index; let last = $last)
-                                {
-                                    <button
-
-                                        type="button"
-
-                                        class="cos-path-step"
-
-                                        [class.cos-path-current]="last"
-
-                                        [disabled]="last"
-
-                                        (click)="onPathClick(step)">
-
-                                        {{ step.label }}
-
-                                    </button>
-
-                                    @if (!last)
-                                    {
-                                        <i class="fas fa-chevron-right cos-path-sep"></i>
-                                    }
-                                }
-
-                            </nav>
 
                         </div>
+
+                    </div>
+
+                    <div class="cos-head-tools">
+
+                    <div
+                        class="cos-seg"
+                        role="group"
+                        aria-label="Status">
+
+                        <button
+                            type="button"
+                            class="cos-seg-btn"
+                            [class.cos-seg-on]="selectedStatus === null"
+                            (click)="onStatusFilterChange(null)">
+                            All
+                        </button>
+
+                        <button
+                            type="button"
+                            class="cos-seg-btn"
+                            [class.cos-seg-on]="selectedStatus === true"
+                            (click)="onStatusFilterChange(true)">
+                            Active
+                        </button>
+
+                        <button
+                            type="button"
+                            class="cos-seg-btn"
+                            [class.cos-seg-on]="selectedStatus === false"
+                            (click)="onStatusFilterChange(false)">
+                            Inactive
+                        </button>
 
                     </div>
 
@@ -533,6 +544,8 @@
                             (ngModelChange)="onRowFilterChange($event)">
 
                     </label>
+
+                    </div>
 
                 </div>
 
@@ -710,6 +723,8 @@
                 </div>
 
             </section>
+
+            </div>
 
         </div>
     }

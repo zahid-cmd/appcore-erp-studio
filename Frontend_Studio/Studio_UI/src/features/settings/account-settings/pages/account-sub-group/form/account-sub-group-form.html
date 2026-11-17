@@ -1,329 +1,250 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-layer-group"
-
+        art="accounts"
         [title]="pageTitle"
-
-        subtitle="Manage account sub groups">
+        subtitle="A sub group inside a group : the level ledgers are made under">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div class="ws-step">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                            <small>Fixed once saved</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Account Class"
+                                [items]="accountClassItems"
+                                [(value)]="entity.AccountClassId"
+                                (valueChange)="onAccountClassChange()"
+                                [disabled]="isEditMode || isViewMode"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Class Code"
+                                placeholder="From the account class"
+                                [(value)]="entity.ClassCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Mode"
+                                placeholder="From the account class"
+                                [(value)]="entity.Mode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-search-dropdown
+                                label="Account Group"
+                                [items]="accountGroupItems"
+                                [(value)]="entity.AccountGroupId"
+                                (valueChange)="onAccountGroupChange()"
+                                [disabled]="isEditMode || isViewMode"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Sub Group</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Sub Group Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.SubGroupCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="ws-span-2"
+                                label="Sub Group Name"
+                                placeholder="e.g. Cash in Hand"
+                                [(value)]="entity.SubGroupName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-note-pad>
+
+                    </section>
 
-            [columns]="4">
+                </div>
 
+            </div>
 
+            <!-- ================= RIGHT : the workspace ================= -->
 
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
+            <aside class="ws-panel">
 
-            <app-form-section
+                <div class="ws-hero">
 
-                title="Basic Information"
+                    <app-workspace-art theme="accounts"></app-workspace-art>
 
-                icon="fas fa-layer-group">
+                    <div class="ws-identity">
 
+                        <b [class.ws-new]="!entity.SubGroupName">{{ entity.SubGroupName || 'New sub group' }}</b>
 
+                        <div class="ws-chips">
 
-                <!-- Account Class -->
+                            @if (entity.SubGroupCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.SubGroupCode }}</span>
+                            }
 
-                <app-search-dropdown
+                            @if (isExpenseClass && entity.IsFinanceCost)
+                            {
+                                <span
+                                    class="ws-chip"
+                                    data-tone="info">Finance cost</span>
+                            }
 
-                    label="Account Class"
+                            @if (entity.Mode)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.Mode }}</span>
+                            }
 
-                    [items]="accountClassItems"
+                        </div>
 
-                    [(value)]="entity.AccountClassId"
+                    </div>
 
-                    (valueChange)="onAccountClassChange()"
+                    <app-toggle-switch
+                        label="Manual ledgers"
+                        onText="Allowed"
+                        offText="Not allowed"
+                        [(value)]="entity.AllowManualLedger"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
 
-                    [disabled]="isEditMode || isViewMode"
+                    @if (isExpenseClass)
+                    {
+                        <app-toggle-switch
+                            label="Finance cost"
+                            onText="Yes : added back for ROCE"
+                            offText="No"
+                            [value]="!!entity.IsFinanceCost"
+                            (valueChange)="entity.IsFinanceCost = $event; onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-toggle-switch>
+                    }
 
-                    [required]="true">
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
 
-                </app-search-dropdown>
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-book"></i><span>Ledgers are made under it</span></li>
+                        <li><i class="fas fa-building-columns"></i><span>Cash, bank, MFS and POS accounts each have their own sub group</span></li>
+                    </ul>
 
+                </div>
 
-                <!-- Class Code -->
+            </aside>
 
-                <app-textbox
-
-                    label="Class Code"
-
-                    placeholder="Derived from Account Class"
-
-                    [(value)]="entity.ClassCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Mode -->
-
-                <app-textbox
-
-                    label="Mode"
-
-                    placeholder="Derived from Account Class"
-
-                    [(value)]="entity.Mode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 SUB GROUP INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Sub Group Information"
-
-                icon="fas fa-tags">
-
-
-
-                <!-- Account Group -->
-
-                <app-search-dropdown
-
-                    label="Account Group"
-
-                    [items]="accountGroupItems"
-
-                    [(value)]="entity.AccountGroupId"
-
-                    (valueChange)="onAccountGroupChange()"
-
-                    [disabled]="isEditMode || isViewMode"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-
-                <!-- Sub Group Code -->
-
-                <app-textbox
-
-                    label="Sub Group Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.SubGroupCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Sub Group Name -->
-
-                <app-textbox
-
-                    label="Sub Group Name"
-
-                    placeholder="Enter sub group name"
-
-                    [(value)]="entity.SubGroupName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-
-                <!-- Allow Manual Ledger -->
-
-                <app-dropdown
-
-                    label="Allow Manual Ledger"
-
-                    [items]="manualLedgerItems"
-
-                    [(value)]="entity.AllowManualLedger"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 DESCRIPTION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Description"
-
-                icon="fas fa-sitemap">
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

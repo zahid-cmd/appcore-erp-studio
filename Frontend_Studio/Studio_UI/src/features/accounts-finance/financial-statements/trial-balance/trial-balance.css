@@ -2,6 +2,12 @@
    head card, figures, ledger-book table) */
 @import '../../accounting-registers/ledger-registers/ledger-registers.css';
 
+/* Corporate statement look for every financial statement (2026-11-16) :
+   filter bar on top, letterhead, report table. Its rules are scoped to
+   .lr-page.tb-page so they win over the rules below and over
+   final-accounts.css */
+@import '../shared/statement-presentation.css';
+
 /* =====================================================
    TRIAL BALANCE
 ===================================================== */

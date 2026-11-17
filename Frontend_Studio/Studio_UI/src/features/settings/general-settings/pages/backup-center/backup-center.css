@@ -1,4 +1,5 @@
 @import '../../../../../shared/styles/scrollbar.css';
+@import '../../../../../shared/styles/app-list-page.css';
 
 /* =====================================================
    BACKUP CENTER
@@ -6,8 +7,6 @@
 
 :host
 {
-    display: block;
-
     --bc-blue: #2563eb;
     --bc-gradient: linear-gradient(135deg, #0f2a44 0%, #1e3a8a 45%, #2563eb 100%);
     --bc-border: #e5e9f0;
@@ -28,7 +27,14 @@
 {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
+}
+
+/* the status card keeps its height; the list gives way */
+.bc-status,
+.bc-denied
+{
+    flex: 0 0 auto;
 }
 
 .bc-denied
@@ -169,132 +175,7 @@
     white-space: nowrap;
 }
 
-/* ---------- List ---------- */
-
-.bc-canvas-body
-{
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-}
-
-.bc-center
-{
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    pointer-events: none;
-}
-
-.bc-empty
-{
-    color: var(--bc-faint);
-    font-size: 14px;
-}
-
-.bc-table-wrap
-{
-    flex: 1 1 auto;
-    height: 100%;
-    min-height: 0;
-    overflow: auto;
-}
-
-.bc-table
-{
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.bc-table th
-{
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    padding: 9px 12px;
-    border-bottom: 1px solid var(--bc-border);
-    background: #f1f5f9;
-    color: var(--bc-muted);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-align: left;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.bc-table td
-{
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--bc-hair);
-    color: var(--bc-text-2);
-    font-size: 14px;
-}
-
-.bc-r
-{
-    text-align: right !important;
-}
-
-.bc-c
-{
-    text-align: center !important;
-}
-
-.bc-sl
-{
-    width: 48px;
-    color: var(--bc-faint);
-}
-
-.bc-main
-{
-    color: var(--bc-text);
-    font-weight: 600;
-}
-
-.bc-sub
-{
-    color: var(--bc-faint);
-    font-size: 13px !important;
-}
-
-.bc-mono
-{
-    font-family: var(--bc-mono);
-    font-size: 13px !important;
-}
-
-.bc-kind
-{
-    color: var(--bc-ok);
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.bc-kind.bc-kind-auto
-{
-    color: var(--bc-blue);
-}
-
-.bc-ok
-{
-    color: var(--bc-ok);
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.bc-warn
-{
-    color: var(--bc-amber);
-    font-size: 13px;
-    font-weight: 600;
-}
+/* ---------- List : the shared list table (2026-11-16) ---------- */
 
 /* ---------- Modal ---------- */
 

@@ -60,6 +60,22 @@ public class CreateAccountGroupDto
         set;
     }
 
+    // Balance Sheet term of an asset / liability group :
+    // true = non-current, false = current. Used by the Net
+    // assets view; ignored for equity, income and expense.
+    public bool IsNonCurrent
+    {
+        get;
+        set;
+    }
+
+    // Cash flow statement : Operating / Investing / Financing
+    public string CashFlowActivity
+    {
+        get;
+        set;
+    } = "Operating";
+
 
     //===========================================================
     // Configuration

@@ -74,9 +74,40 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
 
 import
 {
@@ -222,18 +253,21 @@ from '../../../services/account-group.service';
         PageHeaderComponent,
         PageToolbarComponent,
         CommandCenterComponent,
-        ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
+
+        WorkspaceArtComponent,
+
+        StepTabsComponent,
+
+        ToggleSwitchComponent,
+
+        NotePadComponent,
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-        TextareaComponent,
-        DropdownComponent,
         SearchDropdownComponent,
 
         //=======================================================
@@ -322,6 +356,19 @@ implements OnInit, OnDestroy
     selectedTab:
         string =
         'general';
+
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
 
     //===========================================================
     // Tabs
@@ -449,6 +496,7 @@ implements OnInit, OnDestroy
             SubGroupCode:'',
             SubGroupName:'',
             AllowManualLedger:false,
+            IsFinanceCost:false,
             Remarks:'',
             IsActive:true
         };
@@ -935,6 +983,7 @@ implements OnInit, OnDestroy
             SubGroupCode:'',
             SubGroupName:'',
             AllowManualLedger:true,
+            IsFinanceCost:false,
             Remarks:'',
             IsActive:true
         };
@@ -1005,6 +1054,24 @@ implements OnInit, OnDestroy
         this.loadAccountGroups(
             this.entity.AccountClassId
         );
+    }
+
+
+    //===========================================================
+    // Finance cost switch : expense classes only
+    //===========================================================
+
+    get isExpenseClass():
+        boolean
+    {
+        const accountClassId =
+            Number(this.entity.AccountClassId);
+
+        const selectedClass =
+            this.accountClasses.find(x => x.AccountClassId === accountClassId);
+
+        // by the Statement Type of the class, never by its name
+        return String(selectedClass?.StatementType ?? '') === 'Expense';
     }
 
     //===========================================================
@@ -1412,6 +1479,15 @@ implements OnInit, OnDestroy
                                 response?.AllowManualLedger
                                 ??
                                 response?.allowManualLedger
+                                ??
+                                false
+                            ),
+
+                        IsFinanceCost:
+                            Boolean(
+                                response?.IsFinanceCost
+                                ??
+                                response?.isFinanceCost
                                 ??
                                 false
                             ),
@@ -1870,6 +1946,9 @@ implements OnInit, OnDestroy
             AllowManualLedger:
                 this.entity.AllowManualLedger,
 
+            IsFinanceCost:
+                this.isExpenseClass && !!this.entity.IsFinanceCost,
+
             Remarks:
                 this.entity.Remarks?.trim()
                 ??
@@ -1979,6 +2058,9 @@ implements OnInit, OnDestroy
 
             AllowManualLedger:
                 this.entity.AllowManualLedger,
+
+            IsFinanceCost:
+                this.isExpenseClass && !!this.entity.IsFinanceCost,
 
             Remarks:
                 this.entity.Remarks?.trim()

@@ -8,9 +8,11 @@
 
         title="Motor Bikes"
 
-        subtitle="Manage motor bike models and colors"
+        subtitle="Each model in each colour : the product sold, stocked and priced"
 
-        icon="fas fa-motorcycle">
+        icon="fas fa-motorcycle"
+
+        art="bike">
 
         <div pageHeaderCenter>
 
@@ -167,6 +169,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="bike"
+
+                emptyTitle="No motor bike yet"
+
+                emptySubtitle="Add a bike for a model and colour."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -211,24 +219,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="mbk-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="mbk-summary-item">
-                    <span class="mbk-summary-label">{{ item.label }}</span>
-                    <b
-                        class="mbk-summary-value"
-                        [class.mbk-ok]="item.tone === 'ok'"
-                        [class.mbk-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="mbk-summary-note">
-                Matching the search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="bikes"
+            art="bike"
+            note="All records">
+        </app-summary-line>
     }
 
 

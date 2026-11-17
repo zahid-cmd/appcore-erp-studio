@@ -1,445 +1,332 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-motorcycle"
-
+        art="bike"
         [title]="pageTitle"
-
-        subtitle="Manage motor bike models and colors">
+        subtitle="A bike : one model in one colour, sold, stocked and priced">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <!-- more than one screen : no scrolling -->
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                            <small>Fixed once saved</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Product Category"
+                                [items]="categoryItems"
+                                [(value)]="entity.ProductCategoryId"
+                                (valueChange)="onCategoryChange($event)"
+                                [disabled]="!isAddMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="Product Sub Category"
+                                [items]="subCategoryItems"
+                                [(value)]="entity.ProductSubCategoryId"
+                                (valueChange)="onSubCategoryChange($event)"
+                                [disabled]="!isAddMode || isSaving || !entity.ProductCategoryId"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Brand"
+                                placeholder="Follows the product category"
+                                [value]="brandName"
+                                [readonly]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-motorcycle"></i>
+                            <span>Motor Bike</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Color"
+                                [items]="colorItems"
+                                swatchField="swatch"
+                                [(value)]="entity.ColorManagementId"
+                                (valueChange)="onColorChange($event)"
+                                [disabled]="!isAddMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Product Code"
+                                placeholder="Select a product sub category"
+                                [(value)]="entity.ProductCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Product Name"
+                                placeholder="Made from the sub category and colour"
+                                [(value)]="entity.ProductName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Re-order Level"
+                                placeholder="0"
+                                [value]="reorderLevelText"
+                                (valueChange)="onReorderLevelChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Red Level"
+                                placeholder="0"
+                                [value]="redLevelText"
+                                (valueChange)="onRedLevelChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Max Stock Level"
+                                placeholder="0 = not set"
+                                [value]="maxStockLevelText"
+                                (valueChange)="onMaxStockLevelChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'ledgers'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-book"></i>
+                            <span>Inventory Ledgers</span>
+                            <small>Made on save, renamed with the bike</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Inventory Ledger Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.InventoryLedgerCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-            [columns]="4">
+                            <app-textbox
+                                label="WIP Ledger Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.WipLedgerCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
+                            <app-textbox
+                                label="COGS Ledger Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.CogsLedgerCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-            <!-- =============================================
-                 SECTION 01 : PARENT INFORMATION
-                 Category (Motor Bikes type only) → Sub Category
-                 (the model). Both locked after saving.
-            ============================================== -->
+                            <app-textbox
+                                label="Sales Ledger Code"
+                                placeholder="Auto generated"
+                                [value]="entity.SalesLedgerCode ?? ''"
+                                [readonly]="true">
+                            </app-textbox>
 
-            <app-form-section
+                            <app-textbox
+                                class="ws-full"
+                                label="Sales Ledger Name"
+                                placeholder="Follows the product name"
+                                [value]="salesLedgerName"
+                                [readonly]="true">
+                            </app-textbox>
 
-                title="Parent Information & Status"
+                        </div>
 
-                icon="fas fa-sitemap">
+                    </section>
 
+                </div>
 
-                <!-- Product Category -->
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'photo'">
 
-                <app-search-dropdown
+                    <div class="ws-pair pf-photo">
 
-                    label="Product Category"
+                        <section class="ws-card">
 
-                    [items]="categoryItems"
+                            <header class="ws-card-head">
+                                <i class="fas fa-image"></i>
+                                <span>Photo</span>
+                            </header>
 
-                    [(value)]="entity.ProductCategoryId"
+                                <app-logo-studio
+                                    badge="BIKE PHOTO"
+                                    [imageUrl]="imagePreview"
+                                    [name]="entity.ProductName"
+                                    [disabled]="isViewMode"
+                                    [busy]="isSaving"
+                                    (imageChange)="onImageChange($event)">
+                                </app-logo-studio>
 
-                    (valueChange)="onCategoryChange($event)"
+                        </section>
 
-                    [disabled]="!isAddMode || isSaving"
+                        <section class="ws-card ws-notes">
 
-                    [required]="true">
+                            <header class="ws-card-head">
+                                <i class="fas fa-note-sticky"></i>
+                                <span>Remarks</span>
+                            </header>
 
-                </app-search-dropdown>
+                            <app-note-pad
+                                placeholder="Anything the team should know"
+                                note="Only for your team, never printed"
+                                [maxLength]="500"
+                                [(value)]="entity.Remarks"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving">
+                            </app-note-pad>
 
+                        </section>
 
-                <!-- Product Sub Category -->
+                    </div>
 
-                <app-search-dropdown
+                </div>
 
-                    label="Product Sub Category"
+            </div>
 
-                    [items]="subCategoryItems"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    [(value)]="entity.ProductSubCategoryId"
+            <aside class="ws-panel">
 
-                    (valueChange)="onSubCategoryChange($event)"
+                <div class="ws-hero">
 
-                    [disabled]="!isAddMode || isSaving || !entity.ProductCategoryId"
+                    <app-workspace-art theme="bike"></app-workspace-art>
 
-                    [required]="true">
+                    <div class="ws-identity">
 
-                </app-search-dropdown>
+                        <b [class.ws-new]="!entity.ProductName">{{ entity.ProductName || 'New motor bike' }}</b>
 
+                        <div class="ws-chips">
 
-                <!-- Brand (from the category) -->
+                            @if (entity.ProductCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.ProductCode }}</span>
+                            }
 
-                <app-textbox
+                            @if (brandName)
+                            {
+                                <span
+                                    class="ws-chip">{{ brandName }}</span>
+                            }
 
-                    label="Brand"
+                        </div>
 
-                    placeholder="Follows the product category"
+                    </div>
 
-                    [value]="brandName"
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                    [readonly]="true">
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-cart-shopping"></i><span>Bought, received, sold and priced as one product</span></li>
+                        <li><i class="fas fa-bell"></i><span>Re-order and red levels warn when stock runs low</span></li>
+                    </ul>
 
-                </app-textbox>
+                </div>
 
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 02 : MOTOR BIKE INFORMATION
-                 Product Name = "<Sub Category> - <Color>"
-            ============================================== -->
-
-            <app-form-section
-
-                title="Motor Bike Information"
-
-                icon="fas fa-motorcycle">
-
-
-                <!-- Color (locked after saving) -->
-
-                <app-search-dropdown
-
-                    label="Color"
-
-                    [items]="colorItems"
-
-                    swatchField="swatch"
-
-                    [(value)]="entity.ColorManagementId"
-
-                    (valueChange)="onColorChange($event)"
-
-                    [disabled]="!isAddMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Product Code -->
-
-                <app-textbox
-
-                    label="Product Code"
-
-                    placeholder="Select a product sub category"
-
-                    [(value)]="entity.ProductCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Product Name -->
-
-                <app-textbox
-
-                    label="Product Name"
-
-                    placeholder="Select sub category and color"
-
-                    [(value)]="entity.ProductName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-                <!-- Re-order Level -->
-
-                <app-textbox
-
-                    label="Re-order Level"
-
-                    placeholder="0"
-
-                    [value]="reorderLevelText"
-
-                    (valueChange)="onReorderLevelChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-
-                <!-- Red Level -->
-
-                <app-textbox
-
-                    label="Red Level"
-
-                    placeholder="0"
-
-                    [value]="redLevelText"
-
-                    (valueChange)="onRedLevelChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-                <!-- Max Stock Level -->
-
-                <app-textbox
-
-                    label="Max Stock Level"
-
-                    placeholder="0 = not set"
-
-                    [value]="maxStockLevelText"
-
-                    (valueChange)="onMaxStockLevelChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 03 : INVENTORY LEDGERS
-                 General Ledgers created with the motor bike.
-                 Names : "<INV / WIP / COGS> - <Product Name>"
-            ============================================== -->
-
-            <app-form-section
-
-                title="Inventory Ledgers"
-
-                icon="fas fa-book">
-
-
-                <!-- Inventory Ledger Code -->
-
-                <app-textbox
-
-                    label="Inventory Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.InventoryLedgerCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- WIP Ledger Code -->
-
-                <app-textbox
-
-                    label="WIP Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.WipLedgerCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- COGS Ledger Code -->
-
-                <app-textbox
-
-                    label="COGS Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.CogsLedgerCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Sales Ledger Code (CLS-005 / 006 / 008) -->
-
-                <app-textbox
-
-                    label="Sales Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [value]="entity.SalesLedgerCode ?? ''"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Sales Ledger Name ("Sales - <Product Name>") -->
-
-                <app-textbox
-
-                    label="Sales Ledger Name"
-
-                    placeholder="Follows the product name"
-
-                    [value]="salesLedgerName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 04 : IMAGE & Description
-            ============================================== -->
-
-            <app-form-section
-
-                title="Image & Description"
-
-                icon="fas fa-sliders">
-
-
-                <!-- Motor Bike Image (shared Image Hub; uploaded on save) -->
-
-                <app-image-hub
-
-                    label="Motor Bike Image"
-
-                    placeholder="No motor bike image selected"
-
-                    [imageUrl]="imagePreview"
-
-                    (imageChange)="onImageChange($event)"
-
-                    [disabled]="isSaving"
-
-                    [readonly]="isViewMode">
-
-                </app-image-hub>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="3"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-        </app-form-grid>
-
-
-        <!-- Canvas footer : the Motor Bike (Product) Name (read only) -->
-
-        <div canvasFooter class="mbk-footer">
-
-            <span class="mbk-footer-label">Motor Bike Name</span>
-
-            <b class="mbk-footer-name" [class.mbk-footer-empty]="!entity.ProductName">{{ entity.ProductName || 'Follows the product sub category and color' }}</b>
+            </aside>
 
         </div>
 
@@ -447,10 +334,8 @@
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

@@ -201,6 +201,9 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
 
                         // TODO: Map General Ledger specific configuration fields here
 
+                        BusinessLine =
+                            x.BusinessLine,
+
                         Remarks =
                             x.Remarks,
 
@@ -1322,6 +1325,9 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
                 // Configuration
                 //=======================================================
 
+                BusinessLine =
+                    AppCore.Domain.Platform.Accounting.BusinessLines.Normalize(dto.BusinessLine),
+
                 Remarks =
                     dto.Remarks?.Trim()
                     ??
@@ -1569,6 +1575,9 @@ public class GeneralLedgersRepository : IGeneralLedgersRepository
         //===========================================================
         // Configuration
         //===========================================================
+
+        entity.BusinessLine =
+            AppCore.Domain.Platform.Accounting.BusinessLines.Normalize(dto.BusinessLine);
 
         entity.Remarks =
             dto.Remarks?.Trim()

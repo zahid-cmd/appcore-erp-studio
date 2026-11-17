@@ -8,9 +8,11 @@
 
         title="Account Class"
 
-        subtitle="Manage account classes"
+        subtitle="The top of the chart of accounts : Assets, Liabilities, Income, Expenses ..."
 
-        icon="fas fa-layer-group">
+        icon="fas fa-layer-group"
+
+        art="accounts">
 
         <div pageHeaderCenter>
 
@@ -108,6 +110,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="accounts"
+
+                emptyTitle="No account class yet"
+
+                emptySubtitle="Add the account classes first : groups, sub groups and ledgers sit under them."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -150,24 +158,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="acl-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="acl-summary-item">
-                    <span class="acl-summary-label">{{ item.label }}</span>
-                    <b
-                        class="acl-summary-value"
-                        [class.acl-ok]="item.tone === 'ok'"
-                        [class.acl-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="acl-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="classes"
+            art="accounts"
+            note="All records">
+        </app-summary-line>
     }
 
 

@@ -1,0 +1,36 @@
+@import '../job-cards/job-cards.css';
+
+/* Parts Requisitions, Parts Issues, Parts Returns : the form is the
+   job card form (left the head, right the lines); only what differs
+   is here */
+
+.pd-title
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f2a44;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.pd-buttons
+{
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+/* the picker alone on its row */
+
+.pd-pick
+{
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* an issue line that asks for more than the warehouse holds */
+
+.jc-item.pd-short
+{
+    border-color: #fca5a5;
+    background: #fef2f2;
+}

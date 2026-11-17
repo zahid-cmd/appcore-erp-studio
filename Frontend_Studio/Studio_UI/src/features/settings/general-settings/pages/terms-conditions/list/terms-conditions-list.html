@@ -7,7 +7,8 @@
     <app-page-header
         title="Terms & Conditions"
         subtitle="Numbered terms printed on invoices, quotations, bookings and purchase orders"
-        icon="fas fa-file-contract">
+        icon="fas fa-file-contract"
+        art="terms">
 
         <div pageHeaderCenter>
             <app-search-box
@@ -77,6 +78,9 @@
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
+                emptyArt="terms"
+                emptyTitle="No terms yet"
+                emptySubtitle="Add a set of numbered terms for a document : the Default set prints on its A4 copy."
                 (view)="view($event)"
                 (edit)="edit($event)"
                 (delete)="delete($event)"
@@ -101,24 +105,13 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="tcl-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="tcl-summary-item">
-                    <span class="tcl-summary-label">{{ item.label }}</span>
-                    <b
-                        class="tcl-summary-value"
-                        [class.tcl-ok]="item.tone === 'ok'"
-                        [class.tcl-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="tcl-summary-note">
-                One Default per operation is printed on its A4 documents
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="sets"
+            art="terms"
+            note="Search and operation applied"
+            noteDetail="One Default per operation prints on its A4 documents">
+        </app-summary-line>
     }
 
     <app-history-drawer

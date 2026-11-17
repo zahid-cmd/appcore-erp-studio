@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.AccountsFinance.FinancialStatements;
 using AppCore.Domain.Entities.FixedAssetsManagement;
+using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.Persistence;
 using AppCore.Infrastructure.Platform.Accounting;
 
@@ -89,28 +90,6 @@ public class FinancialFlowsRepository
         "EMI"
     };
 
-    private static readonly string[] FinancingWords =
-    {
-        "loan",
-        "borrow",
-        "lease",
-        "debenture"
-    };
-
-    private static readonly string[] InvestingWords =
-    {
-        "fixed asset",
-        "property",
-        "plant",
-        "equipment",
-        "machinery",
-        "vehicle",
-        "furniture",
-        "fixture",
-        "building",
-        "land",
-        "investment"
-    };
 
 
     public FinancialFlowsRepository(
@@ -141,20 +120,6 @@ public class FinancialFlowsRepository
 
     private static string Clean(string? value) =>
         (value ?? string.Empty).Trim();
-
-
-    private static bool Has
-    (
-        string? text,
-        IEnumerable<string> words
-    )
-    {
-        string value =
-            Clean(text);
-
-        return value.Length > 0
-            && words.Any(word => value.Contains(word, StringComparison.OrdinalIgnoreCase));
-    }
 
 
     private static bool IsMoney(string? ledgerType) =>
@@ -301,20 +266,26 @@ public class FinancialFlowsRepository
             return FinancialFlowActivities.Operating;
         }
 
-        if (row.IsRetainedEarnings || Has(row.ClassName, new[] { "equity", "capital" }))
+        // Equity : the Statement Type of the Account Class. The
+        // rest : the Cash Flow Activity of the Account Group.
+        // Never from a name.
+        string type =
+            StatementTypes.Normalize(row.StatementType);
+
+        if (row.IsRetainedEarnings || type == StatementTypes.Equity)
         {
             return FinancialFlowActivities.Financing;
         }
 
-        string groups =
-            $"{row.GroupName} {row.SubGroupName}";
+        string activity =
+            CashFlowActivities.Normalize(row.CashFlowActivity);
 
-        if (Has(groups, FinancingWords))
+        if (activity == CashFlowActivities.Financing)
         {
             return FinancialFlowActivities.Financing;
         }
 
-        if (Has(row.ClassName, new[] { "asset" }) && Has(groups, InvestingWords))
+        if (activity == CashFlowActivities.Investing)
         {
             return FinancialFlowActivities.Investing;
         }
@@ -340,15 +311,8 @@ public class FinancialFlowsRepository
             return true;
         }
 
-        string code =
-            Clean(row.ClassCode).ToUpperInvariant();
-
-        if (code.StartsWith("INV-") || code.StartsWith("WIP-"))
-        {
-            return false;
-        }
-
-        return Has(row.ClassName, new[] { "equity", "capital", "reserve" });
+        // The Statement Type of the Account Class, never a name
+        return StatementTypes.Normalize(row.StatementType) == StatementTypes.Equity;
     }
 
 

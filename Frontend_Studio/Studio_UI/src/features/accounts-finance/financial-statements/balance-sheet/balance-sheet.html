@@ -163,6 +163,19 @@
 
                 <span class="lr-switchbar-title"><i class="fas fa-sliders"></i> View</span>
 
+                <span class="lr-seg" role="group" aria-label="Layout">
+                    @for (item of layouts; track item.value)
+                    {
+                        <button
+                            type="button"
+                            [class.on]="layout === item.value"
+                            [title]="item.title"
+                            (click)="setLayout(item.value)">
+                            <i [class]="item.icon"></i> {{ item.label }}
+                        </button>
+                    }
+                </span>
+
                 <span class="lr-seg tb-levels" role="group" aria-label="Level">
                     @for (item of levels; track item.value)
                     {
@@ -279,147 +292,328 @@
                         <div class="lr-note"><i class="fas fa-magnifying-glass"></i> Only the ledgers matching the search are listed; the section totals and the check are of the whole statement.</div>
                     }
 
-                    <div class="fa-main">
+                    <div class="fa-main has-insights">
 
-                            <!-- ============ STATEMENT ============ -->
-                            <div class="lr-card tb-tcard fa-tcard">
+                            @if (layout === 'tform' && account)
+                            {
+                                <!-- ============ T-FORM ============ -->
+                                <div class="lr-card tb-tcard fa-tcard">
 
-                                <div class="tb-scroll appcore-scrollbar">
+                                    <div class="tb-scroll appcore-scrollbar fa-tform">
 
-                                    <table
-                                        class="lr-table tb-table fa-table"
-                                        [class.fa-cmp]="hasCompare">
+                                        @if (hasCompare)
+                                        {
+                                            <div class="lr-note fa-tnote"><i class="fas fa-circle-info"></i> The comparison shows in the Vertical and Net assets views.</div>
+                                        }
 
-                                        <colgroup>
-                                            <col>
-                                            <col class="c-bal">
-                                            @if (hasCompare)
-                                            {
-                                                <col class="c-bal">
-                                                <col class="c-amt">
-                                                <col class="c-pct">
-                                            }
-                                        </colgroup>
+                                        <div class="fa-taccount">
 
-                                        <thead>
-                                            <tr>
-                                                <th class="tb-acc-h">
-                                                    <span>Account</span>
-                                                    <span class="tb-tools">
-                                                        <button type="button" class="lr-link" (click)="expandAll()">Expand all</button>
-                                                        <button type="button" class="lr-link" (click)="collapseAll()">Collapse all</button>
-                                                    </span>
-                                                </th>
-                                                <th class="r fa-col-h">
-                                                    <b>As on</b>
-                                                    <span>{{ date(report.AsOn) }}</span>
-                                                </th>
-                                                @if (hasCompare)
-                                                {
-                                                    <th class="r fa-col-h">
-                                                        <b>{{ report.CompareLabel }}</b>
-                                                        <span>{{ date(report.CompareAsOn) }}</span>
-                                                    </th>
-                                                    <th class="r fa-col-h"><b>Change</b></th>
-                                                    <th class="r fa-col-h"><b>Change %</b></th>
-                                                }
-                                            </tr>
-                                        </thead>
+                                            <div class="fa-ttitle">
+                                                <b>{{ account.title }}</b>
+                                                <span>as on {{ date(report.AsOn) }}</span>
+                                            </div>
 
-                                        <tbody>
-                                            @for (line of lines; track line.key)
-                                            {
-                                                <tr
-                                                    class="tb-row fa-row"
-                                                    [ngClass]="line.kind === 'node' ? 'tb-l' + line.level : 'fa-' + line.kind"
-                                                    [class.fa-detail]="line.level === 5"
-                                                    [class.lr-click]="isLedger(line) || canToggle(line)"
-                                                    [class.is-inactive]="line.kind === 'node' && line.level === 4 && !line.row?.IsActive"
-                                                    [class.is-good]="line.tone === 'good'"
-                                                    [class.is-bad]="line.tone === 'bad'"
-                                                    [title]="lineTitle(line)"
-                                                    (click)="lineClick(line)">
+                                            <table class="lr-table fa-ttable">
 
-                                                    <td class="tb-acc">
-                                                        <span class="tb-name">
-                                                            @if (canToggle(line))
-                                                            {
-                                                                <i
-                                                                    class="fas tb-caret"
-                                                                    [class.fa-caret-right]="isCollapsed(line)"
-                                                                    [class.fa-caret-down]="!isCollapsed(line)"></i>
-                                                            }
-                                                            <span class="lr-clip fa-name">{{ line.name }}</span>
-                                                            @if (showCodes && line.code && line.kind === 'node')
-                                                            {
-                                                                <span class="lr-dim lr-mono tb-code">{{ line.code }}</span>
-                                                            }
-                                                            @if ((line.kind === 'node' && line.level < 4) || (line.kind === 'section' && line.count > 0))
-                                                            {
-                                                                <span class="tb-count">{{ line.count }}</span>
-                                                            }
-                                                            @if (line.check)
-                                                            {
-                                                                <i
-                                                                    class="fas fa-check-icon"
-                                                                    [class.fa-circle-check]="line.tone === 'good'"
-                                                                    [class.fa-triangle-exclamation]="line.tone !== 'good'"></i>
-                                                            }
-                                                            @if (line.kind === 'extra' && line.hint)
-                                                            {
-                                                                <span class="lr-dim fa-hint lr-clip">{{ line.hint }}</span>
-                                                            }
-                                                            @if (line.row?.IsRetainedEarnings && priorText())
-                                                            {
-                                                                <span
-                                                                    class="lr-pill tb-re"
-                                                                    [title]="'Includes the result of the earlier financial years : ' + priorText()">
-                                                                    incl. earlier years
-                                                                </span>
-                                                            }
-                                                            @if (line.kind === 'node' && line.level === 4 && !line.row?.IsActive)
-                                                            {
-                                                                <span class="lr-tag">Inactive</span>
-                                                            }
-                                                        </span>
-                                                    </td>
+                                                <colgroup>
+                                                    <col>
+                                                    <col class="c-bal">
+                                                    <col>
+                                                    <col class="c-bal">
+                                                </colgroup>
 
-                                                    <td class="r lr-bal">{{ amountText(line, line.amount) }}</td>
+                                                <thead>
+                                                    <tr>
+                                                        <th>{{ account.drTitle }}</th>
+                                                        <th class="r">Amount</th>
+                                                        <th class="fa-tcr">{{ account.crTitle }}</th>
+                                                        <th class="r">Amount</th>
+                                                    </tr>
+                                                </thead>
 
-                                                    @if (hasCompare)
+                                                <tbody>
+                                                    @for (pair of sideRows(account); track $index)
                                                     {
-                                                        <td class="r lr-bal fa-cmp-cell">
-                                                            {{ amountText(line, line.compare) }}
-                                                        </td>
-                                                        <td
-                                                            class="r fa-chg"
-                                                            [class.is-up-good]="changeTone(line) === 'good'"
-                                                            [class.is-up-bad]="changeTone(line) === 'bad'">
-                                                            {{ change(line) }}
-                                                        </td>
-                                                        <td
-                                                            class="r fa-chg"
-                                                            [class.is-up-good]="changeTone(line) === 'good'"
-                                                            [class.is-up-bad]="changeTone(line) === 'bad'">
-                                                            {{ changePct(line) }}
-                                                        </td>
+                                                        <tr>
+                                                            @if (pair.dr; as item)
+                                                            {
+                                                                <td
+                                                                    class="fa-tname"
+                                                                    [ngClass]="'fa-tl' + item.level"
+                                                                    [class.is-strong]="item.strong"
+                                                                    [class.lr-click]="!!item.row?.ClassCode"
+                                                                    [title]="item.row?.ClassCode ? 'Open the statement (new tab)' : ''"
+                                                                    (click)="sideClick(item)">
+                                                                    <span class="lr-clip">{{ item.name }}</span>
+                                                                    @if (showCodes && item.code)
+                                                                    {
+                                                                        <span class="lr-dim lr-mono tb-code">{{ item.code }}</span>
+                                                                    }
+                                                                </td>
+                                                                <td class="r lr-bal" [class.is-strong]="item.strong">{{ item.strong ? total(item.amount) : money(item.amount) }}</td>
+                                                            }
+                                                            @else
+                                                            {
+                                                                <td></td>
+                                                                <td></td>
+                                                            }
+                                                            @if (pair.cr; as item)
+                                                            {
+                                                                <td
+                                                                    class="fa-tname fa-tcr"
+                                                                    [ngClass]="'fa-tl' + item.level"
+                                                                    [class.is-strong]="item.strong"
+                                                                    [class.lr-click]="!!item.row?.ClassCode"
+                                                                    [title]="item.row?.ClassCode ? 'Open the statement (new tab)' : ''"
+                                                                    (click)="sideClick(item)">
+                                                                    <span class="lr-clip">{{ item.name }}</span>
+                                                                    @if (showCodes && item.code)
+                                                                    {
+                                                                        <span class="lr-dim lr-mono tb-code">{{ item.code }}</span>
+                                                                    }
+                                                                </td>
+                                                                <td class="r lr-bal" [class.is-strong]="item.strong">{{ item.strong ? total(item.amount) : money(item.amount) }}</td>
+                                                            }
+                                                            @else
+                                                            {
+                                                                <td class="fa-tcr"></td>
+                                                                <td></td>
+                                                            }
+                                                        </tr>
                                                     }
-                                                </tr>
-                                            }
+                                                </tbody>
 
-                                            @if (!hasLedgers)
-                                            {
-                                                <tr class="lr-none">
-                                                    <td [attr.colspan]="hasCompare ? 5 : 2">{{ searchText ? 'No ledger matches the search.' : 'No balance-sheet ledger has a balance on this date.' }}</td>
-                                                </tr>
-                                            }
-                                        </tbody>
+                                                <tfoot>
+                                                    <tr class="fa-ttotal">
+                                                        <td class="r">Total</td>
+                                                        <td class="r">{{ total(account.drTotal ?? account.total) }}</td>
+                                                        <td class="r fa-tcr">Total</td>
+                                                        <td class="r">{{ total(account.total) }}</td>
+                                                    </tr>
+                                                </tfoot>
 
-                                    </table>
+                                            </table>
+
+                                        </div>
+
+                                    </div>
 
                                 </div>
+                            }
+                            @else
+                            {
+                                <!-- ============ STATEMENT ============ -->
+                                <div class="lr-card tb-tcard fa-tcard">
 
-                            </div>
+                                    <div class="tb-scroll appcore-scrollbar">
+
+                                        <table
+                                            class="lr-table tb-table fa-table"
+                                            [class.fa-cmp]="hasCompare">
+
+                                            <colgroup>
+                                                <col>
+                                                <col class="c-bal">
+                                                @if (hasCompare)
+                                                {
+                                                    <col class="c-bal">
+                                                    <col class="c-amt">
+                                                    <col class="c-pct">
+                                                }
+                                            </colgroup>
+
+                                            <thead>
+                                                <tr>
+                                                    <th class="tb-acc-h">
+                                                        <span>Account</span>
+                                                        <span class="tb-tools">
+                                                            <button type="button" class="lr-link" (click)="expandAll()">Expand all</button>
+                                                            <button type="button" class="lr-link" (click)="collapseAll()">Collapse all</button>
+                                                        </span>
+                                                    </th>
+                                                    <th class="r fa-col-h">
+                                                        <b>As on</b>
+                                                        <span>{{ date(report.AsOn) }}</span>
+                                                    </th>
+                                                    @if (hasCompare)
+                                                    {
+                                                        <th class="r fa-col-h">
+                                                            <b>{{ report.CompareLabel }}</b>
+                                                            <span>{{ date(report.CompareAsOn) }}</span>
+                                                        </th>
+                                                        <th class="r fa-col-h"><b>Change</b></th>
+                                                        <th class="r fa-col-h"><b>Change %</b></th>
+                                                    }
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                @for (line of lines; track line.key)
+                                                {
+                                                    <tr
+                                                        class="tb-row fa-row"
+                                                        [ngClass]="line.kind === 'node' ? 'tb-l' + line.level : 'fa-' + line.kind"
+                                                        [class.fa-detail]="line.level === 5"
+                                                        [class.lr-click]="isLedger(line) || canToggle(line)"
+                                                        [class.is-inactive]="line.kind === 'node' && line.level === 4 && !line.row?.IsActive"
+                                                        [class.is-good]="line.tone === 'good'"
+                                                        [class.is-bad]="line.tone === 'bad'"
+                                                        [title]="lineTitle(line)"
+                                                        (click)="lineClick(line)">
+
+                                                        <td class="tb-acc">
+                                                            <span class="tb-name">
+                                                                @if (canToggle(line))
+                                                                {
+                                                                    <i
+                                                                        class="fas tb-caret"
+                                                                        [class.fa-caret-right]="isCollapsed(line)"
+                                                                        [class.fa-caret-down]="!isCollapsed(line)"></i>
+                                                                }
+                                                                <span class="lr-clip fa-name">{{ line.name }}</span>
+                                                                @if (showCodes && line.code && line.kind === 'node')
+                                                                {
+                                                                    <span class="lr-dim lr-mono tb-code">{{ line.code }}</span>
+                                                                }
+                                                                @if ((line.kind === 'node' && line.level < 4) || (line.kind === 'section' && line.count > 0))
+                                                                {
+                                                                    <span class="tb-count">{{ line.count }}</span>
+                                                                }
+                                                                @if (line.check)
+                                                                {
+                                                                    <i
+                                                                        class="fas fa-check-icon"
+                                                                        [class.fa-circle-check]="line.tone === 'good'"
+                                                                        [class.fa-triangle-exclamation]="line.tone !== 'good'"></i>
+                                                                }
+                                                                @if (line.kind === 'extra' && line.hint)
+                                                                {
+                                                                    <span class="lr-dim fa-hint lr-clip">{{ line.hint }}</span>
+                                                                }
+                                                                @if (line.row?.IsRetainedEarnings && priorText())
+                                                                {
+                                                                    <span
+                                                                        class="lr-pill tb-re"
+                                                                        [title]="'Includes the result of the earlier financial years : ' + priorText()">
+                                                                        incl. earlier years
+                                                                    </span>
+                                                                }
+                                                                @if (line.kind === 'node' && line.level === 4 && !line.row?.IsActive)
+                                                                {
+                                                                    <span class="lr-tag">Inactive</span>
+                                                                }
+                                                            </span>
+                                                        </td>
+
+                                                        <td class="r lr-bal">{{ amountText(line, line.amount) }}</td>
+
+                                                        @if (hasCompare)
+                                                        {
+                                                            <td class="r lr-bal fa-cmp-cell">
+                                                                {{ amountText(line, line.compare) }}
+                                                            </td>
+                                                            <td
+                                                                class="r fa-chg"
+                                                                [class.is-up-good]="changeTone(line) === 'good'"
+                                                                [class.is-up-bad]="changeTone(line) === 'bad'">
+                                                                {{ change(line) }}
+                                                            </td>
+                                                            <td
+                                                                class="r fa-chg"
+                                                                [class.is-up-good]="changeTone(line) === 'good'"
+                                                                [class.is-up-bad]="changeTone(line) === 'bad'">
+                                                                {{ changePct(line) }}
+                                                            </td>
+                                                        }
+                                                    </tr>
+                                                }
+
+                                                @if (!hasLedgers)
+                                                {
+                                                    <tr class="lr-none">
+                                                        <td [attr.colspan]="hasCompare ? 5 : 2">{{ searchText ? 'No ledger matches the search.' : 'No balance-sheet ledger has a balance on this date.' }}</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+
+                                        </table>
+
+                                    </div>
+
+                                </div>
+                            }
+
+
+                            <!-- ============ INSIGHTS (2026-11-16) ============ -->
+                            @if (insights; as ins)
+                            {
+                                <aside class="lr-card fs-insights" aria-label="Insights">
+
+                                    <h3 class="fs-ins-title">Composition</h3>
+
+                                    @if (ins.assets.length > 0)
+                                    {
+                                        <div class="fs-mix">
+                                            <span>Assets</span>
+                                            <div class="fs-bar">
+                                                @for (p of ins.assets; track p.label)
+                                                {
+                                                    <i [style.width]="p.width" [style.background]="p.color" [title]="p.label + ' ' + p.pct"></i>
+                                                }
+                                            </div>
+                                            @for (p of ins.assets; track p.label)
+                                            {
+                                                <div class="fs-leg" [title]="p.label + ' : ' + p.amount">
+                                                    <i [style.background]="p.color"></i>
+                                                    <span>{{ p.label }}</span>
+                                                    <b>{{ p.pct }}</b>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    @if (ins.funding.length > 0)
+                                    {
+                                        <div class="fs-mix">
+                                            <span>Funded by</span>
+                                            <div class="fs-bar">
+                                                @for (p of ins.funding; track p.label)
+                                                {
+                                                    <i [style.width]="p.width" [style.background]="p.color" [title]="p.label + ' ' + p.pct"></i>
+                                                }
+                                            </div>
+                                            @for (p of ins.funding; track p.label)
+                                            {
+                                                <div class="fs-leg" [title]="p.label + ' : ' + p.amount">
+                                                    <i [style.background]="p.color"></i>
+                                                    <span>{{ p.label }}</span>
+                                                    <b>{{ p.pct }}</b>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <h3 class="fs-ins-title">Key ratios</h3>
+
+                                    <div class="fs-ratios">
+                                        @for (q of ins.ratios; track q.label)
+                                        {
+                                            <div class="fs-ratio">
+                                                <span>{{ q.label }}</span>
+                                                <b>{{ q.value }}</b>
+                                                <em>{{ q.hint }}</em>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="fs-result" [class.is-loss]="ins.profitLoss">
+                                        <span>{{ ins.profitLoss ? 'Loss' : 'Profit' }} for the year to date</span>
+                                        <b>{{ ins.profit }}</b>
+                                        <em>{{ ins.profitNote }}</em>
+                                    </div>
+
+                                </aside>
+                            }
 
                     </div>
 

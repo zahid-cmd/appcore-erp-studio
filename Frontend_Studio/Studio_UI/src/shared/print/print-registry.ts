@@ -251,6 +251,13 @@ export const PRINT_SOURCES:
             import('../../features/accounts-finance/financial-statements/print/final-accounts.print')
                 .then(module => module.BALANCE_SHEET_PRINT),
 
+    // Accounts & Finance : Return on Investment (the id is the
+    // page's token)
+    'return-on-investment':
+        () =>
+            import('../../features/accounts-finance/financial-statements/print/return-on-investment.print')
+                .then(module => module.RETURN_ON_INVESTMENT_PRINT),
+
     // Accounts & Finance : Receipt & Payment Account, Cash Flow
     // Statement, Changes in Equity (the id is the page's token)
     'receipt-payment':
@@ -397,5 +404,40 @@ export const PRINT_SOURCES:
     'fa-tags':
         () =>
             import('../../features/fixed-assets-management/print/fa-print')
-                .then(module => module.FA_TAGS_PRINT)
+                .then(module => module.FA_TAGS_PRINT),
+
+    // Service Operations : a job card, read by its public id
+    'job-card':
+        () =>
+            import('../../features/service-operations/print/job-card.print')
+                .then(module => module.JOB_CARD_PRINT),
+
+    // Service Operations : a service estimate, read by its public id
+    'service-estimate':
+        () =>
+            import('../../features/service-operations/print/service-estimate.print')
+                .then(module => module.SERVICE_ESTIMATE_PRINT),
+
+    // Service Operations : the parts of a job card, read by their
+    // public id
+    'parts-requisition':
+        () =>
+            import('../../features/service-operations/print/parts-document.print')
+                .then(module => module.PARTS_REQUISITION_PRINT),
+
+    'parts-issue':
+        () =>
+            import('../../features/service-operations/print/parts-document.print')
+                .then(module => module.PARTS_ISSUE_PRINT),
+
+    'parts-return':
+        () =>
+            import('../../features/service-operations/print/parts-document.print')
+                .then(module => module.PARTS_RETURN_PRINT),
+
+    // Service Operations : a service invoice, read by its public id
+    'service-invoice':
+        () =>
+            import('../../features/service-operations/print/service-invoice.print')
+                .then(module => module.SERVICE_INVOICE_PRINT)
 };

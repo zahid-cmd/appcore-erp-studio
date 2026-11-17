@@ -184,6 +184,9 @@ public class AccountSubGroupRepository : IAccountSubGroupRepository
                         AllowManualLedger =
                             x.AllowManualLedger,
 
+                        IsFinanceCost =
+                            x.IsFinanceCost,
+
                         Remarks =
                             x.Remarks,
 
@@ -908,6 +911,9 @@ public class AccountSubGroupRepository : IAccountSubGroupRepository
                 AllowManualLedger =
                     dto.AllowManualLedger,
 
+                IsFinanceCost =
+                    dto.IsFinanceCost,
+
                 //=======================================================
                 // Configuration
                 //=======================================================
@@ -1128,6 +1134,9 @@ public class AccountSubGroupRepository : IAccountSubGroupRepository
 
         entity.AllowManualLedger =
             dto.AllowManualLedger;
+
+        entity.IsFinanceCost =
+            dto.IsFinanceCost;
 
 
         //===========================================================

@@ -54,6 +54,13 @@ public class AccountGroupDto
         set;
     } = string.Empty;
 
+    // Statement Type of its Account Class (read only)
+    public string StatementType
+    {
+        get;
+        set;
+    } = string.Empty;
+
 
     public string Mode
     {
@@ -81,6 +88,22 @@ public class AccountGroupDto
         get;
         set;
     }
+
+    // Balance Sheet term of an asset / liability group :
+    // true = non-current, false = current. Used by the Net
+    // assets view; ignored for equity, income and expense.
+    public bool IsNonCurrent
+    {
+        get;
+        set;
+    }
+
+    // Cash flow statement : Operating / Investing / Financing
+    public string CashFlowActivity
+    {
+        get;
+        set;
+    } = "Operating";
 
 
     //===========================================================

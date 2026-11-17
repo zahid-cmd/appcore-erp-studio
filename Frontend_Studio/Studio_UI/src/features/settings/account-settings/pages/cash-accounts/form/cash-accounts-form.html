@@ -1,311 +1,222 @@
-<!-- PAGE-CLONED : Wings -> Cash Accounts -->
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
-        icon="fas fa-layer-group"
-
+        icon="fas fa-money-bill-wave"
+        art="cash"
         [title]="pageTitle"
-
-        subtitle="Manage cash accounts">
+        subtitle="Cash in hand at a branch : where cash is collected and paid from">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
 
-            [columns]="4">
+            <!-- ================= LEFT : the fields ================= -->
 
-            <!-- =============================================
-                 SECTION 01
-                 ACCOUNT SUB GROUP
-            ============================================== -->
+            <div class="ws-steps">
 
-            <app-form-section
+                <div class="ws-step">
 
-                title="Account Sub Group"
+                    <section class="ws-card">
 
-                icon="fas fa-sitemap">
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                        </header>
 
+                        <div class="ws-grid ws-cols-2">
+                            <app-search-dropdown
+                                label="Branch"
+                                [items]="branchItems"
+                                [(value)]="entity.Branch"
+                                (valueChange)="onBranchChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-search-dropdown>
 
-                <!-- Branch -->
+                            <app-search-dropdown
+                                label="Account Sub Group"
+                                [items]="accountSubGroupItems"
+                                [(value)]="entity.AccountSubGroupsId"
+                                [disabled]="true"
+                                [required]="true">
+                            </app-search-dropdown>
 
-                <app-search-dropdown
+                        </div>
 
-                    label="Branch"
+                    </section>
 
-                    [items]="branchItems"
+                    <section class="ws-card">
 
-                    [(value)]="entity.Branch"
-
-                    (valueChange)="onBranchChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Account Sub Group (Reserved : SUB-002-002-001 - Cash In Hand) -->
-
-                <app-search-dropdown
-
-                    label="Account Sub Group"
-
-                    [items]="accountSubGroupItems"
-
-                    [(value)]="entity.AccountSubGroupsId"
-
-                    [disabled]="true"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 02
-                 CASH ACCOUNTS INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Cash Accounts Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Cash Account Code -->
-
-                <app-textbox
-
-                    label="Cash Account Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.CashAccountCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Cash Account Name -->
-
-                <app-textbox
-
-                    label="Cash Account Name"
-
-                    placeholder="Enter cash account name"
-
-                    [(value)]="entity.CashAccountName"
-
-                    (valueChange)="onCashAccountNameChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Display Name (Auto : Cash Account Name - Branch Short Name) -->
-
-                <app-textbox
-
-                    label="Display Name"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.DisplayName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 03
-                 STATUS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Collection Account -->
-
-                <app-dropdown
-
-                    label="Collection Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.CollectionAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Payment Account -->
-
-                <app-dropdown
-
-                    label="Payment Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.PaymentAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 04
-                 DESCRIPTION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Description"
-
-                icon="fas fa-align-left">
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-            </app-form-section>
-
-        </app-form-grid>
+                        <header class="ws-card-head">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Cash Account</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Cash Account Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.CashAccountCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Cash Account Name"
+                                placeholder="e.g. Main Cash"
+                                [(value)]="entity.CashAccountName"
+                                (valueChange)="onCashAccountNameChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Display Name"
+                                placeholder="Made from the name and branch"
+                                [(value)]="entity.DisplayName"
+                                [readonly]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-note-pad>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="cash"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!entity.DisplayName || entity.CashAccountName">{{ entity.DisplayName || entity.CashAccountName || 'New cash account' }}</b>
+
+                        <div class="ws-chips">
+
+                            @if (entity.CashAccountCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.CashAccountCode }}</span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <app-toggle-switch
+                        label="Collection account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.CollectionAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Payment account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.PaymentAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-hand-holding-dollar"></i><span>Collection accounts show when money is received</span></li>
+                        <li><i class="fas fa-money-bill-transfer"></i><span>Payment accounts show when money is paid</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
+
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

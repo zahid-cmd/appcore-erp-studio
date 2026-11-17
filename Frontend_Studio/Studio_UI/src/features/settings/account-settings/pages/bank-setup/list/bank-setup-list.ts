@@ -110,6 +110,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -189,6 +195,8 @@ from '../../../services/bank-setup.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent
@@ -423,42 +431,44 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'60px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Bank Code',
             field:'BankCode',
-            width:'180px',
+            width:'140px',
             align:'center'
         },
         {
             header:'Bank Name',
             field:'BankName',
+            width:'210px',
             align:'left'
         },
         {
             header:'Short Name',
             field:'ShortName',
-            width:'200px',
+            width:'150px',
             align:'left'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'180px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'150px',
+            width:'140px',
             align:'center'
         }
     ];

@@ -112,27 +112,69 @@
         <div canvasBody>
 
             <!-- =================================================
-                 TAB 1 : BRANCH OVERVIEW (today)
+                 TAB 1 : BRANCH OVERVIEW (redesign 2026-11-18)
+                 line tiles on top, then the branch x line matrix
             ================================================== -->
 
             @if (selectedTab === 'overview')
             {
                 <div class="bc-panel appcore-scrollbar">
 
-                    <div class="bc-legend">
+                    <!-- ONE SLIM TILE PER BUSINESS LINE -->
 
-                        <span class="bc-chip bc-chip-core"><i class="fas fa-lock"></i> Core</span>
+                    <div class="bc-lines">
 
-                        <span class="bc-chip bc-chip-granted"><i class="fas fa-check"></i> Granted</span>
+                        @for (sum of lineSummary; track sum.line)
+                        {
+                            <div class="bc-line-tile">
 
-                        <span class="bc-chip bc-chip-scheduled"><i class="fas fa-hourglass-start"></i> Scheduled</span>
+                                <span class="bc-line-icon">
+                                    <i [class]="lineIcons[sum.line]"></i>
+                                </span>
 
-                        <span class="bc-chip bc-chip-off"><i class="fas fa-ban"></i> Expired / Inactive</span>
+                                <div class="bc-line-text">
 
-                        <span class="bc-legend-note">Click an empty cell to grant, a granted cell to edit.</span>
+                                    <span class="bc-line-name">{{ sum.line }}</span>
+
+                                    <span class="bc-line-sub">{{ sum.core }} core · {{ sum.granted }} granted</span>
+
+                                </div>
+
+                                <div
+                                    class="bc-line-marks"
+                                    aria-hidden="true">
+
+                                    @for (mark of sum.marks; track $index)
+                                    {
+                                        <span
+                                            class="bc-mark"
+                                            [attr.data-kind]="mark">
+                                        </span>
+                                    }
+
+                                </div>
+
+                            </div>
+                        }
 
                     </div>
 
+                    <!-- MATRIX HEAD : title + legend -->
+
+                    <div class="bc-matrix-head">
+
+                        <span class="bc-matrix-title">Branches and their business lines</span>
+
+                        <span class="bc-matrix-sub">{{ filteredOverview.length }} {{ filteredOverview.length === 1 ? 'branch' : 'branches' }} · {{ lines.length }} lines</span>
+
+                        <div class="bc-legend">
+                            <span class="bc-swatch" data-kind="core">Core</span>
+                            <span class="bc-swatch" data-kind="granted">Granted</span>
+                            <span class="bc-swatch" data-kind="scheduled">Scheduled</span>
+                            <span class="bc-swatch" data-kind="off">Expired / Inactive</span>
+                        </div>
+
+                    </div>
 
                     @if (loading)
                     {
@@ -151,42 +193,42 @@
                         <table class="bc-matrix">
 
                             <thead>
-
                                 <tr>
-
-                                    <th class="bc-col-wing">Wing</th>
-
                                     <th class="bc-col-branch">Branch</th>
 
                                     @for (line of lines; track line)
                                     {
-                                        <th class="bc-col-line">
-
-                                            <i [class]="lineIcons[line]"></i>
-
-                                            {{ line }}
-
-                                        </th>
+                                        <th class="bc-col-line">{{ line }}</th>
                                     }
 
+                                    <th class="bc-col-count">Lines</th>
                                 </tr>
-
                             </thead>
 
                             <tbody>
-
                                 @for (row of filteredOverview; track row.BranchId)
                                 {
                                     <tr [class.bc-row-inactive]="!row.IsActive">
 
-                                        <td class="bc-col-wing">{{ row.WingName }}</td>
-
                                         <td class="bc-col-branch">
+                                            <div class="bc-branch">
 
-                                            <div class="bc-branch-name">{{ row.BranchName }}</div>
+                                                <span class="bc-branch-icon">
+                                                    <i class="fas fa-store"></i>
+                                                </span>
 
-                                            <div class="bc-branch-code">{{ row.BranchCode }}</div>
+                                                <div class="bc-branch-text">
 
+                                                    <div class="bc-branch-name">{{ row.BranchName }}</div>
+
+                                                    <div class="bc-branch-meta">
+                                                        <span class="bc-branch-code">{{ row.BranchCode }}</span>
+                                                        <span class="bc-branch-wing">{{ row.WingName }}</span>
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
                                         </td>
 
                                         @for (line of lines; track line)
@@ -200,31 +242,32 @@
                                                 {
                                                     @case ('Core')
                                                     {
-                                                        <span class="bc-chip bc-chip-core"><i class="fas fa-lock"></i> Core</span>
+                                                        <span class="bc-pill" data-kind="core"><i class="fas fa-lock"></i> Core</span>
+                                                        <div class="bc-hint">Wing business</div>
                                                     }
                                                     @case ('Granted')
                                                     {
-                                                        <span class="bc-chip bc-chip-granted"><i class="fas fa-check"></i> Granted</span>
+                                                        <span class="bc-pill" data-kind="granted"><i class="fas fa-check"></i> Granted</span>
                                                     }
                                                     @case ('Gifts Only')
                                                     {
-                                                        <span class="bc-chip bc-chip-scheduled" title="May hold and transfer accessories to give with bikes; no counter sale"><i class="fas fa-gift"></i> Gifts Only</span>
+                                                        <span class="bc-pill" data-kind="scheduled" title="May hold and transfer accessories to give with bikes; no counter sale"><i class="fas fa-gift"></i> Gifts Only</span>
                                                     }
                                                     @case ('Scheduled')
                                                     {
-                                                        <span class="bc-chip bc-chip-scheduled"><i class="fas fa-hourglass-start"></i> Scheduled</span>
+                                                        <span class="bc-pill" data-kind="scheduled"><i class="fas fa-hourglass-start"></i> Scheduled</span>
                                                     }
                                                     @case ('Expired')
                                                     {
-                                                        <span class="bc-chip bc-chip-off"><i class="fas fa-ban"></i> Expired</span>
+                                                        <span class="bc-pill" data-kind="off"><i class="fas fa-ban"></i> Expired</span>
                                                     }
                                                     @case ('Inactive')
                                                     {
-                                                        <span class="bc-chip bc-chip-off"><i class="fas fa-pause"></i> Inactive</span>
+                                                        <span class="bc-pill" data-kind="off"><i class="fas fa-pause"></i> Inactive</span>
                                                     }
                                                     @default
                                                     {
-                                                        <span class="bc-add"><i class="fas fa-plus"></i></span>
+                                                        <span class="bc-add"><i class="fas fa-plus"></i> <span class="bc-add-text">Add</span></span>
                                                     }
                                                 }
 
@@ -236,17 +279,35 @@
                                             </td>
                                         }
 
+                                        <td class="bc-col-count">
+                                            <div class="bc-count">
+                                                <span class="bc-count-text"><b>{{ lineCount(row) }}</b> of {{ lines.length }}</span>
+                                                <span class="bc-count-bar" aria-hidden="true">
+                                                    @for (line of lines; track line)
+                                                    {
+                                                        <span
+                                                            class="bc-count-seg"
+                                                            [attr.data-kind]="lineKind(lineStatus(row, line))">
+                                                        </span>
+                                                    }
+                                                </span>
+                                            </div>
+                                        </td>
+
                                     </tr>
                                 }
-
                             </tbody>
 
                         </table>
                     }
 
+                    <div class="bc-foot-note">
+                        <i class="fas fa-circle-info"></i>
+                        Core lines come from the branch's wing and can't be removed here. Click an empty cell to grant a line, or a granted one to change it.
+                    </div>
+
                 </div>
             }
-
 
 
             <!-- =================================================

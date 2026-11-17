@@ -6,6 +6,7 @@
 
     <app-page-header
         icon="fas fa-calendar-check"
+        art="parts"
         title="Service Appointments"
         subtitle="Workshop visits booked for Service enquiries">
 
@@ -38,12 +39,32 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
-            pageToolbarLeft
-            [tabs]="tabs"
-            [(selectedTab)]="selectedTab">
+        <app-step-tabs
 
-        </app-control-tabs>
+            pageToolbarLeft
+
+            [steps]="formSteps"
+
+            [current]="selectedTab"
+
+            (currentChange)="onTabChange($event)">
+
+        </app-step-tabs>
+
+
+        <!-- more than one screen : no scrolling -->
+
+        <app-step-nav
+
+            pageToolbarRight
+
+            [steps]="formSteps"
+
+            [current]="selectedTab"
+
+            (currentChange)="onTabChange($event)">
+
+        </app-step-nav>
 
         @if (record?.IsOverdue)
         {
@@ -71,222 +92,234 @@
          PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
 
-        <app-form-grid
-            canvasBody
-            [columns]="3">
-
-
-            <!-- =============================================
-                 SECTION 01 : THE ENQUIRY
-            ============================================== -->
-
-            <app-form-section
-                title="Service Enquiry"
-                icon="fas fa-screwdriver-wrench">
-
-                @if (isAddMode)
-                {
-                    <!-- Open Service enquiries with no live appointment -->
-                    <app-search-dropdown
-                        label="Service Enquiry"
-                        [placeholder]="enquiryItems.length ? 'Choose an enquiry' : 'No open service enquiry is waiting'"
-                        [items]="enquiryItems"
-                        [value]="enquiryId || null"
-                        (valueChange)="onEnquiryChange($event)"
-                        [disabled]="busy"
-                        [required]="true">
-
-                    </app-search-dropdown>
-                }
-                @else
-                {
-                    <app-textbox
-                        label="Enquiry No"
-                        [value]="enquiryNo"
-                        [readonly]="true">
-
-                    </app-textbox>
-                }
-
-                <app-textbox
-                    label="Customer"
-                    placeholder="From the enquiry"
-                    [value]="customerText"
-                    [readonly]="true">
-
-                </app-textbox>
-
-                <app-textbox
-                    label="Mobile"
-                    placeholder="From the enquiry"
-                    [value]="mobileText"
-                    [readonly]="true">
-
-                </app-textbox>
-
-                <app-textbox
-                    label="Bike"
-                    placeholder="From the enquiry"
-                    [value]="bikeText"
-                    [readonly]="true">
-
-                </app-textbox>
-
-                <app-textbox
-                    label="Request"
-                    placeholder="From the enquiry"
-                    [value]="requestText"
-                    [readonly]="true">
-
-                </app-textbox>
-
-                @if (enquiryNote)
-                {
-                    <div class="saf-note">
-                        <i class="fas fa-circle-info"></i>
-                        {{ enquiryNote }}
-                    </div>
-                }
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 02 : DATE, SLOT, ADVISOR
-            ============================================== -->
-
-            <app-form-section
-                title="Appointment"
-                icon="fas fa-calendar-day">
-
-                <app-datepicker
-                    label="Date"
-                    [value]="dateValue"
-                    [minDate]="canMove ? today : null"
-                    (valueChange)="onDateChange($event)"
-                    [disabled]="!canMove || busy"
-                    [required]="true">
-
-                </app-datepicker>
-
-                <app-search-dropdown
-                    label="Time Slot"
-                    [placeholder]="loadingSlots ? 'Loading the slots...' : 'Choose a slot'"
-                    [items]="slotItems"
-                    swatchField="color"
-                    [value]="slotStart || null"
-                    (valueChange)="onSlotChange($event)"
-                    [disabled]="!canMove || busy || loadingSlots"
-                    [required]="true">
-
-                </app-search-dropdown>
-
-                @if (slotHint && canMove)
-                {
-                    <div
-                        class="saf-note"
-                        [class.saf-note-warn]="!!defaults?.Message || slotItems.length === 0">
-                        <i class="fas fa-clock"></i>
-                        {{ slotHint }}
-                    </div>
-                }
-
-                <app-search-dropdown
-                    label="Service Advisor"
-                    placeholder="Choose the advisor"
-                    [items]="advisorItems"
-                    [value]="advisorId || null"
-                    (valueChange)="onAdvisorChange($event)"
-                    [disabled]="isViewMode || busy">
-
-                </app-search-dropdown>
-
-                <app-textbox
-                    label="Branch"
-                    [value]="branchName"
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 03 : STATUS & NOTE
-            ============================================== -->
-
-            <app-form-section
-                title="Status & Note"
-                icon="fas fa-list-check">
-
-                <app-dropdown
-                    label="Status"
-                    [items]="statusItems"
-                    [value]="status"
-                    (valueChange)="onStatusChange($event)"
-                    [disabled]="!canChangeStatus || busy"
-                    [required]="true">
-
-                </app-dropdown>
-
-                @if (showsReason)
-                {
-                    <app-textbox
-                        label="Cancel Reason"
-                        placeholder="Why it is cancelled"
-                        [value]="reason"
-                        (valueChange)="onReasonChange($event)"
-                        [disabled]="!canChangeStatus || busy"
-                        [required]="canChangeStatus">
-
-                    </app-textbox>
-                }
-
-                <app-textarea
-                    label="Note"
-                    placeholder="e.g. first free service, brake noise"
-                    [rows]="3"
-                    [value]="note"
-                    (valueChange)="onNoteChange($event)"
-                    [disabled]="isViewMode || busy">
-
-                </app-textarea>
-
-                @if (record)
-                {
-                    <div class="saf-note">
-                        <i class="fas fa-clock-rotate-left"></i>
-                        Booked {{ record.CreatedDate | date:'dd-MMM-yyyy hh:mm a' }}{{ record.RescheduleCount > 0 ? ' · moved ' + record.RescheduleCount + (record.RescheduleCount === 1 ? ' time' : ' times') : '' }}
-                    </div>
-                }
-
-            </app-form-section>
-
-        </app-form-grid>
-
-
-        <!-- Canvas footer : the appointment in one line -->
+        [config]="formConfig">
 
         <div
-            canvasFooter
-            class="saf-footer">
+            canvasBody
+            class="ws-body appcore-scrollbar">
 
-            <span class="saf-footer-label">Appointment</span>
+            <!-- ================= LEFT : the fields (2026-11-16 workspace layout) ================= -->
 
-            <b
-                class="saf-footer-text"
-                [class.saf-footer-empty]="!footerText">{{ footerText || 'Choose the enquiry, the date and a slot' }}</b>
+            <div class="ws-steps">
 
-            <span
-                class="saf-footer-status"
-                [style.--status]="footerColor">
-                <span class="saf-footer-dot"></span>
-                {{ footerStatus }}
-            </span>
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-screwdriver-wrench"></i>
+                            <span>Service Enquiry</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            @if (isAddMode)
+                            {
+                                <app-search-dropdown
+                                    label="Service Enquiry"
+                                    [placeholder]="enquiryItems.length ? 'Choose an enquiry' : 'No open service enquiry is waiting'"
+                                    [items]="enquiryItems"
+                                    [value]="enquiryId || null"
+                                    (valueChange)="onEnquiryChange($event)"
+                                    [disabled]="busy"
+                                    [required]="true">
+                                </app-search-dropdown>
+                            }
+                            @else
+                            {
+                                <app-textbox
+                                    label="Enquiry No"
+                                    [value]="enquiryNo"
+                                    [readonly]="true">
+                                </app-textbox>
+                            }
+
+                            <app-textbox
+                                label="Customer"
+                                placeholder="From the enquiry"
+                                [value]="customerText"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Mobile"
+                                placeholder="From the enquiry"
+                                [value]="mobileText"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Bike"
+                                placeholder="From the enquiry"
+                                [value]="bikeText"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Request"
+                                placeholder="From the enquiry"
+                                [value]="requestText"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            @if (enquiryNote)
+                            {
+                                <div class="ws-full saf-note">
+                                    <i class="fas fa-circle-info"></i>
+                                    {{ enquiryNote }}
+                                </div>
+                            }
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-calendar-day"></i>
+                            <span>Appointment</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-datepicker
+                                label="Date"
+                                [value]="dateValue"
+                                [minDate]="canMove ? today : null"
+                                (valueChange)="onDateChange($event)"
+                                [disabled]="!canMove || busy"
+                                [required]="true">
+                            </app-datepicker>
+
+                            <app-search-dropdown
+                                label="Time Slot"
+                                [placeholder]="loadingSlots ? 'Loading the slots...' : 'Choose a slot'"
+                                [items]="slotItems"
+                                swatchField="color"
+                                [value]="slotStart || null"
+                                (valueChange)="onSlotChange($event)"
+                                [disabled]="!canMove || busy || loadingSlots"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            @if (slotHint && canMove)
+                            {
+                                <div
+                                    class="saf-note"
+                                    [class.saf-note-warn]="!!defaults?.Message || slotItems.length === 0">
+                                    <i class="fas fa-clock"></i>
+                                    {{ slotHint }}
+                                </div>
+                            }
+
+                            <app-search-dropdown
+                                label="Service Advisor"
+                                placeholder="Choose the advisor"
+                                [items]="advisorItems"
+                                [value]="advisorId || null"
+                                (valueChange)="onAdvisorChange($event)"
+                                [disabled]="isViewMode || busy">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Branch"
+                                [value]="branchName"
+                                [readonly]="true">
+                            </app-textbox>
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'step2'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-list-check"></i>
+                            <span>Status & Note</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-dropdown
+                                label="Status"
+                                [items]="statusItems"
+                                [value]="status"
+                                (valueChange)="onStatusChange($event)"
+                                [disabled]="!canChangeStatus || busy"
+                                [required]="true">
+                            </app-dropdown>
+
+                            @if (showsReason)
+                            {
+                                <app-textbox
+                                    label="Cancel Reason"
+                                    placeholder="Why it is cancelled"
+                                    [value]="reason"
+                                    (valueChange)="onReasonChange($event)"
+                                    [disabled]="!canChangeStatus || busy"
+                                    [required]="canChangeStatus">
+                                </app-textbox>
+                            }
+
+                            <app-textarea class="ws-full"
+                                label="Note"
+                                placeholder="e.g. first free service, brake noise"
+                                [rows]="3"
+                                [value]="note"
+                                (valueChange)="onNoteChange($event)"
+                                [disabled]="isViewMode || busy">
+                            </app-textarea>
+
+                            @if (record)
+                            {
+                                <div class="ws-full saf-note">
+                                    <i class="fas fa-clock-rotate-left"></i>
+                                    Booked {{ record.CreatedDate | date:'dd-MMM-yyyy hh:mm a' }}{{ record.RescheduleCount > 0 ? ' · moved ' + record.RescheduleCount + (record.RescheduleCount === 1 ? ' time' : ' times') : '' }}
+                                </div>
+                            }
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="parts"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!pageTitle">{{ pageTitle || 'New appointment' }}</b>
+
+                        <div class="ws-chips">
+
+                        </div>
+
+                    </div>
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-calendar-check"></i><span>Books a bay and a time slot</span></li>
+                        <li><i class="fas fa-bell"></i><span>Reminds the customer before the visit</span></li>
+                        <li><i class="fas fa-screwdriver-wrench"></i><span>Becomes a job card on arrival</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
 
         </div>
+
 
     </app-page-canvas>
 

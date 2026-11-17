@@ -72,6 +72,12 @@ export interface GeneralLedger
     // (e.g. NormalBalance, IsControlAccount, OpeningBalance)
 
 
+    // Business line of the ledger : MB / SP / AC / SV.
+    // '' : the one of its Account Class.
+    BusinessLine?:
+        string;
+
+
     Remarks:
         string;
 
@@ -133,6 +139,12 @@ export interface CreateGeneralLedger
     //===========================================================
 
     // TODO: Add General Ledger specific configuration fields here
+
+
+    // Business line of the ledger : MB / SP / AC / SV.
+    // '' : the one of its Account Class.
+    BusinessLine?:
+        string;
 
 
     Remarks:
@@ -200,6 +212,12 @@ export interface UpdateGeneralLedger
     //===========================================================
 
     // TODO: Add General Ledger specific configuration fields here
+
+
+    // Business line of the ledger : MB / SP / AC / SV.
+    // '' : the one of its Account Class.
+    BusinessLine?:
+        string;
 
 
     Remarks:

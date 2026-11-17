@@ -297,9 +297,14 @@ export const DAILY_COLLECTION_PRINT:
             key:'daily-collection',
             title:'Daily Collection Statement',
             icon:'fas fa-cash-register',
+            // Signature lines : only on the printed copy, a switch in the viewer (2026-11-16)
+            toggles:
+            [
+                { key:'signatures', label:'Signature lines', on:false }
+            ],
             render:
                 (data: DailyCollectionPrintData, kit: PrintKit) =>
-                    dailyCollectionHtml(data, kit, !!kit.landscape),
+                    withSignatures(dailyCollectionHtml(data, kit, !!kit.landscape), kit),
             css:
                 DAILY_PRINT_CSS,
             excel:
@@ -540,9 +545,14 @@ export const INVOICE_PROFIT_PRINT:
             key:'invoice-profit',
             title:'Invoice-wise Profit & Loss',
             icon:'fas fa-file-invoice-dollar',
+            // Signature lines : only on the printed copy, a switch in the viewer (2026-11-16)
+            toggles:
+            [
+                { key:'signatures', label:'Signature lines', on:false }
+            ],
             render:
                 (data: InvoiceProfitPrintData, kit: PrintKit) =>
-                    invoiceProfitHtml(data, kit, !!kit.landscape),
+                    withSignatures(invoiceProfitHtml(data, kit, !!kit.landscape), kit),
             css:
                 DAILY_PRINT_CSS,
             excel:
@@ -758,4 +768,30 @@ function invoiceProfitSheet
             [bold('Total'), null, null, null, null, null, t.quantity, money(t.sales, true), money(t.discount, true), money(t.other, true), money(t.netSales, true), money(t.cost, true), money(t.profit, true), faPct(ipMargin(t.profit, t.netSales))]
         ]
     };
+}
+
+
+//===============================================================
+// Prepared / Checked / Approved lines when the viewer's
+// "Signature lines" switch is on : inside the end block, so they
+// sit at the bottom of the last page (never on a page of their own)
+//===============================================================
+
+function withSignatures
+(
+    html:
+        string,
+    kit:
+        PrintKit
+):
+    string
+{
+    if (!kit.toggles?.['signatures'])
+    {
+        return html;
+    }
+
+    return html.replace(
+        '<div class="pv-end">',
+        '<div class="pv-end">' + kit.signatures(['Prepared by', 'Checked by', 'Approved by']));
 }

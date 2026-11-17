@@ -83,9 +83,14 @@ import
     BALANCE_SHEET_COMPARE,
     BALANCE_SHEET_PRINT_KEY,
     BalanceSheet,
+    BalanceSheetLayout,
     FaCompare,
     FaLine,
+    FaSideItem,
+    FaTAccount,
     buildBalanceSheetLines,
+    buildBalanceSheetNetAssets,
+    buildBalanceSheetTForm,
     formatLedgerMoney,
     isZero,
     toIsoDate
@@ -108,6 +113,30 @@ import
 }
 from '../print/final-accounts.print';
 
+
+
+//===============================================================
+// Insights panel shapes
+//===============================================================
+
+interface BsMixPart
+{
+    label:string;
+    amount:string;
+    pct:string;
+    width:string;
+    color:string;
+}
+
+interface BsInsights
+{
+    assets:BsMixPart[];
+    funding:BsMixPart[];
+    ratios:{ label:string; value:string; hint:string }[];
+    profit:string;
+    profitLoss:boolean;
+    profitNote:string;
+}
 
 //===============================================================
 // Balance Sheet (Accounts & Finance › Financial Statements)
@@ -170,6 +199,21 @@ export class BalanceSheetPage
     report:
         BalanceSheet | null = null;
 
+    // View (no reload) : Vertical / Net assets / T-form
+    layout:
+        BalanceSheetLayout = 'vertical';
+
+    account:
+        FaTAccount | null = null;
+
+    readonly layouts:
+        { value:BalanceSheetLayout; label:string; icon:string; title:string }[] =
+    [
+        { value:'vertical', label:'Vertical', icon:'fas fa-list', title:'Assets, Liabilities, Equity in one column' },
+        { value:'net-assets', label:'Net assets', icon:'fas fa-layer-group', title:'Total Assets − Current Liabilities = Net Assets, presented by Equity + Non-current Liabilities' },
+        { value:'tform', label:'T-form', icon:'fas fa-table-columns', title:'Liabilities & Equity beside Assets' }
+    ];
+
     private loadRequest?:
         Subscription;
 
@@ -228,15 +272,88 @@ export class BalanceSheetPage
     protected buildLines():
         FaLine[]
     {
-        return this.report
-            ? buildBalanceSheetLines(
-                this.report,
-                {
-                    level:this.level,
-                    showZero:this.showZero,
-                    search:this.searchText
-                })
-            : [];
+        if (!this.report)
+        {
+            this.account = null;
+
+            return [];
+        }
+
+        const options =
+        {
+            level:this.level,
+            showZero:this.showZero,
+            search:this.searchText
+        };
+
+        this.account =
+            this.layout === 'tform'
+                ? buildBalanceSheetTForm(this.report, options)
+                : null;
+
+        return this.layout === 'net-assets'
+            ? buildBalanceSheetNetAssets(this.report, options)
+            : buildBalanceSheetLines(this.report, options);
+    }
+
+    setLayout
+    (
+        layout:
+            BalanceSheetLayout
+    ):
+        void
+    {
+        if (this.layout === layout)
+        {
+            return;
+        }
+
+        this.layout = layout;
+
+        this.collapsed.clear();
+
+        this.rebuild();
+    }
+
+    get layoutWord():
+        string
+    {
+        return this.layouts.find(x => x.value === this.layout)?.label ?? 'Vertical';
+    }
+
+    // T-form : a ledger item opens its statement
+    sideClick
+    (
+        item:
+            FaSideItem
+    ):
+        void
+    {
+        if (item.row?.ClassCode)
+        {
+            this.openStatement(item.row.LedgerCode, item.row.LedgerType);
+        }
+    }
+
+    // Rows of the T account : both sides side by side
+    sideRows
+    (
+        account:
+            FaTAccount
+    ):
+        { dr:FaSideItem | null; cr:FaSideItem | null }[]
+    {
+        const count =
+            Math.max(account.dr.length, account.cr.length);
+
+        return Array.from(
+            { length:count },
+            (_, i) =>
+            ({
+                dr:account.dr[i] ?? null,
+                cr:account.cr[i] ?? null
+            })
+        );
     }
 
     // A ledger statement : from the year start (or the date) to
@@ -324,6 +441,8 @@ export class BalanceSheetPage
 
         this.compare = 'none';
 
+        this.layout = 'vertical';
+
         this.level = 1;
 
         this.showCodes = true;
@@ -406,6 +525,7 @@ export class BalanceSheetPage
                     branchId:this.report.BranchId,
                     showCancelled:this.report.ShowCancelled,
                     compare:this.report.Compare,
+                    layout:this.layout,
                     level:this.level,
                     showCodes:this.showCodes,
                     showZero:this.showZero,
@@ -414,5 +534,153 @@ export class BalanceSheetPage
             );
 
         this.openPrint(BALANCE_SHEET_PRINT_KEY, token);
+    }
+
+
+    //===========================================================
+    // Insights panel (2026-11-16) : what the assets are made of,
+    // how they are funded and the key ratios. Built once per
+    // loaded report (same objects until the report changes).
+    //===========================================================
+
+    private insightsReport:
+        BalanceSheet | null = null;
+
+    private insightsCache:
+        BsInsights | null = null;
+
+    get insights():
+        BsInsights | null
+    {
+        const report =
+            this.report;
+
+        if (!report)
+        {
+            return null;
+        }
+
+        if (this.insightsReport !== report || !this.insightsCache)
+        {
+            this.insightsReport =
+                report;
+
+            this.insightsCache =
+                this.buildInsights(report);
+        }
+
+        return this.insightsCache;
+    }
+
+    private buildInsights
+    (
+        report:
+            BalanceSheet
+    ):
+        BsInsights
+    {
+        const t =
+            report.Totals;
+
+        const colors =
+            ['#16307a', '#5b7bd5', '#b8692f', '#9fb3e6', '#cbd5e1'];
+
+        const parts =
+            (items: { label:string; amount:number }[]): BsMixPart[] =>
+            {
+                const sum =
+                    items.reduce((s, x) => s + x.amount, 0);
+
+                return items.map(
+                    (x, i) =>
+                    {
+                        const pct =
+                            sum > 0 ? x.amount / sum * 100 : 0;
+
+                        return {
+                            label:x.label,
+                            amount:this.total(x.amount),
+                            pct:pct.toFixed(1) + '%',
+                            width:pct.toFixed(2) + '%',
+                            color:colors[i % colors.length]
+                        };
+                    });
+            };
+
+        // Assets by group (largest four, then the rest together)
+        const byGroup =
+            new Map<string, number>();
+
+        for (const row of report.Rows)
+        {
+            if (row.Section !== 'asset')
+            {
+                continue;
+            }
+
+            const key =
+                row.GroupName || row.ClassName || 'Other';
+
+            byGroup.set(key, (byGroup.get(key) ?? 0) + (Number(row.Amount) || 0));
+        }
+
+        const groups =
+            [...byGroup.entries()]
+                .map(([label, amount]) => ({ label, amount }))
+                .filter(x => x.amount > 0)
+                .sort((a, b) => b.amount - a.amount);
+
+        const assetItems =
+            groups.length > 5
+                ? [
+                    ...groups.slice(0, 4),
+                    { label:'Other assets', amount:groups.slice(4).reduce((s, x) => s + x.amount, 0) }
+                  ]
+                : groups;
+
+        const equity =
+            (Number(t.Equity) || 0) + (Number(t.ProfitToDate) || 0);
+
+        const liabilities =
+            Number(t.Liabilities) || 0;
+
+        const assets =
+            Number(t.Assets) || 0;
+
+        const fundItems =
+            [
+                { label:'Equity (with profit to date)', amount:Math.max(equity, 0) },
+                { label:'Liabilities', amount:Math.max(liabilities, 0) }
+            ]
+            .filter(x => x.amount > 0);
+
+        const ratio =
+            (a: number, b: number): string =>
+                Math.abs(b) < 0.005 ? '-' : (a / b).toFixed(2);
+
+        const pct =
+            (a: number, b: number): string =>
+                Math.abs(b) < 0.005 ? '-' : (a / b * 100).toFixed(1) + '%';
+
+        const profit =
+            Number(t.ProfitToDate) || 0;
+
+        return {
+            assets:parts(assetItems),
+            funding:parts(fundItems),
+            ratios:
+            [
+                { label:'Debt to equity', value:ratio(liabilities, equity), hint:'Liabilities / equity' },
+                { label:'Equity ratio', value:pct(equity, assets), hint:'Equity / total assets' },
+                { label:'Debt ratio', value:pct(liabilities, assets), hint:'Liabilities / total assets' },
+                { label:'Return on equity', value:pct(profit, equity), hint:'Profit to date / equity' }
+            ],
+            profit:this.total(profit),
+            profitLoss:profit < 0,
+            profitNote:
+                report.YearStart
+                    ? 'From ' + this.date(report.YearStart) + ' · included in equity'
+                    : 'Included in equity'
+        };
     }
 }

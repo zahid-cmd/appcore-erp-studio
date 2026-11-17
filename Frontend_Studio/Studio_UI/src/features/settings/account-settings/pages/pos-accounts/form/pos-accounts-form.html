@@ -1,368 +1,258 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-cash-register"
-
+        art="pos"
         [title]="pageTitle"
-
-        subtitle="Manage POS accounts">
+        subtitle="A card terminal : it settles card payments into a linked bank account">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
-
-            [columns]="4">
-
-
-            <!-- =================================================
-                 SECTION 01 : PARENT INFORMATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Parent Information"
-
-                icon="fas fa-sitemap">
-
-
-                <!-- Branch -->
-
-                <app-search-dropdown
-
-                    label="Branch"
-
-                    [items]="branchItems"
-
-                    [(value)]="entity.Branch"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Account Sub Group (reserved, locked) -->
-
-                <app-search-dropdown
-
-                    label="Account Sub Group"
-
-                    [items]="accountSubGroupItems"
-
-                    [(value)]="entity.AccountSubGroupsId"
-
-                    [disabled]="true"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- POS Account Code -->
-
-                <app-textbox
-
-                    label="POS Account Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.POSAccountCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 02 : POS ACCOUNT INFORMATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="POS Account Information"
-
-                icon="fas fa-cash-register">
-
-
-                <!-- Issuing Bank (Bank Setup) -->
-
-                <app-search-dropdown
-
-                    label="Issuing Bank"
-
-                    [items]="issuingBankItems"
-
-                    [(value)]="entity.IssuingBank"
-
-                    (valueChange)="onNamePartChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Terminal Number -->
-
-                <app-textbox
-
-                    label="Terminal Number"
-
-                    placeholder="Enter terminal number"
-
-                    [(value)]="entity.TerminalNumber"
-
-                    (valueChange)="onNamePartChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Linked Bank Account (settlement account) -->
-
-                <app-search-dropdown
-
-                    label="Linked Bank Account"
-
-                    [items]="linkedBankAccountItems"
-
-                    [(value)]="entity.LinkedBankAccount"
-
-                    (valueChange)="onNamePartChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- POS Account Name (auto generated) -->
-
-                <app-textbox
-
-                    label="POS Account Name"
-
-                    placeholder="POS - ISSUING BANK - TERMINAL - BANK"
-
-                    [(value)]="entity.POSAccountName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 03 : CONFIGURATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Configuration"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Collection Account -->
-
-                <app-dropdown
-
-                    label="Collection Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.CollectionAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Payment Account -->
-
-                <app-dropdown
-
-                    label="Payment Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.PaymentAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Branch Exclusive -->
-
-                <app-dropdown
-
-                    label="Branch Exclusive"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.BranchExclusive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 04 : STATUS & DESCRIPTION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Status & Description"
-
-                icon="fas fa-align-left">
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-        </app-form-grid>
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div class="ws-step">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Branch"
+                                [items]="branchItems"
+                                [(value)]="entity.Branch"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="Account Sub Group"
+                                [items]="accountSubGroupItems"
+                                [(value)]="entity.AccountSubGroupsId"
+                                [disabled]="true"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="POS Account Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.POSAccountCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-cash-register"></i>
+                            <span>Terminal</span>
+                            <small>The name is made from the terminal</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Issuing Bank"
+                                [items]="issuingBankItems"
+                                [(value)]="entity.IssuingBank"
+                                (valueChange)="onNamePartChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Terminal Number"
+                                placeholder="As on the machine"
+                                [(value)]="entity.TerminalNumber"
+                                (valueChange)="onNamePartChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-search-dropdown
+                                label="Linked Bank Account"
+                                [items]="linkedBankAccountItems"
+                                [(value)]="entity.LinkedBankAccount"
+                                (valueChange)="onNamePartChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                class="ws-full"
+                                label="POS Account Name"
+                                placeholder="POS - ISSUING BANK - TERMINAL - BANK"
+                                [(value)]="entity.POSAccountName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="pos"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!entity.POSAccountName">{{ entity.POSAccountName || 'New POS account' }}</b>
+
+                        <div class="ws-chips">
+
+                            @if (entity.POSAccountCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.POSAccountCode }}</span>
+                            }
+
+                            @if (entity.TerminalNumber)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.TerminalNumber }}</span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <app-toggle-switch
+                        label="Collection account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.CollectionAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Payment account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.PaymentAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Branch exclusive"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.BranchExclusive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-credit-card"></i><span>Picked when a customer pays by card</span></li>
+                        <li><i class="fas fa-building-columns"></i><span>Settles into its linked bank account</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
+
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

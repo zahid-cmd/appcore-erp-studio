@@ -101,6 +101,12 @@ from '../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../shared/components/controls/pagination/pagination';
@@ -210,6 +216,8 @@ const MONTHS =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent,
@@ -297,17 +305,18 @@ export class SalesQuotationList
 
     readonly columns: ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'45px', align:'center' },
-        { header:'Quotation No', field:'QuotationNo', width:'200px', align:'left', sortable:true },
-        { header:'Date', field:'DateText', width:'100px', align:'center', sortable:true },
-        { header:'Customer', field:'CustomerText', width:'200px', align:'left', sortable:true },
-        { header:'Phone', field:'CustomerPhone', width:'115px', align:'left', sortable:true, priority:3 },
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Quotation No', field:'QuotationNo', width:'160px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
+        { header:'Customer', field:'CustomerText', width:'160px', align:'left', sortable:true },
+        { header:'Phone', field:'CustomerPhone', width:'150px', align:'center', sortable:true, priority:3 },
         { header:this.page.pageType === 'MB' ? 'Models' : 'Items', field:'ItemsText', width:'240px', align:'left', sortable:true, priority:2 },
-        { header:'Total', field:'TotalText', width:'110px', align:'right', sortable:true },
-        { header:'Valid Until', field:'ValidText', width:'100px', align:'center', sortable:true, priority:2 },
-        { header:'Invoice', field:'InvoiceText', width:'180px', align:'left', sortable:true, priority:2 },
-        { header:'Status', field:'StatusText', type:'status', width:'110px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'190px', align:'center' }
+        { header:'Total', field:'TotalText', width:'130px', align:'right', sortable:true },
+        { header:'Valid Until', field:'ValidText', width:'160px', align:'left', sortable:true, priority:2 },
+        { header:'Invoice', field:'InvoiceText', width:'160px', align:'left', sortable:true, priority:2 },
+        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     private open(r: QuotationRow): boolean
@@ -765,5 +774,42 @@ export class SalesQuotationList
         this.historyOpened = false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.countOf('Open')),
+            String(this.countOf('Expired')),
+            String(this.money(this.openTotal)),
+            String(this.countOf('Converted'))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Open', value:v[0], tone:'' },
+                    { label:'Expired', value:v[1], tone:'bad' },
+                    { label:'Open value', value:v[2], tone:'' },
+                    { label:'Converted', value:v[3], tone:'ok' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

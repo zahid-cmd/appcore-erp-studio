@@ -20,6 +20,7 @@
                         [class.lt-p3]="column.priority===3"
                         [class.lt-stick-left]="isStickLeft(ci, column)"
                         [class.lt-stick-right]="isStickRight(ci, column)"
+                        [class.lt-serial]="column.type==='serial'"
                         [style.width]="colWidth(ci, column)"
                         [class.left]="column.align==='left'"
                         [class.center]="column.align==='center'"
@@ -77,12 +78,31 @@
             *ngIf="!loading && !error && rows.length===0"
             class="table-state">
 
-            <app-empty-state
-                icon="fas fa-table"
-                title="No Records Found"
-                subtitle="There are no records available to display.">
+            <div
+                *ngIf="emptyArt; else plainEmpty"
+                class="table-empty-art">
 
-            </app-empty-state>
+                <app-workspace-art
+                    [theme]="emptyArt"
+                    size="empty">
+                </app-workspace-art>
+
+                <b>{{ emptyTitle || 'No Records Found' }}</b>
+
+                <span>{{ emptySubtitle || 'There are no records available to display.' }}</span>
+
+            </div>
+
+            <ng-template #plainEmpty>
+
+                <app-empty-state
+                    icon="fas fa-table"
+                    title="No Records Found"
+                    subtitle="There are no records available to display.">
+
+                </app-empty-state>
+
+            </ng-template>
 
         </div>
 
@@ -139,6 +159,7 @@
                         [class.lt-stick-left]="isStickLeft(ci, column)"
                         [class.lt-stick-right]="isStickRight(ci, column)"
                         [style.width]="colWidth(ci, column)"
+                        [class.lt-serial]="column.type==='serial'"
                         [class.status-cell]="column.type==='status'"
                         [attr.title]="getCellTitle(row, column)"
                         [class.left]="(column.cellAlign || column.align)==='left'"
@@ -540,7 +561,7 @@
                                     ">
 
                                     <i
-                                        class="fas fa-eye">
+                                        class="fa-regular fa-eye">
 
                                     </i>
 
@@ -591,7 +612,7 @@
                                     ">
 
                                     <i
-                                        class="fas fa-pen">
+                                        class="fa-regular fa-pen-to-square">
 
                                     </i>
 
@@ -615,7 +636,7 @@
                                     ">
 
                                     <i
-                                        class="fas fa-trash">
+                                        class="fa-regular fa-trash-can">
 
                                     </i>
 
@@ -682,12 +703,15 @@
                             </span>
 
                             <ng-container *ngIf="!column.dotIcon">
-                            {{
+                            <span
+                                *ngIf="isCodeColumn(column) && getCellValue(row, column); else plainText"
+                                class="lt-code-chip">{{ getCellValue(row, column) }}</span>
+                            <ng-template #plainText>{{
                                 getCellValue(
                                     row,
                                     column
                                 )
-                            }}
+                            }}</ng-template>
                             </ng-container>
 
                             <span
@@ -759,6 +783,7 @@
                         [class.lt-p3]="column.priority===3"
                         [class.lt-stick-left]="isStickLeft(ci, column)"
                         [class.lt-stick-right]="isStickRight(ci, column)"
+                        [class.lt-serial]="column.type==='serial'"
                         [style.width]="colWidth(ci, column)"
                         [class.left]="column.align==='left'"
                         [class.center]="column.align==='center'"

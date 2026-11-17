@@ -37,6 +37,24 @@ export interface AccountGroup
     AllowManualSubGroup:
         boolean;
 
+    // Balance Sheet term (asset / liability groups) :
+    // true = non-current, false = current
+    IsNonCurrent?:
+        boolean;
+
+    // Cash flow statement : Operating / Investing / Financing
+    CashFlowActivity?:
+        string;
+
+    // List only : Current / Non-current / blank (equity, income,
+    // expense)
+    TermText?:
+        string;
+
+    // Statement Type of its Account Class (read only)
+    StatementType?:
+        string;
+
 
     //===========================================================
     // Configuration
@@ -84,6 +102,15 @@ export interface CreateAccountGroup
 
     AllowManualSubGroup:
         boolean;
+
+    // Balance Sheet term (asset / liability groups) :
+    // true = non-current, false = current
+    IsNonCurrent?:
+        boolean;
+
+    // Cash flow statement : Operating / Investing / Financing
+    CashFlowActivity?:
+        string;
 
 
     //===========================================================
@@ -136,6 +163,15 @@ export interface UpdateAccountGroup
 
     AllowManualSubGroup:
         boolean;
+
+    // Balance Sheet term (asset / liability groups) :
+    // true = non-current, false = current
+    IsNonCurrent?:
+        boolean;
+
+    // Cash flow statement : Operating / Investing / Financing
+    CashFlowActivity?:
+        string;
 
 
     //===========================================================

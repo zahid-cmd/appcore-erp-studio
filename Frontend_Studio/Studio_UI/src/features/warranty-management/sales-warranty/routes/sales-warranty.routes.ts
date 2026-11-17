@@ -57,25 +57,40 @@ Routes =
                         pathMatch:'full'
                     },
 
+                    // Built 2026-11-16 (hand-written, read-only : NO Code Sync)
                     {
                         path:'list',
 
                         data:
                         {
-                            breadcrumb:'Sales Warranty Records',
-                            title:'Sales Warranty Records',
-                            icon:'fa-solid fa-certificate',
-                            text:'One record per bike sold : the policy in force on the invoice date, its whole-bike period and part coverages, with the end date and km of each.',
-                            waitsFor:'Sales Invoices'
+                            breadcrumb:'Sales Warranty Records'
                         },
 
                         loadComponent:() =>
                             import(
-                                '../../shared/coming-next/coming-next'
+                                '../pages/sales-warranty-records/sales-warranty-records'
                             )
                             .then(
                                 m =>
-                                    m.WarrantyComingNext
+                                    m.SalesWarrantyRecordsPage
+                            )
+                    },
+
+                    {
+                        path:'view/:id',
+
+                        data:
+                        {
+                            breadcrumb:'View Sales Warranty Record'
+                        },
+
+                        loadComponent:() =>
+                            import(
+                                '../pages/sales-warranty-records/sales-warranty-records'
+                            )
+                            .then(
+                                m =>
+                                    m.SalesWarrantyRecordsPage
                             )
                     }
                 ]

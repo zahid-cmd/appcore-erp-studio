@@ -10,7 +10,9 @@
  
         subtitle="Manage role assignments" 
  
-        icon="fas fa-user-tag"> 
+        icon="fas fa-user-tag"
+ 
+        art="people"> 
  
         <div pageHeaderCenter> 
  
@@ -121,7 +123,13 @@
  
             <app-list-table 
  
-                [columns]="columns" 
+                [columns]="columns"
+ 
+                emptyArt="people"
+ 
+                emptyTitle="No role assignments yet"
+ 
+                emptySubtitle="Give a user one or more roles" 
  
                 [rows]="pagedRoleAssignments" 
  
@@ -173,28 +181,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="assignments"
+            art="people"
+            note="All records">
+        </app-summary-line>
     }
 
 

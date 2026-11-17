@@ -8,9 +8,11 @@
 
         title="Cash Accounts"
 
-        subtitle="Manage cash accounts"
+        subtitle="Cash in hand per branch : where cash is collected and paid from"
 
-        icon="fas fa-money-bill-wave">
+        icon="fas fa-money-bill-wave"
+
+        art="cash">
 
         <div pageHeaderCenter>
 
@@ -167,6 +169,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="cash"
+
+                emptyTitle="No cash account yet"
+
+                emptySubtitle="Add a cash account for each branch that takes cash."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -208,24 +216,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="csa-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="csa-summary-item">
-                    <span class="csa-summary-label">{{ item.label }}</span>
-                    <b
-                        class="csa-summary-value"
-                        [class.csa-ok]="item.tone === 'ok'"
-                        [class.csa-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="csa-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="accounts"
+            art="cash"
+            note="All records">
+        </app-summary-line>
     }
 
 

@@ -6,7 +6,9 @@
 
         subtitle="Quotations : customer or prospect, prices of the day, convert to invoice"
 
-        icon="fas fa-file-signature">
+        icon="fas fa-file-signature"
+
+        art="bike">
 
         <div pageHeaderCenter>
 
@@ -90,6 +92,12 @@
 
                 [columns]="columns"
 
+                emptyArt="bike"
+
+                emptyTitle="No quotations yet"
+
+                emptySubtitle="Quotations you give customers will appear here"
+
                 [rows]="pagedRows"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -131,31 +139,17 @@
     </app-page-canvas>
 
 
-    <div class="ics-summary">
+    <app-summary-line
 
-        <span class="ics-summary-item">
-            <span class="ics-summary-label">Open</span>
-            <b class="ics-summary-value">{{ countOf('Open') }}</b>
-        </span>
+        [items]="summaryItems"
 
-        <span class="ics-summary-item">
-            <span class="ics-summary-label">Expired</span>
-            <b class="ics-summary-value ics-bad">{{ countOf('Expired') }}</b>
-        </span>
+        noun="quotations"
 
-        <span class="ics-summary-item">
-            <span class="ics-summary-label">Open value</span>
-            <b class="ics-summary-value">{{ money(openTotal) }}</b>
-        </span>
+        art="bike"
 
-        <span class="ics-summary-item">
-            <span class="ics-summary-label">Converted</span>
-            <b class="ics-summary-value ics-ok">{{ countOf('Converted') }}</b>
-        </span>
+        note="No stock is taken by a quotation; the invoice prices again on the sale day">
 
-        <span class="ics-summary-note">No stock is taken by a quotation; the invoice prices again on the sale day</span>
-
-    </div>
+    </app-summary-line>
 
 
     @if (cancelRow)

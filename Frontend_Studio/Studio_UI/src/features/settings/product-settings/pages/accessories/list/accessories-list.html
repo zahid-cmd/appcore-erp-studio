@@ -8,9 +8,11 @@
 
         title="Accessories"
 
-        subtitle="Manage accessories"
+        subtitle="Helmets, covers and other accessories : stock levels and shelves"
 
-        icon="fas fa-puzzle-piece">
+        icon="fas fa-puzzle-piece"
+
+        art="helmet">
 
         <div pageHeaderCenter>
 
@@ -149,6 +151,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="helmet"
+
+                emptyTitle="No accessory yet"
+
+                emptySubtitle="Add an accessory under its sub category."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -193,24 +201,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="acc-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="acc-summary-item">
-                    <span class="acc-summary-label">{{ item.label }}</span>
-                    <b
-                        class="acc-summary-value"
-                        [class.acc-ok]="item.tone === 'ok'"
-                        [class.acc-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="acc-summary-note">
-                Matching the search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="accessories"
+            art="helmet"
+            note="All records">
+        </app-summary-line>
     }
 
 

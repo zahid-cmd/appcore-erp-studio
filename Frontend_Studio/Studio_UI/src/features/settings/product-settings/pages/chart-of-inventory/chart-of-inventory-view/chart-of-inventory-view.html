@@ -58,135 +58,76 @@
 
 
     <!-- =====================================================
-         PAGE TOOLBAR : TAB + SCOPED STATS | STATUS
+         LEVEL RAIL (redesign 2026-11-17) : one slim tile per
+         level, counted in the selection; a tile opens its level
     ====================================================== -->
 
-    <app-page-toolbar>
+    <div
+        class="coi-rail"
+        aria-label="Counts in scope">
 
-        <div
+        @for (t of rail; track t.n)
+        {
+            <button
+                type="button"
+                class="coi-rail-tile"
+                [class.coi-rail-on]="t.on"
+                [disabled]="!t.step"
+                [attr.title]="t.step ? 'Show ' + t.step.label : null"
+                (click)="onRailClick(t)">
 
-            pageToolbarLeft
+                <span class="coi-rail-badge">L{{ t.n }}</span>
 
-            class="coi-toolbar-left">
+                <span class="coi-rail-label">{{ t.label }}</span>
 
-            <app-control-tabs
+                <span class="coi-rail-value">{{ t.value }}</span>
 
-                [tabs]="tabs"
+                <span class="coi-rail-of">{{ t.of }}</span>
 
-                [(selectedTab)]="selectedTab">
+                @if (t.pick)
+                {
+                    <span class="coi-rail-pick">{{ t.pick }}</span>
+                }
 
-            </app-control-tabs>
+            </button>
+        }
 
+        <!-- LINK CHECK : green when clean, amber with a count -->
 
-            <!-- STAT STRIP (one capsule, four readings) -->
+        @if (issues.length > 0)
+        {
+            <button
+                type="button"
+                class="coi-rail-check coi-rail-check-warn"
+                [title]="issuesOpen ? 'Back to the chart' : 'Show items that are linked wrongly'"
+                (click)="toggleIssues()">
 
-            <div class="coi-stats" aria-label="Counts in scope">
+                <span class="coi-rail-check-text">
+                    <span class="coi-rail-check-dot"></span>
+                    {{ issues.length }} link {{ issues.length === 1 ? 'issue' : 'issues' }}
+                </span>
 
-                <div class="coi-stat" title="Category types in scope">
-                    <i class="fas fa-layer-group"></i>
-                    <span class="coi-stat-value">{{ countTypes }}</span>
-                    <span class="coi-stat-label">Category Types</span>
-                </div>
+                <span class="coi-rail-check-sub">{{ issuesOpen ? 'Back to the chart' : 'Review' }}</span>
 
-                <div class="coi-stat" title="Product categories in scope">
-                    <i class="fas fa-folder-tree"></i>
-                    <span class="coi-stat-value">{{ countCategories }}</span>
-                    <span class="coi-stat-label">Categories</span>
-                </div>
+            </button>
+        }
+        @else
+        {
+            <div
+                class="coi-rail-check"
+                title="The link check found nothing wrong">
 
-                <div class="coi-stat" title="Product sub categories in scope">
-                    <i class="fas fa-folder-open"></i>
-                    <span class="coi-stat-value">{{ countSubCategories }}</span>
-                    <span class="coi-stat-label">Sub Categories</span>
-                </div>
+                <span class="coi-rail-check-text">
+                    <span class="coi-rail-check-dot"></span>
+                    Links checked
+                </span>
 
-                <div class="coi-stat coi-stat-accent" title="Products in scope">
-                    <i class="fas fa-box"></i>
-                    <span class="coi-stat-value">{{ countProducts }}</span>
-                    <span class="coi-stat-label">Products</span>
-                </div>
+                <span class="coi-rail-check-sub">0 issues</span>
 
             </div>
+        }
 
-            <!-- LINK ISSUES : shown only when the link check finds some -->
-
-            @if (issues.length > 0)
-            {
-                <button
-
-                    type="button"
-
-                    class="coi-scope"
-
-                    style="border-color:#f59e0b; color:#b45309; background:#fffbeb"
-
-                    [title]="issuesOpen ? 'Back to the chart' : 'Show items that are linked wrongly'"
-
-                    (click)="toggleIssues()">
-
-                    <i class="fas fa-triangle-exclamation"></i>
-
-                    <span class="coi-scope-value">
-                        {{ issues.length }} Link {{ issues.length === 1 ? 'Issue' : 'Issues' }}
-                    </span>
-
-                    @if (issuesOpen)
-                    {
-                        <i class="fas fa-xmark coi-scope-x"></i>
-                    }
-
-                </button>
-            }
-
-            @if (scopeLabel)
-            {
-                <button
-
-                    type="button"
-
-                    class="coi-scope"
-
-                    title="Show the whole chart"
-
-                    (click)="clearSelection()">
-
-                    <i class="fas fa-crosshairs"></i>
-
-                    <span class="coi-scope-value">{{ scopeLabel }}</span>
-
-                    <i class="fas fa-xmark coi-scope-x"></i>
-
-                </button>
-            }
-
-        </div>
-
-
-        <div
-
-            pageToolbarRight
-
-            style="width:200px">
-
-            <app-search-dropdown
-
-                placeholder="All Status"
-
-                [items]="statusFilterItems"
-
-                labelField="label"
-
-                valueField="value"
-
-                [value]="selectedStatus"
-
-                (valueChange)="onStatusFilterChange($event)">
-
-            </app-search-dropdown>
-
-        </div>
-
-    </app-page-toolbar>
+    </div>
 
 
 
@@ -461,6 +402,72 @@
                  PREVIEW
             ================================================ -->
 
+            <div class="coi-right">
+
+            <!-- ===============================================
+                 FOCUS : the selected node (redesign 2026-11-17)
+            ================================================ -->
+
+            <div class="coi-focus">
+
+                <div class="coi-focus-main">
+
+                    <nav
+                        class="coi-focus-trail"
+                        aria-label="Path">
+
+                        @for (step of focus.trail; track $index)
+                        {
+                            <button
+                                type="button"
+                                class="coi-focus-step"
+                                (click)="onPathClick(step)">
+                                {{ step.label }}
+                            </button>
+
+                            <i class="fas fa-chevron-right coi-focus-sep"></i>
+                        }
+
+                        <span class="coi-focus-kind">{{ focus.kind }}</span>
+
+                    </nav>
+
+                    <div class="coi-focus-title-row">
+
+                        <span class="coi-focus-title">{{ focus.title }}</span>
+
+                        @if (focus.code)
+                        {
+                            <span class="coi-focus-code">{{ focus.code }}</span>
+                        }
+
+                    </div>
+
+                    <span class="coi-focus-hint">{{ focus.hint }}</span>
+
+                </div>
+
+                <div class="coi-focus-facts">
+
+                    <div class="coi-fact">
+                        <span class="coi-fact-label">Total</span>
+                        <span class="coi-fact-value">{{ focus.total }}</span>
+                    </div>
+
+                    <div class="coi-fact coi-fact-on">
+                        <span class="coi-fact-label">Active</span>
+                        <span class="coi-fact-value">{{ focus.active }}</span>
+                    </div>
+
+                    <div class="coi-fact coi-fact-off">
+                        <span class="coi-fact-label">Inactive</span>
+                        <span class="coi-fact-value">{{ focus.inactive }}</span>
+                    </div>
+
+                </div>
+
+            </div>
+
             <section class="coi-preview">
 
                 <!-- PREVIEW HEAD : one compact bar, same height as the navigator head
@@ -484,37 +491,41 @@
 
                             </span>
 
-                            <!-- PATH : where this list sits -->
-
-                            <nav class="coi-path" aria-label="Path">
-
-                                @for (step of path; track $index; let last = $last)
-                                {
-                                    <button
-
-                                        type="button"
-
-                                        class="coi-path-step"
-
-                                        [class.coi-path-current]="last"
-
-                                        [disabled]="last"
-
-                                        (click)="onPathClick(step)">
-
-                                        {{ step.label }}
-
-                                    </button>
-
-                                    @if (!last)
-                                    {
-                                        <i class="fas fa-chevron-right coi-path-sep"></i>
-                                    }
-                                }
-
-                            </nav>
 
                         </div>
+
+                    </div>
+
+                    <div class="coi-head-tools">
+
+                    <div
+                        class="coi-seg"
+                        role="group"
+                        aria-label="Status">
+
+                        <button
+                            type="button"
+                            class="coi-seg-btn"
+                            [class.coi-seg-on]="selectedStatus === null"
+                            (click)="onStatusFilterChange(null)">
+                            All
+                        </button>
+
+                        <button
+                            type="button"
+                            class="coi-seg-btn"
+                            [class.coi-seg-on]="selectedStatus === true"
+                            (click)="onStatusFilterChange(true)">
+                            Active
+                        </button>
+
+                        <button
+                            type="button"
+                            class="coi-seg-btn"
+                            [class.coi-seg-on]="selectedStatus === false"
+                            (click)="onStatusFilterChange(false)">
+                            Inactive
+                        </button>
 
                     </div>
 
@@ -533,6 +544,8 @@
                             (ngModelChange)="onRowFilterChange($event)">
 
                     </label>
+
+                    </div>
 
                 </div>
 
@@ -710,6 +723,8 @@
                 </div>
 
             </section>
+
+            </div>
 
         </div>
     }

@@ -74,9 +74,40 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
 
 import
 {
@@ -234,17 +265,21 @@ from '../../../services/account-sub-group.service';
         PageHeaderComponent,
         PageToolbarComponent,
         CommandCenterComponent,
-        ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
+
+        WorkspaceArtComponent,
+
+        StepTabsComponent,
+
+        ToggleSwitchComponent,
+
+        NotePadComponent,
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-        TextareaComponent,
         DropdownComponent,
         SearchDropdownComponent,
 
@@ -338,6 +373,19 @@ implements OnInit, OnDestroy
         string =
         'general';
 
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
+
     //===========================================================
     // Tabs
     //===========================================================
@@ -387,6 +435,19 @@ implements OnInit, OnDestroy
     allAccountClasses:
         AccountClass[]
         = [];
+
+    // Business line of the ledger on the statements
+    // ('' : the one of its Account Class)
+    businessLineItems:
+        any[]
+    =
+    [
+        { label:'As the Account Class', value:'' },
+        { label:'Motor Bikes', value:'MB' },
+        { label:'Spare Parts', value:'SP' },
+        { label:'Accessories', value:'AC' },
+        { label:'Service', value:'SV' }
+    ];
 
     // Classes a ledger can be created under
     accountClasses:
@@ -460,6 +521,7 @@ implements OnInit, OnDestroy
             SubGroupCode:'',
             LedgerCode:'',
             LedgerName:'',
+            BusinessLine:'',
             Remarks:'',
             IsActive:true
         };
@@ -1109,6 +1171,7 @@ implements OnInit, OnDestroy
             SubGroupCode:'',
             LedgerCode:'',
             LedgerName:'',
+            BusinessLine:'',
             Remarks:'',
             IsActive:true
         };
@@ -1734,6 +1797,13 @@ implements OnInit, OnDestroy
 
                         // TODO: Map General Ledger specific configuration fields here
 
+                        BusinessLine:
+                            response?.BusinessLine
+                            ??
+                            response?.businessLine
+                            ??
+                            '',
+
                         Remarks:
                             response?.Remarks
                             ??
@@ -2224,6 +2294,9 @@ implements OnInit, OnDestroy
             LedgerName:
                 this.entity.LedgerName.trim(),
 
+            BusinessLine:
+                this.entity.BusinessLine ?? '',
+
             Remarks:
                 this.entity.Remarks?.trim()
                 ??
@@ -2336,6 +2409,9 @@ implements OnInit, OnDestroy
 
             LedgerName:
                 this.entity.LedgerName.trim(),
+
+            BusinessLine:
+                this.entity.BusinessLine ?? '',
 
             Remarks:
                 this.entity.Remarks?.trim()

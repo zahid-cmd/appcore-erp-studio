@@ -106,6 +106,13 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -191,6 +198,8 @@ from '../../../services/company.service';
         PageCanvasComponent,
 
         ListTableComponent,
+
+        SummaryLineComponent,
 
         PaginationComponent,
 
@@ -281,11 +290,7 @@ implements OnInit, OnDestroy
 
     // Summary line below the canvas (all records)
     summaryItems:
-        {
-            label:string;
-            value:string;
-            tone:'' | 'ok' | 'bad';
-        }[] =
+        SummaryLineItem[] =
     [];
 
 
@@ -464,99 +469,71 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
+        // (# 56, codes 130, names 200-240, Status 130, Actions 140)
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'50px',
-
+            width:'56px',
             align:'center'
         },
 
         {
             header:'Company Code',
-
             field:'CompanyCode',
-
-            width:'160px',
-
+            width:'130px',
             align:'center'
         },
 
         {
             header:'Company Name',
-
             field:'CompanyName',
-
-            width:'250px',
-
+            width:'240px',
             align:'left'
         },
 
         {
             header:'Short Name',
-
             field:'CompanyShortName',
-
             width:'160px',
-
             align:'left'
         },
 
         {
             header:'Phone',
-
             field:'Phone',
-
-            width:'160px',
-
+            width:'150px',
             align:'center'
         },
 
         {
             header:'Mobile',
-
             field:'Mobile',
-
-            width:'160px',
-
+            width:'150px',
             align:'center'
         },
 
         {
             header:'Email',
-
             field:'Email',
-
-            width:'250px',
-
+            width:'240px',
             align:'left'
         },
 
         {
             header:'Status',
-
             field:'IsActive',
-
-            width:'120px',
-
-            align:'center',
-
-            type:'status'
+            type:'status',
+            width:'130px',
+            align:'center'
         },
 
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'150px',
-
+            width:'140px',
             align:'center'
         }
     ];

@@ -79,6 +79,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -184,6 +190,8 @@ interface ListNotice
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -329,15 +337,16 @@ export class MassStoringList
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Storing No', field:'StoringNo', width:'150px', align:'center', sortable:true },
-        { header:'Date', field:'DateText', width:'115px', align:'center', sortable:true },
-        { header:'Product Type', field:'TypeText', width:'190px', align:'left', sortable:true },
-        { header:'Warehouse', field:'WarehouseText', align:'left', sortable:true },
-        { header:'Lines', field:'LineCount', width:'80px', align:'right', sortable:true },
-        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center', sortable:true },
-        { header:'Saved By', field:'CreatedByName', width:'150px', align:'left', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'200px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Storing No', field:'StoringNo', width:'160px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
+        { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
+        { header:'Warehouse', field:'WarehouseText', width:'160px', align:'left', sortable:true },
+        { header:'Lines', field:'LineCount', width:'160px', align:'left', sortable:true },
+        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'Saved By', field:'CreatedByName', width:'160px', align:'left', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     // Extra row buttons before View / Edit / Delete
@@ -1102,6 +1111,43 @@ export class MassStoringList
         this.historyOpened = false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.countOf('draft'))),
+            String(this.summaryText(this.countOf('posted'))),
+            String(this.summaryText(this.countOf('cancelled')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Draft', value:v[1], tone:'' },
+                    { label:'Posted', value:v[2], tone:'ok' },
+                    { label:'Cancelled', value:v[3], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }
 

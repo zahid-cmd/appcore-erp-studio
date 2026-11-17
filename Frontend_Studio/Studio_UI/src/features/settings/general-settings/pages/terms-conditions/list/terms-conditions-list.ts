@@ -39,6 +39,7 @@ import { SearchDropdownComponent } from '../../../../../../shared/components/con
 import { SearchBoxComponent } from '../../../../../../shared/components/utilities/search-box/search-box';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn } from '../../../../../../shared/components/layout/list-table/list-table';
+import { SummaryLineComponent } from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
@@ -98,6 +99,7 @@ type TermsRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+        SummaryLineComponent,
         ToastComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
@@ -196,14 +198,15 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Code', field:'Code', width:'100px', align:'center' },
-        { header:'Title', field:'Title', width:'300px', align:'left' },
-        { header:'Operation', field:'OperationName', width:'210px', align:'left' },
-        { header:'Lines', field:'LinesInfo', width:'190px', align:'center' },
+        // balanced widths, one scheme for every Settings list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Code', field:'Code', width:'130px', align:'center' },
+        { header:'Title', field:'Title', width:'260px', align:'left' },
+        { header:'Operation', field:'OperationName', width:'220px', align:'left' },
+        { header:'Lines', field:'LinesInfo', width:'170px', align:'center' },
         { header:'Default', field:'DefaultText', width:'110px', align:'center' },
-        { header:'Status', field:'IsActive', type:'status', width:'110px', align:'center' },
-        { header:'Actions', field:'actions', type:'actions', width:'120px', align:'center' }
+        { header:'Status', field:'IsActive', type:'status', width:'130px', align:'center' },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     ngOnInit():

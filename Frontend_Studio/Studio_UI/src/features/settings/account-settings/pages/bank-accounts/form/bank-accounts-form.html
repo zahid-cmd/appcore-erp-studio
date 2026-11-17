@@ -1,504 +1,346 @@
-<!-- PAGE-CLONED : Cash Accounts -> Bank Accounts -->
-<!-- PAGE-CLONED : Wings -> Bank Accounts -->
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
-        icon="fas fa-layer-group"
-
+        icon="fas fa-building-columns"
+        art="bank"
         [title]="pageTitle"
-
-        subtitle="Manage bank accounts">
+        subtitle="A bank account : collections, payments and loans">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <!-- two screens : no scrolling -->
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                            <small>The sub group is fixed once saved</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Branch"
+                                [items]="branchItems"
+                                [(value)]="entity.Branch"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="Account Sub Group"
+                                [items]="accountSubGroupItems"
+                                [(value)]="entity.AccountSubGroupsId"
+                                (valueChange)="onAccountSubGroupChange()"
+                                [disabled]="!isAddMode"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Bank Account Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.BankAccountCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-building-columns"></i>
+                            <span>Bank Account</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Bank"
+                                [items]="bankItems"
+                                [(value)]="entity.Bank"
+                                (valueChange)="onDisplayNamePartChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                class="ws-span-2"
+                                label="Bank Account Name"
+                                placeholder="As the bank writes it"
+                                [(value)]="entity.BankAccountName"
+                                (valueChange)="onBankAccountNameChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Full Account Number"
+                                placeholder="Full account number"
+                                [(value)]="entity.FullAccountNumber"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Bank Branch Name"
+                                placeholder="e.g. Uttara Branch"
+                                [(value)]="entity.BankBranchName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Swift Code"
+                                placeholder="Optional"
+                                [(value)]="entity.SwiftCode"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Routing Number"
+                                placeholder="Optional"
+                                [(value)]="entity.RoutingNumber"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+
+                            @if (isLiabilityForFinance)
+                            {
+                                <app-textbox
+                                    label="Sanction Limit"
+                                    placeholder="Loan limit (optional)"
+                                    [value]="sanctionLimitText"
+                                    (valueChange)="onSanctionLimitTextChange($event)"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+                            }
+
+                        </div>
+
+                    </section>
+
+                </div>
 
-            [columns]="4">
-
-            <!-- =====================================================
-                SECTION 01
-                PARENT INFORMATION
-            ====================================================== -->
-
-            <app-form-section
-
-                title="Parent Information"
-
-                icon="fas fa-sitemap">
-
-
-                <!-- Branch -->
-
-                <app-search-dropdown
-
-                    label="Branch"
-
-                    [items]="branchItems"
-
-                    [(value)]="entity.Branch"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Account Sub Group
-                     SUB-002-002-002 - Cash At Banks
-                     SUB-003-002-002 - Liability For Finance
-                     Chosen in add mode only; locked after saving. -->
-
-                <app-search-dropdown
-
-                    label="Account Sub Group"
-
-                    [items]="accountSubGroupItems"
-
-                    [(value)]="entity.AccountSubGroupsId"
-
-                    (valueChange)="onAccountSubGroupChange()"
-
-                    [disabled]="!isAddMode"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Bank Account Name (Auto Uppercase) -->
-
-                <app-textbox
-
-                    label="Bank Account Name"
-
-                    placeholder="ENTER BANK ACCOUNT NAME"
-
-                    [(value)]="entity.BankAccountName"
-
-                    (valueChange)="onBankAccountNameChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Full Account Number -->
-
-                <app-textbox
-
-                    label="Full Account Number"
-
-                    placeholder="Enter full account number"
-
-                    [(value)]="entity.FullAccountNumber"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Bank Branch Name -->
-
-                <app-textbox
-
-                    label="Bank Branch Name"
-
-                    placeholder="Enter bank branch name"
-
-                    [(value)]="entity.BankBranchName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-            <!-- =====================================================
-                SECTION 02
-                BANK ACCOUNTS INFORMATION
-            ====================================================== -->
-
-            <app-form-section
-
-                title="Bank Accounts Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Bank Account Code -->
-
-                <app-textbox
-
-                    label="Bank Account Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.BankAccountCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Bank -->
-
-                <app-search-dropdown
-
-                    label="Bank"
-
-                    [items]="bankItems"
-
-                    [(value)]="entity.Bank"
-
-                    (valueChange)="onDisplayNamePartChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Short Account Name (Auto Uppercase) -->
-
-                <app-textbox
-
-                    label="Short Account Name"
-
-                    placeholder="ENTER SHORT ACCOUNT NAME"
-
-                    [(value)]="entity.ShortAccountName"
-
-                    (valueChange)="onDisplayNamePartChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Short Account Number -->
-
-                <app-textbox
-
-                    label="Short Account Number"
-
-                    placeholder="Enter short account number"
-
-                    [(value)]="entity.ShortAccountNumber"
-
-                    (valueChange)="onDisplayNamePartChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Short Branch Name (Auto Uppercase) -->
-
-                <app-textbox
-
-                    label="Short Branch Name"
-
-                    placeholder="ENTER SHORT BRANCH NAME"
-
-                    [(value)]="entity.ShortBranchName"
-
-                    (valueChange)="onDisplayNamePartChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-            <!-- =====================================================
-                SECTION 03
-                DISPLAY & CONFIGURATION
-            ====================================================== -->
-
-            <app-form-section
-
-                title="Display & Configuration"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Display Name (Auto, Uppercase) -->
-
-                <app-textbox
-
-                    label="Display Name"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.DisplayName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Sanction Limit (optional; Liability For Finance only) -->
-
-                @if (isLiabilityForFinance)
-                {
-                    <app-textbox
-
-                        label="Sanction Limit"
-
-                        placeholder="Enter sanction limit (optional)"
-
-                        [value]="sanctionLimitText"
-
-                        (valueChange)="onSanctionLimitTextChange($event)"
-
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'display'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-id-card"></i>
+                            <span>Display Name</span>
+                            <small>Shown on vouchers and pick lists</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Short Account Name"
+                                placeholder="e.g. MOTO ZONE"
+                                [(value)]="entity.ShortAccountName"
+                                (valueChange)="onDisplayNamePartChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Short Account Number"
+                                placeholder="e.g. last 4 digits"
+                                [(value)]="entity.ShortAccountNumber"
+                                (valueChange)="onDisplayNamePartChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Short Branch Name"
+                                placeholder="e.g. UTTARA"
+                                [(value)]="entity.ShortBranchName"
+                                (valueChange)="onDisplayNamePartChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="ws-full"
+                                label="Display Name"
+                                placeholder="Made from the short names"
+                                [(value)]="entity.DisplayName"
+                                [readonly]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-note-pad>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="bank"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!entity.DisplayName || entity.BankAccountName">{{ entity.DisplayName || entity.BankAccountName || 'New bank account' }}</b>
+
+                        <div class="ws-chips">
+
+                            @if (entity.BankAccountCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.BankAccountCode }}</span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <app-toggle-switch
+                        label="Collection account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.CollectionAccount"
+                        (valueChange)="onValueChange()"
                         [disabled]="isViewMode">
-
-                    </app-textbox>
-                }
-
-
-                <!-- Swift Code -->
-
-                <app-textbox
-
-                    label="Swift Code"
-
-                    placeholder="Enter swift code"
-
-                    [(value)]="entity.SwiftCode"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-                <!-- Routing Number -->
-
-                <app-textbox
-
-                    label="Routing Number"
-
-                    placeholder="Enter routing number"
-
-                    [(value)]="entity.RoutingNumber"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-                <!-- Branch Exclusive -->
-
-                <app-dropdown
-
-                    label="Branch Exclusive"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.BranchExclusive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-            <!-- =====================================================
-                SECTION 04
-                STATUS & DESCRIPTION
-            ====================================================== -->
-
-            <app-form-section
-
-                title="Status & Description"
-
-                icon="fas fa-align-left">
-
-
-                <!-- Collection Account -->
-
-                <app-dropdown
-
-                    label="Collection Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.CollectionAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Payment Account -->
-
-                <app-dropdown
-
-                    label="Payment Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.PaymentAccount"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-            </app-form-section>
-
-        </app-form-grid>
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Payment account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.PaymentAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Branch exclusive"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.BranchExclusive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-book"></i><span>It becomes a ledger under its sub group</span></li>
+                        <li><i class="fas fa-store"></i><span>Branch exclusive : only its branch can use it</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
+
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

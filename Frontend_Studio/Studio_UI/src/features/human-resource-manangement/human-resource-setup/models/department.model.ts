@@ -23,6 +23,13 @@ export interface Department
     DepartmentShortName:
         string;
 
+    // The wing the department belongs to (null : none)
+    WingId?:
+        number | null;
+
+    WingName?:
+        string;
+
 
     //===========================================================
     // Configuration
@@ -57,6 +64,13 @@ export interface CreateDepartment
 
 
     DepartmentShortName:
+        string;
+
+    // The wing the department belongs to (null : none)
+    WingId?:
+        number | null;
+
+    WingName?:
         string;
 
 
@@ -97,6 +111,13 @@ export interface UpdateDepartment
 
 
     DepartmentShortName:
+        string;
+
+    // The wing the department belongs to (null : none)
+    WingId?:
+        number | null;
+
+    WingName?:
         string;
 
 

@@ -38,6 +38,12 @@ import { ControlTab, ControlTabsComponent } from '../../../../../../shared/compo
 import { SearchBoxComponent } from '../../../../../../shared/components/utilities/search-box/search-box';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn } from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
@@ -111,6 +117,8 @@ function dayText(value: string): string
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ToastComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
@@ -208,13 +216,14 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Code', field:'Code', width:'100px', align:'center' },
-        { header:'Employee', field:'EmployeeText', width:'240px', align:'left' },
-        { header:'Movement', field:'MovementType', width:'140px', align:'left', dotField:'TypeColor' },
-        { header:'Effective', field:'DateText', width:'120px', align:'center' },
-        { header:'What Changed', field:'Summary', width:'460px', align:'left' },
-        { header:'Actions', field:'actions', type:'actions', width:'100px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Code', field:'Code', width:'140px', align:'center' },
+        { header:'Employee', field:'EmployeeText', width:'160px', align:'left' },
+        { header:'Movement', field:'MovementType', width:'160px', align:'left', dotField:'TypeColor' },
+        { header:'Effective', field:'DateText', width:'160px', align:'left' },
+        { header:'What Changed', field:'Summary', width:'160px', align:'left' },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     ngOnInit():

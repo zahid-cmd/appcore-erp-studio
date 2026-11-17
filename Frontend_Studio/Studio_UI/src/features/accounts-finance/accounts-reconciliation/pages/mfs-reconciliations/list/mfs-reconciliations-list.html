@@ -7,7 +7,8 @@
     <app-page-header
         title="MFS Reconciliation"
         subtitle="Settle or reject the MFS receipts of posted vouchers"
-        icon="fas fa-mobile-screen-button">
+        icon="fas fa-mobile-screen-button"
+        art="mfs">
 
         <div pageHeaderCenter>
 
@@ -62,6 +63,18 @@
             pageToolbarRight
             class="mfr-filters">
 
+            <!-- status (was the chips row) -->
+            <app-search-dropdown
+                class="crc-status"
+                placeholder="Status"
+                [items]="statusFilterItems"
+                labelField="label"
+                valueField="value"
+                [value]="statusFilter"
+                (valueChange)="onStatusFilter($event)">
+
+            </app-search-dropdown>
+
             <app-search-dropdown
                 class="mfr-branch"
                 placeholder="All Branches"
@@ -100,36 +113,10 @@
 
         <section canvasBody class="crc-list">
 
-            <!-- Status chips -->
-
-            <div class="crc-chips">
-
-                @for (chip of statusChips; track chip.id)
-                {
-                    <button
-                        type="button"
-                        class="crc-chip"
-                        [class.crc-chip-on]="statusFilter === chip.id"
-                        (click)="onStatusFilter(chip.id)">
-
-                        {{ chip.label }}
-
-                        <span class="crc-chip-count">{{ chip.count }}</span>
-
-                    </button>
-                }
-
-                <span class="crc-chips-total">
-
-                    {{ filteredRows.length }} transaction(s) · Tk {{ filteredTotalText }}
-
-                </span>
-
-            </div>
-
-            <!-- List table (standard) : row actions Print / Undo / History -->
-
             <app-list-table
+                emptyArt="mfs"
+                emptyTitle="No MFS receipts here"
+                emptySubtitle="MFS receipts from posted vouchers will appear here"
                 class="crc-list-table"
                 [columns]="columns"
                 [rows]="pagedRows"
@@ -160,6 +147,21 @@
         </app-page-canvas>
 
     </div>
+
+    <!-- =====================================================
+         SUMMARY (branch and filters applied; search not)
+    ====================================================== -->
+
+    @if (summaryItems.length > 0)
+    {
+        <app-summary-line
+            [items]="summaryItems"
+            noun="receipts"
+            art="mfs"
+            [note]="'Tk ' + filteredTotalText"
+            noteDetail="Amount of the rows in view">
+        </app-summary-line>
+    }
 
     <!-- =====================================================
          UNDO DIALOG (one transaction)

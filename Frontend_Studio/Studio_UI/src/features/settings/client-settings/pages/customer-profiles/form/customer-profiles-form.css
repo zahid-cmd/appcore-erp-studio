@@ -1,4 +1,4 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../../../../../shared/styles/app-workspace-form.css';
 
 /* =====================================================
    Customer Profiles Form
@@ -209,4 +209,59 @@
 {
     color:#94a3b8;
     font-weight:600;
+}
+
+
+/* =====================================================
+   Workspace layout (2026-11-16)
+===================================================== */
+
+/* four fields in one row (Personal Details / Corporate Information) */
+.ws-cols-4
+{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px)
+{
+    .ws-cols-4
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* a warning takes the whole row under its box */
+.ws-grid > .cus-warning
+{
+    grid-column: 1 / -1;
+    margin: -6px 0 0;
+}
+
+.ws-grid > .cus-date-field
+{
+    margin-bottom: 0;
+}
+
+.ws-step > .cus-note
+{
+    margin: 0;
+}
+
+/* the Remarks note pad fills what is left of its card */
+.ws-notes > app-note-pad
+{
+    flex: 1 1 auto;
+}
+
+/* the Walk-in tag sits in the panel */
+.ws-hero > .cus-walkin
+{
+    margin: 0;
+}
+
+/* Photo | Remarks : Remarks takes the top half (both customer types) */
+.cus-photo-pair > .ws-notes
+{
+    align-self: start;
+    height: 50%;
 }

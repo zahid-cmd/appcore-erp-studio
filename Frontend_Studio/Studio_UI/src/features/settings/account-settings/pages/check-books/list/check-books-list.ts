@@ -39,6 +39,7 @@ import { SearchDropdownComponent } from '../../../../../../shared/components/con
 import { SearchBoxComponent } from '../../../../../../shared/components/utilities/search-box/search-box';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn } from '../../../../../../shared/components/layout/list-table/list-table';
+import { SummaryLineComponent, SummaryLineItem } from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
@@ -99,6 +100,7 @@ type CheckBookRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+        SummaryLineComponent,
         ToastComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
@@ -168,7 +170,7 @@ implements OnInit
         10;
 
     summaryItems:
-        { label: string; value: string; tone: '' | 'ok' | 'bad' }[] = [];
+        SummaryLineItem[] = [];
 
     // Bank accounts low on leaves : "DBBL Current (8 left)"
     lowAccounts:
@@ -201,16 +203,17 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Code', field:'Code', width:'95px', align:'center' },
+        // balanced widths, one scheme for every Settings list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Code', field:'Code', width:'120px', align:'center' },
         { header:'Bank Account', field:'AccountText', width:'260px', align:'left' },
-        { header:'Check Numbers', field:'RangeText', width:'220px', align:'center' },
+        { header:'Check Numbers', field:'RangeText', width:'200px', align:'center' },
         { header:'Unused', field:'LeavesText', width:'130px', align:'center' },
-        { header:'Used', field:'UsedText', width:'170px', align:'center', priority:2 },
+        { header:'Used', field:'UsedText', width:'160px', align:'center', priority:2 },
         { header:'Next Check', field:'NextCheckNo', width:'120px', align:'center' },
-        { header:'Received', field:'ReceivedText', width:'115px', align:'center', priority:3 },
-        { header:'Status', field:'IsActive', type:'status', width:'110px', align:'center' },
-        { header:'Actions', field:'actions', type:'actions', width:'120px', align:'center' }
+        { header:'Received', field:'ReceivedText', width:'120px', align:'center', priority:3 },
+        { header:'Status', field:'IsActive', type:'status', width:'130px', align:'center' },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     ngOnInit():
@@ -329,11 +332,12 @@ implements OnInit
 
         this.summaryItems =
         [
-            { label:'Books', value:count(base.length), tone:'' },
+            // the first tile is the total : the leaves (2026-11-16)
             { label:'Leaves', value:count(sum(x => x.LeafCount)), tone:'' },
             { label:'Unused', value:count(sum(x => x.Unused)), tone:'ok' },
             { label:'Issued', value:count(sum(x => x.Issued)), tone:'' },
-            { label:'Cancelled / Lost / Void', value:count(sum(x => x.Cancelled + x.Lost + x.Void)), tone:'bad' }
+            { label:'Cancelled / Lost / Void', value:count(sum(x => x.Cancelled + x.Lost + x.Void)), tone:'bad' },
+            { label:'Books', value:count(base.length), tone:'', icon:'fas fa-book', share:false }
         ];
 
         this.cdr.detectChanges();

@@ -1,416 +1,286 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-warehouse"
-
+        art="warehouses"
         [title]="pageTitle"
-
-        subtitle="Manage warehouses">
+        subtitle="Where the stock is kept : each branch has its own, more can be added">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
-
-            [columns]="4">
-
-
-
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Basic Information"
-
-                icon="fas fa-sitemap">
-
-
-
-                <!-- Company -->
-
-                <app-dropdown
-
-                    label="Company"
-
-                    [items]="companyItems"
-
-                    [(value)]="entity.CompanyId"
-
-                    (valueChange)="onCompanyChange($event)"
-
-                    [disabled]="isViewMode || entity.IsBranchGenerated"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-
-                <!-- Wing -->
-
-                <app-search-dropdown
-
-                    label="Wing"
-
-                    placeholder="Select wing"
-
-                    [items]="wingItems"
-
-                    labelField="label"
-
-                    valueField="value"
-
-                    [value]="entity.WingId"
-
-                    (valueChange)="onWingChange($event)"
-
-                    [disabled]="isViewMode || entity.IsBranchGenerated"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-
-                <!-- Branch -->
-
-                <app-search-dropdown
-
-                    label="Branch"
-
-                    placeholder="Select branch"
-
-                    [items]="branchItems"
-
-                    labelField="label"
-
-                    valueField="value"
-
-                    [value]="entity.BranchId"
-
-                    (valueChange)="onBranchChange($event)"
-
-                    [disabled]="isViewMode || entity.IsBranchGenerated"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 WAREHOUSE INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Warehouse Information"
-
-                icon="fas fa-warehouse">
-
-
-
-                <!-- Warehouse Code -->
-
-                <app-textbox
-
-                    label="Warehouse Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.WarehouseCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Warehouse Name -->
-
-                <app-textbox
-
-                    label="Warehouse Name"
-
-                    placeholder="Enter warehouse name"
-
-                    [(value)]="entity.WarehouseName"
-
-                    (valueChange)="onWarehouseNameChange()"
-
-                    [readonly]="entity.IsBranchGenerated"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Display Name -->
-
-                <app-textbox
-
-                    label="Display Name"
-
-                    [placeholder]="entity.IsBranchGenerated
-
-                        ? 'Auto generated'
-
-                        : 'Enter display name'"
-
-                    [(value)]="entity.DisplayName"
-
-                    (valueChange)="onValueChange()"
-
-                    [readonly]="entity.IsBranchGenerated"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 CONTACT INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Contact Information"
-
-                icon="fas fa-address-book">
-
-
-
-                <!-- Mobile -->
-
-                <app-textbox
-
-                    label="Mobile"
-
-                    placeholder="Enter mobile number"
-
-                    [(value)]="entity.Mobile"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Email -->
-
-                <app-textbox
-
-                    label="Email"
-
-                    placeholder="Enter email address"
-
-                    [(value)]="entity.Email"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Address -->
-
-                <app-textarea
-
-                    label="Address"
-
-                    placeholder="Enter address"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Address"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textarea>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 STATUS & DESCRIPTION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Description"
-
-                icon="fas fa-toggle-on">
-
-
-
-                <!-- Default Warehouse -->
-
-                <app-dropdown
-
-                    label="Default Warehouse"
-
-                    [items]="defaultItems"
-
-                    [(value)]="entity.IsDefault"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || entity.IsBranchGenerated"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || entity.IsBranchGenerated"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-
-            </app-form-section>
-
-
-
-        </app-form-grid>
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div class="ws-step">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-dropdown
+                                label="Company"
+                                [items]="companyItems"
+                                [(value)]="entity.CompanyId"
+                                (valueChange)="onCompanyChange($event)"
+                                [disabled]="isViewMode || entity.IsBranchGenerated"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-search-dropdown
+                                label="Wing"
+                                placeholder="Select wing"
+                                [items]="wingItems"
+                                labelField="label"
+                                valueField="value"
+                                [value]="entity.WingId"
+                                (valueChange)="onWingChange($event)"
+                                [disabled]="isViewMode || entity.IsBranchGenerated"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="Branch"
+                                placeholder="Select branch"
+                                [items]="branchItems"
+                                labelField="label"
+                                valueField="value"
+                                [value]="entity.BranchId"
+                                (valueChange)="onBranchChange($event)"
+                                [disabled]="isViewMode || entity.IsBranchGenerated"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-warehouse"></i>
+                            <span>Warehouse</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Warehouse Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.WarehouseCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Warehouse Name"
+                                placeholder="e.g. Back Store"
+                                [(value)]="entity.WarehouseName"
+                                (valueChange)="onWarehouseNameChange()"
+                                [readonly]="entity.IsBranchGenerated"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Display Name"
+                                [placeholder]="entity.IsBranchGenerated ? 'Auto generated' : 'Shown in stock screens'"
+                                [(value)]="entity.DisplayName"
+                                (valueChange)="onValueChange()"
+                                [readonly]="entity.IsBranchGenerated"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <div class="ws-pair">
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-address-card"></i>
+                                <span>Contact</span>
+                            </header>
+
+                            <div class="ws-grid ws-cols-2">
+                                <app-textbox
+                                    label="Mobile"
+                                    placeholder="01XXXXXXXXX"
+                                    [(value)]="entity.Mobile"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Email"
+                                    placeholder="store@company.com"
+                                    [(value)]="entity.Email"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode">
+                                </app-textbox>
+
+                                <app-textarea
+                                    class="ws-full"
+                                    label="Address"
+                                    placeholder="Where the store is"
+                                    [rows]="2"
+                                    [(value)]="entity.Address"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode"
+                                    [required]="true">
+                                </app-textarea>
+
+                            </div>
+
+                        </section>
+
+                        <section class="ws-card ws-notes">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-note-sticky"></i>
+                                <span>Remarks</span>
+                            </header>
+
+                            <app-note-pad
+                                placeholder="Anything the team should know"
+                                note="Only for your team, never printed"
+                                [maxLength]="500"
+                                [(value)]="entity.Remarks"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-note-pad>
+
+                        </section>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="warehouses"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!entity.WarehouseName">{{ entity.WarehouseName || 'New warehouse' }}</b>
+
+                        <div class="ws-chips">
+
+                            @if (entity.WarehouseCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.WarehouseCode }}</span>
+                            }
+
+                            @if (entity.IsBranchGenerated)
+                            {
+                                <span class="ws-chip">Made with the branch</span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <app-toggle-switch
+                        label="Default warehouse"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.IsDefault"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || entity.IsBranchGenerated">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || entity.IsBranchGenerated">
+                    </app-toggle-switch>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-boxes-stacked"></i><span>Stock is received, moved and sold from here</span></li>
+                        <li><i class="fas fa-star"></i><span>The default warehouse is picked first on a sale</span></li>
+                        <li><i class="fas fa-lock"></i><span>The one made with a branch is managed by the branch</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
+
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
+
+<app-progress-dialog></app-progress-dialog>

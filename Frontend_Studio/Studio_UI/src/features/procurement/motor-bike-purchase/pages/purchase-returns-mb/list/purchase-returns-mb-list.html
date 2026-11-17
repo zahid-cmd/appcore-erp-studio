@@ -10,7 +10,9 @@
 
         subtitle="Manage purchasereturnsmbs"
 
-        icon="fas fa-list">
+        icon="fas fa-list"
+
+        art="bike">
 
         <div pageHeaderCenter>
 
@@ -123,6 +125,12 @@
 
                 [columns]="columns"
 
+                emptyArt="bike"
+
+                emptyTitle="No purchase returns yet"
+
+                emptySubtitle="Stock returned to suppliers will appear here"
+
                 [rows]="pagedPurchaseReturnsMbs"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -173,28 +181,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="returns"
+            art="bike"
+            note="All records">
+        </app-summary-line>
     }
 
 

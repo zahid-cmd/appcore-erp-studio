@@ -140,6 +140,21 @@ public class AccountGroupRepository : IAccountGroupRepository
                         AllowManualSubGroup =
                             x.AllowManualSubGroup,
 
+                        IsNonCurrent =
+                            x.IsNonCurrent,
+
+                        CashFlowActivity =
+                            x.CashFlowActivity,
+
+                        StatementType =
+                            _context
+                                .Set<AccountClassEntity>()
+                                .Where(c => c.AccountClassId == x.AccountClassId)
+                                .Select(c => c.StatementType)
+                                .FirstOrDefault()
+                                ??
+                                string.Empty,
+
                         //===================================================
                         // Configuration
                         //===================================================
@@ -738,6 +753,12 @@ public class AccountGroupRepository : IAccountGroupRepository
                 AllowManualSubGroup =
                     dto.AllowManualSubGroup,
 
+                IsNonCurrent =
+                    dto.IsNonCurrent,
+
+                CashFlowActivity =
+                    AppCore.Domain.Platform.Accounting.CashFlowActivities.Normalize(dto.CashFlowActivity),
+
                 //=======================================================
                 // Configuration
                 //=======================================================
@@ -927,6 +948,12 @@ public class AccountGroupRepository : IAccountGroupRepository
 
         entity.AllowManualSubGroup =
             dto.AllowManualSubGroup;
+
+        entity.IsNonCurrent =
+            dto.IsNonCurrent;
+
+        entity.CashFlowActivity =
+            AppCore.Domain.Platform.Accounting.CashFlowActivities.Normalize(dto.CashFlowActivity);
 
 
         //===========================================================

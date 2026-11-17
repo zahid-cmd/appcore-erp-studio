@@ -1,0 +1,238 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+@import '../../shared/workshop-form.css';
+@import '../../../../shared/styles/app-workspace-form.css';
+
+/* ==============================================================
+   JOB CARD ASSIGNMENT
+   Row 1 : the job (read only) | the serial token
+   Row 2 : services and time   | the people
+============================================================== */
+
+.ja-grid
+{
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+.ja-grid .se-card-header
+{
+    height: 50px;
+}
+
+.ja-grid .se-card-header > small
+{
+    margin-left: auto;
+    padding: 1px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* the job : label over value, three in a row */
+.ja-facts
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 16px;
+    padding: 12px 16px 14px;
+}
+
+.ja-facts > div,
+.ja-panel-facts > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ja-facts span,
+.ja-panel-facts span
+{
+    font-size: 11px;
+    color: var(--app-text-muted, #64748b);
+}
+
+.ja-facts b,
+.ja-panel-facts b
+{
+    font-size: 13px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.ja-wide
+{
+    grid-column: 1 / -1;
+}
+
+/* the observations : small pills */
+.ja-facts em
+{
+    display: inline-block;
+    margin: 0 6px 4px 0;
+    padding: 2px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    font-style: normal;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* the serial token : the date regular, the serial big and green */
+.ja-token
+{
+    display: flex;
+    flex-direction: column;
+}
+
+.ja-token-no
+{
+    flex: 1 1 auto;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    align-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    min-height: 64px;
+    padding: 0 10px;
+    line-height: 1;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: #475569;
+}
+
+.ja-token-no > span
+{
+    font-size: 30px;
+    font-weight: 500;
+}
+
+.ja-token-no > b
+{
+    font-size: 68px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #16a34a;
+}
+
+/* one field a row */
+.ja-one
+{
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* the picked services */
+.ja-services
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 132px;
+    overflow: auto;
+    margin: 0 16px 4px;
+}
+
+.ja-service
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.ja-service > b
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ja-service > span
+{
+    flex: 0 0 auto;
+    color: #1e3a8a;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ja-service > button
+{
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.ja-service > button:hover
+{
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.ja-none
+{
+    padding: 8px 10px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+/* a time box with what it is taken as */
+.ja-time
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ja-time > small
+{
+    min-height: 14px;
+    color: #16a34a;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.ja-time > small.is-bad
+{
+    color: #b91c1c;
+}
+
+/* the panel */
+.ja-panel-facts
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--app-border, #e2e8f0);
+    border-radius: 10px;
+}
+
+@media (max-width: 1100px)
+{
+    .ja-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

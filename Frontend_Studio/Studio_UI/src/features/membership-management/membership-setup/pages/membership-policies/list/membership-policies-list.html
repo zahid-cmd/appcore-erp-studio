@@ -7,7 +7,8 @@
     <app-page-header
         title="Membership Policies"
         subtitle="Validity, fees, member discounts and free services of each card"
-        icon="fas fa-file-shield">
+        icon="fas fa-file-shield"
+        art="terms">
 
         <div pageHeaderCenter>
 
@@ -102,6 +103,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="terms"
+                emptyTitle="No membership policies yet"
+                emptySubtitle="Add a policy to define how memberships work"
                 [rows]="pagedMembershipPolicies"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -137,28 +141,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="policies"
+            art="terms"
+            note="All records">
+        </app-summary-line>
     }
 
 

@@ -68,28 +68,46 @@ from '../../../../../../shared/components/utilities/command-center/command-cente
 
 import
 {
-    ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
 import
 {
-    FormGridComponent
+    WorkspaceArtComponent
 }
-from '../../../../../../shared/components/layout/form-grid/form-grid';
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
 
 import
 {
-    FormSectionComponent
+    OrbitLoaderComponent
 }
-from '../../../../../../shared/components/layout/form-section/form-section';
+from '../../../../../../shared/components/utilities/orbit-loader/orbit-loader';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
 
 
 //===============================================================
@@ -104,21 +122,15 @@ from '../../../../../../shared/components/controls/textbox/textbox';
 
 import
 {
-    TextareaComponent
+    NotePadComponent
 }
-from '../../../../../../shared/components/controls/textarea/textarea';
+from '../../../../../../shared/components/controls/note-pad/note-pad';
 
 import
 {
-    DropdownComponent
+    LogoStudioComponent
 }
-from '../../../../../../shared/components/controls/dropdown/dropdown';
-
-import
-{
-    ImageHubComponent
-}
-from '../../../../../../shared/components/controls/image-hub/image-hub';
+from '../../../../../../shared/components/controls/logo-studio/logo-studio';
 
 
 //===============================================================
@@ -212,13 +224,18 @@ from '../../../services/company.service';
 
         CommandCenterComponent,
 
-        ControlTabsComponent,
 
         PageCanvasComponent,
 
-        FormGridComponent,
+        WorkspaceArtComponent,
 
-        FormSectionComponent,
+        OrbitLoaderComponent,
+
+        StepNavComponent,
+
+        StepTabsComponent,
+
+        ToggleSwitchComponent,
 
 
         //=======================================================
@@ -227,11 +244,9 @@ from '../../../services/company.service';
 
         TextboxComponent,
 
-        TextareaComponent,
+        NotePadComponent,
 
-        DropdownComponent,
-
-        ImageHubComponent,
+        LogoStudioComponent,
 
 
         //=======================================================
@@ -306,6 +321,23 @@ implements OnInit, OnDestroy
         string =
         '';
 
+    // The record is loading (edit / view) : the form waits for it
+    loading =
+        false;
+
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-15)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
+
 
 
     //===========================================================
@@ -327,9 +359,11 @@ implements OnInit, OnDestroy
     // Selected Tab
     //===========================================================
 
+    // The form is split into three screens (no scrolling) :
+    // Company · Contact · Logo & Remarks (2026-11-15)
     selectedTab:
         string =
-        'general';
+        'company';
 
 
 
@@ -341,11 +375,9 @@ implements OnInit, OnDestroy
         ControlTab[]
     {
         return [
-            {
-                id:'general',
-
-                label:this.tabTitle
-            }
+            { id:'company', label:'Company' },
+            { id:'contact', label:'Contact' },
+            { id:'brand',   label:'Logo & Remarks' }
         ];
     }
 
@@ -924,6 +956,9 @@ implements OnInit, OnDestroy
     private loadEntity():
         void
     {
+        this.loading =
+            true;
+
         this.companyservice
             .getById(
                 this.entityId
@@ -1093,6 +1128,8 @@ implements OnInit, OnDestroy
                     this.hasChanges =
                         false;
 
+                    this.loading =
+                        false;
 
                     this.cdr.detectChanges();
                 },
@@ -1104,6 +1141,9 @@ implements OnInit, OnDestroy
                         unknown
                 ): void =>
                 {
+                    this.loading =
+                        false;
+
                     console.error(
                         'Load Company Error',
 
@@ -1835,6 +1875,9 @@ implements OnInit, OnDestroy
             !this.entity.CompanyCode?.trim()
         )
         {
+            this.selectedTab =
+                'company';
+
             this.toast.error(
                 'Validation',
 
@@ -1850,6 +1893,9 @@ implements OnInit, OnDestroy
             !this.entity.CompanyName?.trim()
         )
         {
+            this.selectedTab =
+                'company';
+
             this.toast.error(
                 'Validation',
 
@@ -2449,4 +2495,4 @@ model
         this.cdr.detectChanges();
     }
 
-}
+}

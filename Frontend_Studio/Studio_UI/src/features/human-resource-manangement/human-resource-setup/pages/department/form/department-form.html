@@ -85,6 +85,15 @@
                         [disabled]="isViewMode">
                     </app-textbox>
 
+                    <app-dropdown
+                        label="Wing"
+                        placeholder="Select wing"
+                        [items]="wingItems"
+                        [(value)]="entity.WingId"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-dropdown>
+
                     <div class="hrf-cell hrf-span-2">
                         <app-textbox
                             label="Remarks"
@@ -114,6 +123,7 @@
                 <ul>
                     <li>Each employee belongs to one department (Employee Management &gt; Employee Profiles).</li>
                     <li>Departments filter the Employee Profiles list and the Staff List report.</li>
+                    <li>The wing tells where the department works. The employees of the departments under the Service Center wing can be made technicians (Service Setup &gt; Workshop Configuration).</li>
                     <li>A transfer to another department is saved on Employee Movements.</li>
                     <li>Make a department that is no longer used Inactive : it then stays on the old records.</li>
                 </ul>

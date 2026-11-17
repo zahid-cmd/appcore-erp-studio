@@ -7,7 +7,8 @@
     <app-page-header
         title="EMI Accounts"
         subtitle="EMI collection accounts (SSLCommerz / ShurjoPay / POS / QR / Online)"
-        icon="fas fa-credit-card">
+        icon="fas fa-credit-card"
+        art="card">
 
         <div pageHeaderCenter>
 
@@ -91,6 +92,9 @@
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
+                emptyArt="card"
+                emptyTitle="No EMI account yet"
+                emptySubtitle="Add an EMI platform and the bank account it pays into."
                 (view)="view($event)"
                 (edit)="edit($event)"
                 (delete)="delete($event)"
@@ -122,24 +126,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="ema-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="ema-summary-item">
-                    <span class="ema-summary-label">{{ item.label }}</span>
-                    <b
-                        class="ema-summary-value"
-                        [class.ema-ok]="item.tone === 'ok'"
-                        [class.ema-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="ema-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="accounts"
+            art="card"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================

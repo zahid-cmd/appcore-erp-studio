@@ -38,6 +38,20 @@ from '../../../../../shared/components/controls/pagination/pagination';
 
 import
 {
+    ListTableColumn,
+    ListTableComponent
+}
+from '../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     CommandCenterComponent
 }
 from '../../../../../shared/components/utilities/command-center/command-center';
@@ -122,9 +136,10 @@ from '../../services/backup-center.service';
         PageHeaderComponent,
         PageCanvasComponent,
         PaginationComponent,
+        ListTableComponent,
+        SummaryLineComponent,
         CommandCenterComponent,
         TextboxComponent,
-        OrbitLoaderComponent,
         ProgressDialogComponent,
         ToastComponent
     ],
@@ -173,6 +188,25 @@ export class BackupCenterPage
         headerHeight:36,
         footerHeight:56
     };
+
+    // The list (2026-11-16) : the shared list table, balanced widths
+    readonly columns:
+        ListTableColumn[] =
+    [
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Taken', field:'TakenText', width:'180px', align:'left' },
+        { header:'Kind', field:'Kind', width:'130px', align:'center', dotField:'KindColor' },
+        { header:'Note', field:'NoteText', width:'280px', align:'left' },
+        { header:'Size', field:'SizeText', width:'120px', align:'center' },
+        { header:'By', field:'ByText', width:'170px', align:'left' },
+        { header:'Copies', field:'CopiesText', width:'130px', align:'center', dotField:'CopiesColor' }
+    ];
+
+    rows:
+        any[] = [];
+
+    summaryItems:
+        SummaryLineItem[] = [];
 
     currentPage = 1;
 
@@ -413,9 +447,43 @@ export class BackupCenterPage
             : `${Math.max(1, Math.round(value / 1024)).toLocaleString('en-US')} KB`;
     }
 
+    // the rows and the tiles follow the data and the page
+    private buildRows():
+        void
+    {
+        const auto = new Set(['Nightly', 'Weekly', 'Monthly']);
+
+        this.rows =
+            this.pagedBackups.map(item =>
+            ({
+                ...item,
+                TakenText: this.formatDateTime(item.TakenDate),
+                KindColor: auto.has(item.Kind) ? '#1f6bff' : '#c8703a',
+                NoteText: item.Note || '-',
+                SizeText: this.formatBytes(item.SizeBytes),
+                ByText: item.TakenBy || '-',
+                CopiesText: item.OnThisPc && item.OnOtherPc ? '2 PCs' : '1 PC',
+                CopiesColor: item.OnThisPc && item.OnOtherPc ? '#10b981' : '#f59e0b'
+            }));
+
+        const all = this.backups;
+        const both = all.filter(x => x.OnThisPc && x.OnOtherPc).length;
+
+        this.summaryItems =
+            all.length === 0
+                ? []
+                : [
+                    { label:'Backups', value:all.length },
+                    { label:'On 2 PCs', value:both, tone:'ok', icon:'fas fa-clone' },
+                    { label:'On 1 PC', value:all.length - both, tone:'warn' }
+                ];
+    }
+
     private refreshView():
         void
     {
+        this.buildRows();
+
         this.cdr.markForCheck();
         this.cdr.detectChanges();
     }

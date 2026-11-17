@@ -53,6 +53,14 @@ export interface AccountSubGroup
     AllowManualLedger:
         boolean;
 
+    // Expense sub group holding finance costs (ROI / ROCE add-back)
+    IsFinanceCost?:
+        boolean;
+
+    // List only : Yes / blank
+    FinanceCostText?:
+        string;
+
 
     Remarks:
         string;
@@ -107,6 +115,10 @@ export interface CreateAccountSubGroup
     //===========================================================
 
     AllowManualLedger:
+        boolean;
+
+    // Expense sub group holding finance costs (ROI / ROCE add-back)
+    IsFinanceCost?:
         boolean;
 
 
@@ -167,6 +179,10 @@ export interface UpdateAccountSubGroup
     //===========================================================
 
     AllowManualLedger:
+        boolean;
+
+    // Expense sub group holding finance costs (ROI / ROCE add-back)
+    IsFinanceCost?:
         boolean;
 
 

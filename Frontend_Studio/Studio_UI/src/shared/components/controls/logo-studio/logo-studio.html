@@ -1,0 +1,201 @@
+<div class="ls">
+
+    <input
+        #picker
+        type="file"
+        class="ls-file"
+        [accept]="accept"
+        (change)="onPick(picker)">
+
+    <!-- ================= the picture ================= -->
+
+    @if (hasImage)
+    {
+        <div class="ls-frame">
+
+            <span class="ls-corner ls-c1"></span>
+            <span class="ls-corner ls-c2"></span>
+            <span class="ls-corner ls-c3"></span>
+            <span class="ls-corner ls-c4"></span>
+
+            @if (badge)
+            {
+                <span class="ls-badge">{{ badge }}</span>
+            }
+
+            <img
+                class="ls-img"
+                [class.ls-fill]="fill"
+                [src]="imageUrl"
+                alt="Logo">
+
+            @if (busy)
+            {
+                <div class="ls-busy">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Uploading...
+                </div>
+            }
+
+            <div class="ls-tools">
+
+                <button
+                    type="button"
+                    [class.ls-on]="!fill"
+                    [title]="fill ? 'Show the whole picture' : 'Fill the frame'"
+                    (click)="toggleFill()">
+                    <i class="fas" [class.fa-compress]="fill" [class.fa-expand]="!fill"></i>
+                    {{ fill ? 'Fill' : 'Fit' }}
+                </button>
+
+                @if (!disabled)
+                {
+                    <button
+                        type="button"
+                        [disabled]="busy"
+                        (click)="picker.click()">
+                        <i class="fas fa-arrows-rotate"></i>
+                        Replace
+                    </button>
+
+                    <button
+                        type="button"
+                        class="ls-danger"
+                        [disabled]="busy"
+                        (click)="remove()">
+                        <i class="fas fa-trash"></i>
+                        Remove
+                    </button>
+                }
+
+            </div>
+
+        </div>
+    }
+    @else
+    {
+        <div
+            class="ls-drop"
+            [class.ls-drag]="dragging"
+            [class.ls-off]="disabled"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)">
+
+            @if (disabled)
+            {
+                <i class="fas fa-image ls-none"></i>
+                <b>No logo</b>
+            }
+            @else
+            {
+                <span class="ls-big">
+                    <i class="fas fa-cloud-arrow-up"></i>
+                </span>
+
+                <b>Drop the logo here</b>
+
+                <span>or</span>
+
+                <button
+                    type="button"
+                    class="ls-browse"
+                    [disabled]="busy"
+                    (click)="picker.click()">
+                    Browse files
+                </button>
+
+                <small>At least {{ minWidth }} px wide · up to {{ maxKb >= 1024 ? (maxKb / 1024) + ' MB' : maxKb + ' KB' }}</small>
+            }
+
+        </div>
+    }
+
+    <!-- ================= the side ================= -->
+
+    <div class="ls-side">
+
+        <div class="ls-mini">
+
+            <span class="ls-mini-title">On the invoice</span>
+
+            <div class="ls-inv">
+
+                @if (hasImage)
+                {
+                    <img
+                        class="ls-inv-logo"
+                        [src]="imageUrl"
+                        alt="">
+                }
+                @else
+                {
+                    <span class="ls-inv-empty"></span>
+                }
+
+                <div class="ls-inv-text">
+                    <b [class.ls-muted]="!name">{{ name || 'Your company' }}</b>
+                    <span class="ls-inv-line"></span>
+                    <span class="ls-inv-line ls-short"></span>
+                </div>
+
+            </div>
+
+        </div>
+
+        @if (hasImage)
+        {
+            <div class="ls-mini">
+
+                <span class="ls-mini-title">File</span>
+
+                <dl class="ls-facts">
+                    <dt>Type</dt>
+                    <dd>{{ fileType || '-' }}</dd>
+                    @if (fileSize)
+                    {
+                        <dt>Size</dt>
+                        <dd>{{ fileSize }}</dd>
+                    }
+                    <dt>Pixels</dt>
+                    <dd>{{ isVector ? 'Vector' : (pixels || '-') }}</dd>
+                </dl>
+
+            </div>
+
+            @if (pixels || isVector)
+            {
+                <span
+                    class="ls-quality"
+                    [class.ls-warn]="!sharp">
+                    <i class="fas" [class.fa-circle-check]="sharp" [class.fa-triangle-exclamation]="!sharp"></i>
+                    {{ sharp ? 'Sharp enough to print' : 'Small : may print blurry (' + minWidth + ' px wide or more)' }}
+                </span>
+            }
+        }
+        @else
+        {
+            <div class="ls-mini">
+
+                <span class="ls-mini-title">Tips</span>
+
+                <ul class="ls-tips">
+                    <li>Square or wide logo</li>
+                    <li>Transparent background</li>
+                    <li>PNG or SVG prints best</li>
+                </ul>
+
+            </div>
+        }
+
+        @if (error)
+        {
+            <span class="ls-error">
+                <i class="fas fa-circle-exclamation"></i>
+                {{ error }}
+            </span>
+        }
+
+    </div>
+
+</div>

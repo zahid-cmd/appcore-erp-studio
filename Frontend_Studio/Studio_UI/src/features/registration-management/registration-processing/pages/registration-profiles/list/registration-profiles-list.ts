@@ -266,19 +266,20 @@ export class RegistrationProfilesList
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'45px', align:'center' },
-        { header:'Profile No', field:'ProfileNo', width:'230px', align:'left', sortable:true },
-        { header:'Date', field:'ProfileDateText', width:'100px', align:'center', sortable:true },
-        { header:'Customer', field:'CustomerName', width:'190px', align:'left', sortable:true },
-        { header:'Model', field:'ModelName', width:'170px', align:'left', sortable:true, priority:2 },
-        { header:'Chassis No', field:'ChassisNo', width:'150px', align:'left', sortable:true },
-        { header:'Registration Type', field:'RegistrationTypeName', width:'190px', align:'left', sortable:true, priority:2 },
-        { header:'Amount', field:'AmountText', width:'100px', align:'right', sortable:true },
-        { header:'Cost', field:'CostText', width:'95px', align:'right', sortable:true, priority:3 },
-        { header:'Surplus', field:'SurplusText', width:'95px', align:'right', sortable:true, priority:3 },
-        { header:'Days', field:'DaysText', width:'65px', align:'center', sortable:true, priority:3 },
-        { header:'Status', field:'StatusText', type:'status', width:'150px', align:'center', sortable:true },
-        { header:'View', field:'actions', type:'actions', width:'60px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Profile No', field:'ProfileNo', width:'160px', align:'left', sortable:true },
+        { header:'Date', field:'ProfileDateText', width:'130px', align:'center', sortable:true },
+        { header:'Customer', field:'CustomerName', width:'160px', align:'left', sortable:true },
+        { header:'Model', field:'ModelName', width:'160px', align:'left', sortable:true, priority:2 },
+        { header:'Chassis No', field:'ChassisNo', width:'160px', align:'left', sortable:true },
+        { header:'Registration Type', field:'RegistrationTypeName', width:'160px', align:'left', sortable:true, priority:2 },
+        { header:'Amount', field:'AmountText', width:'130px', align:'right', sortable:true },
+        { header:'Cost', field:'CostText', width:'160px', align:'left', sortable:true, priority:3 },
+        { header:'Surplus', field:'SurplusText', width:'160px', align:'left', sortable:true, priority:3 },
+        { header:'Days', field:'DaysText', width:'160px', align:'left', sortable:true, priority:3 },
+        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'View', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     //===========================================================

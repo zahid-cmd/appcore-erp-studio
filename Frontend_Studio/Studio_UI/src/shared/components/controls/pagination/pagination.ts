@@ -1,5 +1,6 @@
 import
 {
+    ChangeDetectionStrategy,
     Component,
     EventEmitter,
     Input,
@@ -7,11 +8,20 @@ import
 }
 from '@angular/core';
 
-import
-{
-    CommonModule
-}
-from '@angular/common';
+
+//===============================================================
+// Pagination (redesigned 2026-11-16) : the pager in a list's
+// canvas footer.
+//   left   : "1 - 10 of 48 records" (the range highlighted)
+//   centre : first / previous, page numbers in a soft track (the
+//            open page a raised white button; 1 ... 4 5 6 ... 12),
+//            next / last
+//   right  : "Rows" as clickable sizes (10 | 20 | 50 | 100, and
+//            Auto (n) when the page offers it)
+// Inputs and outputs unchanged.
+//===============================================================
+
+export type PagerItem = number | 'gap-l' | 'gap-r';
 
 @Component(
 {
@@ -19,10 +29,7 @@ from '@angular/common';
 
     standalone: true,
 
-    imports:
-    [
-        CommonModule
-    ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 
     templateUrl:
         './pagination.html',
@@ -46,12 +53,11 @@ export class PaginationComponent
     pageSize = 10;
 
     // Auto page size (page canvas across monitors) : the rows
-    // that fit the canvas. 0 = no Auto choice in the list.
-    // The page passes the list table's (fitRowsChange) value.
+    // that fit the canvas. 0 = no Auto choice.
     @Input()
     autoRows = 0;
 
-    // Auto is the current choice (the select shows "Auto (n)")
+    // Auto is the current choice
     @Input()
     autoActive = false;
 
@@ -63,6 +69,10 @@ export class PaginationComponent
         50,
         100
     ];
+
+    // the word after the count : "48 records"
+    @Input()
+    noun = 'records';
 
     /* =====================================================
        OUTPUTS
@@ -77,50 +87,23 @@ export class PaginationComponent
         new EventEmitter<number>();
 
     /* =====================================================
-       TOTAL PAGES
+       STATE
     ====================================================== */
 
     get totalPages(): number
     {
-        return Math.max(
-            Math.ceil(
-                this.totalRecords / this.pageSize
-            ),
-            1
-        );
+        return Math.max(Math.ceil(this.totalRecords / Math.max(1, this.pageSize)), 1);
     }
-
-    /* =====================================================
-       RECORD RANGE
-    ====================================================== */
 
     get startRecord(): number
     {
-        if (this.totalRecords === 0)
-        {
-            return 0;
-        }
-
-        return (
-            (
-                this.currentPage - 1
-            )
-            *
-            this.pageSize
-        ) + 1;
+        return this.totalRecords === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
     }
 
     get endRecord(): number
     {
-        return Math.min(
-            this.currentPage * this.pageSize,
-            this.totalRecords
-        );
+        return Math.min(this.currentPage * this.pageSize, this.totalRecords);
     }
-
-    /* =====================================================
-       NAVIGATION STATE
-    ====================================================== */
 
     get hasPrevious(): boolean
     {
@@ -132,83 +115,66 @@ export class PaginationComponent
         return this.currentPage < this.totalPages;
     }
 
-    /* =====================================================
-       VISIBLE PAGES
-    ====================================================== */
-
-    get visiblePages(): number[]
+    // the sizes offered, with the current one if it is not a choice
+    // (e.g. 5 on a two-line list)
+    get sizes(): number[]
     {
-        const pages: number[] = [];
+        const all = new Set(this.pageSizeOptions);
 
-        let start =
-            Math.max(
-                this.currentPage - 1,
-                1
-            );
-
-        let end =
-            start + 2;
-
-        if (end > this.totalPages)
+        if (!this.autoActive && this.pageSize > 0)
         {
-            end = this.totalPages;
-
-            start =
-                Math.max(
-                    end - 2,
-                    1
-                );
+            all.add(this.pageSize);
         }
 
-        for (
-            let page = start;
-            page <= end;
-            page++
-        )
+        return [...all].sort((a, b) => a - b);
+    }
+
+    // up to 7 places : 1 2 3 4 5 ... 12 / 1 ... 5 6 7 ... 12 / 1 ... 8 9 10 11 12
+    get pages(): PagerItem[]
+    {
+        const total = this.totalPages;
+        const current = Math.min(Math.max(1, this.currentPage), total);
+
+        if (total <= 7)
         {
-            pages.push(page);
+            return Array.from({ length: total }, (_, i) => i + 1);
         }
 
-        return pages;
+        if (current <= 4)
+        {
+            return [1, 2, 3, 4, 5, 'gap-r', total];
+        }
+
+        if (current >= total - 3)
+        {
+            return [1, 'gap-l', total - 4, total - 3, total - 2, total - 1, total];
+        }
+
+        return [1, 'gap-l', current - 1, current, current + 1, 'gap-r', total];
+    }
+
+    isPage(item: PagerItem): item is number
+    {
+        return typeof item === 'number';
     }
 
     /* =====================================================
-       PAGE NAVIGATION
+       NAVIGATION
     ====================================================== */
 
     previous(): void
     {
-        if (!this.hasPrevious)
-        {
-            return;
-        }
-
-        this.goToPage(
-            this.currentPage - 1
-        );
+        this.goToPage(this.currentPage - 1);
     }
 
     next(): void
     {
-        if (!this.hasNext)
-        {
-            return;
-        }
-
-        this.goToPage(
-            this.currentPage + 1
-        );
+        this.goToPage(this.currentPage + 1);
     }
 
-    goToPage(
-        page: number
-    ): void
+    goToPage(page: number): void
     {
-        if (
-            page < 1 ||
-            page > this.totalPages ||
-            page === this.currentPage
-        )
+        if (page < 1 || page > this.totalPages || page === this.currentPage)
         {
             return;
         }
@@ -216,22 +182,14 @@ export class PaginationComponent
         this.pageChange.emit(page);
     }
 
-    /* =====================================================
-       PAGE SIZE
-    ====================================================== */
-
-    changePageSize(
-        event: Event
-    ): void
+    // 0 = Auto
+    choose(size: number): void
     {
-        const target =
-            event.target as HTMLSelectElement;
+        const active = size === 0 ? this.autoActive : (!this.autoActive && size === this.pageSize);
 
-        // "auto" → 0 : the page switches to the Auto page size
-        this.pageSizeChange.emit(
-            target.value === 'auto'
-                ? 0
-                : Number(target.value)
-        );
+        if (!active)
+        {
+            this.pageSizeChange.emit(size);
+        }
     }
-}
+}

@@ -91,7 +91,10 @@ import
     CashFlows,
     RECEIPT_PAYMENT_PRINT_KEY,
     RpItem,
-    buildReceiptPayment
+    RpLayout,
+    RpRow,
+    buildReceiptPayment,
+    receiptPaymentVertical
 }
 from '../models/financial-flows.model';
 
@@ -192,7 +195,14 @@ export class ReceiptPaymentPage
     paymentsTotal:
         number = 0;
 
+    // Vertical view : one column
+    rows:
+        RpRow[] = [];
+
     // View (no reload)
+    layout:
+        RpLayout = 'tform';
+
     showTransfers:
         boolean = false;
 
@@ -284,6 +294,8 @@ export class ReceiptPaymentPage
 
             this.paymentsTotal = 0;
 
+            this.rows = [];
+
             return [];
         }
 
@@ -304,6 +316,8 @@ export class ReceiptPaymentPage
         this.receiptsTotal = sides.receiptsTotal;
 
         this.paymentsTotal = sides.paymentsTotal;
+
+        this.rows = receiptPaymentVertical(sides);
 
         return [];
     }
@@ -336,6 +350,39 @@ export class ReceiptPaymentPage
                 cr:this.payments[i] ?? null
             })
         );
+    }
+
+    setLayout
+    (
+        layout:
+            RpLayout
+    ):
+        void
+    {
+        this.layout = layout;
+    }
+
+    rowClick
+    (
+        row:
+            RpRow
+    ):
+        void
+    {
+        if (row.item)
+        {
+            this.itemClick(row.item);
+        }
+    }
+
+    rowClass
+    (
+        row:
+            RpRow
+    ):
+        string
+    {
+        return row.kind === 'node' ? 'tb-l' + row.level : 'fa-' + row.kind;
     }
 
     canOpen
@@ -510,7 +557,8 @@ export class ReceiptPaymentPage
                     showZero:this.showZero,
                     search:this.searchText,
                     showTransfers:this.showTransfers,
-                    showCashLedgers:this.showCashLedgers
+                    showCashLedgers:this.showCashLedgers,
+                    layout:this.layout
                 }
             );
 

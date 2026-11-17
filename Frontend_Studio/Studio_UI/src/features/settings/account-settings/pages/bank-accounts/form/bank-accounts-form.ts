@@ -77,9 +77,40 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
 
 import
 {
@@ -266,13 +297,17 @@ const ALLOWED_SUB_GROUP_CODES:
 
         CommandCenterComponent,
 
-        ControlTabsComponent,
-
         PageCanvasComponent,
 
-        FormGridComponent,
+        WorkspaceArtComponent,
 
-        FormSectionComponent,
+        StepTabsComponent,
+
+        StepNavComponent,
+
+        ToggleSwitchComponent,
+
+        NotePadComponent,
 
 
         //=======================================================
@@ -282,10 +317,6 @@ const ALLOWED_SUB_GROUP_CODES:
         TextboxComponent,
 
         SearchDropdownComponent,
-
-        TextareaComponent,
-
-        DropdownComponent,
 
 
         //=======================================================
@@ -396,6 +427,27 @@ implements OnInit, OnDestroy
     selectedTab:
         string =
         'general';
+
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
+
+    // Two screens, no scrolling (2026-11-16) : the first id is the
+    // page's own first tab, so the form opens on it
+    readonly formSteps =
+    [
+        { id:'general', label:'Account' },
+        { id:'display', label:'Display & Remarks' }
+    ];
 
 
 

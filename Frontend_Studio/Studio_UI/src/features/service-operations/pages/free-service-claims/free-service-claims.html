@@ -1,0 +1,334 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Free Service Claims"
+            subtitle="What the brand pays back for the free services, collected into claims and settled"
+            icon="fas fa-hand-holding-dollar">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search claim, brand, voucher..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="listActions"
+                    (view)="view($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Free Service Claim History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="mode === 'add' ? 'Add Free Service Claim' : 'View Free Service Claim'"
+            subtitle="The free services of one brand, claimed together"
+            icon="fas fa-hand-holding-dollar">
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Save"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="add"
+                    (command1Click)="onSave()"
+                    [command1Visible]="canEdit"
+                    [command2Visible]="false"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split jc-split appcore-scrollbar">
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-hand-holding-dollar"></i>
+                        <span>Free Service Claim</span>
+
+                        @if (doc)
+                        {
+                            <span
+                                class="jc-status"
+                                [style.background]="statusColor">{{ doc.Status }}</span>
+                        }
+                    </header>
+
+                    <div class="jc-two">
+
+                        <app-textbox
+                            label="Claim No"
+                            [value]="doc ? doc.ClaimNo : (lookups?.NextClaimNo ?? '')"
+                            [disabled]="true">
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [disabled]="mode !== 'add'"
+                            [value]="$any(asDate(claimDate))"
+                            (valueChange)="onDate($event)">
+                        </app-datepicker>
+
+                    </div>
+
+                    @if (mode === 'add')
+                    {
+                        <app-search-dropdown
+                            label="Brand"
+                            [placeholder]="brandItems.length > 0 ? 'Select the brand' : 'No brand has unclaimed free services'"
+                            [items]="brandItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="brandId"
+                            [required]="true"
+                            (valueChange)="onBrand($event)">
+                        </app-search-dropdown>
+                    }
+                    @else if (doc)
+                    {
+                        <app-textbox
+                            label="Brand"
+                            [value]="doc.BrandName"
+                            [disabled]="true">
+                        </app-textbox>
+                    }
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        [disabled]="mode !== 'add'"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                    <!-- an open claim : the brand paid -->
+
+                    @if (isOpen && doc)
+                    {
+                        <header class="pf-card-head si-subhead">
+                            <i class="fas fa-money-check-dollar"></i>
+                            <span>Settlement</span>
+                        </header>
+
+                        <div class="jc-two">
+
+                            <app-datepicker
+                                label="Settled On"
+                                [required]="true"
+                                [value]="$any(asDate(settledDate))"
+                                (valueChange)="onSettledDate($event)">
+                            </app-datepicker>
+
+                            <app-textbox
+                                label="Reference"
+                                placeholder="Cheque, transfer or credit note no"
+                                [value]="settledRef"
+                                [maxLength]="100"
+                                (valueChange)="onSettledRef($event)">
+                            </app-textbox>
+
+                        </div>
+
+                        <app-search-dropdown
+                            label="Received In"
+                            placeholder="The bank account, or the brand's supplier account"
+                            [items]="ledgerItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="settledLedger || null"
+                            [required]="true"
+                            (valueChange)="onSettledLedger($event)">
+                        </app-search-dropdown>
+
+                        <div class="jc-buttons si-buttons">
+
+                            <button
+                                type="button"
+                                class="hp-add"
+                                [disabled]="isSaving"
+                                (click)="settle()">
+                                <i class="fas fa-check"></i>
+                                Settle the claim
+                            </button>
+
+                            <button
+                                type="button"
+                                class="hp-add hp-danger"
+                                [disabled]="isSaving"
+                                (click)="cancel()">
+                                <i class="fas fa-ban"></i>
+                                Cancel the claim
+                            </button>
+
+                        </div>
+                    }
+
+                    @if (doc && doc.Status === 'Settled')
+                    {
+                        <div class="jc-two">
+                            <app-textbox label="Settled On" [value]="day(doc.SettledDate)" [disabled]="true"></app-textbox>
+                            <app-textbox label="Voucher" [value]="doc.SettlementNo" [disabled]="true"></app-textbox>
+                            <app-textbox label="Received In" [value]="doc.SettledLedgerName || doc.SettledLedgerCode" [disabled]="true"></app-textbox>
+                            <app-textbox label="Reference" [value]="doc.SettlementRef || '-'" [disabled]="true"></app-textbox>
+                        </div>
+                    }
+
+                    <span class="hp-note">A free service comes here when its service invoice is posted with a brand reimbursement (Scheduled Services) and the Service Policy has its claim ledger. Settling posts : debit the account chosen, credit the claim ledger.</span>
+
+                </section>
+
+                <section class="pf-card jc-work">
+
+                    <header class="pf-card-head jc-head">
+
+                        <span class="si-title">
+                            <i class="fas fa-list-check"></i>
+                            Free Services{{ mode === 'add' && lines.length > 0 ? '  (' + tickedCount + ' of ' + lines.length + ')' : '' }}
+                        </span>
+
+                        <span class="jc-total">
+                            <small>Claim</small>
+                            <b>{{ money(total) }}</b>
+                        </span>
+
+                    </header>
+
+                    @if (lines.length > 0)
+                    {
+                        <div class="si-claim jc-cols">
+                            <span></span>
+                            <span>Invoice</span>
+                            <span>Date</span>
+                            <span>Job Card</span>
+                            <span>Customer / Chassis</span>
+                            <span>Service</span>
+                            <span class="jc-right">Amount</span>
+                        </div>
+                    }
+
+                    @for (line of lines; track line.LineId; let i = $index)
+                    {
+                        <div class="si-claim jc-item">
+
+                            @if (mode === 'add')
+                            {
+                                <input
+                                    type="checkbox"
+                                    [checked]="!!ticked[line.LineId]"
+                                    (change)="onTick(line, $event)">
+                            }
+                            @else
+                            {
+                                <span class="jc-no">{{ i + 1 }}</span>
+                            }
+
+                            <span>{{ line.InvoiceNo }}</span>
+                            <span>{{ day(line.InvoiceDate) }}</span>
+                            <span>{{ line.JobCardNo }}</span>
+                            <span class="jc-name">
+                                <b>{{ line.CustomerName }}</b>
+                                <small>{{ line.ChassisNo }}{{ line.ModelName ? '  |  ' + line.ModelName : '' }}</small>
+                            </span>
+                            <span>{{ line.ServiceName }}</span>
+                            <span class="jc-amount">{{ money(line.Amount) }}</span>
+
+                        </div>
+                    }
+                    @empty
+                    {
+                        <div class="pfx-empty">{{ mode === 'add' ? (brandId ? 'This brand has no unclaimed free services.' : 'Choose the brand : its unclaimed free services come here.') : 'This claim holds no free services any more.' }}</div>
+                    }
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

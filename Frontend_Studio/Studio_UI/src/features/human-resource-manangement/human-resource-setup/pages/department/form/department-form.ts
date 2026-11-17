@@ -316,6 +316,12 @@ implements OnInit
     // Status Items
     //===========================================================
 
+    // The wings a department can belong to
+    wingItems:
+        { label: string; value: number }[]
+    =
+        [];
+
     statusItems:
         any[]
     =
@@ -348,6 +354,8 @@ implements OnInit
 
         DepartmentShortName:'',
 
+        WingId:null,
+
         Remarks:'',
 
         IsActive:true
@@ -374,7 +382,31 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.loadWings();
+
         this.initializeMode();
+    }
+
+    // The Wing dropdown
+    private loadWings():
+        void
+    {
+        this.departmentservice
+            .getWings()
+            .subscribe
+            ({
+                next:
+                    items =>
+                    {
+                        this.wingItems = items;
+
+                        this.cdr.detectChanges();
+                    },
+
+                error:
+                    () =>
+                        this.toast.error('Error', 'The wings could not be loaded.')
+            });
     }
 
 
@@ -514,6 +546,8 @@ implements OnInit
             DepartmentName:'',
 
             DepartmentShortName:'',
+
+            WingId:null,
 
             Remarks:'',
 
@@ -706,6 +740,13 @@ implements OnInit
                             ??
                             '',
 
+                        WingId:
+                            response?.WingId
+                            ??
+                            response?.wingId
+                            ??
+                            null,
+
                         Remarks:
                             response?.Remarks
                             ??
@@ -884,6 +925,11 @@ implements OnInit
                 ??
                 '',
 
+            WingId:
+                this.entity.WingId
+                ||
+                null,
+
             Remarks:
                 this.entity.Remarks?.trim()
                 ??
@@ -967,6 +1013,11 @@ implements OnInit
                 this.entity.DepartmentShortName?.trim()
                 ??
                 '',
+
+            WingId:
+                this.entity.WingId
+                ||
+                null,
 
             Remarks:
                 this.entity.Remarks?.trim()

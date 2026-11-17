@@ -38,6 +38,12 @@ import { ControlTab, ControlTabsComponent } from '../../../../../../shared/compo
 import { SearchBoxComponent } from '../../../../../../shared/components/utilities/search-box/search-box';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn } from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
@@ -112,6 +118,8 @@ type AdvanceRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ToastComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
@@ -199,17 +207,18 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Code', field:'Code', width:'100px', align:'center' },
-        { header:'Employee', field:'EmployeeText', width:'250px', align:'left' },
-        { header:'Type', field:'AdvanceType', width:'90px', align:'center' },
-        { header:'Date', field:'DateText', width:'115px', align:'center' },
-        { header:'Amount', field:'AmountText', width:'120px', align:'right' },
-        { header:'Per Month', field:'InstallmentText', width:'110px', align:'right' },
-        { header:'Recovered', field:'RecoveredText', width:'120px', align:'right' },
-        { header:'Balance', field:'BalanceText', width:'120px', align:'right' },
-        { header:'Status', field:'Status', width:'120px', align:'left', dotField:'StatusColor' },
-        { header:'Actions', field:'actions', type:'actions', width:'120px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Code', field:'Code', width:'140px', align:'center' },
+        { header:'Employee', field:'EmployeeText', width:'160px', align:'left' },
+        { header:'Type', field:'AdvanceType', width:'110px', align:'center' },
+        { header:'Date', field:'DateText', width:'130px', align:'center' },
+        { header:'Amount', field:'AmountText', width:'130px', align:'right' },
+        { header:'Per Month', field:'InstallmentText', width:'160px', align:'left' },
+        { header:'Recovered', field:'RecoveredText', width:'160px', align:'left' },
+        { header:'Balance', field:'BalanceText', width:'130px', align:'right' },
+        { header:'Status', field:'Status', width:'160px', align:'left', dotField:'StatusColor' },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     ngOnInit():

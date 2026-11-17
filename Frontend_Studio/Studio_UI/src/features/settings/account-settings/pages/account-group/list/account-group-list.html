@@ -6,8 +6,9 @@
 
     <app-page-header
         title="Account Group"
-        subtitle="Manage account groups"
-        icon="fas fa-layer-group">
+        subtitle="Groups inside an account class, e.g. Current Assets, Fixed Assets"
+        icon="fas fa-layer-group"
+        art="accounts">
 
         <div pageHeaderCenter>
 
@@ -91,6 +92,9 @@
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
+                emptyArt="accounts"
+                emptyTitle="No account group yet"
+                emptySubtitle="Add a group under an account class."
                 (view)="view($event)"
                 (edit)="edit($event)"
                 (delete)="delete($event)"
@@ -122,24 +126,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="agr-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="agr-summary-item">
-                    <span class="agr-summary-label">{{ item.label }}</span>
-                    <b
-                        class="agr-summary-value"
-                        [class.agr-ok]="item.tone === 'ok'"
-                        [class.agr-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="agr-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="groups"
+            art="accounts"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================

@@ -1,0 +1,139 @@
+/* =====================================================================
+   Workspace Art : colours come from these variables, so a page can
+   recolour a drawing (the tile is white on the blue icon tile)
+   ===================================================================== */
+
+:host
+{
+    --wa-ink: #1e3a8a;
+    --wa-blue: #1f6bff;
+    --wa-soft: #e8f0fe;
+    --wa-pane: #dbe7ff;
+    --wa-paper: #ffffff;
+    --wa-accent: #c8703a;
+
+    display: block;
+    line-height: 0;
+}
+
+:host(.wa-panel)
+{
+    width: 100%;
+}
+
+:host(.wa-empty)
+{
+    width: min(260px, 70%);
+    margin: 0 auto;
+}
+
+:host(.wa-tile)
+{
+    --wa-ink: #ffffff;
+    --wa-pane: rgba(255, 255, 255, .55);
+    --wa-accent: #f3b385;
+
+    width: 34px;
+    height: 34px;
+}
+
+.wa-svg
+{
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+:host(.wa-tile) .wa-svg
+{
+    height: 100%;
+}
+
+.wa-soft
+{
+    fill: var(--wa-soft);
+}
+
+.wa-soft-2
+{
+    opacity: .7;
+}
+
+.wa-body
+{
+    fill: var(--wa-paper);
+    stroke: var(--wa-ink);
+    stroke-width: 2;
+    stroke-linejoin: round;
+}
+
+.wa-line
+{
+    fill: none;
+    stroke: var(--wa-ink);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wa-thin
+{
+    fill: none;
+    stroke: var(--wa-blue);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: .55;
+}
+
+.wa-pane
+{
+    fill: var(--wa-pane);
+}
+
+.wa-fill
+{
+    fill: var(--wa-pane);
+}
+
+.wa-door
+{
+    fill: var(--wa-soft);
+    stroke: var(--wa-ink);
+    stroke-width: 2;
+}
+
+.wa-leaf
+{
+    fill: #e3f4ea;
+    stroke: #2f855a;
+    stroke-width: 2;
+}
+
+.wa-accent-fill
+{
+    fill: var(--wa-accent);
+}
+
+.wa-accent-line
+{
+    fill: none;
+    stroke: var(--wa-accent);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.wa-fill-white
+{
+    fill: #ffffff;
+}
+
+.wa-fill-white-line
+{
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}

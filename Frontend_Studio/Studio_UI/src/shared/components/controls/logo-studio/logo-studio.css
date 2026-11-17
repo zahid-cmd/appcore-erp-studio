@@ -1,0 +1,408 @@
+/* =====================================================================
+   Logo Studio
+   ===================================================================== */
+
+:host
+{
+    display: block;
+    min-width: 0;
+}
+
+.ls
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 150px;
+    gap: 14px;
+    align-items: start;
+}
+
+@media (max-width: 760px)
+{
+    .ls
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.ls-file
+{
+    display: none;
+}
+
+/* the frame : 5 : 4 on a transparency checkerboard */
+
+.ls-frame
+{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 5 / 4;
+    overflow: hidden;
+    border: 1px solid #dbe6f7;
+    border-radius: 18px;
+    background:
+        linear-gradient(45deg, #f4f7fc 25%, transparent 25%),
+        linear-gradient(-45deg, #f4f7fc 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f4f7fc 75%),
+        linear-gradient(-45deg, transparent 75%, #f4f7fc 75%),
+        #ffffff;
+    background-position: 0 0, 0 9px, 9px -9px, -9px 0;
+    background-size: 18px 18px;
+}
+
+.ls-corner
+{
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border: 3px solid #1f6bff;
+    opacity: .55;
+    pointer-events: none;
+}
+
+.ls-c1 { top: 12px; left: 12px; border-right: 0; border-bottom: 0; border-radius: 8px 0 0 0; }
+.ls-c2 { top: 12px; right: 12px; border-left: 0; border-bottom: 0; border-radius: 0 8px 0 0; }
+.ls-c3 { bottom: 12px; left: 12px; border-right: 0; border-top: 0; border-radius: 0 0 0 8px; }
+.ls-c4 { bottom: 12px; right: 12px; border-left: 0; border-top: 0; border-radius: 0 0 8px 0; }
+
+.ls-badge
+{
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    z-index: 1;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #16307a;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    transform: translateX(-50%);
+}
+
+.ls-img
+{
+    max-width: 72%;
+    max-height: 62%;
+    object-fit: contain;
+}
+
+.ls-img.ls-fill
+{
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+}
+
+.ls-busy
+{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, .75);
+    color: #1e3a8a;
+    font-weight: 600;
+}
+
+.ls-tools
+{
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    z-index: 1;
+    display: flex;
+    gap: 4px;
+    padding: 5px;
+    border: 1px solid #dbe6f7;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 6px 16px -8px rgba(30, 58, 138, .35);
+    transform: translateX(-50%);
+}
+
+.ls-tools button
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .15s ease;
+}
+
+.ls-tools button:hover:not(:disabled),
+.ls-tools button.ls-on
+{
+    background: #e8f0fe;
+}
+
+.ls-tools button:disabled
+{
+    cursor: default;
+    opacity: .5;
+}
+
+.ls-tools button.ls-danger
+{
+    color: #be123c;
+}
+
+.ls-tools button.ls-danger:hover:not(:disabled)
+{
+    background: #fee2e2;
+}
+
+/* empty : the drop area */
+
+.ls-drop
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    aspect-ratio: 5 / 4;
+    padding: 12px;
+    border: 2px dashed #b9cdf3;
+    border-radius: 18px;
+    background: radial-gradient(80% 80% at 50% 30%, #eef4ff 0%, #fbfcff 70%);
+    box-sizing: border-box;
+    text-align: center;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+
+.ls-drop.ls-drag
+{
+    border-color: #1f6bff;
+    background: #e8f0fe;
+}
+
+.ls-drop.ls-off
+{
+    border-style: solid;
+    border-color: #e3e9f3;
+    background: #f8fafc;
+}
+
+.ls-big
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 17px;
+    background: #1f6bff;
+    color: #ffffff;
+    font-size: 24px;
+    box-shadow: 0 12px 24px -10px rgba(31, 107, 255, .6);
+}
+
+.ls-none
+{
+    color: #cbd5e1;
+    font-size: 34px;
+}
+
+.ls-drop > b
+{
+    color: #0f2a44;
+    font-size: 15px;
+}
+
+.ls-drop > span,
+.ls-drop > small
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.ls-browse
+{
+    padding: 7px 16px;
+    border: 1px solid #c9dbfb;
+    border-radius: 10px;
+    background: #e8f0fe;
+    color: #1e3a8a;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ls-browse:hover:not(:disabled)
+{
+    background: #dbe7ff;
+}
+
+/* the side : invoice preview, file facts, quality */
+
+.ls-side
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+.ls-mini
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #e3e9f3;
+    border-radius: 12px;
+    background: #fbfcff;
+}
+
+.ls-mini-title
+{
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.ls-inv
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: #ffffff;
+}
+
+.ls-inv-logo
+{
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.ls-inv-empty
+{
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 50%;
+}
+
+.ls-inv-text
+{
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.ls-inv-text > b
+{
+    overflow: hidden;
+    color: #0f2a44;
+    font-size: 10.5px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ls-inv-text > b.ls-muted
+{
+    color: #94a3b8;
+}
+
+.ls-inv-line
+{
+    height: 4px;
+    border-radius: 2px;
+    background: #e5e7eb;
+}
+
+.ls-inv-line.ls-short
+{
+    width: 70%;
+}
+
+.ls-facts
+{
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 8px;
+    margin: 0;
+    font-size: 12px;
+}
+
+.ls-facts dt
+{
+    color: #475569;
+}
+
+.ls-facts dd
+{
+    margin: 0;
+    color: #0f172a;
+    font-weight: 600;
+    text-align: right;
+}
+
+.ls-tips
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding-left: 16px;
+    color: #475569;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.ls-quality
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: #047857;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.ls-quality.ls-warn
+{
+    color: #b45309;
+}
+
+.ls-error
+{
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: #be123c;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.35;
+}

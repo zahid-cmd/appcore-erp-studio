@@ -1769,6 +1769,104 @@ public static class DependencyInjection
             AppCore.Infrastructure.Repositories.FixedAssetsManagement.FaReportsRepository
         >();
 
+        // Service Operations : the workshop and the job cards (MANUAL :
+        // hand-written pages, ServiceOperations_Workshop_Engine.sql; NO
+        // Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IWorkshopSetupRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.WorkshopSetupRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IJobCardsRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.JobCardsRepository
+        >();
+
+        // Service Operations : service estimates (MANUAL : hand-written
+        // page, ServiceOperations_Estimates_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IServiceEstimatesRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.ServiceEstimatesRepository
+        >();
+
+        // Service Operations : observations and diagnoses (MANUAL :
+        // hand-written pages, ServiceOperations_Diagnosis_Engine.sql;
+        // NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IWorkshopDiagnosisRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.WorkshopDiagnosisRepository
+        >();
+
+        // Service Operations : parts outsourced for a job card
+        // (MANUAL : hand-written, ServiceOperations_Outsourced_Parts.sql;
+        // NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IWorkshopOutsourcedPartsRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.WorkshopOutsourcedPartsRepository
+        >();
+
+        // Service Operations : the list of outside works (MANUAL :
+        // hand-written, ServiceOperations_Outside_Works.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IWorkshopOutsideWorksRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.WorkshopOutsideWorksRepository
+        >();
+
+        // Service Operations : parts requisitions, issues, returns
+        // (MANUAL : hand-written pages, ServiceOperations_Parts_Engine.sql;
+        // NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IWorkshopPartsRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.WorkshopPartsRepository
+        >();
+
+        // Service Operations : service invoices, service returns,
+        // free service claims (MANUAL : hand-written pages,
+        // ServiceOperations_Billing_Engine.sql; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IServiceInvoicesRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.ServiceInvoicesRepository
+        >();
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IFreeServiceClaimsRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.FreeServiceClaimsRepository
+        >();
+
+        // Service Operations : Workshop Dashboard and Service
+        // Reports (MANUAL : read-only hand-written pages; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.ServiceOperations.IWorkshopReportsRepository,
+            AppCore.Infrastructure.Repositories.ServiceOperations.WorkshopReportsRepository
+        >();
+
+        // Warranty Management : Sales Warranty Records (MANUAL :
+        // read-only hand-written page; NO Code Sync)
+
+        services.AddScoped
+        <
+            AppCore.Application.WarrantyManagement.SalesWarranty.ISalesWarrantyRecordsRepository,
+            AppCore.Infrastructure.Repositories.WarrantyManagement.SalesWarranty.SalesWarrantyRecordsRepository
+        >();
+
         // Human Resource : leave encashment policies (MANUAL :
         // hand-written page,
         // HumanResource_EncashmentPolicies_Engine.sql; NO Code Sync)

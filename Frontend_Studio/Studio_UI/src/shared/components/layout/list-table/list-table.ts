@@ -34,6 +34,10 @@ import {
 } from '../empty-state/empty-state';
 
 import {
+  WorkspaceArtComponent
+} from '../workspace-art/workspace-art';
+
+import {
   SidebarService
 } from '../../../../core/sidebar/sidebar.service';
 
@@ -189,6 +193,7 @@ export interface ListTableRowActionEvent
   imports: [
     CommonModule,
     EmptyStateComponent,
+    WorkspaceArtComponent,
     OrbitLoaderComponent
   ],
   templateUrl: './list-table.html',
@@ -504,6 +509,65 @@ implements OnChanges
       .forEach(el => el.scrollLeft = body.scrollLeft);
   }
 
+  /* =====================================================
+     ROW HEIGHT (owner 2026-11-15) : the body holds exactly
+     10 one-line rows, or 5 rows for lists whose records
+     take two lines ([rowLines]="2"). The row height is the
+     body height / 10 (or / 5), never below MIN_ROW (then
+     the rows scroll inside the body). Set on the host as
+     --list-row-height, so it wins over the page's value.
+  ====================================================== */
+
+  static readonly MIN_ROW = 34;
+
+  static readonly MIN_ROW_TWO_LINES = 56;
+
+  private fitRowHeight(host: HTMLElement, body: HTMLElement): void
+  {
+    const available =
+      body.clientHeight;
+
+    if (available <= 0)
+    {
+      return;
+    }
+
+    const count =
+      this.rowLines === 2 ? 5 : 10;
+
+    const set =
+      parseFloat(host.style.getPropertyValue('--list-row-height')) || 0;
+
+    // what a row adds beyond its set height (borders), measured
+    // once a row is there
+    const row =
+      body.querySelector('tr.list-table-row') as HTMLElement | null;
+
+    const extra =
+      row && set > 0
+        ? Math.max(0, Math.ceil(row.getBoundingClientRect().height - set - 0.01))
+        : 0;
+
+    const min =
+      this.rowLines === 2 ? ListTableComponent.MIN_ROW_TWO_LINES : ListTableComponent.MIN_ROW;
+
+    const height =
+      // a pixel under the exact share, so rounding and the row
+      // borders never push the last row into a scroll
+      Math.max(min, Math.floor((available - 2) / count) - extra - 1);
+
+    if (height !== set)
+    {
+      host.style.setProperty('--list-row-height', `${height}px`);
+
+      // once more, to measure the rows at their new height
+      if (row && set === 0)
+      {
+        this.scheduleFit();
+      }
+    }
+  }
+
   private fitToCanvas(): void
   {
     const host =
@@ -525,6 +589,11 @@ implements OnChanges
     if (body)
     {
       this.fitColumns(host, body);
+    }
+
+    if (body)
+    {
+      this.fitRowHeight(host, body);
     }
 
     if (!body || !this.fitRowsChange.observed)
@@ -587,6 +656,11 @@ private readonly navigationContextSubscription =
   @Input()
   columns: ListTableColumn[] = [];
 
+  // 1 : one-line records, 10 rows fill the body ; 2 : records on
+  // two lines, 5 rows fill it (pair with a page size of 5)
+  @Input()
+  rowLines: 1 | 2 = 1;
+
   @Input()
   rows: any[] = [];
 
@@ -601,6 +675,17 @@ private readonly navigationContextSubscription =
 
   @Input()
   loading = false;
+
+  // Empty list : the page's workspace drawing (company, branches ...)
+  // with its own words, instead of the plain table icon (2026-11-15)
+  @Input()
+  emptyArt = '';
+
+  @Input()
+  emptyTitle = '';
+
+  @Input()
+  emptySubtitle = '';
 
   @Input()
   error = false;
@@ -943,7 +1028,7 @@ private readonly navigationContextSubscription =
     void
   {
     // new columns (or rows after loading) : widths again
-    if (changes['columns'] || changes['rows'] || changes['loading'])
+    if (changes['columns'] || changes['rows'] || changes['loading'] || changes['rowLines'])
     {
       this.scheduleFit();
     }
@@ -1034,6 +1119,17 @@ private readonly navigationContextSubscription =
   /* =====================================================
      CELL VALUE
   ====================================================== */
+
+  // A code column (field ending in Code : DesignationCode,
+  // GroupCode ...) : its value sits in a small chip (2026-11-17)
+  isCodeColumn(
+    column: ListTableColumn
+  ): boolean
+  {
+    return (!column.type || column.type === 'text')
+      && !column.link
+      && /code$/i.test(column.field || '');
+  }
 
   getCellValue(
     row: any,

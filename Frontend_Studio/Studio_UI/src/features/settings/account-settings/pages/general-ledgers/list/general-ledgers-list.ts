@@ -124,6 +124,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -230,6 +236,8 @@ from 'rxjs';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -562,61 +570,62 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'4%',
+            width:'56px',
             align:'center'
         },
         {
             header:'Account Class',
             field:'AccountClassName',
-            width:'11%',
+            width:'160px',
             align:'left'
         },
         {
             header:'Group Name',
             field:'AccountGroupName',
-            width:'12%',
+            width:'190px',
             align:'left'
         },
         {
             header:'Sub Group Name',
             field:'AccountSubGroupName',
-            width:'14%',
+            width:'210px',
             align:'left'
         },
         {
             header:'Ledger Code',
             field:'LedgerCode',
-            width:'14%',
-            align:'left'
+            width:'200px',
+            align:'center'
         },
         {
             header:'Ledger Name',
             field:'LedgerName',
-            width:'25%',
+            width:'280px',
             align:'left'
         },
         {
             header:'Mode',
             field:'Mode',
-            width:'6%',
+            width:'90px',
             align:'center'
         },
         {
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'7%',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'7%',
+            width:'140px',
             align:'center'
         }
     ];

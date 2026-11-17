@@ -148,6 +148,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     SalesFollowUpDialog
 }
 from '../follow-up/sales-follow-up-dialog';
@@ -253,6 +259,8 @@ from '../../../services/sales-enquiries.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent,
@@ -518,16 +526,17 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#',             field:'serial',           type:'serial', width:'50px',  align:'center' },
-        { header:'Enquiry No',    field:'EnquiryNo',        width:'215px', align:'center' },
-        { header:'Date',          field:'DateText',         width:'120px', align:'center' },
-        { header:'Enquirer',      field:'EnquirerText',     align:'left' },
-        { header:'Model',         field:'ModelColourText',  width:'190px', align:'left' },
-        { header:'Executive',     field:'ExecutiveText',    width:'130px', align:'left' },
-        { header:'Interest',      field:'InterestText',     width:'130px', align:'left', dotField:'InterestLevelColor' },
-        { header:'Status',        field:'StatusText',       width:'220px', align:'left', dotField:'StatusDot' },
-        { header:'Next Follow-up', field:'NextFollowUpText', width:'135px', align:'center' },
-        { header:'Actions',       field:'actions',          type:'actions', width:'130px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#',             field:'serial',           type:'serial', width:'56px',  align:'center' },
+        { header:'Enquiry No',    field:'EnquiryNo',        width:'160px', align:'left' },
+        { header:'Date',          field:'DateText',         width:'130px', align:'center' },
+        { header:'Enquirer',      field:'EnquirerText', width:'160px',     align:'left' },
+        { header:'Model',         field:'ModelColourText',  width:'160px', align:'left' },
+        { header:'Executive',     field:'ExecutiveText',    width:'160px', align:'left' },
+        { header:'Interest',      field:'InterestText',     width:'160px', align:'left', dotField:'InterestLevelColor' },
+        { header:'Status',        field:'StatusText',       width:'160px', align:'left', dotField:'StatusDot' },
+        { header:'Next Follow-up', field:'NextFollowUpText', width:'160px', align:'left' },
+        { header:'Actions',       field:'actions',          type:'actions', width:'140px', align:'center' }
     ];
 
 
@@ -1683,5 +1692,46 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.countOf('Open'))),
+            String(this.summaryText(this.countOf('Due'))),
+            String(this.summaryText(this.countOf('Lapsed'))),
+            String(this.summaryText(this.countOf('Matured'))),
+            String(this.summaryText(this.countOf('Suspended')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Open', value:v[1], tone:'' },
+                    { label:'Due Today', value:v[2], tone:'' },
+                    { label:'Lapsed', value:v[3], tone:'' },
+                    { label:'Matured', value:v[4], tone:'ok' },
+                    { label:'Suspended', value:v[5], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

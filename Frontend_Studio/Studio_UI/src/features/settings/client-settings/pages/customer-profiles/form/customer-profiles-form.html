@@ -9,6 +9,8 @@
 
         icon="fas fa-id-card"
 
+        art="people"
+
         [title]="pageTitle"
 
         subtitle="Inbound (bike) and Outside (service) customers">
@@ -44,1145 +46,757 @@
     </app-page-header>
 
 
-
     <!-- =====================================================
          SECTION 02 : PAGE TOOLBAR
+         left : the customer type ; right : the two steps
     ====================================================== -->
 
     <app-page-toolbar>
 
         <app-control-tabs
-
             pageToolbarLeft
-
             [tabs]="tabs"
-
             [selectedTab]="selectedTab"
-
             (selectedTabChange)="onTabChange($event)">
-
         </app-control-tabs>
 
+        <app-step-tabs
+            pageToolbarLeft
+            [steps]="formSteps"
+            [current]="currentStep"
+            (currentChange)="onStepChange($event)">
+        </app-step-tabs>
 
-        <!-- Inbound : two pages of 4 sections -->
-
-        @if (showPager)
-        {
-            <div class="cus-pager" pageToolbarRight>
-
-                <span class="cus-pager-step">Page {{ formPage }} of 2</span>
-
-                @if (formPage === 1)
-                {
-                    <button
-
-                        type="button"
-
-                        class="cus-pager-btn"
-
-                        (click)="nextPage()">
-
-                        Next
-
-                        <i class="fas fa-arrow-right"></i>
-
-                    </button>
-                }
-                @else
-                {
-                    <button
-
-                        type="button"
-
-                        class="cus-pager-btn cus-pager-btn-back"
-
-                        (click)="previousPage()">
-
-                        <i class="fas fa-arrow-left"></i>
-
-                        Back
-
-                    </button>
-                }
-
-            </div>
-        }
+        <!-- more than one screen : no scrolling -->
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="currentStep"
+            (currentChange)="onStepChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
 
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         SECTION 03 : PAGE CANVAS (2026-11-16 workspace layout)
     ====================================================== -->
 
-    @if (isConverting)
-    {
-        <div class="cus-note">
-            <i class="fas fa-arrow-right-arrow-left"></i>
-            Converting to an Inbound customer : a new CIB code is given on save,
-            {{ entity.PreviousCode }} is kept as Previous Code, and the receivable
-            ledger stays the same. NID No and Present Address are now required.
-        </div>
-    }
+    <app-page-canvas
+        [config]="formConfig">
 
-    <app-page-canvas>
-
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                @if (isInbound)
+                {
+                    <div
+                        class="ws-step"
+                        [class.ws-step-off]="currentStep !== 'p1'">
+
+                        @if (isConverting)
+                        {
+                            <div class="cus-note">
+                                <i class="fas fa-arrow-right-arrow-left"></i>
+                                Converting to an Inbound customer : a new CIB code is given on save,
+                                {{ entity.PreviousCode }} is kept as Previous Code, and the receivable
+                                ledger stays the same. NID No and Present Address are now required.
+                            </div>
+                        }
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-id-card"></i>
+                                <span>Customer Information</span>
+                            </header>
+
+                            <div class="ws-grid ws-cols-3">
+                                <!-- Customer Code : CIB-000001 / COS-000001 (central code generator) -->
+                                <app-textbox
+                                    label="Customer Code"
+                                    placeholder="Auto generated"
+                                    [(value)]="entity.CustomerCode"
+                                    [readonly]="true"
+                                    [required]="true">
+                                </app-textbox>
+
+                                @if (entity.PreviousCode)
+                                {
+                                    <!-- Previous Code : the COS code before conversion -->
+                                    <app-textbox
+                                        label="Previous Code"
+                                        [(value)]="entity.PreviousCode"
+                                        [readonly]="true">
+                                    </app-textbox>
+                                }
+
+                                <app-textbox
+                                    label="Customer Name"
+                                    placeholder="e.g. Rahim Uddin"
+                                    [(value)]="entity.CustomerName"
+                                    (valueChange)="onCustomerNameChange()"
+                                    [disabled]="isViewMode || isSaving"
+                                    [required]="true">
+                                </app-textbox>
+
+                                <!-- Display Name : "<Customer Name> - <Phone 1>" -->
+                                <app-textbox
+                                    label="Display Name"
+                                    placeholder="Follows the name and Phone 1"
+                                    [(value)]="entity.DisplayName"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <!-- Category : Individual / Corporate / Institution
+                                     (Inbound only; Corporate buys on Corporate
+                                     sales of Sales Invoices - MB) -->
+                                <app-dropdown
+                                    label="Customer Category"
+                                    [items]="categoryItems"
+                                    [value]="entity.IsCorporate"
+                                    (valueChange)="onCategoryChange($event)"
+                                    [disabled]="isViewMode || isSaving || lockedCategory !== null"
+                                    [required]="true">
+                                </app-dropdown>
+                            </div>
+
+                        </section>
+
+                        @if (entity.IsCorporate)
+                        {
+                            <section class="ws-card">
+
+                                <header class="ws-card-head">
+                                    <i class="fas fa-building"></i>
+                                    <span>Corporate Information</span>
+                                </header>
+
+                                <div class="ws-grid ws-cols-4">
+                                    <!-- TIN : 12 digits, optional -->
+                                    <app-textbox
+                                        label="TIN No"
+                                        placeholder="Optional, 12 digits"
+                                        [value]="entity.TinNo"
+                                        (valueChange)="onTinChange($event)"
+                                        [disabled]="isViewMode || isSaving">
+                                    </app-textbox>
+                                    @if (!isViewMode && tinWarning)
+                                    {
+                                        <div class="cus-warning">
+                                            <i class="fas fa-triangle-exclamation"></i>
+                                            {{ tinWarning }}
+                                        </div>
+                                    }
+
+                                    <!-- BIN : 9 or 13 digits, optional -->
+                                    <app-textbox
+                                        label="BIN No"
+                                        placeholder="Optional, 9 or 13 digits"
+                                        [value]="entity.BinNo"
+                                        (valueChange)="onBinChange($event)"
+                                        [disabled]="isViewMode || isSaving">
+                                    </app-textbox>
+                                    @if (!isViewMode && binWarning)
+                                    {
+                                        <div class="cus-warning">
+                                            <i class="fas fa-triangle-exclamation"></i>
+                                            {{ binWarning }}
+                                        </div>
+                                    }
+
+                                    <!-- Contact person of the company (optional) -->
+                                    <app-textbox
+                                        label="Contact Person"
+                                        placeholder="Optional, e.g. Karim Ahmed"
+                                        [(value)]="entity.ContactPersonName"
+                                        (valueChange)="onUpperCaseChange('ContactPersonName')"
+                                        [disabled]="isViewMode || isSaving">
+                                    </app-textbox>
+
+                                    <!-- The contact person's NID : optional, 10 / 13
+                                         / 17 digits, not unique -->
+                                    <app-textbox
+                                        label="Contact Person NID"
+                                        placeholder="Optional, 10, 13 or 17 digits"
+                                        [value]="entity.ContactPersonNid"
+                                        (valueChange)="onContactNidChange($event)"
+                                        [disabled]="isViewMode || isSaving">
+                                    </app-textbox>
+                                    @if (!isViewMode && contactNidWarning)
+                                    {
+                                        <div class="cus-warning">
+                                            <i class="fas fa-triangle-exclamation"></i>
+                                            {{ contactNidWarning }}
+                                        </div>
+                                    }
+                                </div>
+
+                            </section>
+                        }
+                        @else
+                        {
+                            <section class="ws-card">
+
+                                <header class="ws-card-head">
+                                    <i class="fas fa-user"></i>
+                                    <span>Personal Details</span>
+                                </header>
+
+                                <div class="ws-grid ws-cols-4">
+                                    <app-textbox
+                                        label="Father's Name"
+                                        placeholder="Enter father's name"
+                                        [(value)]="entity.FatherName"
+                                        (valueChange)="onUpperCaseChange('FatherName')"
+                                        [disabled]="isViewMode || isSaving">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        label="Mother's Name"
+                                        placeholder="Enter mother's name"
+                                        [(value)]="entity.MotherName"
+                                        (valueChange)="onUpperCaseChange('MotherName')"
+                                        [disabled]="isViewMode || isSaving">
+                                    </app-textbox>
+
+                                    <!-- NID : 10 / 13 / 17 digits, unique among Inbound
+                                         (Individual; a corporate customer has its
+                                         contact person's NID instead) -->
+                                    <app-textbox
+                                        label="NID No"
+                                        placeholder="10, 13 or 17 digits"
+                                        [value]="entity.NidNo"
+                                        (valueChange)="onNidChange($event)"
+                                        [disabled]="isViewMode || isSaving"
+                                        [required]="true">
+                                    </app-textbox>
+                                    @if (!isViewMode && nidWarning)
+                                    {
+                                        <div class="cus-warning">
+                                            <i class="fas fa-triangle-exclamation"></i>
+                                            {{ nidWarning }}
+                                        </div>
+                                    }
+
+                                    <div class="cus-date-field">
+                                        <label class="cus-date-label">Date of Birth</label>
+                                        <app-datepicker
+                                            placeholder="Select date of birth"
+                                            [value]="$any(dateOfBirthValue)"
+                                            (valueChange)="onDateOfBirthChange($event)"
+                                            [disabled]="isViewMode || isSaving">
+                                        </app-datepicker>
+                                    </div>
+                                </div>
+
+                            </section>
+                        }
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-phone"></i>
+                                <span>Contact</span>
+                            </header>
+
+                            <div class="ws-grid ws-cols-3">
+                                <!-- Phone 1 : 11 digits, starts 01, unique -->
+                                <app-textbox
+                                    label="Phone 1"
+                                    placeholder="e.g. 01711223344"
+                                    [value]="entity.Phone1"
+                                    (valueChange)="onPhone1Change($event)"
+                                    [disabled]="isViewMode || isSaving"
+                                    [required]="true">
+                                </app-textbox>
+                                @if (!isViewMode && phone1Warning)
+                                {
+                                    <div class="cus-warning">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                        {{ phone1Warning }}
+                                    </div>
+                                }
+
+                                <app-textbox
+                                    label="Phone 2"
+                                    placeholder="Optional, e.g. 01811223344"
+                                    [value]="entity.Phone2"
+                                    (valueChange)="onPhone2Change($event)"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textbox>
+                                @if (!isViewMode && phone2Warning)
+                                {
+                                    <div class="cus-warning">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                        {{ phone2Warning }}
+                                    </div>
+                                }
+
+                                <app-textbox
+                                    label="Email"
+                                    placeholder="Optional"
+                                    [(value)]="entity.Email"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textbox>
+                            </div>
+
+                        </section>
+
+                    </div>
+
+                    <div
+                        class="ws-step"
+                        [class.ws-step-off]="currentStep !== 'p2'">
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-house"></i>
+                                <span>License & Addresses</span>
+                            </header>
+
+                            <div class="ws-grid ws-cols-2">
+                                <app-textbox
+                                    label="Driving License No"
+                                    placeholder="Optional"
+                                    [(value)]="entity.DrivingLicenseNo"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textbox>
+
+                                <!-- Location : optional (General Settings > Locations) -->
+                                <app-search-dropdown
+                                    label="Location"
+                                    placeholder="Optional"
+                                    [items]="locationItems"
+                                    [value]="entity.LocationId"
+                                    (valueChange)="onLocationChange($event)"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-search-dropdown>
+
+                                <app-textarea class="ws-full"
+                                    label="Present Address *"
+                                    placeholder="Enter present address"
+                                    [rows]="2"
+                                    [(value)]="entity.PresentAddress"
+                                    (valueChange)="onUpperCaseChange('PresentAddress')"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textarea>
+
+                                <app-textarea
+                                    label="Permanent Address"
+                                    placeholder="Enter permanent address"
+                                    [rows]="2"
+                                    [(value)]="entity.PermanentAddress"
+                                    (valueChange)="onUpperCaseChange('PermanentAddress')"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textarea>
+
+                                <app-textarea
+                                    label="Registration Address"
+                                    placeholder="Address for bike registration"
+                                    [rows]="2"
+                                    [(value)]="entity.RegistrationAddress"
+                                    (valueChange)="onUpperCaseChange('RegistrationAddress')"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textarea>
+                            </div>
+
+                        </section>
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-sack-dollar"></i>
+                                <span>Accounts</span>
+                            </header>
+
+                            <div class="ws-grid ws-cols-3">
+                                <!-- Receivable Ledger : GLR-... under SUB-002-002-005 (created on save) -->
+                                <app-textbox
+                                    label="Receivable Ledger Code"
+                                    placeholder="Auto generated"
+                                    [(value)]="entity.ReceivableLedgerCode"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Receivable Ledger Name"
+                                    placeholder="Follows the display name"
+                                    [(value)]="entity.ReceivableLedgerName"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Credit Limit"
+                                    placeholder="0 = cash only"
+                                    [value]="creditLimitText"
+                                    (valueChange)="onCreditLimitChange($event)"
+                                    [disabled]="isViewMode || isSaving"
+                                    [required]="true">
+                                </app-textbox>
+                            </div>
+
+                        </section>
+
+                    </div>
+
+                    <div
+                        class="ws-step"
+                        [class.ws-step-off]="currentStep !== 'p3'">
+
+                        <!-- photo and remarks side by side -->
+                        <div class="ws-pair cus-photo-pair">
+
+                            <section class="ws-card">
+
+                                <header class="ws-card-head">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Photo</span>
+                                </header>
+
+                                <app-logo-studio
+                                    badge="PHOTO"
+                                    [imageUrl]="photoPreview"
+                                    [name]="entity.CustomerName || ''"
+                                    [disabled]="isViewMode || isSaving"
+                                    [busy]="isSaving"
+                                    (imageChange)="onPhotoChange($event)">
+                                </app-logo-studio>
+
+                            </section>
+
+                            <section class="ws-card ws-notes">
+
+                                <header class="ws-card-head">
+                                    <i class="fas fa-note-sticky"></i>
+                                    <span>Remarks</span>
+                                </header>
+
+                                <app-note-pad
+                                    placeholder="Anything the team should know"
+                                    note="Only for your team, never printed"
+                                    [maxLength]="1000"
+                                    [(value)]="entity.Remarks"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-note-pad>
+
+                            </section>
 
-            [columns]="4">
-
-
-            @if (!isInbound)
-            {
-                <!-- OUTSIDE CUSTOMER : one page, 4 sections -->
-
-                <!-- =============================================
-                     SECTION 01
-                     CUSTOMER & ADDRESS
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Customer & Address"
-
-                    icon="fas fa-id-card">
-
-
-                    <!-- Customer Code : CIB-000001 / COS-000001 (central code generator) -->
-
-                    <app-textbox
-
-                        label="Customer Code"
-
-                        placeholder="Auto generated"
-
-                        [(value)]="entity.CustomerCode"
-
-                        [readonly]="true"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-
-                    @if (entity.PreviousCode)
-                    {
-                        <!-- Previous Code : the COS code before conversion -->
-
-                        <app-textbox
-
-                            label="Previous Code"
-
-                            [(value)]="entity.PreviousCode"
-
-                            [readonly]="true">
-
-                        </app-textbox>
-                    }
-
-
-                    <app-textbox
-
-                        label="Customer Name"
-
-                        placeholder="e.g. Rahim Uddin"
-
-                        [(value)]="entity.CustomerName"
-
-                        (valueChange)="onCustomerNameChange()"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-
-                    <!-- Display Name : "<Customer Name> - <Phone 1>" -->
-
-                    <app-textbox
-
-                        label="Display Name"
-
-                        placeholder="Follows the name and Phone 1"
-
-                        [(value)]="entity.DisplayName"
-
-                        [readonly]="true">
-
-                    </app-textbox>
-
-                    <app-textarea
-
-                        label="Present Address"
-
-                        placeholder="Enter present address"
-
-                        [rows]="2"
-
-                        [(value)]="entity.PresentAddress"
-
-                        (valueChange)="onUpperCaseChange('PresentAddress')"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textarea>
-
-                </app-form-section>
-
-
-                <!-- =============================================
-                     SECTION 02
-                     PHOTO & REMARKS
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Photo & Remarks"
-
-                    icon="fas fa-camera">
-
-
-                    <!-- Photo : optional, JPG / PNG, max 2 MB (uploaded on save) -->
-
-                    <app-image-hub
-
-                        label="Photo"
-
-                        placeholder="No photo selected"
-
-                        [imageUrl]="photoPreview"
-
-                        (imageChange)="onPhotoChange($event)"
-
-                        [disabled]="isSaving"
-
-                        [readonly]="isViewMode">
-
-                    </app-image-hub>
-
-
-                    <app-textarea
-
-                        label="Remarks"
-
-                        placeholder="Enter remarks"
-
-                        [rows]="2"
-
-                        [(value)]="entity.Remarks"
-
-                        (valueChange)="onValueChange()"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textarea>
-                    
-                </app-form-section>
-
-
-                <!-- =============================================
-                     SECTION 03
-                     CONTACT & LOCATION
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Contact & Location"
-
-                    icon="fas fa-phone">
-                    <!-- Phone 1 : 11 digits, starts 01, unique -->
-
-                    <app-textbox
-
-                        label="Phone 1"
-
-                        placeholder="e.g. 01711223344"
-
-                        [value]="entity.Phone1"
-
-                        (valueChange)="onPhone1Change($event)"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-                    @if (!isViewMode && phone1Warning)
-                    {
-                        <div class="cus-warning">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            {{ phone1Warning }}
                         </div>
-                    }
 
+                    </div>
+                }
+                @else
+                {
+                    <div
+                        class="ws-step"
+                        [class.ws-step-off]="currentStep !== 'p1'">
 
-                    <app-textbox
+                        <section class="ws-card">
 
-                        label="Phone 2"
+                            <header class="ws-card-head">
+                                <i class="fas fa-id-card"></i>
+                                <span>Customer & Address</span>
+                            </header>
 
-                        placeholder="Optional, e.g. 01811223344"
+                            <div class="ws-grid ws-cols-3">
+                                <!-- Customer Code : CIB-000001 / COS-000001 (central code generator) -->
+                                <app-textbox
+                                    label="Customer Code"
+                                    placeholder="Auto generated"
+                                    [(value)]="entity.CustomerCode"
+                                    [readonly]="true"
+                                    [required]="true">
+                                </app-textbox>
 
-                        [value]="entity.Phone2"
+                                @if (entity.PreviousCode)
+                                {
+                                    <!-- Previous Code : the COS code before conversion -->
+                                    <app-textbox
+                                        label="Previous Code"
+                                        [(value)]="entity.PreviousCode"
+                                        [readonly]="true">
+                                    </app-textbox>
+                                }
 
-                        (valueChange)="onPhone2Change($event)"
+                                <app-textbox
+                                    label="Customer Name"
+                                    placeholder="e.g. Rahim Uddin"
+                                    [(value)]="entity.CustomerName"
+                                    (valueChange)="onCustomerNameChange()"
+                                    [disabled]="isViewMode || isSaving"
+                                    [required]="true">
+                                </app-textbox>
 
-                        [disabled]="isViewMode || isSaving">
+                                <!-- Display Name : "<Customer Name> - <Phone 1>" -->
+                                <app-textbox
+                                    label="Display Name"
+                                    placeholder="Follows the name and Phone 1"
+                                    [(value)]="entity.DisplayName"
+                                    [readonly]="true">
+                                </app-textbox>
 
-                    </app-textbox>
+                                <app-textarea class="ws-full"
+                                    label="Present Address"
+                                    placeholder="Enter present address"
+                                    [rows]="2"
+                                    [(value)]="entity.PresentAddress"
+                                    (valueChange)="onUpperCaseChange('PresentAddress')"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textarea>
+                            </div>
 
-                    @if (!isViewMode && phone2Warning)
-                    {
-                        <div class="cus-warning">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            {{ phone2Warning }}
+                        </section>
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-phone"></i>
+                                <span>Contact & Location</span>
+                            </header>
+
+                            <div class="ws-grid ws-cols-3">
+                                <!-- Phone 1 : 11 digits, starts 01, unique -->
+                                <app-textbox
+                                    label="Phone 1"
+                                    placeholder="e.g. 01711223344"
+                                    [value]="entity.Phone1"
+                                    (valueChange)="onPhone1Change($event)"
+                                    [disabled]="isViewMode || isSaving"
+                                    [required]="true">
+                                </app-textbox>
+                                @if (!isViewMode && phone1Warning)
+                                {
+                                    <div class="cus-warning">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                        {{ phone1Warning }}
+                                    </div>
+                                }
+
+                                <app-textbox
+                                    label="Phone 2"
+                                    placeholder="Optional, e.g. 01811223344"
+                                    [value]="entity.Phone2"
+                                    (valueChange)="onPhone2Change($event)"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textbox>
+                                @if (!isViewMode && phone2Warning)
+                                {
+                                    <div class="cus-warning">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                        {{ phone2Warning }}
+                                    </div>
+                                }
+
+                                <app-textbox
+                                    label="Email"
+                                    placeholder="Optional"
+                                    [(value)]="entity.Email"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-textbox>
+
+                                <!-- Location : optional (General Settings > Locations) -->
+                                <app-search-dropdown
+                                    label="Location"
+                                    placeholder="Optional"
+                                    [items]="locationItems"
+                                    [value]="entity.LocationId"
+                                    (valueChange)="onLocationChange($event)"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-search-dropdown>
+                            </div>
+
+                        </section>
+
+                    </div>
+
+                    <div
+                        class="ws-step"
+                        [class.ws-step-off]="currentStep !== 'p2'">
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-sack-dollar"></i>
+                                <span>Accounts</span>
+                            </header>
+
+                            <div class="ws-grid ws-cols-3">
+                                <!-- Receivable Ledger : GLR-... under SUB-002-002-005 (created on save) -->
+                                <app-textbox
+                                    label="Receivable Ledger Code"
+                                    placeholder="Auto generated"
+                                    [(value)]="entity.ReceivableLedgerCode"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Receivable Ledger Name"
+                                    placeholder="Follows the display name"
+                                    [(value)]="entity.ReceivableLedgerName"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Credit Limit"
+                                    placeholder="0 = cash only"
+                                    [value]="creditLimitText"
+                                    (valueChange)="onCreditLimitChange($event)"
+                                    [disabled]="isViewMode || isSaving"
+                                    [required]="true">
+                                </app-textbox>
+                            </div>
+
+                        </section>
+
+                        <!-- photo and remarks side by side -->
+                        <div class="ws-pair cus-photo-pair">
+
+                            <section class="ws-card">
+
+                                <header class="ws-card-head">
+                                    <i class="fas fa-camera"></i>
+                                    <span>Photo</span>
+                                </header>
+
+                                <app-logo-studio
+                                    badge="PHOTO"
+                                    [imageUrl]="photoPreview"
+                                    [name]="entity.CustomerName || ''"
+                                    [disabled]="isViewMode || isSaving"
+                                    [busy]="isSaving"
+                                    (imageChange)="onPhotoChange($event)">
+                                </app-logo-studio>
+
+                            </section>
+
+                            <section class="ws-card ws-notes">
+
+                                <header class="ws-card-head">
+                                    <i class="fas fa-note-sticky"></i>
+                                    <span>Remarks</span>
+                                </header>
+
+                                <app-note-pad
+                                    placeholder="Anything the team should know"
+                                    note="Only for your team, never printed"
+                                    [maxLength]="1000"
+                                    [(value)]="entity.Remarks"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-note-pad>
+
+                            </section>
+
                         </div>
-                    }
 
+                    </div>
+                }
 
-                    <app-textbox
+            </div>
 
-                        label="Email"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                        placeholder="Optional"
+            <aside class="ws-panel">
 
-                        [(value)]="entity.Email"
+                <div class="ws-hero">
 
-                        (valueChange)="onValueChange()"
+                    <app-workspace-art theme="people"></app-workspace-art>
 
-                        [disabled]="isViewMode || isSaving">
+                    <div class="ws-identity">
 
-                    </app-textbox>
+                        <b [class.ws-new]="!entity.CustomerName">{{ entity.DisplayName || entity.CustomerName || 'New customer' }}</b>
 
-                    <!-- Location : optional (General Settings > Locations) -->
+                        <div class="ws-chips">
 
-                    <app-search-dropdown
+                            @if (entity.CustomerCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                    data-tone="info">{{ entity.CustomerCode }}</span>
+                            }
 
-                        label="Location"
+                            <span
+                                class="ws-chip">{{ isInbound ? (entity.IsCorporate ? 'Inbound · Corporate' : 'Inbound · Individual') : 'Outside' }}</span>
 
-                        placeholder="Optional"
+                        </div>
 
-                        [items]="locationItems"
+                    </div>
 
-                        [value]="entity.LocationId"
-
-                        (valueChange)="onLocationChange($event)"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-search-dropdown>
-
-                </app-form-section>
-
-
-                <!-- =============================================
-                     SECTION 04
-                     ACCOUNTS & STATUS
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Accounts & Status"
-
-                    icon="fas fa-sack-dollar">
-
-
-                    <!-- Receivable Ledger : GLR-... under SUB-002-002-005 (created on save) -->
-
-                    <app-textbox
-
-                        label="Receivable Ledger Code"
-
-                        placeholder="Auto generated"
-
-                        [(value)]="entity.ReceivableLedgerCode"
-
-                        [readonly]="true">
-
-                    </app-textbox>
-
-
-                    <app-textbox
-
-                        label="Receivable Ledger Name"
-
-                        placeholder="Follows the display name"
-
-                        [(value)]="entity.ReceivableLedgerName"
-
-                        [readonly]="true">
-
-                    </app-textbox>
-
-
-                    <app-textbox
-
-                        label="Credit Limit"
-
-                        placeholder="0 = cash only"
-
-                        [value]="creditLimitText"
-
-                        (valueChange)="onCreditLimitChange($event)"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-
-                    <app-dropdown
-
+                    <app-toggle-switch
                         label="Status"
-
-                        [items]="statusItems"
-
+                        onText="Active"
+                        offText="Inactive"
                         [(value)]="entity.IsActive"
-
                         (valueChange)="onValueChange()"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-dropdown>
-
-
-                    <!-- Walk-in tag : added at a sales counter (Sales
-                         Invoices › Add Customer); can only be cleared -->
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
                     @if (showWalkIn)
                     {
                         <div
-
                             class="cus-walkin"
-
                             [class.cus-walkin-cleared]="!entity.IsWalkIn">
-
                             <span class="cus-walkin-tag">
-
                                 <i class="fa-regular fa-user"></i>
-
                                 Walk-in
-
                             </span>
-
                             <span class="cus-walkin-text">
-
                                 {{ entity.IsWalkIn ? 'Added at a sales counter : cash only.' : 'The tag is removed when you update.' }}
-
                             </span>
-
                             @if (!isViewMode)
                             {
                                 @if (entity.IsWalkIn)
                                 {
                                     <button
-
                                         type="button"
-
                                         class="cus-walkin-btn"
-
                                         [disabled]="isSaving"
-
                                         (click)="onClearWalkIn()">
-
                                         <i class="fas fa-xmark"></i>
-
                                         Clear tag
-
                                     </button>
                                 }
                                 @else
                                 {
                                     <button
-
                                         type="button"
-
                                         class="cus-walkin-btn"
-
                                         [disabled]="isSaving"
-
                                         (click)="onKeepWalkIn()">
-
                                         <i class="fas fa-rotate-left"></i>
-
                                         Undo
-
                                     </button>
                                 }
                             }
-
                         </div>
                     }
 
-                </app-form-section>
-
-
-            }
-
-            @else if (formPage === 1)
-            {
-                <!-- INBOUND CUSTOMER : page 1 of 2 (sections 1-4) -->
-
-                <!-- =============================================
-                     SECTION 01
-                     CUSTOMER INFORMATION
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Customer Information"
-
-                    icon="fas fa-id-card">
-
-
-                    <!-- Customer Code : CIB-000001 / COS-000001 (central code generator) -->
-
-                    <app-textbox
-
-                        label="Customer Code"
-
-                        placeholder="Auto generated"
-
-                        [(value)]="entity.CustomerCode"
-
-                        [readonly]="true"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-
-                    @if (entity.PreviousCode)
-                    {
-                        <!-- Previous Code : the COS code before conversion -->
-
-                        <app-textbox
-
-                            label="Previous Code"
-
-                            [(value)]="entity.PreviousCode"
-
-                            [readonly]="true">
-
-                        </app-textbox>
-                    }
-
-
-                    <app-textbox
-
-                        label="Customer Name"
-
-                        placeholder="e.g. Rahim Uddin"
-
-                        [(value)]="entity.CustomerName"
-
-                        (valueChange)="onCustomerNameChange()"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-
-                    <!-- Display Name : "<Customer Name> - <Phone 1>" -->
-
-                    <app-textbox
-
-                        label="Display Name"
-
-                        placeholder="Follows the name and Phone 1"
-
-                        [(value)]="entity.DisplayName"
-
-                        [readonly]="true">
-
-                    </app-textbox>
-
-
-                    <!-- Category : Individual / Corporate / Institution
-                         (Inbound only; Corporate buys on Corporate
-                         sales of Sales Invoices - MB) -->
-
-                    <app-dropdown
-
-                        label="Customer Category"
-
-                        [items]="categoryItems"
-
-                        [value]="entity.IsCorporate"
-
-                        (valueChange)="onCategoryChange($event)"
-
-                        [disabled]="isViewMode || isSaving || lockedCategory !== null"
-
-                        [required]="true">
-
-                    </app-dropdown>
-
-                </app-form-section>
-
-
-                <!-- =============================================
-                     SECTION 02
-                     PERSONAL DETAILS (Individual : parents, NID,
-                     date of birth) /
-                     CORPORATE INFORMATION (Corporate / Institution :
-                     TIN, BIN, contact person and the person's NID)
-                ============================================== -->
-
-                @if (entity.IsCorporate)
-                {
-                    <app-form-section
-
-                        title="Corporate Information"
-
-                        icon="fas fa-building">
-
-
-                        <!-- TIN : 12 digits, optional -->
-
-                        <app-textbox
-
-                            label="TIN No"
-
-                            placeholder="Optional, 12 digits"
-
-                            [value]="entity.TinNo"
-
-                            (valueChange)="onTinChange($event)"
-
-                            [disabled]="isViewMode || isSaving">
-
-                        </app-textbox>
-
-                        @if (!isViewMode && tinWarning)
-                        {
-                            <div class="cus-warning">
-                                <i class="fas fa-triangle-exclamation"></i>
-                                {{ tinWarning }}
-                            </div>
-                        }
-
-
-                        <!-- BIN : 9 or 13 digits, optional -->
-
-                        <app-textbox
-
-                            label="BIN No"
-
-                            placeholder="Optional, 9 or 13 digits"
-
-                            [value]="entity.BinNo"
-
-                            (valueChange)="onBinChange($event)"
-
-                            [disabled]="isViewMode || isSaving">
-
-                        </app-textbox>
-
-                        @if (!isViewMode && binWarning)
-                        {
-                            <div class="cus-warning">
-                                <i class="fas fa-triangle-exclamation"></i>
-                                {{ binWarning }}
-                            </div>
-                        }
-
-
-                        <!-- Contact person of the company (optional) -->
-
-                        <app-textbox
-
-                            label="Contact Person"
-
-                            placeholder="Optional, e.g. Karim Ahmed"
-
-                            [(value)]="entity.ContactPersonName"
-
-                            (valueChange)="onUpperCaseChange('ContactPersonName')"
-
-                            [disabled]="isViewMode || isSaving">
-
-                        </app-textbox>
-
-
-                        <!-- The contact person's NID : optional, 10 / 13
-                             / 17 digits, not unique -->
-
-                        <app-textbox
-
-                            label="Contact Person NID"
-
-                            placeholder="Optional, 10, 13 or 17 digits"
-
-                            [value]="entity.ContactPersonNid"
-
-                            (valueChange)="onContactNidChange($event)"
-
-                            [disabled]="isViewMode || isSaving">
-
-                        </app-textbox>
-
-                        @if (!isViewMode && contactNidWarning)
-                        {
-                            <div class="cus-warning">
-                                <i class="fas fa-triangle-exclamation"></i>
-                                {{ contactNidWarning }}
-                            </div>
-                        }
-
-                    </app-form-section>
-                }
-                @else
-                {
-                <app-form-section
-
-                    title="Personal Details"
-
-                    icon="fas fa-user">
-
-
-                    <app-textbox
-
-                        label="Father's Name"
-
-                        placeholder="Enter father's name"
-
-                        [(value)]="entity.FatherName"
-
-                        (valueChange)="onUpperCaseChange('FatherName')"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textbox>
-
-
-                    <app-textbox
-
-                        label="Mother's Name"
-
-                        placeholder="Enter mother's name"
-
-                        [(value)]="entity.MotherName"
-
-                        (valueChange)="onUpperCaseChange('MotherName')"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textbox>
-
-
-                    <!-- NID : 10 / 13 / 17 digits, unique among Inbound
-                         (Individual; a corporate customer has its
-                         contact person's NID instead) -->
-
-                    <app-textbox
-
-                        label="NID No"
-
-                        placeholder="10, 13 or 17 digits"
-
-                        [value]="entity.NidNo"
-
-                        (valueChange)="onNidChange($event)"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-                    @if (!isViewMode && nidWarning)
-                    {
-                        <div class="cus-warning">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            {{ nidWarning }}
-                        </div>
-                    }
-
-
-                    <div class="cus-date-field">
-
-                        <label class="cus-date-label">Date of Birth</label>
-
-                        <app-datepicker
-
-                            placeholder="Select date of birth"
-
-                            [value]="$any(dateOfBirthValue)"
-
-                            (valueChange)="onDateOfBirthChange($event)"
-
-                            [disabled]="isViewMode || isSaving">
-
-                        </app-datepicker>
-
-                    </div>
-
-                </app-form-section>
-                }
-
-
-                <!-- =============================================
-                     SECTION 03
-                     CONTACT
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Contact"
-
-                    icon="fas fa-phone">
-
-
-                    <!-- Phone 1 : 11 digits, starts 01, unique -->
-
-                    <app-textbox
-
-                        label="Phone 1"
-
-                        placeholder="e.g. 01711223344"
-
-                        [value]="entity.Phone1"
-
-                        (valueChange)="onPhone1Change($event)"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-                    @if (!isViewMode && phone1Warning)
-                    {
-                        <div class="cus-warning">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            {{ phone1Warning }}
-                        </div>
-                    }
-
-
-                    <app-textbox
-
-                        label="Phone 2"
-
-                        placeholder="Optional, e.g. 01811223344"
-
-                        [value]="entity.Phone2"
-
-                        (valueChange)="onPhone2Change($event)"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textbox>
-
-                    @if (!isViewMode && phone2Warning)
-                    {
-                        <div class="cus-warning">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            {{ phone2Warning }}
-                        </div>
-                    }
-
-
-                    <app-textbox
-
-                        label="Email"
-
-                        placeholder="Optional"
-
-                        [(value)]="entity.Email"
-
-                        (valueChange)="onValueChange()"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textbox>
-
-                </app-form-section>
-
-
-                <!-- =============================================
-                     SECTION 04
-                     PHOTO
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Photo"
-
-                    icon="fas fa-camera">
-
-
-                    <!-- Photo : optional, JPG / PNG, max 2 MB (uploaded on save) -->
-
-                    <app-image-hub
-
-                        label="Photo"
-
-                        placeholder="No photo selected"
-
-                        [imageUrl]="photoPreview"
-
-                        (imageChange)="onPhotoChange($event)"
-
-                        [disabled]="isSaving"
-
-                        [readonly]="isViewMode">
-
-                    </app-image-hub>
-
-                </app-form-section>
-
-
-            }
-            @else
-            {
-                <!-- INBOUND CUSTOMER : page 2 of 2 (sections 5-8) -->
-
-                <!-- =============================================
-                     SECTION 05
-                     DRIVING LICENSE & PRESENT ADDRESS
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Driving License & Present Address"
-
-                    icon="fas fa-fingerprint">
-
-
-                    <app-textbox
-
-                        label="Driving License No"
-
-                        placeholder="Optional"
-
-                        [(value)]="entity.DrivingLicenseNo"
-
-                        (valueChange)="onValueChange()"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textbox>
-
-                    <app-textarea
-
-                        label="Present Address *"
-
-                        placeholder="Enter present address"
-
-                        [rows]="2"
-
-                        [(value)]="entity.PresentAddress"
-
-                        (valueChange)="onUpperCaseChange('PresentAddress')"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textarea>
-
-                </app-form-section>
-
-
-                <!-- =============================================
-                     SECTION 06
-                     PERMANENT & REGISTRATION ADDRESS
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Permanent & Registration Address"
-
-                    icon="fas fa-house">
-
-                    <app-textarea
-
-                        label="Permanent Address"
-
-                        placeholder="Enter permanent address"
-
-                        [rows]="2"
-
-                        [(value)]="entity.PermanentAddress"
-
-                        (valueChange)="onUpperCaseChange('PermanentAddress')"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textarea>
-
-                    <app-textarea
-
-                        label="Registration Address"
-
-                        placeholder="Address for bike registration"
-
-                        [rows]="2"
-
-                        [(value)]="entity.RegistrationAddress"
-
-                        (valueChange)="onUpperCaseChange('RegistrationAddress')"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textarea>
-
-                </app-form-section>
-
-
-                <!-- =============================================
-                     SECTION 07
-                     LOCATION, REMARKS & STATUS
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Location, Remarks & Status"
-
-                    icon="fas fa-map-location-dot">
-
-
-                    <app-textarea
-
-                        label="Remarks"
-
-                        placeholder="Enter remarks"
-
-                        [rows]="2"
-
-                        [(value)]="entity.Remarks"
-
-                        (valueChange)="onValueChange()"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-textarea>
-
-                    <!-- Location : optional (General Settings > Locations) -->
-
-                    <app-search-dropdown
-
-                        label="Location"
-
-                        placeholder="Optional"
-
-                        [items]="locationItems"
-
-                        [value]="entity.LocationId"
-
-                        (valueChange)="onLocationChange($event)"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-search-dropdown>
-
-                    <app-dropdown
-
-                        label="Status"
-
-                        [items]="statusItems"
-
-                        [(value)]="entity.IsActive"
-
-                        (valueChange)="onValueChange()"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-dropdown>
-
-                </app-form-section>
-
-
-                <!-- =============================================
-                     SECTION 08
-                     ACCOUNTS
-                ============================================== -->
-
-                <app-form-section
-
-                    title="Accounts"
-
-                    icon="fas fa-sack-dollar">
-
-
-                    <!-- Receivable Ledger : GLR-... under SUB-002-002-005 (created on save) -->
-
-                    <app-textbox
-
-                        label="Receivable Ledger Code"
-
-                        placeholder="Auto generated"
-
-                        [(value)]="entity.ReceivableLedgerCode"
-
-                        [readonly]="true">
-
-                    </app-textbox>
-
-
-                    <app-textbox
-
-                        label="Receivable Ledger Name"
-
-                        placeholder="Follows the display name"
-
-                        [(value)]="entity.ReceivableLedgerName"
-
-                        [readonly]="true">
-
-                    </app-textbox>
-
-
-                    <app-textbox
-
-                        label="Credit Limit"
-
-                        placeholder="0 = cash only"
-
-                        [value]="creditLimitText"
-
-                        (valueChange)="onCreditLimitChange($event)"
-
-                        [disabled]="isViewMode || isSaving"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-                </app-form-section>
-
-
-            }
-
-        </app-form-grid>
-
-
-        <!-- Canvas footer : the Display Name (follows the name and
-             Phone 1; read-only, as on Supplier Profiles) -->
-
-        <div canvasFooter class="cus-footer">
-
-            <span class="cus-footer-label">Display Name</span>
-
-            <b class="cus-footer-name" [class.cus-footer-empty]="!entity.DisplayName">{{ entity.DisplayName || 'Follows the name and Phone 1' }}</b>
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-file-invoice-dollar"></i><span>Picked on sales invoices and job cards</span></li>
+                        <li><i class="fas fa-book"></i><span>Its receivable ledger holds what the customer owes</span></li>
+                        <li><i class="fas fa-motorcycle"></i><span>Inbound customers are used for bike registration</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
 
         </div>
 
     </app-page-canvas>
 
 </div>
-
 
 
 <!-- =====================================================
@@ -1193,4 +807,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

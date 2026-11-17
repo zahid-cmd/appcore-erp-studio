@@ -9,6 +9,8 @@
 
         icon="fas fa-file-shield"
 
+        art="terms"
+
         [title]="pageTitle"
 
         subtitle="Validity, fees, member discounts and free services of a card">
@@ -51,15 +53,32 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
+        <app-step-tabs
 
             pageToolbarLeft
 
-            [tabs]="tabs"
+            [steps]="formSteps"
 
-            [(selectedTab)]="selectedTab">
+            [current]="selectedTab"
 
-        </app-control-tabs>
+            (currentChange)="onTabChange($event)">
+
+        </app-step-tabs>
+
+
+        <!-- more than one screen : no scrolling -->
+
+        <app-step-nav
+
+            pageToolbarRight
+
+            [steps]="formSteps"
+
+            [current]="selectedTab"
+
+            (currentChange)="onTabChange($event)">
+
+        </app-step-nav>
 
     </app-page-toolbar>
 
@@ -69,367 +88,260 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
 
-        <app-form-grid
+        [config]="formConfig">
 
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields (2026-11-16 workspace layout) ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-file-shield"></i>
+                            <span>Policy Information</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Policy Code"
+                                placeholder="Auto generated"
+                                [value]="entity.PolicyCode"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-search-dropdown
+                                label="Membership Card"
+                                placeholder="Select membership card"
+                                [items]="cardItems"
+                                labelField="label"
+                                valueField="value"
+                                [value]="entity.MembershipCardId"
+                                (valueChange)="onCardChange($event)"
+                                [disabled]="isViewMode || isSaving || !isAddMode"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Card Rank"
+                                placeholder="From the card"
+                                [value]="cardRankText"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Validity (Months)"
+                                placeholder="1 to 120"
+                                [value]="texts.ValidityMonths"
+                                (valueChange)="onNumberChange('ValidityMonths', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-percent"></i>
+                            <span>Fees & Discounts</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Enrollment Fee"
+                                placeholder="0.00"
+                                [value]="texts.EnrollmentFee"
+                                (valueChange)="onNumberChange('EnrollmentFee', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Renewal Fee"
+                                placeholder="0.00"
+                                [value]="texts.RenewalFee"
+                                (valueChange)="onNumberChange('RenewalFee', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Spare Parts Discount %"
+                                placeholder="0 to 100"
+                                [value]="texts.SparePartsDiscountPercent"
+                                (valueChange)="onNumberChange('SparePartsDiscountPercent', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Accessories Discount %"
+                                placeholder="0 to 100"
+                                [value]="texts.AccessoriesDiscountPercent"
+                                (valueChange)="onNumberChange('AccessoriesDiscountPercent', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Service Charge Discount %"
+                                placeholder="0 to 100"
+                                [value]="texts.ServiceChargeDiscountPercent"
+                                (valueChange)="onNumberChange('ServiceChargeDiscountPercent', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'step2'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-gift"></i>
+                            <span>Free Services</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="No. of Free Services"
+                                placeholder="0 = none"
+                                [value]="texts.FreeServiceCount"
+                                (valueChange)="onNumberChange('FreeServiceCount', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="Interval Unit"
+                                [items]="unitItems"
+                                [(value)]="entity.ServiceIntervalUnit"
+                                (valueChange)="onUnitChange()"
+                                [disabled]="isViewMode || isSaving || !hasFreeServices">
+                            </app-dropdown>
+
+                            <app-textbox
+                                label="Service Interval"
+                                placeholder="e.g. 2"
+                                [value]="texts.ServiceInterval"
+                                (valueChange)="onNumberChange('ServiceInterval', $event)"
+                                [disabled]="isViewMode || isSaving || !hasFreeServices">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Grace Period After Expiry (Days)"
+                                placeholder="0 to 365"
+                                [value]="texts.MissedServiceGraceDays"
+                                (valueChange)="onNumberChange('MissedServiceGraceDays', $event)"
+                                [disabled]="isViewMode || isSaving || !hasFreeServices">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Max Missed Services Allowed"
+                                placeholder="0 to No. of Free Services"
+                                [value]="texts.MaxMissedServices"
+                                (valueChange)="onNumberChange('MaxMissedServices', $event)"
+                                [disabled]="isViewMode || isSaving || !hasFreeServices">
+                            </app-textbox>
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-toggle-on"></i>
+                            <span>Status & Control</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Summary"
+                                placeholder="No free services"
+                                [value]="freeServiceSummary"
+                                [readonly]="true">
+                            </app-textbox>
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="1000"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="terms"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!pageTitle">{{ pageTitle || 'New policy' }}</b>
+
+                        <div class="ws-chips">
+
+                        </div>
+
+                    </div>
+
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-id-card"></i><span>Applied to membership cards</span></li>
+                        <li><i class="fas fa-rotate"></i><span>Drives renewals and validity</span></li>
+                        <li><i class="fas fa-gift"></i><span>Sets benefits and complimentary services</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
+
+        </div>
 
-            [columns]="4">
-
-
-
-            <!-- =============================================
-                 SECTION 01
-                 POLICY INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Policy Information"
-
-                icon="fas fa-file-shield">
-
-
-                <!-- Policy Code : MSP-001 (central code generator) -->
-
-                <app-textbox
-
-                    label="Policy Code"
-
-                    placeholder="Auto generated"
-
-                    [value]="entity.PolicyCode"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Membership Card : cards without a policy; locked after saving -->
-
-                <app-search-dropdown
-
-                    label="Membership Card"
-
-                    placeholder="Select membership card"
-
-                    [items]="cardItems"
-
-                    labelField="label"
-
-                    valueField="value"
-
-                    [value]="entity.MembershipCardId"
-
-                    (valueChange)="onCardChange($event)"
-
-                    [disabled]="isViewMode || isSaving || !isAddMode"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <app-textbox
-
-                    label="Card Rank"
-
-                    placeholder="From the card"
-
-                    [value]="cardRankText"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Validity (Months)"
-
-                    placeholder="1 to 120"
-
-                    [value]="texts.ValidityMonths"
-
-                    (valueChange)="onNumberChange('ValidityMonths', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 FEES & DISCOUNTS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Fees & Discounts"
-
-                icon="fas fa-percent">
-
-
-                <!-- Fees post to the card's Fee Ledger (0 = free) -->
-
-                <app-textbox
-
-                    label="Enrollment Fee"
-
-                    placeholder="0.00"
-
-                    [value]="texts.EnrollmentFee"
-
-                    (valueChange)="onNumberChange('EnrollmentFee', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Renewal Fee"
-
-                    placeholder="0.00"
-
-                    [value]="texts.RenewalFee"
-
-                    (valueChange)="onNumberChange('RenewalFee', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Discounts post to the card's Discount Ledger -->
-
-                <app-textbox
-
-                    label="Spare Parts Discount %"
-
-                    placeholder="0 to 100"
-
-                    [value]="texts.SparePartsDiscountPercent"
-
-                    (valueChange)="onNumberChange('SparePartsDiscountPercent', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Accessories Discount %"
-
-                    placeholder="0 to 100"
-
-                    [value]="texts.AccessoriesDiscountPercent"
-
-                    (valueChange)="onNumberChange('AccessoriesDiscountPercent', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Service Charge Discount %"
-
-                    placeholder="0 to 100"
-
-                    [value]="texts.ServiceChargeDiscountPercent"
-
-                    (valueChange)="onNumberChange('ServiceChargeDiscountPercent', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 FREE SERVICES
-            ============================================== -->
-
-            <app-form-section
-
-                title="Free Services"
-
-                icon="fas fa-gift">
-
-
-                <!-- Fixed windows from the membership start; one free service per window -->
-
-                <app-textbox
-
-                    label="No. of Free Services"
-
-                    placeholder="0 = none"
-
-                    [value]="texts.FreeServiceCount"
-
-                    (valueChange)="onNumberChange('FreeServiceCount', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <app-dropdown
-
-                    label="Interval Unit"
-
-                    [items]="unitItems"
-
-                    [(value)]="entity.ServiceIntervalUnit"
-
-                    (valueChange)="onUnitChange()"
-
-                    [disabled]="isViewMode || isSaving || !hasFreeServices">
-
-                </app-dropdown>
-
-                <app-textbox
-
-                    label="Service Interval"
-
-                    placeholder="e.g. 2"
-
-                    [value]="texts.ServiceInterval"
-
-                    (valueChange)="onNumberChange('ServiceInterval', $event)"
-
-                    [disabled]="isViewMode || isSaving || !hasFreeServices">
-
-                </app-textbox>
-
-
-                <!-- Missed services : only with approval; other windows never move -->
-
-                <app-textbox
-
-                    label="Grace Period After Expiry (Days)"
-
-                    placeholder="0 to 365"
-
-                    [value]="texts.MissedServiceGraceDays"
-
-                    (valueChange)="onNumberChange('MissedServiceGraceDays', $event)"
-
-                    [disabled]="isViewMode || isSaving || !hasFreeServices">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Max Missed Services Allowed"
-
-                    placeholder="0 to No. of Free Services"
-
-                    [value]="texts.MaxMissedServices"
-
-                    (valueChange)="onNumberChange('MaxMissedServices', $event)"
-
-                    [disabled]="isViewMode || isSaving || !hasFreeServices">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Status : cannot be active while the card is inactive -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-
-                <app-textbox
-
-                    label="Summary"
-
-                    placeholder="No free services"
-
-                    [value]="freeServiceSummary"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-        </app-form-grid>
 
     </app-page-canvas>
 

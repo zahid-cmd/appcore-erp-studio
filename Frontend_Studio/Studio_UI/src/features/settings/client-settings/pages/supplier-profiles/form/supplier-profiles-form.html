@@ -9,6 +9,8 @@
 
         icon="fas fa-truck-field"
 
+        art="truck"
+
         [title]="pageTitle"
 
         subtitle="Brand distributors, local vendors and service providers">
@@ -50,15 +52,32 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
+        <app-step-tabs
 
             pageToolbarLeft
 
-            [tabs]="tabs"
+            [steps]="formSteps"
 
-            [(selectedTab)]="selectedTab">
+            [current]="selectedTab"
 
-        </app-control-tabs>
+            (currentChange)="onTabChange($event)">
+
+        </app-step-tabs>
+
+
+        <!-- more than one screen : no scrolling -->
+
+        <app-step-nav
+
+            pageToolbarRight
+
+            [steps]="formSteps"
+
+            [current]="selectedTab"
+
+            (currentChange)="onTabChange($event)">
+
+        </app-step-nav>
 
     </app-page-toolbar>
 
@@ -67,474 +86,342 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
 
-        <app-form-grid
+        [config]="formConfig">
 
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields (2026-11-16 workspace layout) ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-truck-field"></i>
+                            <span>Supplier Information</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Supplier Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.SupplierCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="Supplier Type"
+                                [items]="supplierTypeItems"
+                                [value]="entity.SupplierType"
+                                (valueChange)="onSupplierTypeChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-dropdown
+                                label="Supply Type"
+                                [items]="supplyTypeItems"
+                                [value]="entity.SupplyType"
+                                (valueChange)="onSupplyTypeChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-textbox
+                                label="Supplier Name"
+                                placeholder="e.g. RUNNER AUTOMOBILES LTD"
+                                [(value)]="entity.SupplierName"
+                                (valueChange)="onUpperCaseChange('SupplierName')"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-search-dropdown
+                                label="Brand"
+                                placeholder="Optional"
+                                [items]="brandItems"
+                                [value]="entity.BrandManagementId"
+                                (valueChange)="onBrandChange($event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-search-dropdown>
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-phone"></i>
+                            <span>Contact & Tax IDs</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Contact Person"
+                                placeholder="Optional"
+                                [(value)]="entity.ContactPerson"
+                                (valueChange)="onUpperCaseChange('ContactPerson')"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Phone 1"
+                                placeholder="e.g. 01711223344"
+                                [value]="entity.Phone1"
+                                (valueChange)="onDigitsChange('Phone1', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            @if (!isViewMode && phone1Warning)
+                            {
+                                <div class="ws-full sup-warning">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                    {{ phone1Warning }}
+                                </div>
+                            }
+
+                            <app-textbox
+                                label="Phone 2"
+                                placeholder="Optional, e.g. 01811223344"
+                                [value]="entity.Phone2"
+                                (valueChange)="onDigitsChange('Phone2', $event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            @if (!isViewMode && phone2Warning)
+                            {
+                                <div class="ws-full sup-warning">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                    {{ phone2Warning }}
+                                </div>
+                            }
+
+                            <app-textbox
+                                label="Email"
+                                placeholder="Optional"
+                                [(value)]="entity.Email"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="BIN (VAT Reg. No)"
+                                placeholder="Optional, 9 to 13 digits"
+                                [value]="entity.BinNo"
+                                (valueChange)="onDigitsChange('BinNo', $event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            @if (!isViewMode && binWarning)
+                            {
+                                <div class="ws-full sup-warning">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                    {{ binWarning }}
+                                </div>
+                            }
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'step2'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-location-dot"></i>
+                            <span>Address, License & Credit</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-textarea class="ws-full"
+                                label="Address *"
+                                placeholder="Enter address"
+                                [rows]="2"
+                                [(value)]="entity.Address"
+                                (valueChange)="onUpperCaseChange('Address')"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textarea>
+
+                            <app-textbox
+                                label="Trade License No"
+                                placeholder="Optional"
+                                [(value)]="entity.TradeLicenseNo"
+                                (valueChange)="onUpperCaseChange('TradeLicenseNo')"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Credit Days"
+                                placeholder="0 = pay on purchase"
+                                [value]="creditDaysText"
+                                (valueChange)="onCreditDaysChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="TIN"
+                                placeholder="Optional, 12 digits"
+                                [value]="entity.TinNo"
+                                (valueChange)="onDigitsChange('TinNo', $event)"
+                                [disabled]="isViewMode || isSaving">
+                            </app-textbox>
+
+                            @if (!isViewMode && tinWarning)
+                            {
+                                <div class="ws-full sup-warning">
+                                    <i class="fas fa-triangle-exclamation"></i>
+                                    {{ tinWarning }}
+                                </div>
+                            }
+                        </div>
+
+                    </section>
+
+                    <!-- accounts and remarks side by side : the step fits the screen -->
+                    <div class="ws-pair">
+
+                        <section class="ws-card">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-sack-dollar"></i>
+                                <span>Accounts & Pricing</span>
+                            </header>
+
+                            <div class="ws-grid ws-cols-2">
+                                <app-textbox
+                                    label="Payable Ledger Code"
+                                    placeholder="Auto generated"
+                                    [(value)]="entity.PayableLedgerCode"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Payable Ledger Name"
+                                    placeholder="Follows the display name"
+                                    [(value)]="entity.PayableLedgerName"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                @if (showsTerms)
+                                {
+                                    <app-dropdown
+                                        label="Prices"
+                                        [items]="priceEntryItems"
+                                        [(value)]="entity.DefaultPriceEntry"
+                                        (valueChange)="onValueChange()"
+                                        [disabled]="isViewMode || isSaving">
+                                    </app-dropdown>
+                                }
+
+                                @if (showsProfit)
+                                {
+                                    <app-dropdown
+                                        label="Invoice Price"
+                                        [items]="invoicePriceItems"
+                                        [(value)]="entity.DefaultInvoicePrice"
+                                        (valueChange)="onInvoicePriceChange()"
+                                        [disabled]="isViewMode || isSaving">
+                                    </app-dropdown>
+                                    @if (profitOn)
+                                    {
+                                        <app-textbox
+                                            [label]="profitOn === 'MRP' ? 'Margin % (on MRP)' : 'Profit % (on DP · Pricing)'"
+                                            [placeholder]="profitOn === 'MRP' ? 'Not set' : 'Not set · used by the Pricing page'"
+                                            inputMode="decimal"
+                                            [value]="defaultProfitText"
+                                            (valueChange)="onDefaultProfitChange($event)"
+                                            [disabled]="isViewMode || isSaving">
+                                        </app-textbox>
+                                    }
+                                }
+                            </div>
+
+                        </section>
+
+                        <section class="ws-card ws-notes">
+
+                            <header class="ws-card-head">
+                                <i class="fas fa-note-sticky"></i>
+                                <span>Remarks</span>
+                            </header>
+
+                            <app-note-pad
+                                placeholder="Anything the team should know"
+                                note="Only for your team, never printed"
+                                [maxLength]="1000"
+                                [(value)]="entity.Remarks"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving">
+                            </app-note-pad>
+
+                        </section>
 
-            [columns]="4">
-
-
-            <!-- =============================================
-                 SECTION 01
-                 SUPPLIER INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Supplier Information"
-
-                icon="fas fa-truck-field">
-
-
-                <!-- Supplier Code : SUP-000001 (central code generator) -->
-
-                <app-textbox
-
-                    label="Supplier Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.SupplierCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <app-dropdown
-
-                    label="Supplier Type"
-
-                    [items]="supplierTypeItems"
-
-                    [value]="entity.SupplierType"
-
-                    (valueChange)="onSupplierTypeChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- What this supplier code supplies (one company may
-                     have one code per Supply Type) -->
-
-                <app-dropdown
-
-                    label="Supply Type"
-
-                    [items]="supplyTypeItems"
-
-                    [value]="entity.SupplyType"
-
-                    (valueChange)="onSupplyTypeChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <app-textbox
-
-                    label="Supplier Name"
-
-                    placeholder="e.g. RUNNER AUTOMOBILES LTD"
-
-                    [(value)]="entity.SupplierName"
-
-                    (valueChange)="onUpperCaseChange('SupplierName')"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Brand : optional (Product Settings > Brand Management) -->
-
-                <app-search-dropdown
-
-                    label="Brand"
-
-                    placeholder="Optional"
-
-                    [items]="brandItems"
-
-                    [value]="entity.BrandManagementId"
-
-                    (valueChange)="onBrandChange($event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-search-dropdown>
-
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 02
-                 CONTACT & TAX IDS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Contact & Tax IDs"
-
-                icon="fas fa-phone">
-
-
-                <!-- Contact Person : first in this section -->
-                <app-textbox
-
-                    label="Contact Person"
-
-                    placeholder="Optional"
-
-                    [(value)]="entity.ContactPerson"
-
-                    (valueChange)="onUpperCaseChange('ContactPerson')"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-
-                <!-- Phone 1 : 11 digits, starts 01, unique among suppliers -->
-
-                <app-textbox
-
-                    label="Phone 1"
-
-                    placeholder="e.g. 01711223344"
-
-                    [value]="entity.Phone1"
-
-                    (valueChange)="onDigitsChange('Phone1', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-                @if (!isViewMode && phone1Warning)
-                {
-                    <div class="sup-warning">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        {{ phone1Warning }}
                     </div>
-                }
 
+                </div>
 
-                <app-textbox
+            </div>
 
-                    label="Phone 2"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    placeholder="Optional, e.g. 01811223344"
+            <aside class="ws-panel">
 
-                    [value]="entity.Phone2"
+                <div class="ws-hero">
 
-                    (valueChange)="onDigitsChange('Phone2', $event)"
+                    <app-workspace-art theme="truck"></app-workspace-art>
 
-                    [disabled]="isViewMode || isSaving">
+                    <div class="ws-identity">
 
-                </app-textbox>
+                        <b [class.ws-new]="!entity.SupplierName">{{ entity.SupplierName || 'New supplier' }}</b>
 
-                @if (!isViewMode && phone2Warning)
-                {
-                    <div class="sup-warning">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        {{ phone2Warning }}
+                        <div class="ws-chips">
+
+                            @if (entity.SupplierCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.SupplierCode }}</span>
+                            }
+
+                        </div>
+
                     </div>
-                }
 
-
-                <app-textbox
-
-                    label="Email"
-
-                    placeholder="Optional"
-
-                    [(value)]="entity.Email"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="BIN (VAT Reg. No)"
-
-                    placeholder="Optional, 9 to 13 digits"
-
-                    [value]="entity.BinNo"
-
-                    (valueChange)="onDigitsChange('BinNo', $event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-                @if (!isViewMode && binWarning)
-                {
-                    <div class="sup-warning">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        {{ binWarning }}
-                    </div>
-                }
-
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 03
-                 ADDRESS, LICENSE, TIN & CREDIT DAYS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Address, License & Credit"
-
-                icon="fas fa-location-dot">
-
-
-                <app-textarea
-
-                    label="Address *"
-
-                    placeholder="Enter address"
-
-                    [rows]="2"
-
-                    [(value)]="entity.Address"
-
-                    (valueChange)="onUpperCaseChange('Address')"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-
-                <app-textbox
-
-                    label="Trade License No"
-
-                    placeholder="Optional"
-
-                    [(value)]="entity.TradeLicenseNo"
-
-                    (valueChange)="onUpperCaseChange('TradeLicenseNo')"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Credit Days"
-
-                    placeholder="0 = pay on purchase"
-
-                    [value]="creditDaysText"
-
-                    (valueChange)="onCreditDaysChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="TIN"
-
-                    placeholder="Optional, 12 digits"
-
-                    [value]="entity.TinNo"
-
-                    (valueChange)="onDigitsChange('TinNo', $event)"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textbox>
-
-                @if (!isViewMode && tinWarning)
-                {
-                    <div class="sup-warning">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        {{ tinWarning }}
-                    </div>
-                }
-
-
-            </app-form-section>
-
-
-            <!-- =============================================
-                 SECTION 04
-                 ACCOUNTS & STATUS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Accounts, Status & Remarks"
-
-                icon="fas fa-sack-dollar">
-
-
-                <!-- Payable Ledger : GLR-... under SUB-003-002-001 (created on save) -->
-
-                <app-textbox
-
-                    label="Payable Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.PayableLedgerCode"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Payable Ledger Name"
-
-                    placeholder="Follows the display name"
-
-                    [(value)]="entity.PayableLedgerName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Supplier terms : a new PO takes them (System Configuration › Edit Supplier Terms fixes them) -->
-
-                @if (showsTerms)
-                {
-                    <app-dropdown
-
-                        label="Prices"
-
-                        [items]="priceEntryItems"
-
-                        [(value)]="entity.DefaultPriceEntry"
-
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
                         (valueChange)="onValueChange()"
-
                         [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-cart-shopping"></i><span>Picked on purchases and receiving</span></li>
+                        <li><i class="fas fa-book"></i><span>Its payable ledger holds what we owe</span></li>
+                        <li><i class="fas fa-percent"></i><span>Default prices and margins guide the Pricing page</span></li>
+                    </ul>
 
-                    </app-dropdown>
-                }
+                </div>
 
-                @if (showsProfit)
-                {
-                    <app-dropdown
-
-                        label="Invoice Price"
-
-                        [items]="invoicePriceItems"
-
-                        [(value)]="entity.DefaultInvoicePrice"
-
-                        (valueChange)="onInvoicePriceChange()"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-dropdown>
-
-                    <!-- MRP invoice : Margin % on MRP (sets the DP on the
-                         PO / purchase). DP invoice : Profit % on DP (Pricing
-                         page only). -->
-                    @if (profitOn)
-                    {
-                        <app-textbox
-
-                            [label]="profitOn === 'MRP' ? 'Margin % (on MRP)' : 'Profit % (on DP · Pricing)'"
-
-                            [placeholder]="profitOn === 'MRP' ? 'Not set' : 'Not set · used by the Pricing page'"
-
-                            inputMode="decimal"
-
-                            [value]="defaultProfitText"
-
-                            (valueChange)="onDefaultProfitChange($event)"
-
-                            [disabled]="isViewMode || isSaving">
-
-                        </app-textbox>
-                    }
-                }
-
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="2"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-        </app-form-grid>
-
-
-        <!-- Canvas footer : the Display Name (follows the name,
-             brand, supply type and Phone 1; read-only) -->
-
-        <div canvasFooter class="sup-footer">
-
-            <span class="sup-footer-label">Display Name</span>
-
-            <b class="sup-footer-name" [class.sup-footer-empty]="!entity.DisplayName">{{ entity.DisplayName || 'Follows the name, brand, supply type and Phone 1' }}</b>
+            </aside>
 
         </div>
+
 
     </app-page-canvas>
 
@@ -549,4 +436,4 @@
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

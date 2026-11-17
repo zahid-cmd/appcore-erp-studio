@@ -35,7 +35,7 @@ import { Subscription } from 'rxjs';
 
 import { PageHeaderComponent } from '../../../../../../shared/components/layout/page-header/page-header';
 import { PageToolbarComponent } from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
-import { PageCanvasComponent } from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+import { PageCanvasComponent, PageCanvasConfig } from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 import { FormGridComponent } from '../../../../../../shared/components/layout/form-grid/form-grid';
 import { FormSectionComponent } from '../../../../../../shared/components/layout/form-section/form-section';
 import { ControlTabsComponent, ControlTab } from '../../../../../../shared/components/controls/control-tabs/control-tabs';
@@ -73,6 +73,24 @@ import
 }
 from '../../../services/service-appointments.service';
 
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
 
 interface Item
 {
@@ -92,9 +110,9 @@ interface Item
         PageHeaderComponent,
         PageToolbarComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
-        ControlTabsComponent,
+        StepNavComponent,
+        StepTabsComponent,
+        WorkspaceArtComponent,
         CommandCenterComponent,
         TextboxComponent,
         TextareaComponent,
@@ -155,6 +173,32 @@ implements OnInit, OnDestroy
     tabs: ControlTab[] = [];
 
     selectedTab = 'appointment';
+
+    onTabChange(tabId: string): void
+    {
+        this.selectedTab = tabId;
+    }
+
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
+
+    // More than one screen, no scrolling (2026-11-16) : the first id
+    // is the page's own first tab, so the form opens on it
+    readonly formSteps =
+    [
+        { id:'general', label:'Service Enquiry' },
+        { id:'step2', label:'Status & Note' }
+    ];
 
 
     //===========================================================
@@ -929,5 +973,12 @@ implements OnInit, OnDestroy
         }
 
         return fallback;
+    }
+
+    // Name on the workspace panel : the enquirer of the saved
+    // record, else its enquiry number; empty while it is new
+    get pageTitle(): string
+    {
+        return this.record?.EnquirerName || this.record?.EnquiryNo || '';
     }
 }

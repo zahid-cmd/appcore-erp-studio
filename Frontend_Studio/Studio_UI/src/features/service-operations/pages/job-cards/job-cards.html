@@ -1,0 +1,2364 @@
+<div class="app-list-page" [class.app-form-page]="simple && mode !== 'list'">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            [title]="listTitle"
+            [subtitle]="listSubtitle"
+            [icon]="listIcon">
+
+            <div pageHeaderCenter>
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search job card, customer, mobile, chassis, registration..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            </div>
+
+            <div pageHeaderRight>
+                <app-command-center
+                    command1Text="New Job"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    [command1Visible]="desk !== 'assignment'"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    command3Text="Restore"
+                    command3Icon="fas fa-trash-arrow-up"
+                    command3Permission="restore"
+                    [command3Visible]="desk !== 'assignment'"
+                    (command3Click)="restore()"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [rowActions]="rowActions"
+                    (rowAction)="onRowAction($event)"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (delete)="delete($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Job Card History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <!-- =====================================================
+             FORM (2026-11-17 : the layout of the Service Estimate)
+             Header : Service Center | Job Card No | status
+             Row 1  : Job Card Information | Service Center & Check-in
+             Row 2  : Customer, Bike, Add Labour & Parts, Outsourcing |
+                      complaints, labour, parts, checklist, technician
+                      time, status
+             The page never scrolls : only the rows do
+        ====================================================== -->
+
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="simple ? 'Receive the bike : the customer, the bike and the check-in' : 'Check-in, work and technician time of a bike'"
+            icon="fas fa-clipboard-list">
+
+            <div
+                pageHeaderCenter
+                class="se-center">
+
+                <div class="se-ribbon">
+
+                    <div class="se-chip">
+                        <span class="se-chip-icon se-chip-icon-branch"><i class="fas fa-building"></i></span>
+                        <span class="se-chip-text">
+                            <span class="se-chip-label">Service Center</span>
+                            <strong>{{ branchName || 'Not set' }}</strong>
+                        </span>
+                    </div>
+
+                    <span class="se-ribbon-sep"></span>
+
+                    <div class="se-chip">
+                        <span class="se-chip-icon se-chip-icon-no"><i class="fas fa-hashtag"></i></span>
+                        <span class="se-chip-text">
+                            <span class="se-chip-label">Job Card No</span>
+                            <strong>{{ jobCardNo || 'On save' }}</strong>
+                        </span>
+                    </div>
+
+                    <span class="se-ribbon-sep"></span>
+
+                    <div class="se-state">
+                        <span
+                            class="se-status jc-state"
+                            [style.background]="statusColor">{{ card ? card.Status : 'New' }}</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <app-command-center
+                pageHeaderRight
+                [command1Text]="mode === 'edit' ? 'Update Job Card' : 'Save Job Card'"
+                command1Icon="fas fa-floppy-disk"
+                (command1Click)="onSave()"
+                [command1Visible]="canEdit"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                (command2Click)="print()"
+                [command2Visible]="!!card"
+                command4Text="Clear"
+                command4Icon="fas fa-broom"
+                command4Title="Empty the form : a new job from the start"
+                (command4Click)="clearForm()"
+                [command4Visible]="simple && mode === 'add'"
+                command3Text="Tokens"
+                command3Icon="fas fa-ticket"
+                (command3Click)="print('', true)"
+                [command3Visible]="hasTokens"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the list"
+                (rightCommandClick)="goToList()">
+            </app-command-center>
+
+        </app-page-header>
+
+        <!-- Parts Outsourcing and Outside Works : the entry and the
+             entries of the card (tab Parts Needed : the parts; tab
+             Service / Labour : the works) -->
+
+                    <ng-template #outForm>
+                            <div class="jc-out">
+
+                                <div class="jc-out-head">
+                                    <i class="fas fa-truck-ramp-box"></i>
+                                    <b>{{ outWork ? 'Outside Works' : 'Parts Outsourcing' }}</b>
+                                    <span>{{ outWork ? 'done by a vendor for this job card : the vendor is credited at once' : 'bought outside for this job card : no purchase order, no stock' }}</span>
+                                    <button
+                                        type="button"
+                                        class="jc-x"
+                                        title="Close"
+                                        (click)="closeOutsource()">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <div class="jc-out-grid">
+
+                                    @if (outWork)
+                                    {
+                                        <div class="jc-out-wide jc-out-work">
+
+                                            <app-search-dropdown
+                                                label="Outside Work"
+                                                placeholder="Pick the outside work"
+                                                [items]="workItems"
+                                                labelField="label"
+                                                valueField="value"
+                                                [value]="outWorkId"
+                                                [required]="true"
+                                                (valueChange)="onOutWork($event)">
+                                            </app-search-dropdown>
+
+                                            <button
+                                                type="button"
+                                                class="hp-btn"
+                                                title="The work is not in the list : add it in Workshop Configuration"
+                                                (click)="newWork()">
+                                                <i class="fas fa-plus"></i>
+                                                New Work
+                                            </button>
+
+                                        </div>
+                                    }
+                                    @else if (!outTyped)
+                                    {
+                                        <app-search-dropdown
+                                            class="jc-out-wide"
+                                            label="Part"
+                                            placeholder="Pick the part of the product lists"
+                                            [items]="partItems"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="outPick"
+                                            [required]="true"
+                                            (valueChange)="onOutPick($event)">
+                                        </app-search-dropdown>
+                                    }
+                                    @else
+                                    {
+                                        <app-textbox
+                                            label="Part No"
+                                            placeholder="Optional"
+                                            textCase="upper"
+                                            [value]="outCode"
+                                            [maxLength]="40"
+                                            (valueChange)="onOutText('outCode', $event)">
+                                        </app-textbox>
+
+                                        <app-textbox
+                                            label="Part (typed)"
+                                            placeholder="The part bought"
+                                            [value]="outName"
+                                            [maxLength]="200"
+                                            [required]="true"
+                                            (valueChange)="onOutText('outName', $event)">
+                                        </app-textbox>
+                                    }
+
+                                    @if (!outVendorTyped)
+                                    {
+                                        <app-search-dropdown
+                                            class="jc-out-wide"
+                                            label="Supplier"
+                                            placeholder="Pick the supplier"
+                                            [items]="outSupplierItems"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="outSupplierId"
+                                            [required]="true"
+                                            (valueChange)="onOutSupplier($event)">
+                                        </app-search-dropdown>
+                                    }
+                                    @else
+                                    {
+                                        <app-textbox
+                                            class="jc-out-wide"
+                                            label="Vendor (typed)"
+                                            [placeholder]="outWork ? 'The shop that does the work' : 'The shop the part was bought from'"
+                                            [value]="outVendor"
+                                            [maxLength]="150"
+                                            [required]="true"
+                                            (valueChange)="onOutText('outVendor', $event)">
+                                        </app-textbox>
+                                    }
+
+                                    <app-datepicker
+                                        label="Date"
+                                        [required]="true"
+                                        [value]="$any(asDate(outDate))"
+                                        (valueChange)="onOutDate($event)">
+                                    </app-datepicker>
+
+                                    <app-textbox
+                                        label="Bill / Memo No"
+                                        placeholder="Optional"
+                                        [value]="outBill"
+                                        [maxLength]="60"
+                                        (valueChange)="onOutText('outBill', $event)">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        label="Quantity"
+                                        inputMode="decimal"
+                                        [value]="outQty"
+                                        [maxLength]="6"
+                                        [required]="true"
+                                        (valueChange)="onOutText('outQty', $event)">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        [label]="outWork ? 'Vendor Charge' : 'Purchase Rate'"
+                                        placeholder="What the vendor charges"
+                                        inputMode="decimal"
+                                        [value]="outCost"
+                                        [maxLength]="12"
+                                        [required]="true"
+                                        (valueChange)="onOutText('outCost', $event)">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        [label]="outWork ? 'Customer Charge' : 'Selling Rate'"
+                                        placeholder="What the customer pays"
+                                        inputMode="decimal"
+                                        [value]="outSell"
+                                        [maxLength]="12"
+                                        [required]="true"
+                                        (valueChange)="onOutText('outSell', $event)">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        class="jc-out-note"
+                                        label="Note"
+                                        placeholder="Optional"
+                                        [value]="outNote"
+                                        [maxLength]="200"
+                                        (valueChange)="onOutText('outNote', $event)">
+                                    </app-textbox>
+
+                                </div>
+
+                                <div class="jc-out-foot">
+
+                                    <span class="hp-note jc-info">
+
+                                        @if (outWork)
+                                        {
+                                            <span>The work is picked from the list of Workshop Configuration.</span>
+                                        }
+                                        @else if (!outTyped)
+                                        {
+                                            <a (click)="onOutTyped(true)">The part is not in the list : type it</a>
+                                        }
+                                        @else
+                                        {
+                                            <a (click)="onOutTyped(false)">Pick the part from the list</a>
+                                        }
+
+                                        @if (!outVendorTyped)
+                                        {
+                                            <a (click)="onOutVendorTyped(true)">Not a supplier : type the vendor</a>
+                                        }
+                                        @else
+                                        {
+                                            <a (click)="onOutVendorTyped(false)">Pick a supplier</a>
+                                        }
+
+                                    </span>
+
+                                    <span class="jc-out-sum" [class.jc-out-warn]="outAboveMrp || outLoss">
+                                        {{ outSummary }}
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        class="hp-btn"
+                                        [disabled]="outSaving"
+                                        (click)="saveOutsource()">
+                                        <i class="fas fa-floppy-disk"></i>
+                                        Save &amp; Post
+                                    </button>
+
+                                </div>
+
+                            </div>
+                    </ng-template>
+
+                    <ng-template #outList let-rows="rows" let-work="work">
+                        @if (out && rows.length > 0)
+                        {
+                            <div class="jc-out-title">
+                                <i class="fas fa-truck-ramp-box"></i>
+                                <b>{{ work ? 'Outside Works' : 'Outsourced Parts' }}</b>
+                                <span>Cost {{ money(outSum(rows, 'CostAmount')) }} · Billed {{ money(outSum(rows, 'SellAmount')) }}</span>
+                            </div>
+
+                            <div class="jc-row jc-row-out jc-cols">
+                                <span></span>
+                                <span>{{ work ? 'Work' : 'Part' }}</span>
+                                <span>Vendor</span>
+                                <span class="jc-right">Qty</span>
+                                <span class="jc-right">Cost</span>
+                                <span class="jc-right">Billed</span>
+                                <span></span>
+                            </div>
+
+                            @for (row of rows; track row.PublicId; let i = $index)
+                            {
+                                <div
+                                    class="jc-row jc-row-out jc-item"
+                                    [class.jc-out-off]="row.Status !== 'Posted'">
+
+                                    <span class="jc-no">{{ i + 1 }}</span>
+
+                                    <span class="jc-name">
+                                        <b>{{ row.ItemName }}</b>
+                                        <small>{{ row.PurchaseNo }}{{ row.ItemCode ? ' · ' + row.ItemCode : '' }}{{ row.ItemKind === 'Other' ? ' · typed' : '' }}</small>
+                                    </span>
+
+                                    <span class="jc-name">
+                                        <b>{{ row.VendorName }}</b>
+                                        <small>{{ day(row.PurchaseDate) }}{{ row.BillNo ? ' · ' + row.BillNo : '' }}{{ row.Status !== 'Posted' ? ' · ' + row.Status + (row.CancelReason ? ' : ' + row.CancelReason : '') : '' }}</small>
+                                    </span>
+
+                                    <span class="jc-amount">{{ row.Quantity }}</span>
+
+                                    <span class="jc-amount">{{ money(row.CostAmount) }}</span>
+
+                                    <span class="jc-amount">{{ money(row.SellAmount) }}</span>
+
+                                    @if (row.Status === 'Posted' && out.CanAdd && canEditLines)
+                                    {
+                                        <button
+                                            type="button"
+                                            class="jc-x"
+                                            title="Cancel : the journal is reversed"
+                                            (click)="startCancelOut(row)">
+                                            <i class="fas fa-xmark"></i>
+                                        </button>
+                                    }
+                                    @else
+                                    {
+                                        <span></span>
+                                    }
+
+                                </div>
+
+                                @if (outCancel === row.PublicId)
+                                {
+                                    <div class="jc-pick">
+
+                                        <app-textbox
+                                            placeholder="Why is it cancelled?"
+                                            [value]="outReason"
+                                            [maxLength]="300"
+                                            (valueChange)="onOutText('outReason', $event)"
+                                            (enterPressed)="cancelOut(row)">
+                                        </app-textbox>
+
+                                        <button
+                                            type="button"
+                                            class="hp-btn"
+                                            [disabled]="outSaving"
+                                            (click)="cancelOut(row)">
+                                            <i class="fas fa-ban"></i>
+                                            Cancel {{ row.PurchaseNo }}
+                                        </button>
+
+                                    </div>
+                                }
+                            }
+                        }
+                    </ng-template>
+
+        <!-- The customer and the bike : one card each, shown by the
+             full form and by the New Job page -->
+
+                    <ng-template #customerSearch>
+                            @if (mode === 'add')
+                            {
+                                <div
+                                    class="se-cust-search"
+                                    (keydown)="onHitKey($event)">
+
+                                    <app-textbox
+                                        placeholder="Search : mobile, name, registration or chassis no"
+                                        textCase="none"
+                                        [prefixIcon]="customerPicked ? 'fas fa-lock' : 'fas fa-magnifying-glass'"
+                                        [readonly]="customerPicked"
+                                        [maxLength]="60"
+                                        [value]="customerBoxText"
+                                        (valueChange)="onCustomerQuery($event)"
+                                        (enterPressed)="onHitEnter()"
+                                        (blur)="onHitBlur()">
+                                    </app-textbox>
+
+                                    @if (finding)
+                                    {
+                                        <span class="se-cust-spin">
+                                            <i class="fas fa-circle-notch fa-spin"></i>
+                                        </span>
+                                    }
+
+                                    <!-- on the New Job page the list opens under the toolbar -->
+                                    @if (!simple)
+                                    {
+                                        <ng-container [ngTemplateOutlet]="customerResults"></ng-container>
+                                    }
+
+                                </div>
+
+                                @if (customerPicked)
+                                {
+                                    <button
+                                        type="button"
+                                        class="se-head-link"
+                                        (click)="changeCustomer()">
+                                        <i class="fas fa-rotate-left"></i>
+                                        Change
+                                    </button>
+                                }
+                            }
+                    </ng-template>
+
+                    <ng-template #customerResults>
+                                    @if (hitsOpen)
+                                    {
+                                        <div class="se-cust-results appcore-scrollbar">
+
+                                            @if (hits.length === 0)
+                                            {
+                                                <div class="se-cust-empty">
+                                                    @if (simple)
+                                                    {
+                                                        {{ fullMobileTyped ? 'No customer has "' + customerQuery + '" : press Add on the Customer card to make the customer.' : 'No customer matches "' + customerQuery + '" : type the whole mobile number (11 digits) - Add opens when nobody has it.' }}
+                                                    }
+                                                    @else
+                                                    {
+                                                        No customer matches "{{ customerQuery }}" : a new customer, type the name, the mobile and the bike below.
+                                                    }
+                                                </div>
+                                            }
+
+                                            @for (hit of hits; track hit.key; let i = $index)
+                                            {
+                                                <button
+                                                    type="button"
+                                                    class="se-cust-row"
+                                                    [class.is-active]="i === hitActive"
+                                                    (mouseenter)="hitActive = i"
+                                                    (mousedown)="$event.preventDefault(); pickHit(hit)">
+
+                                                    <span class="se-cust-main">
+                                                        <strong>{{ hit.name || 'No name' }}</strong>
+                                                        <span>{{ hit.mobile }}</span>
+                                                    </span>
+
+                                                    <span class="se-cust-side">
+                                                        <span class="se-cust-tag">{{ hit.bikes.length === 0 ? 'new here' : hit.bikes.length === 1 ? '1 bike' : hit.bikes.length + ' bikes' }}</span>
+                                                        <span class="se-cust-match">{{ hitBikeText(hit) }}</span>
+                                                    </span>
+
+                                                </button>
+                                            }
+
+                                            <div class="se-cust-hint">
+                                                <i class="fas fa-keyboard"></i>
+                                                Up / Down to move · Enter to pick · Esc to close
+                                            </div>
+
+                                        </div>
+                                    }
+                    </ng-template>
+
+                    <ng-template #customerCard>
+                    <div class="se-card">
+
+                        <div class="se-card-header">
+
+                            <i class="fas fa-user"></i>
+                            <span>Customer</span>
+
+                            <!-- search : mobile or name first; the list opens
+                                 while typing (Up / Down, Enter, Esc) -->
+
+                            <!-- the New Job page : the customer is found by the
+                                 search (toolbar), or made in Customer Profiles -->
+                            @if (simple && mode === 'add')
+                            {
+                                <button
+                                    type="button"
+                                    class="jc-cust-add"
+                                    [disabled]="!canAddCustomer"
+                                    [title]="canAddCustomer ? 'Make the customer in Customer Profiles, then come back here' : 'Search the whole mobile number (11 digits) first : Add opens when nobody has it'"
+                                    (click)="addCustomer()">
+                                    <i class="fas fa-user-plus"></i>
+                                    Add
+                                </button>
+                            }
+
+                            <!-- on the New Job page the search is in the toolbar -->
+                            @if (!simple)
+                            {
+                                <ng-container [ngTemplateOutlet]="customerSearch"></ng-container>
+                            }
+
+                        </div>
+
+                        <div class="se-fields se-fields-2">
+
+                            <app-textbox
+                                label="Customer"
+                                [value]="customerName"
+                                [maxLength]="150"
+                                [required]="true"
+                                [disabled]="!canEdit || customerPicked || simple"
+                                (valueChange)="onText('customerName', $event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Mobile"
+                                inputMode="tel"
+                                [value]="mobile"
+                                [maxLength]="20"
+                                [disabled]="!canEdit || customerPicked || simple"
+                                (valueChange)="onText('mobile', $event)">
+                            </app-textbox>
+
+                        </div>
+
+                    </div>
+                    </ng-template>
+
+                    <ng-template #bikeCard>
+                    <div class="se-card">
+
+                        <div class="se-card-header">
+                            <i class="fas fa-motorcycle"></i>
+                            <span>Bike</span>
+
+                            <!-- the New Job page : a bike we do not sell
+                                 (another brand, model or colour) -->
+                            @if (simple && mode === 'add')
+                            {
+                                <button
+                                    type="button"
+                                    class="jc-cust-add"
+                                    [disabled]="!canOpenBikeAdd"
+                                    [title]="canOpenBikeAdd ? 'A bike not in the list : add its brand, model and colour' : 'Opens for a picked customer who has no saved bike, after Bike not found is picked in the Motor Bike list'"
+                                    (click)="openBikeAdd()">
+                                    <i class="fas fa-plus"></i>
+                                    Add
+                                </button>
+                            }
+                        </div>
+
+                        <!-- the customer has several bikes : one is chosen -->
+
+                        @if (mode === 'add' && bikeChoices.length)
+                        {
+                            <div class="se-found appcore-scrollbar">
+
+                                <span class="se-found-none">The bikes of the customer : choose one.</span>
+
+                                @for (bike of bikeChoices; track $index)
+                                {
+                                    <button
+                                        type="button"
+                                        class="se-bike"
+                                        [class.jc-bike-busy]="!!bike.OpenJobCardNo"
+                                        (click)="pickBike(bike)">
+                                        <span>{{ bikeLine(bike) }}</span>
+                                        @if (bike.OpenJobCardNo)
+                                        {
+                                            <small>Open : {{ bike.OpenJobCardNo }}</small>
+                                        }
+                                    </button>
+                                }
+
+                                <button
+                                    type="button"
+                                    class="se-bike se-bike-new"
+                                    (click)="otherBike()">
+                                    <span><i class="fas fa-plus"></i> Another bike : type it</span>
+                                </button>
+
+                            </div>
+                        }
+
+                        <div class="se-fields se-fields-3">
+
+                            <app-textbox
+                                label="Registration No"
+                                [value]="registrationNo"
+                                [maxLength]="50"
+                                [disabled]="!canEdit"
+                                (valueChange)="onText('registrationNo', $event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Chassis No"
+                                textCase="upper"
+                                [value]="chassisNo"
+                                [maxLength]="50"
+                                [disabled]="!canEdit || !!serviceVehicleId"
+                                (valueChange)="onText('chassisNo', $event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Engine No"
+                                textCase="upper"
+                                [value]="engineNo"
+                                [maxLength]="50"
+                                [disabled]="!canEdit || !!serviceVehicleId"
+                                (valueChange)="onText('engineNo', $event)">
+                            </app-textbox>
+
+                            @if (canEdit && !serviceVehicleId && simple)
+                            {
+                                <!-- New Job : a Motor Bike (model + colour) -->
+                                <app-search-dropdown
+                                    label="Motor Bike"
+                                    placeholder="Select motor bike"
+                                    [items]="motorBikeItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="motorBikeId"
+                                    (valueChange)="onMotorBike($event)">
+                                </app-search-dropdown>
+                            }
+                            @else if (canEdit && !serviceVehicleId)
+                            {
+                                <app-search-dropdown
+                                    label="Model"
+                                    placeholder="Select model"
+                                    [items]="modelItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="modelId"
+                                    (valueChange)="onModel($event)">
+                                </app-search-dropdown>
+                            }
+                            @else
+                            {
+                                <app-textbox
+                                    label="Model"
+                                    [value]="(brandName + ' ' + modelName).trim()"
+                                    [disabled]="true">
+                                </app-textbox>
+                            }
+
+                            <app-textbox
+                                label="Color"
+                                [value]="colorName"
+                                [maxLength]="80"
+                                [disabled]="!canEdit || !!serviceVehicleId || simple"
+                                (valueChange)="onText('colorName', $event)">
+                            </app-textbox>
+
+                            @if (canEdit && !serviceVehicleId && !modelId && !simple)
+                            {
+                                <app-textbox
+                                    label="Model (typed)"
+                                    placeholder="When not in the list"
+                                    [value]="modelName"
+                                    [maxLength]="150"
+                                    (valueChange)="onText('modelName', $event)">
+                                </app-textbox>
+                            }
+
+                            <app-textbox
+                                label="KM Reading"
+                                inputMode="numeric"
+                                [value]="kmReading"
+                                [maxLength]="7"
+                                [required]="lookups?.Switches?.RequireKm !== false"
+                                [disabled]="!canEdit"
+                                (valueChange)="onText('kmReading', $event)">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="Fuel"
+                                placeholder="Select"
+                                [items]="fuelItems"
+                                [value]="fuelLevel || null"
+                                [disabled]="!canEdit"
+                                (valueChange)="onPick('fuelLevel', $event)">
+                            </app-dropdown>
+
+                            @if (simple)
+                            {
+                                <app-datepicker
+                                    label="Purchase Date"
+                                    [disabled]="!canEdit || !!serviceVehicleId"
+                                    [value]="$any(asDate(purchaseDate))"
+                                    (valueChange)="onPurchaseDate($event)">
+                                </app-datepicker>
+
+                                <app-datepicker
+                                    label="Last Service Date"
+                                    [required]="!serviceVehicleId"
+                                    [disabled]="!canEdit || !!serviceVehicleId"
+                                    [value]="$any(asDate(lastServiceDate))"
+                                    (valueChange)="onLastServiceDate($event)">
+                                </app-datepicker>
+                            }
+
+                            @if (scheduleItems.length > 0 && canEdit)
+                            {
+                                <app-search-dropdown
+                                    label="Scheduled Service"
+                                    placeholder="Which service of the schedule?"
+                                    [items]="scheduleItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="scheduleId"
+                                    (valueChange)="onSchedule($event)">
+                                </app-search-dropdown>
+                            }
+                            @else if (scheduleName)
+                            {
+                                <app-textbox
+                                    label="Scheduled Service"
+                                    [value]="scheduleName"
+                                    [disabled]="true">
+                                </app-textbox>
+                            }
+
+                        </div>
+
+                        @if (bikeInfo || (canEdit && mode === 'add'))
+                        {
+                            <div class="se-hint">
+
+                                <i class="fas fa-circle-info"></i>
+
+                                @if (bikeInfo)
+                                {
+                                    <span>
+                                        {{ bikeInfo }}
+                                        @if (mode === 'add' && serviceVehicleId)
+                                        {
+                                            @if (customerBikes.length > 1)
+                                            {
+                                                <a (click)="chooseBike()">Choose another bike of the customer</a>
+                                            }
+                                            <a (click)="clearBike()">Type another bike</a>
+                                        }
+                                    </span>
+                                }
+                                @else
+                                {
+                                    <span>Search the customer above, or type the bike.</span>
+                                }
+
+                            </div>
+                        }
+
+                    </div>
+                    </ng-template>
+
+        @if (simple)
+        {
+        <app-page-toolbar
+            leftFlex="0 0 auto"
+            rightFlex="1 1 auto">
+
+            <app-step-tabs
+                pageToolbarLeft
+                [steps]="openSteps"
+                [current]="openTab"
+                (currentChange)="openTab = $event">
+            </app-step-tabs>
+
+            <!-- the customer search : the centre of the toolbar -->
+
+            <div
+                pageToolbarRight
+                class="jc-tool-search se-card-header">
+                <ng-container [ngTemplateOutlet]="customerSearch"></ng-container>
+            </div>
+
+        </app-page-toolbar>
+
+        <!-- the matches open here : under the toolbar, over the cards -->
+
+        <div
+            class="jc-tool-results"
+            [style.left.px]="toolBox.left"
+            [style.top.px]="toolBox.top"
+            [style.width.px]="toolBox.width">
+            <div class="se-cust-search">
+                <ng-container [ngTemplateOutlet]="customerResults"></ng-container>
+            </div>
+        </div>
+
+        <app-page-canvas
+            [config]="openConfig">
+
+            <div
+                canvasBody
+                class="ws-body appcore-scrollbar">
+
+                <!-- ================= LEFT : the fields ================= -->
+
+                <div class="ws-steps">
+
+                    <!-- ---------- step 1 : the job opening ---------- -->
+
+                    <div class="ws-step jc-open-col" [class.ws-step-off]="openTab !== 'open'">
+
+                    @if (mode === 'add' && fromEstimateNo)
+                    {
+                        <div class="se-banner se-banner-info">
+                            <i class="fas fa-file-pen"></i>
+                            <span>Made from estimate <strong>{{ fromEstimateNo }}</strong> : its customer, bike, labour and parts come with it.</span>
+                        </div>
+                    }
+                    @else if (mode === 'add' && lookups?.Switches?.RequireEstimate)
+                    {
+                        <div class="se-banner se-banner-info">
+                            <i class="fas fa-circle-info"></i>
+                            <span>A job card is made from a service estimate (Create Job Card on the estimate). Free Service, Warranty, Rework and Internal jobs can be made here.</span>
+                        </div>
+                    }
+
+                    <div class="jc-open">
+
+                        <!-- the job -->
+
+                        <div class="se-card">
+
+                            <div class="se-card-header">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Job</span>
+                            </div>
+
+                            <div class="se-fields se-fields-2">
+
+                                <app-textbox
+                                    label="Job Card No"
+                                    [value]="jobCardNo"
+                                    placeholder="On save"
+                                    [readonly]="true">
+                                </app-textbox>
+
+                                <app-datepicker
+                                    label="Date"
+                                    [required]="true"
+                                    [disabled]="!canEdit"
+                                    [value]="$any(asDate(jobDate))"
+                                    (valueChange)="onDate($event)">
+                                </app-datepicker>
+
+                            </div>
+
+                        </div>
+
+                        <!-- service center and check-in -->
+
+                        <div class="se-card">
+
+                            <div class="se-card-header">
+                                <i class="fas fa-align-left"></i>
+                                <span>Service &amp; Check-in</span>
+                            </div>
+
+                            <div class="se-fields jc-open-service">
+
+                                <!-- only a user of several service centers chooses -->
+                                @if (branchItems.length > 1)
+                                {
+                                    <app-search-dropdown
+                                        label="Service Center"
+                                        placeholder="Select service center"
+                                        [items]="branchItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="branchId || null"
+                                        [required]="true"
+                                        [disabled]="mode !== 'add'"
+                                        (valueChange)="onBranch($event)">
+                                    </app-search-dropdown>
+                                }
+
+                                <app-dropdown
+                                    label="Service Type"
+                                    placeholder="Select"
+                                    [items]="jobTypeItems"
+                                    [value]="jobType || null"
+                                    [required]="true"
+                                    [disabled]="!canEdit"
+                                    (valueChange)="onPick('jobType', $event)">
+                                </app-dropdown>
+
+                                <app-textbox
+                                    label="Remarks"
+                                    placeholder="Optional"
+                                    [value]="remarks"
+                                    [maxLength]="500"
+                                    [disabled]="!canEdit"
+                                    (valueChange)="onText('remarks', $event)">
+                                </app-textbox>
+
+                            </div>
+
+                        </div>
+
+                        <ng-container [ngTemplateOutlet]="customerCard"></ng-container>
+
+                        <ng-container [ngTemplateOutlet]="bikeCard"></ng-container>
+
+                        <!-- the token : beside the check-in, big -->
+
+                        <div class="se-card jc-token" [title]="tokenNote">
+
+                            <div class="se-card-header">
+                                <i class="fas fa-ticket"></i>
+                                <span>Serial Token</span>
+                                @if (!card && tokenBig !== '-')
+                                {
+                                    <small>next</small>
+                                }
+                            </div>
+
+                            <div class="jc-token-no" [class.is-next]="!card"><span>{{ tokenPrefix }}</span><b>{{ tokenSerial }}</b></div>
+
+                        </div>
+
+                    </div>
+
+                    </div>
+
+                    <!-- ---------- step 2 : the observations ---------- -->
+
+                    <div class="ws-step" [class.ws-step-off]="openTab !== 'observations'">
+
+                        <div class="se-card jc-obs">
+
+                            <div class="se-card-header">
+                                <i class="fas fa-eye"></i>
+                                <span>Observations</span>
+                                <span class="se-count">{{ openObs.length }} {{ openObs.length === 1 ? 'observation' : 'observations' }}</span>
+                            </div>
+
+                            @if (canEdit)
+                            {
+                                <div class="jc-obs-pick">
+
+                                    <app-search-dropdown
+                                        label="Observation"
+                                        placeholder="Pick what the customer says or what is seen on the bike"
+                                        [items]="observationItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="observationPick"
+                                        (valueChange)="onObservationPick($event)">
+                                    </app-search-dropdown>
+
+                                    <button
+                                        type="button"
+                                        class="jc-obs-none-btn"
+                                        [class.is-on]="noComplaint"
+                                        title="The customer has no complaint and nothing is seen on the bike"
+                                        (click)="setNoComplaint()">
+                                        <i class="fas fa-circle-check"></i>
+                                        No complaint or problem
+                                    </button>
+
+                                </div>
+                            }
+
+                            <div class="jc-obs-rows appcore-scrollbar">
+
+                                @for (row of openObs; track row.key; let i = $index)
+                                {
+                                    <div class="jc-obs-row">
+
+                                        <span class="jc-obs-no">{{ i + 1 }}</span>
+
+                                        <b>{{ row.Observation }}</b>
+
+                                        <input
+                                            type="text"
+                                            class="jc-obs-note"
+                                            maxlength="300"
+                                            placeholder="Note"
+                                            [value]="row.Note"
+                                            [disabled]="!canEdit"
+                                            (input)="onObsNote(row, $event)">
+
+                                        @if (canEdit)
+                                        {
+                                            <button
+                                                type="button"
+                                                class="jc-x"
+                                                title="Remove"
+                                                (click)="removeObservation(row)">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+                                        }
+
+                                    </div>
+                                }
+
+                                @if (openObs.length === 0)
+                                {
+                                    <div class="jc-obs-empty">
+                                        No observation yet. One is needed to save the job card : pick from the list, or press No complaint or problem.
+                                    </div>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- ================= RIGHT : the workspace ================= -->
+
+                <aside class="ws-panel">
+
+                    <div class="ws-hero">
+
+                        <app-workspace-art theme="bike"></app-workspace-art>
+
+                        <div class="ws-identity">
+
+                            <b [class.ws-new]="!customerName">{{ customerName || 'New job' }}</b>
+
+                            <div class="ws-chips">
+
+                                @if (jobCardNo)
+                                {
+                                    <span class="ws-chip" data-tone="info">{{ jobCardNo }}</span>
+                                }
+
+                                @if (tokenNo)
+                                {
+                                    <span class="ws-chip" data-tone="ok">Serial Token {{ tokenNo }}</span>
+                                }
+
+                                <span class="ws-chip">{{ !card ? 'New' : card.Status === 'Open' ? 'Pending' : card.Status }}</span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="jc-open-facts">
+                            <div><span>Service Center</span><b>{{ openBranchName || '-' }}</b></div>
+                            <div><span>Job Type</span><b>{{ jobType || '-' }}</b></div>
+                            <div><span>Bike</span><b>{{ registrationNo || chassisNo || '-' }}</b></div>
+                            <div><span>Mobile</span><b>{{ mobile || '-' }}</b></div>
+                        </div>
+
+                        <ul class="ws-uses">
+                            <li><i class="fas fa-ticket"></i><span>The serial token is the date and a number from 001 : 1118002 is the second job of 18 November</span></li>
+                            <li><i class="fas fa-hourglass-half"></i><span>After saving, the job waits in the list under Open as Pending</span></li>
+                            <li><i class="fas fa-user-check"></i><span>Next : the job is assigned to its engineer, bay and technicians</span></li>
+                        </ul>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </app-page-canvas>
+        }
+        @else
+        {
+        <div class="se-body">
+
+            @if (mode === 'add' && fromEstimateNo)
+            {
+                <div class="se-banner se-banner-info">
+                    <i class="fas fa-file-pen"></i>
+                    <span>Made from estimate <strong>{{ fromEstimateNo }}</strong> : its customer, bike, labour and parts are here. The estimate becomes Converted when this job card is saved.</span>
+                </div>
+            }
+            @else if (mode === 'add' && lookups?.Switches?.RequireEstimate)
+            {
+                <div class="se-banner se-banner-info">
+                    <i class="fas fa-circle-info"></i>
+                    <span>A job card is made from a service estimate (Create Job Card on the estimate). Free Service, Warranty, Rework and Internal jobs can be made here.</span>
+                </div>
+            }
+            @else if (card?.EstimateNo)
+            {
+                <div class="se-banner se-banner-info">
+                    <i class="fas fa-file-pen"></i>
+                    <span>
+                        This job card was made from estimate <strong>{{ card!.EstimateNo }}</strong>.
+                        <a (click)="openEstimate()">Open the estimate</a>
+                    </span>
+                </div>
+            }
+
+            <div class="se-grid">
+
+                <!-- ============ ROW 1 LEFT : Job Card Information ============ -->
+
+                <div class="se-card">
+
+                    <div class="se-card-header">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Job Card Information</span>
+                    </div>
+
+                    <div class="se-fields jc-fields-info">
+
+                        <app-textbox
+                            class="se-no"
+                            label="Job Card No"
+                            [value]="jobCardNo"
+                            placeholder="Assigned on save"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [disabled]="!canEdit"
+                            [value]="$any(asDate(jobDate))"
+                            (valueChange)="onDate($event)">
+                        </app-datepicker>
+
+                        <app-datepicker
+                            label="Promised Date"
+                            [disabled]="!canEdit"
+                            [value]="$any(asDate(promisedDate))"
+                            (valueChange)="onPromisedDate($event)">
+                        </app-datepicker>
+
+                        <app-textbox
+                            label="Promised Time"
+                            placeholder="17:30"
+                            [value]="promisedTime"
+                            [maxLength]="5"
+                            [disabled]="!canEdit"
+                            (valueChange)="onText('promisedTime', $event)">
+                        </app-textbox>
+
+                    </div>
+
+                    <div class="se-hint jc-hint-switch">
+
+                        <label class="pf-switch jc-switch">
+                            <input
+                                type="checkbox"
+                                [checked]="pickupDrop"
+                                [disabled]="!canEdit"
+                                (change)="onPickup($event)">
+                            <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                            <span class="pf-switch-text">
+                                <b>Pick-up &amp; Drop</b>
+                                <small>The bike is collected from and returned to the customer</small>
+                            </span>
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <!-- ============ ROW 1 RIGHT : Service Center & Check-in ============ -->
+
+                <div class="se-card">
+
+                    <div class="se-card-header">
+                        <i class="fas fa-align-left"></i>
+                        <span>Service Center &amp; Check-in</span>
+                    </div>
+
+                    <div class="se-fields se-fields-3 jc-fields-tight">
+
+                        <app-search-dropdown
+                            label="Service Center"
+                            placeholder="Select service center"
+                            [items]="branchItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="branchId || null"
+                            [required]="true"
+                            [disabled]="mode !== 'add'"
+                            (valueChange)="onBranch($event)">
+                        </app-search-dropdown>
+
+                        <app-dropdown
+                            label="Job Type"
+                            placeholder="Select"
+                            [items]="jobTypeItems"
+                            [value]="jobType || null"
+                            [required]="true"
+                            [disabled]="!canEdit"
+                            (valueChange)="onPick('jobType', $event)">
+                        </app-dropdown>
+
+                        <app-search-dropdown
+                            label="Service Advisor"
+                            placeholder="Select"
+                            [items]="advisorItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="advisorId"
+                            [disabled]="!canEdit"
+                            (valueChange)="onAdvisor($event)">
+                        </app-search-dropdown>
+
+                    </div>
+
+                    <div class="se-fields jc-fields-notes">
+
+                        <app-textbox
+                            label="Basic Requirement"
+                            placeholder="What the engineer finds the bike needs"
+                            [value]="basicRequirement"
+                            [maxLength]="1000"
+                            [disabled]="!canEdit"
+                            (valueChange)="onText('basicRequirement', $event)">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            [value]="remarks"
+                            [maxLength]="500"
+                            [disabled]="!canEdit"
+                            (valueChange)="onText('remarks', $event)">
+                        </app-textbox>
+
+                    </div>
+
+                </div>
+
+                <!-- ============ ROW 2 LEFT : Customer, Bike, Add, Outsourcing ============ -->
+
+                <div class="se-col appcore-scrollbar">
+
+                    <!-- the customer -->
+
+                    <ng-container [ngTemplateOutlet]="customerCard"></ng-container>
+
+                    <!-- the bike -->
+
+                    <ng-container [ngTemplateOutlet]="bikeCard"></ng-container>
+
+                    <!-- add labour / parts -->
+
+                    @if (canEditLines)
+                    {
+                        <div class="se-card">
+
+                            <div class="se-card-header">
+
+                                <i class="fas fa-screwdriver-wrench"></i>
+                                <span>Add Labour &amp; Parts</span>
+
+                                <button
+                                    type="button"
+                                    class="se-head-link"
+                                    title="A part that is not of the product lists : typed, with its own rate"
+                                    (click)="section = 'parts'; addOtherPart()">
+                                    <i class="fas fa-keyboard"></i>
+                                    Typed Part
+                                </button>
+
+                            </div>
+
+                            <div class="se-fields se-fields-2">
+
+                                <app-search-dropdown
+                                    label="Service / Labour"
+                                    placeholder="Add from the service charts"
+                                    [items]="serviceItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="servicePick"
+                                    (valueChange)="section = 'services'; onServicePick($event)">
+                                </app-search-dropdown>
+
+                                <app-search-dropdown
+                                    label="Spare Part / Accessory"
+                                    [placeholder]="branchId ? 'Add a part' : 'Choose the service center first'"
+                                    [items]="partItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="partPick"
+                                    (valueChange)="section = 'parts'; onPartPick($event)">
+                                </app-search-dropdown>
+
+                            </div>
+
+                        </div>
+
+                        <!-- work done by a vendor and parts bought from a
+                             vendor for this job card : posted at once -->
+
+                        <div class="se-card se-card-head-only">
+
+                            <div class="se-card-header">
+
+                                <i class="fas fa-truck-ramp-box"></i>
+                                <span>Outsourcing</span>
+
+                                <div class="se-out-group">
+
+                                    <button
+                                        type="button"
+                                        class="se-out se-out-work"
+                                        title="A work done by a vendor for this job card : picked from the list, the vendor is credited at once"
+                                        (click)="section = 'services'; openOutsideWork()">
+                                        <span class="se-out-ico"><i class="fas fa-screwdriver-wrench"></i></span>
+                                        <span class="se-out-text">
+                                            <b>Outside Works</b>
+                                            <small>Done by a vendor</small>
+                                        </span>
+                                        <span class="se-out-plus"><i class="fas fa-plus"></i></span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="se-out se-out-part"
+                                        title="A part bought from a local vendor for this job card : no purchase order, no stock"
+                                        (click)="section = 'parts'; openOutsource()">
+                                        <span class="se-out-ico"><i class="fas fa-box-open"></i></span>
+                                        <span class="se-out-text">
+                                            <b>Parts Outsourcing</b>
+                                            <small>Bought from a vendor</small>
+                                        </span>
+                                        <span class="se-out-plus"><i class="fas fa-plus"></i></span>
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+                <!-- ============ ROW 2 RIGHT : the work ============ -->
+
+                <div class="se-slot">
+
+                    <div class="se-card se-summary">
+
+                        <div class="se-card-header se-card-header-tabs">
+
+                            <app-control-tabs
+                                [tabs]="shownTabs"
+                                [selectedTab]="section"
+                                (selectedTabChange)="onSection($event)">
+                            </app-control-tabs>
+
+                            <span class="se-count">{{ sectionCount }}</span>
+
+                        </div>
+
+                        <!-- The stages of the card, strictly in order -->
+
+                        @if (card)
+                        {
+                            <div class="jc-stages">
+                                @for (stage of stages; track stage; let i = $index)
+                                {
+                                    <span
+                                        class="jc-stage"
+                                        [class.jc-stage-done]="stageNo > i + 1"
+                                        [class.jc-stage-now]="stageNo === i + 1">
+                                        <b>{{ i + 1 }}</b>{{ stage }}
+                                    </span>
+                                }
+                                <span class="jc-stage-status">{{ card.Status }}</span>
+                            </div>
+                        }
+
+                        <!-- ---------- Complaints ---------- -->
+
+                        @if (section === 'complaints')
+                        {
+                            <div class="se-table-scroll appcore-scrollbar">
+
+                                <table class="se-table jc-table-narrow">
+
+                                    <colgroup>
+                                        <col class="se-col-sl">
+                                        <col>
+                                        <col class="se-col-action">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="se-sl">#</th>
+                                            <th>What the customer says</th>
+                                            <th class="se-action"></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        @for (row of complaints; track row.key; let i = $index)
+                                        {
+                                            <tr>
+                                                <td class="se-sl">{{ i + 1 }}</td>
+                                                <td>
+                                                    <input
+                                                        class="se-input"
+                                                        maxlength="500"
+                                                        placeholder="What the customer says"
+                                                        [value]="row.text"
+                                                        [disabled]="!canEdit"
+                                                        (input)="onComplaint(row, $event)">
+                                                </td>
+                                                <td class="se-action">
+                                                    @if (canEdit)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="se-remove"
+                                                            title="Remove"
+                                                            (click)="removeComplaint(row)">
+                                                            <i class="fas fa-xmark"></i>
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+
+                                        @if (complaints.length === 0)
+                                        {
+                                            <tr>
+                                                <td
+                                                    class="se-empty"
+                                                    colspan="3">No complaint is written.</td>
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            @if (canEdit)
+                            {
+                                <div class="se-foot se-foot-note">
+                                    <span class="se-foot-vat"><i class="fas fa-circle-info"></i> One complaint per row, in the customer's words.</span>
+                                    <button
+                                        type="button"
+                                        class="se-add"
+                                        (click)="addComplaint()">
+                                        <i class="fas fa-plus"></i>
+                                        Add a complaint
+                                    </button>
+                                </div>
+                            }
+                        }
+
+                        <!-- ---------- Service / Labour ---------- -->
+
+                        @if (section === 'services')
+                        {
+                            <div class="se-table-scroll appcore-scrollbar">
+
+                                @if (outOpen && outWork)
+                                {
+                                    <div class="jc-pane-pad">
+                                        <ng-container *ngTemplateOutlet="outForm"></ng-container>
+                                    </div>
+                                }
+
+                                <table class="se-table">
+
+                                    <colgroup>
+                                        <col class="se-col-sl">
+                                        <col>
+                                        <col class="se-col-note">
+                                        <col class="se-col-qty">
+                                        <col class="se-col-num">
+                                        <col class="se-col-num">
+                                        <col class="se-col-action">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="se-sl">#</th>
+                                            <th>Service</th>
+                                            <th>Note</th>
+                                            <th class="se-num">Qty</th>
+                                            <th class="se-num">Rate</th>
+                                            <th class="se-num">Amount</th>
+                                            <th class="se-action"></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        @for (line of services; track line.key; let i = $index)
+                                        {
+                                            <tr>
+                                                <td class="se-sl">{{ i + 1 }}</td>
+                                                <td>
+                                                    @if (line.ItemKind === 'Other' && !line.ItemCode)
+                                                    {
+                                                        <input
+                                                            class="se-input"
+                                                            maxlength="200"
+                                                            placeholder="The work"
+                                                            [value]="line.ItemName"
+                                                            [disabled]="!canEditLines"
+                                                            (input)="onLine(line, 'ItemName', $event)">
+                                                    }
+                                                    @else
+                                                    {
+                                                        <div class="se-item">{{ line.ItemName }}</div>
+                                                        <div class="se-sub">{{ line.ItemCode }}{{ line.IsFree ? '  Free' : '' }}{{ line.ItemKind === 'Other' ? '  ·  quoted : no vendor yet (Outside Works)' : '' }}</div>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="se-input"
+                                                        maxlength="300"
+                                                        [value]="line.Note"
+                                                        [disabled]="!canEditLines"
+                                                        (input)="onLine(line, 'Note', $event)">
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="se-input se-input-num"
+                                                        inputmode="decimal"
+                                                        maxlength="6"
+                                                        [value]="line.Quantity"
+                                                        [disabled]="!canEditLines"
+                                                        (input)="onLine(line, 'Quantity', $event)">
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="se-input se-input-num"
+                                                        inputmode="decimal"
+                                                        maxlength="12"
+                                                        [value]="line.Rate"
+                                                        [disabled]="!canEditLines || line.ItemKind !== 'Other'"
+                                                        (input)="onLine(line, 'Rate', $event)">
+                                                </td>
+                                                <td class="se-num">{{ money(amount(line)) }}</td>
+                                                <td class="se-action">
+                                                    @if (canEditLines)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="se-remove"
+                                                            title="Remove"
+                                                            (click)="removeService(line)">
+                                                            <i class="fas fa-xmark"></i>
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+
+                                        @if (services.length === 0)
+                                        {
+                                            <tr>
+                                                <td
+                                                    class="se-empty"
+                                                    colspan="7">No service is on the job card yet.</td>
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                                <!-- the works done by a vendor for this job card -->
+
+                                <div class="jc-pane-pad jc-pane-list">
+                                    <ng-container *ngTemplateOutlet="outList; context:{ rows:outWorkRows, work:true }"></ng-container>
+                                </div>
+
+                            </div>
+
+                            <div class="se-foot">
+                                <span class="se-foot-vat"><i class="fas fa-circle-info"></i> Prices are before VAT : VAT is added on the service invoice.</span>
+                                <span>Labour <b>{{ money(labourTotal) }}</b></span>
+                                <span>Parts <b>{{ money(partsTotal) }}</b></span>
+                                <span class="se-foot-total">Job Total <b>{{ money(labourTotal + partsTotal) }}</b></span>
+                            </div>
+                        }
+
+                        <!-- ---------- Parts Needed ---------- -->
+
+                        @if (section === 'parts')
+                        {
+                            <div class="se-table-scroll appcore-scrollbar">
+
+                                <!-- Parts Outsourcing : a part bought from a local
+                                     vendor for this job card (no PO, no stock). Saved
+                                     and posted at once : Dr Workshop WIP, Cr the vendor -->
+
+                                @if (outOpen && !outWork)
+                                {
+                                    <div class="jc-pane-pad">
+                                        <ng-container *ngTemplateOutlet="outForm"></ng-container>
+                                    </div>
+                                }
+
+                                <table class="se-table">
+
+                                    <colgroup>
+                                        <col class="se-col-sl">
+                                        <col>
+                                        <col class="se-col-note">
+                                        <col class="se-col-qty">
+                                        <col class="se-col-num">
+                                        <col class="se-col-num">
+                                        <col class="se-col-action">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="se-sl">#</th>
+                                            <th>Part</th>
+                                            <th>Note</th>
+                                            <th class="se-num">Qty</th>
+                                            <th class="se-num">Rate</th>
+                                            <th class="se-num">Amount</th>
+                                            <th class="se-action"></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        @for (line of partLines; track line.key; let i = $index)
+                                        {
+                                            <tr>
+                                                <td class="se-sl">{{ i + 1 }}</td>
+                                                <td>
+                                                    @if (line.ItemKind === 'Other')
+                                                    {
+                                                        <input
+                                                            class="se-input"
+                                                            maxlength="200"
+                                                            placeholder="The part"
+                                                            [value]="line.ItemName"
+                                                            [disabled]="!canEditLines"
+                                                            (input)="onLine(line, 'ItemName', $event)">
+                                                    }
+                                                    @else
+                                                    {
+                                                        <div class="se-item">{{ line.ItemName }}</div>
+                                                        <div class="se-sub">{{ line.ItemCode }}</div>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="se-input"
+                                                        maxlength="300"
+                                                        [value]="line.Note"
+                                                        [disabled]="!canEditLines"
+                                                        (input)="onLine(line, 'Note', $event)">
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="se-input se-input-num"
+                                                        inputmode="decimal"
+                                                        maxlength="6"
+                                                        [value]="line.Quantity"
+                                                        [disabled]="!canEditLines"
+                                                        (input)="onLine(line, 'Quantity', $event)">
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="se-input se-input-num"
+                                                        inputmode="decimal"
+                                                        maxlength="12"
+                                                        [value]="line.Rate"
+                                                        [disabled]="!canEditLines || line.ItemKind !== 'Other'"
+                                                        (input)="onLine(line, 'Rate', $event)">
+                                                </td>
+                                                <td class="se-num">{{ money(amount(line)) }}</td>
+                                                <td class="se-action">
+                                                    @if (canEditLines)
+                                                    {
+                                                        <button
+                                                            type="button"
+                                                            class="se-remove"
+                                                            title="Remove"
+                                                            (click)="removePart(line)">
+                                                            <i class="fas fa-xmark"></i>
+                                                        </button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+
+                                        @if (partLines.length === 0)
+                                        {
+                                            <tr>
+                                                <td
+                                                    class="se-empty"
+                                                    colspan="7">No part is listed.</td>
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                                <!-- the parts bought outside for this job card -->
+
+                                <div class="jc-pane-pad jc-pane-list">
+                                    <ng-container *ngTemplateOutlet="outList; context:{ rows:outPartRows, work:false }"></ng-container>
+                                </div>
+
+                            </div>
+
+                            <div class="se-foot">
+                                <span class="se-foot-vat"><i class="fas fa-circle-info"></i> The parts the job needs : stock moves when the parts are issued.</span>
+                                <span>Labour <b>{{ money(labourTotal) }}</b></span>
+                                <span>Parts <b>{{ money(partsTotal) }}</b></span>
+                                <span class="se-foot-total">Job Total <b>{{ money(labourTotal + partsTotal) }}</b></span>
+                            </div>
+                        }
+
+                        <!-- ---------- Check-in checklist ---------- -->
+
+                        @if (section === 'checklist')
+                        {
+                            <div class="se-table-scroll appcore-scrollbar">
+
+                                <table class="se-table">
+
+                                    <colgroup>
+                                        <col class="se-col-sl">
+                                        <col>
+                                        <col class="jc-col-result">
+                                        <col class="jc-col-check-note">
+                                    </colgroup>
+
+                                    <thead>
+                                        <tr>
+                                            <th class="se-sl">#</th>
+                                            <th>Item</th>
+                                            <th>Result</th>
+                                            <th>Note</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        @for (row of checklist; track row.WorkshopChecklistItemId; let i = $index)
+                                        {
+                                            <tr>
+                                                <td class="se-sl">{{ i + 1 }}</td>
+                                                <td><div class="se-item">{{ row.ItemName }}</div></td>
+                                                <td>
+                                                    <span class="jc-seg">
+                                                        @for (result of results; track result)
+                                                        {
+                                                            <button
+                                                                type="button"
+                                                                [class.jc-seg-on]="row.Result === result"
+                                                                [disabled]="!canEdit"
+                                                                (click)="onResult(row, result)">{{ result }}</button>
+                                                        }
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        class="se-input"
+                                                        maxlength="300"
+                                                        placeholder="Note"
+                                                        [value]="row.Note"
+                                                        [disabled]="!canEdit"
+                                                        (input)="onCheckNote(row, $event)">
+                                                </td>
+                                            </tr>
+                                        }
+
+                                        @if (checklist.length === 0)
+                                        {
+                                            <tr>
+                                                <td
+                                                    class="se-empty"
+                                                    colspan="4">There is no checklist item. Add them in Service Setup &gt; Workshop Configuration.</td>
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        }
+
+                        <!-- ---------- Assignment (stage 2) ---------- -->
+
+                        @if (section === 'assign')
+                        {
+                            @if (!card)
+                            {
+                                <div class="se-empty">Save the job card first : a saved (Open) job card is assigned to its service engineer, bay and technicians.</div>
+                            }
+                            @else
+                            {
+                                @if (canAssign)
+                                {
+                                    <div class="jc-bar">
+
+                                        <div class="jc-assign">
+
+                                            <app-search-dropdown
+                                                label="Service Engineer"
+                                                placeholder="Select engineer"
+                                                [items]="engineerItems"
+                                                labelField="label"
+                                                valueField="value"
+                                                [value]="assignEngineerId"
+                                                (valueChange)="onAssignEngineer($event)">
+                                            </app-search-dropdown>
+
+                                            <app-search-dropdown
+                                                label="Bay"
+                                                placeholder="Select bay"
+                                                [items]="bayItems"
+                                                labelField="label"
+                                                valueField="value"
+                                                [value]="assignBayId"
+                                                (valueChange)="onAssignBay($event)">
+                                            </app-search-dropdown>
+
+                                            <app-search-dropdown
+                                                label="Add Technician"
+                                                placeholder="Select technician"
+                                                [items]="technicianItems"
+                                                labelField="label"
+                                                valueField="value"
+                                                [value]="assignPick"
+                                                (valueChange)="onAssignTechnician($event)">
+                                            </app-search-dropdown>
+
+                                            <app-textbox
+                                                label="Note"
+                                                placeholder="Optional"
+                                                [value]="assignNote"
+                                                [maxLength]="300"
+                                                (valueChange)="onAssignNote($event)">
+                                            </app-textbox>
+
+                                            <button
+                                                type="button"
+                                                class="hp-add"
+                                                [disabled]="isSaving"
+                                                (click)="saveAssignment()">
+                                                <i class="fas fa-user-check"></i>
+                                                {{ card.Status === 'Open' ? 'Assign' : 'Assign Again' }}
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+                                }
+                                @else
+                                {
+                                    <div class="se-foot se-foot-note">
+                                        <span class="se-foot-vat"><i class="fas fa-circle-info"></i>
+                                            @if (card.CanAssign && mode === 'edit')
+                                            {
+                                                Assigning needs the page action Assign Job Card.
+                                            }
+                                            @else
+                                            {
+                                                Service engineer : {{ card.ServiceEngineerName || '-' }}  |  Bay : {{ card.BayName || '-' }}
+                                            }
+                                        </span>
+                                    </div>
+                                }
+
+                                <div class="se-table-scroll appcore-scrollbar">
+
+                                    <table class="se-table">
+
+                                        <colgroup>
+                                            <col class="se-col-sl">
+                                            <col>
+                                            <col class="jc-col-status">
+                                            <col class="jc-col-acts">
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th class="se-sl">#</th>
+                                                <th>Technician</th>
+                                                <th>Role</th>
+                                                <th class="se-action"></th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+
+                                            @for (id of assignTechnicianIds; track id; let i = $index)
+                                            {
+                                                <tr>
+                                                    <td class="se-sl">{{ i + 1 }}</td>
+                                                    <td><div class="se-item">{{ technicianName(id) }}</div></td>
+                                                    <td>{{ i === 0 ? 'Lead' : 'Technician' }}</td>
+                                                    <td class="se-action">
+                                                        <span class="jc-acts">
+                                                            @if (canAssign && i > 0)
+                                                            {
+                                                                <button
+                                                                    type="button"
+                                                                    class="se-remove"
+                                                                    title="Make lead"
+                                                                    (click)="leadAssignTechnician(id)">
+                                                                    <i class="fas fa-arrow-up"></i>
+                                                                </button>
+                                                            }
+                                                            @if (canAssign)
+                                                            {
+                                                                <button
+                                                                    type="button"
+                                                                    class="se-remove"
+                                                                    title="Remove"
+                                                                    (click)="removeAssignTechnician(id)">
+                                                                    <i class="fas fa-xmark"></i>
+                                                                </button>
+                                                            }
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            @if (assignTechnicianIds.length === 0)
+                                            {
+                                                <tr>
+                                                    <td
+                                                        class="se-empty"
+                                                        colspan="4">The job card is not assigned yet. Work, parts and outsourcing start after the assignment.</td>
+                                                </tr>
+                                            }
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+                            }
+                        }
+
+                        <!-- ---------- Technician time ---------- -->
+
+                        @if (section === 'work')
+                        {
+                            @if (!card)
+                            {
+                                <div class="se-empty">Save the job card first : technicians start their work on the saved card.</div>
+                            }
+                            @else
+                            {
+                                @if (!canWork && card.Status === 'Open' && mode === 'edit')
+                                {
+                                    <div class="se-foot se-foot-note">
+                                        <span class="se-foot-vat"><i class="fas fa-circle-info"></i> The job card is not assigned yet : assign it first (tab Assignment).</span>
+                                    </div>
+                                }
+
+                                @if (canWork)
+                                {
+                                    <div class="jc-bar">
+
+                                        <div class="jc-start">
+
+                                            <app-search-dropdown
+                                                label="Technician"
+                                                placeholder="Select technician"
+                                                [items]="startTechnicianItems"
+                                                labelField="label"
+                                                valueField="value"
+                                                [value]="workTechnicianId"
+                                                (valueChange)="onWorkTechnician($event)">
+                                            </app-search-dropdown>
+
+                                            <app-search-dropdown
+                                                label="Bay"
+                                                placeholder="The bay of the assignment"
+                                                [items]="bayItems"
+                                                labelField="label"
+                                                valueField="value"
+                                                [value]="workBayId"
+                                                (valueChange)="onWorkBay($event)">
+                                            </app-search-dropdown>
+
+                                            <app-textbox
+                                                label="Work"
+                                                placeholder="What is being done"
+                                                [value]="workNote"
+                                                [maxLength]="300"
+                                                (valueChange)="onText('workNote', $event)">
+                                            </app-textbox>
+
+                                            <button
+                                                type="button"
+                                                class="hp-add"
+                                                [disabled]="isSaving"
+                                                (click)="startWork()">
+                                                <i class="fas fa-play"></i>
+                                                Start
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+                                }
+
+                                <div class="se-table-scroll appcore-scrollbar">
+
+                                    <table class="se-table">
+
+                                        <colgroup>
+                                            <col class="se-col-sl">
+                                            <col>
+                                            <col class="jc-col-time">
+                                            <col class="jc-col-time">
+                                            <col class="se-col-qty">
+                                            <col class="jc-col-acts">
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th class="se-sl">#</th>
+                                                <th>Technician</th>
+                                                <th>Started</th>
+                                                <th>Ended</th>
+                                                <th class="se-num">Time</th>
+                                                <th class="se-action"></th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+
+                                            @for (entry of workEntries; track entry.JobCardWorkEntryId; let i = $index)
+                                            {
+                                                <tr>
+                                                    <td class="se-sl">{{ i + 1 }}</td>
+                                                    <td>
+                                                        <div class="se-item">{{ entry.TechnicianName }}</div>
+                                                        <div class="se-sub">{{ entry.BayName }}{{ entry.BayName && entry.WorkNote ? '  |  ' : '' }}{{ entry.WorkNote }}</div>
+                                                    </td>
+                                                    <td>{{ dateTime(entry.StartAt) }}</td>
+                                                    <td>{{ entry.EndAt ? dateTime(entry.EndAt) : 'Working...' }}</td>
+                                                    <td class="se-num">{{ minutes(entry.Minutes) }}</td>
+                                                    <td class="se-action">
+                                                        <span class="jc-acts">
+                                                            @if (!entry.EndAt && mode === 'edit' && access.CanWork)
+                                                            {
+                                                                <button
+                                                                    type="button"
+                                                                    class="hp-add hp-danger jc-stop"
+                                                                    [disabled]="isSaving"
+                                                                    (click)="stopWork(entry)">
+                                                                    <i class="fas fa-stop"></i>
+                                                                    Stop
+                                                                </button>
+                                                            }
+                                                            @if (canWork)
+                                                            {
+                                                                <button
+                                                                    type="button"
+                                                                    class="se-remove"
+                                                                    title="Remove"
+                                                                    (click)="removeWork(entry)">
+                                                                    <i class="fas fa-xmark"></i>
+                                                                </button>
+                                                            }
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            }
+
+                                            @if (workEntries.length === 0)
+                                            {
+                                                <tr>
+                                                    <td
+                                                        class="se-empty"
+                                                        colspan="6">No technician has worked on this job card yet.</td>
+                                                </tr>
+                                            }
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+                            }
+                        }
+
+                        <!-- ---------- Status ---------- -->
+
+                        @if (section === 'status')
+                        {
+                            @if (!card)
+                            {
+                                <div class="se-empty">A new job card is Open when it is saved.</div>
+                            }
+                            @else
+                            {
+                                @if (mode === 'edit' && nextStatuses.length > 0)
+                                {
+                                    <div class="jc-bar">
+
+                                        <div class="jc-next">
+
+                                            <app-textbox
+                                                label="Note"
+                                                placeholder="Needed to cancel; optional otherwise"
+                                                [value]="statusNote"
+                                                [maxLength]="300"
+                                                (valueChange)="onText('statusNote', $event)">
+                                            </app-textbox>
+
+                                            <div class="jc-buttons">
+                                                @for (status of nextStatuses; track status)
+                                                {
+                                                    <button
+                                                        type="button"
+                                                        class="hp-add"
+                                                        [class.hp-danger]="status === 'Cancelled'"
+                                                        [disabled]="isSaving"
+                                                        (click)="changeStatus(status)">
+                                                        <i [class]="statusIcon(status)"></i>
+                                                        {{ status }}
+                                                    </button>
+                                                }
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                }
+
+                                <div class="se-table-scroll appcore-scrollbar">
+
+                                    <table class="se-table">
+
+                                        <colgroup>
+                                            <col class="se-col-sl">
+                                            <col class="jc-col-status">
+                                            <col class="jc-col-time">
+                                            <col>
+                                        </colgroup>
+
+                                        <thead>
+                                            <tr>
+                                                <th class="se-sl">#</th>
+                                                <th>Status</th>
+                                                <th>Changed</th>
+                                                <th>Note</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+
+                                            @for (row of statusHistory; track $index; let i = $index)
+                                            {
+                                                <tr>
+                                                    <td class="se-sl">{{ i + 1 }}</td>
+                                                    <td><div class="se-item">{{ row.Status }}</div></td>
+                                                    <td>{{ dateTime(row.ChangedAt) }}</td>
+                                                    <td>{{ row.Note }}</td>
+                                                </tr>
+                                            }
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                                @if (mode === 'edit' && nextStatuses.length > 0)
+                                {
+                                    <div class="se-foot se-foot-note">
+                                        <span class="se-foot-vat"><i class="fas fa-circle-info"></i> Save the changes of the job card before moving its status. Open becomes Assigned in the tab Assignment. Invoicing and delivery come with Service Invoices.</span>
+                                    </div>
+                                }
+                            }
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+        }
+    }
+
+    <app-toast></app-toast>
+    <!-- New Job : a bike we do not sell -->
+
+    @if (bikeAddOpen)
+    {
+        <div class="jc-pop" (click)="closeBikeAdd()">
+
+            <div class="jc-pop-box" (click)="$event.stopPropagation()">
+
+                <div class="jc-pop-head">
+                    <i class="fas fa-motorcycle"></i>
+                    <span>Add Bike</span>
+                </div>
+
+                <p class="jc-pop-note">A bike that is not in the list. It is kept for job cards only : it is not a product.</p>
+
+                <app-search-dropdown
+                    label="Brand"
+                    placeholder="Select brand"
+                    [items]="brandItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="bikeAddBrand"
+                    (valueChange)="onBikeAdd('brand', $event)">
+                </app-search-dropdown>
+
+                <app-textbox
+                    label="Model"
+                    placeholder="Model name"
+                    [value]="bikeAddModel"
+                    [maxLength]="150"
+                    (valueChange)="onBikeAdd('model', $event)">
+                </app-textbox>
+
+                @if (bikeAddLike.length)
+                {
+                    <div class="jc-pop-like">
+                        <span>Already in the list - pick it instead :</span>
+                        @for (bike of bikeAddLike; track bike.Name)
+                        {
+                            <button type="button" (click)="pickBikeAddLike(bike)">{{ bike.Name }}</button>
+                        }
+                    </div>
+                }
+
+                <app-search-dropdown
+                    label="Color"
+                    placeholder="Select color"
+                    [items]="colorItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="bikeAddColor"
+                    (valueChange)="onBikeAdd('color', $event)">
+                </app-search-dropdown>
+
+                <div class="jc-pop-foot">
+                    <button type="button" class="jc-pop-btn" [disabled]="bikeAddBusy" (click)="closeBikeAdd()">Cancel</button>
+                    <button type="button" class="jc-pop-btn is-main" [disabled]="bikeAddBusy" (click)="saveBikeAdd()">
+                        <i class="fas fa-check"></i>
+                        Add
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

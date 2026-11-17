@@ -8,9 +8,11 @@
 
         title="Product Category"
 
-        subtitle="Manage product categories"
+        subtitle="The product categories by type (Motor Bikes, Spare Parts, Accessories) and their inventory groups"
 
-        icon="fas fa-layer-group">
+        icon="fas fa-layer-group"
+
+        art="catalog">
 
         <div pageHeaderCenter>
 
@@ -131,6 +133,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="catalog"
+
+                emptyTitle="No product category yet"
+
+                emptySubtitle="Add a category : sub categories and products sit under it."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -172,24 +180,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="pct-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="pct-summary-item">
-                    <span class="pct-summary-label">{{ item.label }}</span>
-                    <b
-                        class="pct-summary-value"
-                        [class.pct-ok]="item.tone === 'ok'"
-                        [class.pct-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="pct-summary-note">
-                Matching the status filter and search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="categories"
+            art="catalog"
+            note="All records">
+        </app-summary-line>
     }
 
 

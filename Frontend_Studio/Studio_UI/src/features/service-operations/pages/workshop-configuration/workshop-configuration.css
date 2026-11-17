@@ -1,0 +1,284 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+
+/* Workshop Configuration : the rows on the left, the form of one
+   row on the right */
+
+.wc-layout
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    /* one fixed height for every section, on every tab (the tallest
+       form fits) : a longer list scrolls inside its section, the
+       page itself never grows */
+    grid-template-rows: minmax(0, 1fr);
+    gap: 12px;
+    align-items: stretch;
+    /* as the list canvas of the other pages : fits the screen */
+    height: clamp(480px, calc(100dvh - var(--page-canvas-reserve, 300px) - 30px), 660px);
+}
+
+/* the list fills the height of its section and scrolls inside it */
+
+.wc-layout > app-page-canvas
+{
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+}
+
+.wc-layout > app-page-canvas ::ng-deep .page-canvas
+{
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+}
+
+.wc-form
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+/* the fields keep their own height, one right under the other :
+   what is left of the height stays empty at the bottom */
+
+.wc-form > *
+{
+    flex: 0 0 auto;
+}
+
+.wc-switch
+{
+    margin: 0;
+}
+
+/* Switches : three side by side on a wide screen, two on a
+   narrower one, one below 800px; the boxes of a row are equally
+   high */
+
+.wc-switch-grid
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 10px;
+    align-items: stretch;
+}
+
+.wc-switch-grid > .wc-switch
+{
+    min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
+    align-items: flex-start;
+}
+
+/* Add Bays : what Save will make */
+
+.wc-preview
+{
+    padding: 10px 12px;
+    border: 1px solid #d6e4fb;
+    border-radius: 12px;
+    background: #f7faff;
+    color: #0f2a44;
+    font-size: 12.5px;
+    line-height: 1.45;
+}
+
+.wc-preview i
+{
+    margin-right: 6px;
+    color: #2f55d4;
+}
+
+.wc-buttons
+{
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.wc-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.wc-btn:hover
+{
+    background: #f1f5f9;
+}
+
+.wc-btn.wc-primary
+{
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.wc-btn.wc-primary:hover
+{
+    background: #1d4ed8;
+}
+
+.wc-btn:disabled
+{
+    opacity: .6;
+    cursor: default;
+}
+
+/* Diagnoses : a wider form with the fields two by two, so it fits
+   the height without scrolling. Only the suggested lines scroll,
+   inside their own box. */
+
+.wc-layout-wide
+{
+    grid-template-columns: minmax(0, 1fr) 500px;
+}
+
+.wc-form-wide
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: start;
+    column-gap: 12px;
+}
+
+.wc-form-wide > *
+{
+    grid-column: 1 / -1;
+    order: 20;
+}
+
+.wc-form-wide > header
+{
+    order: 0;
+}
+
+.wc-form-wide > .wc-f-code,
+.wc-form-wide > .wc-f-observation,
+.wc-form-wide > .wc-f-name,
+.wc-form-wide > .wc-f-remarks,
+.wc-form-wide > .wc-f-labour,
+.wc-form-wide > .wc-f-part
+{
+    grid-column: auto;
+    min-width: 0;
+}
+
+.wc-form-wide > .wc-f-code { order: 1; }
+.wc-form-wide > .wc-f-observation { order: 2; }
+.wc-form-wide > .wc-f-name { order: 3; }
+.wc-form-wide > .wc-f-remarks { order: 4; }
+.wc-form-wide > .wc-f-labour { order: 5; }
+.wc-form-wide > .wc-f-part { order: 6; }
+
+.wc-form-wide > .wc-items
+{
+    order: 7;
+    max-height: 104px;
+    overflow-y: auto;
+}
+
+/* A diagnosis : the labour and the parts it suggests */
+
+.wc-items
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.wc-item
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: 12.5px;
+    color: #1e293b;
+}
+
+.wc-item-type
+{
+    flex: 0 0 auto;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1e40af;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.wc-item-part
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.wc-item-name
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.wc-item-qty
+{
+    flex: 0 0 auto;
+    width: 48px;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    text-align: right;
+    font-size: 12.5px;
+    outline: none;
+}
+
+.wc-item-x
+{
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+@media (max-width: 1100px)
+{
+    .wc-layout,
+    .wc-layout-wide
+    {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: 600px auto;
+        height: auto;
+    }
+}

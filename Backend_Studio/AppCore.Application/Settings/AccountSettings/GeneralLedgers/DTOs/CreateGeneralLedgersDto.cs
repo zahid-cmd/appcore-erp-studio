@@ -97,6 +97,14 @@ public class CreateGeneralLedgersDto
     // TODO: Add General Ledger specific configuration fields here
 
 
+    // Business line of the ledger : MB / SP / AC / SV. "" : the one
+    // of its Account Class.
+    public string BusinessLine
+    {
+        get;
+        set;
+    } = string.Empty;
+
     public string Remarks
     {
         get;

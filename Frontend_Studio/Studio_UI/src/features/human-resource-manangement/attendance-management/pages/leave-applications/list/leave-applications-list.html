@@ -7,7 +7,8 @@
     <app-page-header
         title="Leave Applications"
         subtitle="Leave with approval : approved days go into the attendance"
-        icon="fas fa-plane-departure">
+        icon="fas fa-plane-departure"
+        art="people">
 
         <div pageHeaderCenter>
             <app-search-box
@@ -73,6 +74,9 @@
         <div canvasBody>
             <app-list-table
                 [columns]="columns"
+                emptyArt="people"
+                emptyTitle="No leave application yet"
+                emptySubtitle="Add a leave application for a staff member."
                 [rows]="rows"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -101,25 +105,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="lva-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="lva-summary-item">
-                    <span class="lva-summary-label">{{ item.label }}</span>
-                    <b
-                        class="lva-summary-value"
-                        [class.lva-ok]="item.tone === 'ok'"
-                        [class.lva-bad]="item.tone === 'bad'"
-                        [class.lva-warn]="item.tone === 'warn' && item.value !== '0'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="lva-summary-note">
-                Open an application (View) to approve, reject or cancel it
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="applications"
+            art="people"
+            note="All records">
+        </app-summary-line>
     }
 
     <app-history-drawer

@@ -40,6 +40,15 @@ import
 }
 from '../models/final-accounts.model';
 
+import
+{
+    ReturnOnInvestment,
+    RoiBase,
+    RoiCompare,
+    RoiFigures
+}
+from '../models/return-on-investment.model';
+
 
 //===============================================================
 // Final Accounts service (read only)
@@ -47,6 +56,7 @@ from '../models/final-accounts.model';
 //   GET <api>/year?date=
 //   GET <api>/profit-loss?from=&to=&branchId=&showCancelled=&compare=
 //   GET <api>/balance-sheet?asOn=&branchId=&showCancelled=&compare=
+//   GET <api>/return-on-investment?from=&to=&branchId=&showCancelled=&compare=
 //
 // Branches : TrialBalanceService.getBranches() (same list).
 // The API answers in camelCase; mapped to PascalCase.
@@ -67,6 +77,15 @@ export interface BalanceSheetQuery
     branchId:number;
     showCancelled:boolean;
     compare:FaCompare;
+}
+
+export interface RoiQuery
+{
+    from:string;
+    to:string;
+    branchId:number;
+    showCancelled:boolean;
+    compare:RoiCompare;
 }
 
 @Injectable(
@@ -197,6 +216,51 @@ export class FinalAccountsService
                 )
             );
     }
+
+    getReturnOnInvestment
+    (
+        query:
+            RoiQuery
+    ):
+        Observable<ReturnOnInvestment>
+    {
+        return this.http
+            .get<any>(
+                `${this.api}/return-on-investment`,
+                {
+                    params:
+                    {
+                        from:query.from,
+                        to:query.to,
+                        branchId:String(query.branchId || 0),
+                        showCancelled:String(!!query.showCancelled),
+                        compare:query.compare || 'none'
+                    }
+                }
+            )
+            .pipe(
+                map
+                (
+                    x =>
+                    {
+                        const previous =
+                            pick(x, 'Previous');
+
+                        return {
+                            BranchId:num(pick(x, 'BranchId')),
+                            BranchName:text(pick(x, 'BranchName')),
+                            ShowCancelled:!!pick(x, 'ShowCancelled'),
+                            Compare:(text(pick(x, 'Compare')) || 'none') as RoiCompare,
+                            CompareLabel:text(pick(x, 'CompareLabel')),
+                            Message:text(pick(x, 'Message')),
+                            FinanceSubGroups:list(pick(x, 'FinanceSubGroups')).map(y => text(y)),
+                            Current:toRoiFigures(pick(x, 'Current')),
+                            Previous:previous ? toRoiFigures(previous) : null
+                        };
+                    }
+                )
+            );
+    }
 }
 
 
@@ -223,6 +287,7 @@ function toRow
         SubGroupName:text(pick(x, 'SubGroupName')),
         IsActive:!!pick(x, 'IsActive'),
         IsRetainedEarnings:!!pick(x, 'IsRetainedEarnings'),
+        IsNonCurrent:!!pick(x, 'IsNonCurrent'),
         Section:text(pick(x, 'Section')) as FaRow['Section'],
         Line:text(pick(x, 'Line')) as FaRow['Line'],
         Amount:num(pick(x, 'Amount')),
@@ -323,4 +388,52 @@ function list
     any[]
 {
     return Array.isArray(value) ? value : [];
+}
+
+function toRoiBase
+(
+    x:
+        any
+):
+    RoiBase
+{
+    return {
+        Date:text(pick(x, 'Date')),
+        Equity:num(pick(x, 'Equity')),
+        NonCurrentLiabilities:num(pick(x, 'NonCurrentLiabilities')),
+        CurrentLiabilities:num(pick(x, 'CurrentLiabilities')),
+        TotalAssets:num(pick(x, 'TotalAssets')),
+        CapitalEmployed:num(pick(x, 'CapitalEmployed'))
+    };
+}
+
+function toRoiFigures
+(
+    x:
+        any
+):
+    RoiFigures
+{
+    return {
+        From:text(pick(x, 'From')),
+        To:text(pick(x, 'To')),
+        NetProfit:num(pick(x, 'NetProfit')),
+        FinanceCosts:num(pick(x, 'FinanceCosts')),
+        ProfitBeforeInterest:num(pick(x, 'ProfitBeforeInterest')),
+        Opening:toRoiBase(pick(x, 'Opening')),
+        Closing:toRoiBase(pick(x, 'Closing')),
+        Lines:
+            list(pick(x, 'Lines'))
+                .map
+                (
+                    y =>
+                    ({
+                        Line:text(pick(y, 'Line')) as FaRow['Line'],
+                        Sales:num(pick(y, 'Sales')),
+                        GrossProfit:num(pick(y, 'GrossProfit')),
+                        OpeningStock:num(pick(y, 'OpeningStock')),
+                        ClosingStock:num(pick(y, 'ClosingStock'))
+                    })
+                )
+    };
 }

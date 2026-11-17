@@ -17,6 +17,7 @@ from '@angular/router';
 //   receipt-payment/list  Receipt & Payment Account
 //   daily-collection/list Daily Collection Statement
 //   invoice-profit/list   Invoice-wise Profit & Loss
+//   return-on-investment/list Return on Investment
 //===========================================================
 
 export const financialStatementsRoutes:
@@ -318,6 +319,43 @@ Routes =
                             .then(
                                 m =>
                                     m.InvoiceProfitPage
+                            )
+                    }
+                ]
+            },
+
+            //===========================================================
+            // Return on Investment
+            //===========================================================
+
+            {
+                path:'return-on-investment',
+
+                data:
+                {
+                    breadcrumb:'Return on Investment'
+                },
+
+                children:
+                [
+                    {
+                        path:'',
+                        redirectTo:'list',
+                        pathMatch:'full'
+                    },
+                    {
+                        path:'list',
+                        data:
+                        {
+                            breadcrumb:'Return on Investment'
+                        },
+                        loadComponent:() =>
+                            import(
+                                '../return-on-investment/return-on-investment'
+                            )
+                            .then(
+                                m =>
+                                    m.ReturnOnInvestmentPage
                             )
                     }
                 ]

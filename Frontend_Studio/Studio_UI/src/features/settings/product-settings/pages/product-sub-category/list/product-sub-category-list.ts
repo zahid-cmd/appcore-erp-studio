@@ -130,6 +130,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -226,6 +232,8 @@ type ProductSubCategoryRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ToastComponent,
         ProgressDialogComponent
@@ -487,23 +495,24 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Sub Category Code',
             field:'SubCategoryCode',
-            width:'170px',
+            width:'140px',
             align:'center'
         },
         {
             header:'Sub Category Name',
             field:'SubCategoryName',
-            width:'220px',
+            width:'210px',
             align:'left'
         },
         {
@@ -515,33 +524,33 @@ implements OnInit, OnDestroy
         {
             header:'Inventory Sub Group',
             field:'InventorySubGroupCode',
-            width:'170px',
+            width:'150px',
             align:'center'
         },
         {
             header:'WIP Sub Group',
             field:'WipSubGroupCode',
-            width:'170px',
+            width:'150px',
             align:'center'
         },
         {
             header:'COGS Sub Group',
             field:'CogsSubGroupCode',
-            width:'170px',
+            width:'150px',
             align:'center'
         },
         {
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'110px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];

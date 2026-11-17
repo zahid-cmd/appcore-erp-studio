@@ -8,9 +8,11 @@
 
         title="Bank Setup"
 
-        subtitle="Manage bank setup"
+        subtitle="The banks you deal with : used by bank accounts, POS, cards and cheques"
 
-        icon="fas fa-building-columns">
+        icon="fas fa-building-columns"
+
+        art="bank">
 
         <div pageHeaderCenter>
 
@@ -131,6 +133,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="bank"
+
+                emptyTitle="No bank yet"
+
+                emptySubtitle="Add the banks your business uses."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -172,24 +180,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="bks-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="bks-summary-item">
-                    <span class="bks-summary-label">{{ item.label }}</span>
-                    <b
-                        class="bks-summary-value"
-                        [class.bks-ok]="item.tone === 'ok'"
-                        [class.bks-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="bks-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="banks"
+            art="bank"
+            note="All records">
+        </app-summary-line>
     }
 
 

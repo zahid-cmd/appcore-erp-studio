@@ -10,7 +10,9 @@
 
         subtitle="Job titles of employees and users"
 
-        icon="fas fa-id-badge">
+        icon="fas fa-id-badge"
+
+        art="people">
 
         <div pageHeaderCenter>
 
@@ -102,6 +104,12 @@
 
                 [columns]="columns"
 
+                emptyArt="people"
+
+                emptyTitle="No designation yet"
+
+                emptySubtitle="Add the designations staff are hired into."
+
                 [rows]="pagedDesignations"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -152,28 +160,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                Each employee has one designation
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="designations"
+            art="people"
+            note="All records">
+        </app-summary-line>
     }
 
 

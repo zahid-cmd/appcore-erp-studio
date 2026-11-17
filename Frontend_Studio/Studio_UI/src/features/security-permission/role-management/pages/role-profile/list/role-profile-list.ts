@@ -99,6 +99,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -178,6 +184,9 @@ from '../../../services/role-profile.service';
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -393,6 +402,7 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
 
@@ -400,7 +410,7 @@ implements OnInit
 
             type:'serial',
 
-            width:'60px',
+            width:'56px',
 
             align:'center'
         },
@@ -410,7 +420,7 @@ implements OnInit
 
             field:'ProfileCode',
 
-            width:'250px',
+            width:'140px',
 
             align:'center'
         },
@@ -418,7 +428,7 @@ implements OnInit
         {
             header:'Profile Name',
 
-            field:'ProfileName',
+            field:'ProfileName', width:'210px',
 
             align:'left'
         },
@@ -428,9 +438,9 @@ implements OnInit
 
             field:'DisplayOrder',
 
-            width:'220px',
+            width:'160px',
 
-            align:'center'
+            align:'left'
         },
 
         {
@@ -440,7 +450,7 @@ implements OnInit
 
             type:'status',
 
-            width:'220px',
+            width:'130px',
 
             align:'center'
         },
@@ -452,7 +462,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'150px',
+            width:'140px',
 
             align:'center'
         }
@@ -1457,5 +1467,40 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.summaryActive)),
+            String(this.summaryText(this.summaryTotal - this.summaryActive))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Active', value:v[1], tone:'ok' },
+                    { label:'Inactive', value:v[2], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

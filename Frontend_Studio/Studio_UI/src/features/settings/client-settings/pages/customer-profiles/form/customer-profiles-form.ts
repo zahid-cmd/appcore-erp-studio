@@ -87,21 +87,12 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
-import
-{
-    FormGridComponent
-}
-from '../../../../../../shared/components/layout/form-grid/form-grid';
 
-import
-{
-    FormSectionComponent
-}
-from '../../../../../../shared/components/layout/form-section/form-section';
 
 //===============================================================
 // Form Controls
@@ -137,11 +128,42 @@ import
 }
 from '../../../../../../shared/components/controls/datepicker/datepicker';
 
+
 import
 {
-    ImageHubComponent
+    WorkspaceArtComponent
 }
-from '../../../../../../shared/components/controls/image-hub/image-hub';
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
+
+import
+{
+    LogoStudioComponent
+}
+from '../../../../../../shared/components/controls/logo-studio/logo-studio';
 
 //===============================================================
 // Utilities
@@ -321,8 +343,9 @@ interface CustomerDraft
         CommandCenterComponent,
         ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
+        WorkspaceArtComponent,
+        StepTabsComponent,
+        StepNavComponent,
 
         //=======================================================
         // Form Controls
@@ -333,7 +356,9 @@ interface CustomerDraft
         DropdownComponent,
         SearchDropdownComponent,
         DatepickerComponent,
-        ImageHubComponent,
+        ToggleSwitchComponent,
+        NotePadComponent,
+        LogoStudioComponent,
 
         //=======================================================
         // Utilities
@@ -492,6 +517,15 @@ implements OnInit, OnDestroy
             this.isAddMode
         )
         {
+            // ?lockType=1 (opened from a job card) : the type of
+            // ?type= only, the other tab is not offered
+            if (this.route.snapshot.queryParamMap.get('lockType') === '1')
+            {
+                return this.resolveAddType() === 'Outside'
+                    ? [outside]
+                    : [inbound];
+            }
+
             return [inbound, outside];
         }
 
@@ -525,8 +559,68 @@ implements OnInit, OnDestroy
     //===========================================================
 
     formPage:
-        1 | 2 =
+        1 | 2 | 3 =
         1;
+
+    //===========================================================
+    // Workspace layout (2026-11-16) : Inbound has three steps,
+    // Outside two (light step tabs + Back / Next), no scrolling
+    //===========================================================
+
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
+
+    private readonly inboundSteps =
+    [
+        { id:'p1', label:'Customer & Contact' },
+        { id:'p2', label:'Addresses & Accounts' },
+        { id:'p3', label:'Photo & Remarks' }
+    ];
+
+    private readonly outsideSteps =
+    [
+        { id:'p1', label:'Customer & Contact' },
+        { id:'p2', label:'Accounts, Photo & Remarks' }
+    ];
+
+    get formSteps():
+        { id:string; label:string }[]
+    {
+        return this.isInbound
+            ? this.inboundSteps
+            : this.outsideSteps;
+    }
+
+    get currentStep():
+        string
+    {
+        return 'p' + this.formPage;
+    }
+
+    onStepChange
+    (
+        stepId:
+            string
+    ):
+        void
+    {
+        this.formPage =
+            stepId === 'p3'
+                ? 3
+                : stepId === 'p2'
+                    ? 2
+                    : 1;
+
+        this.cdr.detectChanges();
+    }
 
     get showPager():
         boolean

@@ -10,7 +10,9 @@
 
         subtitle="Motor bike sales leads, from first contact to the sale"
 
-        icon="fas fa-motorcycle">
+        icon="fas fa-motorcycle"
+
+        art="bike">
 
         <div pageHeaderCenter>
 
@@ -215,6 +217,12 @@
 
                 [columns]="tableColumns"
 
+                emptyArt="bike"
+
+                emptyTitle="No sales enquiries yet"
+
+                emptySubtitle="Walk-in and phone enquiries for bikes will appear here"
+
                 [rows]="tableRows"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -267,43 +275,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Open</span>
-                <b class="ics-summary-value">{{ summaryText(countOf('Open')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Due Today</span>
-                <b class="ics-summary-value">{{ summaryText(countOf('Due')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Lapsed</span>
-                <b class="ics-summary-value">{{ summaryText(countOf('Lapsed')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Matured</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(countOf('Matured')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Suspended</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(countOf('Suspended')) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                {{ summaryNote }}
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="enquiries"
+            art="bike"
+            note="{{ summaryNote }}">
+        </app-summary-line>
     }
 
 

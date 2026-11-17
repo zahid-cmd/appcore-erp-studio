@@ -7,7 +7,8 @@
     <app-page-header
         title="Salary Advances"
         subtitle="Advances and loans, recovered from the monthly salary"
-        icon="fas fa-hand-holding-dollar">
+        icon="fas fa-hand-holding-dollar"
+        art="cash">
 
         <div pageHeaderCenter>
             <app-search-box
@@ -63,6 +64,9 @@
         <div canvasBody>
             <app-list-table
                 [columns]="columns"
+                emptyArt="cash"
+                emptyTitle="No salary advance yet"
+                emptySubtitle="Add an advance : it is recovered from the salary."
                 [rows]="rows"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -91,24 +95,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="pay-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="pay-summary-item">
-                    <span class="pay-summary-label">{{ item.label }}</span>
-                    <b
-                        class="pay-summary-value"
-                        [class.pay-ok]="item.tone === 'ok'"
-                        [class.pay-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="pay-summary-note">
-                The installment is taken when the month's salary sheet is made
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="advances"
+            art="cash"
+            note="All records">
+        </app-summary-line>
     }
 
     <app-history-drawer

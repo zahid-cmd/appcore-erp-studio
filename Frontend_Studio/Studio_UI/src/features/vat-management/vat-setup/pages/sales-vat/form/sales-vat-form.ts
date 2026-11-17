@@ -80,7 +80,8 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
 
@@ -197,6 +198,36 @@ import
 }
 from '../../../../../../shared/components/accounting/accounting.models';
 
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
+
 //===============================================================
 // Component
 //===============================================================
@@ -219,10 +250,12 @@ from '../../../../../../shared/components/accounting/accounting.models';
         PageHeaderComponent,
         PageToolbarComponent,
         CommandCenterComponent,
-        ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
+        NotePadComponent,
+        ToggleSwitchComponent,
+        StepNavComponent,
+        StepTabsComponent,
+        WorkspaceArtComponent,
 
         //=======================================================
         // Form Controls
@@ -230,7 +263,6 @@ from '../../../../../../shared/components/accounting/accounting.models';
 
         TextboxComponent,
         SearchDropdownComponent,
-        TextareaComponent,
         DropdownComponent,
         DatepickerComponent,
 
@@ -352,6 +384,27 @@ implements OnInit, OnDestroy
     selectedTab:
         string =
         'general';
+
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
+
+    // More than one screen, no scrolling (2026-11-16) : the first id
+    // is the page's own first tab, so the form opens on it
+    readonly formSteps =
+    [
+        { id:'general', label:'VAT Information & Rate' },
+        { id:'step2', label:'Ledger & Status' }
+    ];
 
     get tabs():
         ControlTab[]
@@ -2061,4 +2114,4 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
     }
-}
+}

@@ -66,6 +66,12 @@ import { ControlTabsComponent, ControlTab } from '../../../../../../shared/compo
 import { SearchBoxComponent } from '../../../../../../shared/components/utilities/search-box/search-box';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn, ListTableRowAction, ListTableRowActionEvent } from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { ServiceFollowUpDialog } from '../follow-up/service-follow-up-dialog';
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
@@ -170,6 +176,8 @@ const PARTS_COLOR = '#7C3AED';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent,
@@ -401,17 +409,18 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#',              field:'serial',       type:'serial', width:'50px',  align:'center' },
-        { header:'Enquiry No',     field:'EnquiryNo',    width:'215px', align:'center' },
-        { header:'Date',           field:'DateText',     width:'120px', align:'center' },
-        { header:'Type',           field:'TypeText',     width:'95px',  align:'left', dotField:'TypeDot' },
-        { header:'Enquirer',       field:'EnquirerText', align:'left' },
-        { header:'Bike',           field:'BikeText',     width:'200px', align:'left' },
-        { header:'Request',        field:'RequestText',  width:'220px', align:'left' },
-        { header:'Executive',      field:'ExecutiveText', width:'130px', align:'left' },
-        { header:'Status',         field:'StatusText',   width:'150px', align:'left', dotField:'StatusDot' },
-        { header:'Next',           field:'NextText',     width:'150px', align:'center' },
-        { header:'Actions',        field:'actions',      type:'actions', width:'130px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#',              field:'serial',       type:'serial', width:'56px',  align:'center' },
+        { header:'Enquiry No',     field:'EnquiryNo',    width:'160px', align:'left' },
+        { header:'Date',           field:'DateText',     width:'130px', align:'center' },
+        { header:'Type',           field:'TypeText',     width:'110px',  align:'center', dotField:'TypeDot' },
+        { header:'Enquirer',       field:'EnquirerText', width:'160px', align:'left' },
+        { header:'Bike',           field:'BikeText',     width:'160px', align:'left' },
+        { header:'Request',        field:'RequestText',  width:'160px', align:'left' },
+        { header:'Executive',      field:'ExecutiveText', width:'160px', align:'left' },
+        { header:'Status',         field:'StatusText',   width:'160px', align:'left', dotField:'StatusDot' },
+        { header:'Next',           field:'NextText',     width:'160px', align:'left' },
+        { header:'Actions',        field:'actions',      type:'actions', width:'140px', align:'center' }
     ];
 
 
@@ -1393,5 +1402,44 @@ implements OnInit
     summaryText(value: number): string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.countOf('Open'))),
+            String(this.summaryText(this.countOf('Due'))),
+            String(this.summaryText(this.countOf('Converted'))),
+            String(this.summaryText(this.countOf('Suspended')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Open', value:v[1], tone:'' },
+                    { label:'Due', value:v[2], tone:'' },
+                    { label:'Converted', value:v[3], tone:'ok' },
+                    { label:'Suspended', value:v[4], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

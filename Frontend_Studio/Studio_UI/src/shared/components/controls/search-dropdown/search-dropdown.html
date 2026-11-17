@@ -66,6 +66,8 @@
 
             [attr.aria-disabled]="disabled"
 
+            [attr.title]="selectedTitle"
+
             (click)="toggleDropdown()">
 
             <!-- =================================================
@@ -77,7 +79,7 @@
                 <ng-container
                     *ngIf="selectedLabel; else placeholderTemplate">
 
-                    {{ selectedLabel }}
+                    {{ selectedName }}
 
                 </ng-container>
 
@@ -134,6 +136,10 @@
             [origin]="origin"
 
             [(visible)]="isOpen"
+
+            [matchOriginWidth]="false"
+
+            [minWidth]="panelMinWidth"
 
             [closeOnOutsideClick]="true"
 
@@ -204,9 +210,21 @@
                                 )
                             ">
 
-                            <div class="dropdown-option-label">
+                            <!-- name on top, the code under it (2026-11-16) -->
 
-                                {{ option[labelField] }}
+                            <div
+
+                                class="dropdown-option-label"
+
+                                [attr.title]="option[labelField]">
+
+                                <span class="dropdown-option-name">{{ parts(option).name }}</span>
+
+                                <span
+
+                                    class="dropdown-option-code"
+
+                                    *ngIf="parts(option).code">{{ parts(option).code }}</span>
 
                             </div>
 

@@ -1,353 +1,251 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-credit-card"
-
+        art="pos"
         [title]="pageTitle"
-
-        subtitle="Manage card charges per POS account">
+        subtitle="What each card costs on a POS terminal : the bank's charge per card">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR (ENTRY BAR)
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
-
-
-        <div
-
-            pageToolbarRight
-
-            class="cc-entry-bar">
-
-
-            <!-- POS Account (master) -->
-
-            <div class="cc-entry-pos">
-
-                <app-search-dropdown
-
-                    placeholder="Select POS Account"
-
-                    [items]="posAccountItems"
-
-                    [(value)]="entity.POSAccountId"
-
-                    (valueChange)="onPosAccountChange()"
-
-                    [disabled]="isPosLocked"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-            </div>
-
-
-            @if (!isViewMode)
-            {
-                <!-- Card -->
-
-                <div class="cc-entry-card">
-
-                    <app-search-dropdown
-
-                        placeholder="Select Card"
-
-                        [items]="cardItems"
-
-                        [(value)]="entryCardSetupId"
-
-                        [disabled]="isSaving || !entity.POSAccountId"
-
-                        [required]="true">
-
-                    </app-search-dropdown>
-
-                </div>
-
-
-                <!-- Charge % -->
-
-                <div class="cc-entry-charge">
-
-                    <app-textbox
-
-                        placeholder="Charge %"
-
-                        [value]="entryChargeText"
-
-                        (valueChange)="onChargeTextChange($event)"
-
-                        [disabled]="isSaving || !entity.POSAccountId"
-
-                        [required]="true">
-
-                    </app-textbox>
-
-                </div>
-
-
-                <!-- Add / Update -->
-
-                <button
-
-                    type="button"
-
-                    class="cc-btn cc-btn-primary"
-
-                    [disabled]="isSaving || !entity.POSAccountId"
-
-                    (click)="onAddLine()">
-
-                    <i [class]="isEditingLine ? 'fas fa-check' : 'fas fa-plus'"></i>
-
-                    <span>{{ isEditingLine ? 'Update' : 'Add' }}</span>
-
-                </button>
-
-
-                <!-- Cancel line edit -->
-
-                @if (isEditingLine)
-                {
-                    <button
-
-                        type="button"
-
-                        class="cc-btn cc-btn-light"
-
-                        title="Cancel editing"
-
-                        [disabled]="isSaving"
-
-                        (click)="cancelLineEdit()">
-
-                        <i class="fas fa-xmark"></i>
-
-                    </button>
-                }
-            }
-
-        </div>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS (CARD LINES)
+         PAGE CANVAS : terminal, entry and lines left ; the
+         workspace right (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
         <div
-
             canvasBody
+            class="ws-body appcore-scrollbar">
 
-            class="cc-canvas">
+            <!-- ================= LEFT ================= -->
 
+            <div class="ws-steps">
 
-            <!-- =================================================
-                 SUMMARY
-            ================================================== -->
+                <div class="ws-step">
 
-            <div class="cc-summary">
+                    <!-- Terminal + entry -->
 
-                <div class="cc-summary-item">
+                    <section class="ws-card">
 
-                    <span class="cc-summary-label">POS Account</span>
+                        <header class="ws-card-head">
+                            <i class="fas fa-cash-register"></i>
+                            <span>POS Terminal</span>
+                            <small>Fixed once a card is added</small>
+                        </header>
 
-                    <span class="cc-summary-value">
+                        <div class="ws-grid cc-entry">
 
-                        {{ selectedPosAccountName || '—' }}
-
-                    </span>
-
-                </div>
-
-
-                <div class="cc-summary-item">
-
-                    <span class="cc-summary-label">Cards</span>
-
-                    <span class="cc-summary-value">
-
-                        {{ lines.length }}
-
-                    </span>
-
-                </div>
-
-
-                @if (!isViewMode && lines.length > 0)
-                {
-                    <div class="cc-summary-hint">
-
-                        <i class="fas fa-circle-info"></i>
-
-                        Double-click a row to edit it.
-
-                    </div>
-                }
-
-            </div>
-
-
-            <!-- =================================================
-                 LINES TABLE
-            ================================================== -->
-
-            <div class="cc-table-wrap">
-
-                <table class="cc-table">
-
-                    <thead>
-
-                        <tr>
-
-                            <th class="cc-col-serial">#</th>
-
-                            <th class="cc-col-code">Card Code</th>
-
-                            <th>Card Name</th>
-
-                            <th class="cc-col-charge">Charge %</th>
+                            <app-search-dropdown
+                                class="cc-entry-pos"
+                                label="POS Account"
+                                placeholder="Select POS Account"
+                                [items]="posAccountItems"
+                                [(value)]="entity.POSAccountId"
+                                (valueChange)="onPosAccountChange()"
+                                [disabled]="isPosLocked"
+                                [required]="true">
+                            </app-search-dropdown>
 
                             @if (!isViewMode)
                             {
-                                <th class="cc-col-action">Action</th>
-                            }
+                                <app-search-dropdown
+                                    label="Card"
+                                    placeholder="Select Card"
+                                    [items]="cardItems"
+                                    [(value)]="entryCardSetupId"
+                                    [disabled]="isSaving || !entity.POSAccountId"
+                                    [required]="true">
+                                </app-search-dropdown>
 
-                        </tr>
+                                <app-textbox
+                                    label="Charge %"
+                                    placeholder="e.g. 1.50"
+                                    [value]="entryChargeText"
+                                    (valueChange)="onChargeTextChange($event)"
+                                    [disabled]="isSaving || !entity.POSAccountId"
+                                    [required]="true">
+                                </app-textbox>
 
-                    </thead>
+                                <div class="cc-entry-actions">
 
+                                    <button
+                                        type="button"
+                                        class="cc-add"
+                                        [disabled]="isSaving || !entity.POSAccountId"
+                                        (click)="onAddLine()">
+                                        <i [class]="isEditingLine ? 'fas fa-check' : 'fas fa-plus'"></i>
+                                        <span>{{ isEditingLine ? 'Update' : 'Add' }}</span>
+                                    </button>
 
-                    @if (lines.length > 0)
-                    {
-                        <tbody>
-
-                            @for (line of lines; track line.CardSetupId; let i = $index)
-                            {
-                                <tr
-
-                                    [class.cc-row-editing]="i === editingIndex"
-
-                                    [class.cc-row-clickable]="!isViewMode && !isSaving"
-
-                                    (dblclick)="onRowDoubleClick(i)">
-
-                                    <td class="cc-col-serial">{{ i + 1 }}</td>
-
-                                    <td class="cc-col-code">{{ line.CardCode }}</td>
-
-                                    <td>{{ line.CardName }}</td>
-
-                                    <td class="cc-col-charge">{{ formatCharge(line.ChargePercent) }}</td>
-
-                                    @if (!isViewMode)
+                                    @if (isEditingLine)
                                     {
-                                        <td class="cc-col-action">
-
-                                            <button
-
-                                                type="button"
-
-                                                class="cc-icon-btn cc-icon-danger"
-
-                                                title="Remove"
-
-                                                [disabled]="isSaving"
-
-                                                (click)="removeLine(i, $event)">
-
-                                                <i class="fas fa-trash"></i>
-
-                                            </button>
-
-                                        </td>
+                                        <button
+                                            type="button"
+                                            class="cc-cancel"
+                                            title="Cancel editing"
+                                            [disabled]="isSaving"
+                                            (click)="cancelLineEdit()">
+                                            <i class="fas fa-xmark"></i>
+                                        </button>
                                     }
 
-                                </tr>
+                                </div>
                             }
 
-                        </tbody>
-                    }
+                        </div>
 
-                </table>
+                    </section>
 
+                    <!-- Lines -->
 
-                <!-- =============================================
-                     EMPTY STATE (shared component)
-                ============================================== -->
+                    <section class="ws-card cc-lines">
 
-                @if (lines.length === 0)
-                {
-                    <div class="cc-table-state">
+                        <header class="ws-card-head">
+                            <i class="fas fa-list-ul"></i>
+                            <span>Card Charges</span>
+                            @if (!isViewMode && lines.length > 0)
+                            {
+                                <small><i class="fas fa-computer-mouse"></i> Double-click a row to edit it</small>
+                            }
+                        </header>
 
-                        <app-empty-state
+                        <div class="cc-table-wrap appcore-scrollbar">
 
-                            [icon]="emptyIcon"
+                            <table class="cc-table">
 
-                            [title]="emptyTitle"
+                                <thead>
+                                    <tr>
+                                        <th class="cc-col-serial">#</th>
+                                        <th class="cc-col-code">Card Code</th>
+                                        <th>Card Name</th>
+                                        <th class="cc-col-charge">Charge %</th>
+                                        @if (!isViewMode)
+                                        {
+                                            <th class="cc-col-action">Action</th>
+                                        }
+                                    </tr>
+                                </thead>
 
-                            [subtitle]="emptySubtitle">
+                                @if (lines.length > 0)
+                                {
+                                    <tbody>
+                                        @for (line of lines; track line.CardSetupId; let i = $index)
+                                        {
+                                            <tr
+                                                [class.cc-row-editing]="i === editingIndex"
+                                                [class.cc-row-clickable]="!isViewMode && !isSaving"
+                                                (dblclick)="onRowDoubleClick(i)">
+                                                <td class="cc-col-serial">{{ i + 1 }}</td>
+                                                <td class="cc-col-code">{{ line.CardCode }}</td>
+                                                <td>{{ line.CardName }}</td>
+                                                <td class="cc-col-charge">{{ formatCharge(line.ChargePercent) }}</td>
+                                                @if (!isViewMode)
+                                                {
+                                                    <td class="cc-col-action">
+                                                        <button
+                                                            type="button"
+                                                            class="cc-icon-btn cc-icon-danger"
+                                                            title="Remove"
+                                                            [disabled]="isSaving"
+                                                            (click)="removeLine(i, $event)">
+                                                            <i class="fa-regular fa-trash-can"></i>
+                                                        </button>
+                                                    </td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                }
 
-                        </app-empty-state>
+                            </table>
 
-                    </div>
-                }
+                            @if (lines.length === 0)
+                            {
+                                <div class="cc-table-state">
+                                    <app-workspace-art
+                                        size="empty"
+                                        theme="card">
+                                    </app-workspace-art>
+                                    <b>{{ emptyTitle }}</b>
+                                    <span>{{ emptySubtitle }}</span>
+                                </div>
+                            }
+
+                        </div>
+
+                    </section>
+
+                </div>
 
             </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="pos"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!selectedPosAccountName">{{ selectedPosAccountName || 'Pick a POS terminal' }}</b>
+
+                        <div class="ws-chips">
+                            <span
+                                class="ws-chip"
+                                data-tone="info">{{ lines.length }} card{{ lines.length === 1 ? '' : 's' }}</span>
+                        </div>
+
+                    </div>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-credit-card"></i><span>Each card's charge is booked on every card sale through this terminal</span></li>
+                        <li><i class="fas fa-percent"></i><span>One charge per card; double-click a row to change it</span></li>
+                        <li><i class="fas fa-building-columns"></i><span>The terminal settles into its linked bank account</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
 
         </div>
 
@@ -355,10 +253,8 @@
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

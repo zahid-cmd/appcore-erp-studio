@@ -6,7 +6,9 @@
 
         subtitle="Collect through the Payment Desk : the membership turns Active; cancel or refund only while unused"
 
-        icon="fas fa-id-card">
+        icon="fas fa-id-card"
+
+        art="cash">
 
         <div pageHeaderCenter>
 
@@ -93,6 +95,12 @@
 
                 [columns]="columns"
 
+                emptyArt="cash"
+
+                emptyTitle="No fee collections yet"
+
+                emptySubtitle="Fees collected from members will appear here"
+
                 [rows]="pagedRows"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -132,26 +140,17 @@
     </app-page-canvas>
 
 
-    <div class="ics-summary">
+    <app-summary-line
 
-        <span class="ics-summary-item">
-            <span class="ics-summary-label">To collect</span>
-            <b class="ics-summary-value ics-bad">{{ countOf('To Collect') }} · {{ money(totalOf('To Collect')) }}</b>
-        </span>
+        [items]="summaryItems"
 
-        <span class="ics-summary-item">
-            <span class="ics-summary-label">Collected</span>
-            <b class="ics-summary-value ics-ok">{{ countOf('Paid') }} · {{ money(totalOf('Paid')) }}</b>
-        </span>
+        noun="collections"
 
-        <span class="ics-summary-item">
-            <span class="ics-summary-label">Refunded</span>
-            <b class="ics-summary-value">{{ countOf('Refunded') }} · {{ money(totalOf('Refunded')) }}</b>
-        </span>
+        art="cash"
 
-        <span class="ics-summary-note">Refunds go to the customer's ledger; cash out by a Payment Voucher</span>
+        note="Refunds go to the customer's ledger; cash out by a Payment Voucher">
 
-    </div>
+    </app-summary-line>
 
 
     @if (reasonRow)

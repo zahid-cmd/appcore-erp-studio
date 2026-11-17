@@ -52,6 +52,8 @@ import
     ProfitLoss,
     ProfitLossPrintRequest,
     buildBalanceSheetLines,
+    buildBalanceSheetNetAssets,
+    buildBalanceSheetTForm,
     buildBusinessLines,
     buildProfitLossLines,
     buildProfitLossTForm,
@@ -173,6 +175,8 @@ export interface BalanceSheetPrintData
     request:BalanceSheetPrintRequest;
     report:BalanceSheet;
     lines:FaLine[];
+    // T-form only
+    account:FaTAccount | null;
 }
 
 
@@ -216,6 +220,7 @@ table.fa-lines { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .fa-rule { border-left: 1px solid #dbe3ef; }
 .fa-code { margin-left: 1.2mm; font-size: 6.2pt; color: #94a3b8; white-space: nowrap; }
 .fa-pill { margin-left: 1.6mm; font-size: 6.2pt; font-weight: 700; color: #047857; }
+.fa-cap td { padding-top: 3mm; font-style: italic; font-weight: 800; color: #0b2a5b; border-bottom: 0; }
 .fa-sec td { background: #e9f0fb; font-weight: 800; color: #0b2a5b; text-transform: uppercase; letter-spacing: 0.4pt; font-size: 7.4pt; }
 .fa-l1 td { font-weight: 700; color: #0b2a5b; }
 .fa-l1 td:first-child { padding-left: 4mm; }
@@ -403,13 +408,16 @@ export function statementTable
 
     const amountText =
         (line: FaLine, value: number) =>
-            line.check
+            line.kind === 'caption'
+                ? ''
+                : line.check
                 ? (isZero(value) ? 'Balanced' : amountOf(kit, value, true))
                 : amountOf(kit, value, line.kind === 'section' || line.kind === 'result');
 
     const rowClass =
         (line: FaLine) =>
-            line.kind === 'section' ? 'fa-sec'
+            line.kind === 'caption' ? 'fa-cap'
+            : line.kind === 'section' ? 'fa-sec'
             : line.kind === 'result' ? `fa-res ${line.tone ?? ''}`
             : line.kind === 'extra' ? (line.level === 5 ? 'fa-extra fa-detail' : 'fa-extra')
             : `fa-l${line.level}`;
@@ -434,8 +442,8 @@ export function statementTable
                     const cmp =
                         compare
                             ? `<td class="fa-r fa-rule">${e(amountText(line, line.compare))}</td>`
-                              + `<td class="fa-r fa-rule${toneClass}">${line.check ? '' : e(amountOf(kit, faChange(line.amount, line.compare), false))}</td>`
-                              + `<td class="fa-r${toneClass}">${line.check ? '' : e(faPct(faChangePct(line.amount, line.compare)))}</td>`
+                              + `<td class="fa-r fa-rule${toneClass}">${line.check || line.kind === 'caption' ? '' : e(amountOf(kit, faChange(line.amount, line.compare), false))}</td>`
+                              + `<td class="fa-r${toneClass}">${line.check || line.kind === 'caption' ? '' : e(faPct(faChangePct(line.amount, line.compare)))}</td>`
                             : '';
 
                     return `<tr class="${rowClass(line)}"><td>${name}</td><td class="fa-r fa-rule">${e(amountText(line, line.amount))}</td>${cmp}</tr>`;
@@ -488,6 +496,11 @@ export function statementSheetRows
     (
         line =>
         {
+            if (line.kind === 'caption')
+            {
+                return [{ v:line.name, s:'bold' }];
+            }
+
             const strong =
                 line.kind === 'section' || line.kind === 'result';
 
@@ -624,9 +637,14 @@ export const PROFIT_LOSS_PRINT:
             key:'profit-loss',
             title:'Profit & Loss',
             icon:'fas fa-chart-line',
+            // Signature lines : only on the printed copy, a switch in the viewer (2026-11-16)
+            toggles:
+            [
+                { key:'signatures', label:'Signature lines', on:false }
+            ],
             render:
                 (data: ProfitLossPrintData, kit: PrintKit) =>
-                    profitLossHtml(data, kit, !!kit.landscape),
+                    withSignatures(profitLossHtml(data, kit, !!kit.landscape), kit),
             css:
                 FINAL_ACCOUNTS_PRINT_CSS,
             excel:
@@ -750,7 +768,10 @@ function tAccountHtml
     period:
         string,
     showCodes:
-        boolean
+        boolean,
+    // "for <period>" (Profit & Loss) / "as on <date>" (Balance Sheet)
+    phrase:
+        string = 'for'
 ):
     string
 {
@@ -783,12 +804,12 @@ function tAccountHtml
             .join('');
 
     return `<div class="fa-t">
-<div class="fa-t-title">${e(account.title)} for ${e(period)}</div>
+<div class="fa-t-title">${e(account.title)} ${e(phrase)} ${e(period)}</div>
 <table class="pv-split fa-lines">
   <colgroup><col><col style="width:27mm"><col><col style="width:27mm"></colgroup>
-  <thead><tr><th>Dr · Particulars</th><th class="fa-r">Amount</th><th class="fa-cr">Cr · Particulars</th><th class="fa-r">Amount</th></tr></thead>
+  <thead><tr><th>${e(account.drTitle ?? 'Dr · Particulars')}</th><th class="fa-r">Amount</th><th class="fa-cr">${e(account.crTitle ?? 'Cr · Particulars')}</th><th class="fa-r">Amount</th></tr></thead>
   <tbody>${rows}</tbody>
-  <tfoot><tr class="fa-tot"><td class="fa-r">Total</td><td class="fa-r">${e(amountOf(kit, account.total, true))}</td><td class="fa-r fa-cr">Total</td><td class="fa-r">${e(amountOf(kit, account.total, true))}</td></tr></tfoot>
+  <tfoot><tr class="fa-tot"><td class="fa-r">Total</td><td class="fa-r">${e(amountOf(kit, account.drTotal ?? account.total, true))}</td><td class="fa-r fa-cr">Total</td><td class="fa-r">${e(amountOf(kit, account.total, true))}</td></tr></tfoot>
 </table>
 </div>`;
 }
@@ -941,17 +962,26 @@ export const BALANCE_SHEET_PRINT:
                     )
             );
 
+        const options =
+        {
+            level:request.level,
+            showZero:request.showZero,
+            search:request.search ?? ''
+        };
+
         return {
             request,
             report,
+            // Net assets view, else the vertical lines (also the
+            // Excel sheet of the T-form)
             lines:
-                buildBalanceSheetLines(
-                    report,
-                    {
-                        level:request.level,
-                        showZero:request.showZero,
-                        search:request.search ?? ''
-                    })
+                request.layout === 'net-assets'
+                    ? buildBalanceSheetNetAssets(report, options)
+                    : buildBalanceSheetLines(report, options),
+            account:
+                request.layout === 'tform'
+                    ? buildBalanceSheetTForm(report, options)
+                    : null
         };
     },
 
@@ -977,9 +1007,14 @@ export const BALANCE_SHEET_PRINT:
             key:'balance-sheet',
             title:'Balance Sheet',
             icon:'fas fa-building-columns',
+            // Signature lines : only on the printed copy, a switch in the viewer (2026-11-16)
+            toggles:
+            [
+                { key:'signatures', label:'Signature lines', on:false }
+            ],
             render:
                 (data: BalanceSheetPrintData, kit: PrintKit) =>
-                    balanceSheetHtml(data, kit, !!kit.landscape),
+                    withSignatures(balanceSheetHtml(data, kit, !!kit.landscape), kit),
             css:
                 FINAL_ACCOUNTS_PRINT_CSS,
             excel:
@@ -1023,6 +1058,11 @@ function balanceSheetHtml
             ? ''
             : `${kit.money(Math.abs(r.PriorYearsResult))} ${r.PriorYearsResult < 0 ? 'profit' : 'loss'}`;
 
+    const layoutName =
+        data.request.layout === 'net-assets' ? 'Net assets'
+        : data.request.layout === 'tform' ? 'T-form'
+        : 'Vertical';
+
     const header =
         head(
             kit,
@@ -1032,6 +1072,7 @@ function balanceSheetHtml
             r.BranchName,
             [
                 ['Branch', r.BranchName],
+                ['Layout', layoutName],
                 ['Down to', levelLabel(data.request.level)],
                 ['Compared with', compare ? `${r.CompareLabel} (${kit.date(r.CompareAsOn)})` : ''],
                 ['Profit for the year from', r.YearStart ? kit.date(r.YearStart) : ''],
@@ -1052,7 +1093,10 @@ ${header}
 </div>
 <div class="pv-body">
 ${band}
-${statementTable(kit, data.lines, compare, ['As on', asOn], [r.CompareLabel, compare ? kit.date(r.CompareAsOn) : ''], data.request.showCodes !== false, landscape)}
+${data.account
+    ? tAccountHtml(kit, data.account, asOn, data.request.showCodes !== false, 'as on')
+      + (compare ? '<div class="fa-fine">The comparison shows in the vertical and net assets layouts.</div>' : '')
+    : statementTable(kit, data.lines, compare, ['As on', asOn], [r.CompareLabel, compare ? kit.date(r.CompareAsOn) : ''], data.request.showCodes !== false, landscape)}
 ${prior ? `<div class="fa-fine">${e(r.RetainedEarningsName || 'Retained Earnings')} includes the result of the earlier financial years : ${e(prior)}.</div>` : ''}
 ${r.Message ? `<div class="fa-fine">${e(r.Message)}</div>` : ''}
 ${data.request.search ? '<div class="fa-fine">Only the ledgers matching the search are listed; the section totals and the check are of the whole statement.</div>' : ''}
@@ -1102,4 +1146,30 @@ function balanceSheetSheet
             ...statementSheetRows(data.lines, compare)
         ]
     };
+}
+
+
+//===============================================================
+// Prepared / Checked / Approved lines when the viewer's
+// "Signature lines" switch is on : inside the end block, so they
+// sit at the bottom of the last page (never on a page of their own)
+//===============================================================
+
+function withSignatures
+(
+    html:
+        string,
+    kit:
+        PrintKit
+):
+    string
+{
+    if (!kit.toggles?.['signatures'])
+    {
+        return html;
+    }
+
+    return html.replace(
+        '<div class="pv-end">',
+        '<div class="pv-end">' + kit.signatures(['Prepared by', 'Checked by', 'Approved by']));
 }

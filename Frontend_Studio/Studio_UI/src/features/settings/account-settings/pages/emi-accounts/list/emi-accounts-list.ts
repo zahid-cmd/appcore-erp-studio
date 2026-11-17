@@ -104,6 +104,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -198,6 +204,8 @@ type EmiAccountRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -428,35 +436,36 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
             header:'EMI Code',
             field:'EmiAccountCode',
-            width:'170px',
+            width:'140px',
             align:'center'
         },
         {
             header:'EMI Account Name',
             field:'EmiAccountName',
-            width:'300px',
+            width:'240px',
             align:'left'
         },
         {
             header:'Platform',
             field:'Platform',
-            width:'90px',
+            width:'110px',
             align:'center'
         },
         {
             header:'Linked Bank Account',
             field:'LinkedBankAccountName',
-            width:'280px',
+            width:'210px',
             align:'left'
         },
         {
@@ -468,21 +477,21 @@ implements OnInit, OnDestroy
         {
             header:'Branch',
             field:'Branch',
-            width:'140px',
+            width:'170px',
             align:'left'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'100px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];

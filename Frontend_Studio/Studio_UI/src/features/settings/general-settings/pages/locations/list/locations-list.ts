@@ -106,6 +106,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -188,6 +194,8 @@ from '../../../services/locations.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -460,55 +468,64 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
+        // (# 56, codes 130, names 200-240, Status 130, Actions 140)
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
+
         {
             header:'Location Code',
             field:'LocationCode',
             width:'130px',
             align:'center'
         },
+
         {
             header:'Location Name',
             field:'LocationName',
-            width:'220px',
+            width:'200px',
             align:'left'
         },
+
         {
             header:'District',
             field:'District',
             width:'160px',
             align:'left'
         },
+
         {
             header:'Division',
             field:'Division',
-            width:'150px',
+            width:'160px',
             align:'left'
         },
+
         {
             header:'Postal Code',
             field:'PostalCode',
-            width:'110px',
+            width:'120px',
             align:'center'
         },
+
         {
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'100px',
+            width:'130px',
             align:'center'
         },
+
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];

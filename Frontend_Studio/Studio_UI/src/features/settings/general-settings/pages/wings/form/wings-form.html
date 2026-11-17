@@ -1,256 +1,180 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-layer-group"
-
+        art="wings"
         [title]="pageTitle"
-
-        subtitle="Manage wings">
+        subtitle="A group of branches under the company, e.g. Sales, Service, Accessories">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
 
-            [columns]="4">
+            <!-- ================= LEFT : the fields ================= -->
 
+            <div class="ws-steps">
 
+                <div class="ws-step">
 
-            <!-- =============================================
-                 SECTION 01
-                 COMPANY
-            ============================================== -->
+                    <section class="ws-card">
 
-            <app-form-section
+                        <header class="ws-card-head">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Wing</span>
+                            <small>The company is fixed once saved</small>
+                        </header>
 
-                title="Company"
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Wing Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.WingCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-                icon="fas fa-building">
+                            <app-textbox
+                                class="ws-span-2"
+                                label="Wing Name"
+                                placeholder="e.g. Sales"
+                                [(value)]="entity.WingName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
 
+                            <app-dropdown
+                                class="ws-full"
+                                label="Company"
+                                [items]="companyItems"
+                                [(value)]="entity.CompanyId"
+                                (valueChange)="onCompanyChange($event)"
+                                [disabled]="isEditMode || isViewMode"
+                                [required]="true">
+                            </app-dropdown>
 
+                        </div>
 
-                <!-- Company (locked after creation) -->
+                    </section>
 
-                <app-dropdown
+                    <section class="ws-card ws-notes">
 
-                    label="Company"
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
 
-                    [items]="companyItems"
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-note-pad>
 
-                    [(value)]="entity.CompanyId"
+                    </section>
 
-                    (valueChange)="onCompanyChange($event)"
+                </div>
 
-                    [disabled]="isEditMode || isViewMode"
+            </div>
 
-                    [required]="true">
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                </app-dropdown>
+            <aside class="ws-panel">
 
+                <div class="ws-hero">
 
-            </app-form-section>
+                    <app-workspace-art theme="wings"></app-workspace-art>
 
+                    <div class="ws-identity">
 
+                        <b [class.ws-new]="!entity.WingName">{{ entity.WingName || 'New wing' }}</b>
 
-            <!-- =============================================
-                 SECTION 02
-                 WING INFORMATION
-            ============================================== -->
+                        <div class="ws-chips">
 
-            <app-form-section
+                            @if (entity.WingCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.WingCode }}</span>
+                            }
 
-                title="Wing Information"
+                        </div>
 
-                icon="fas fa-layer-group">
+                    </div>
 
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
 
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-code-branch"></i><span>Every branch belongs to one wing</span></li>
+                        <li><i class="fas fa-chart-column"></i><span>Reports can be grouped and totalled by wing</span></li>
+                    </ul>
 
-                <!-- Wing Code -->
+                </div>
 
-                <app-textbox
+            </aside>
 
-                    label="Wing Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.WingCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-
-                <!-- Wing Name -->
-
-                <app-textbox
-
-                    label="Wing Name"
-
-                    placeholder="Enter wing name"
-
-                    [(value)]="entity.WingName"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 STATUS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status"
-
-                icon="fas fa-toggle-on">
-
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 CONFIGURATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Configuration"
-
-                icon="fas fa-sliders">
-
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-
-            </app-form-section>
-
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

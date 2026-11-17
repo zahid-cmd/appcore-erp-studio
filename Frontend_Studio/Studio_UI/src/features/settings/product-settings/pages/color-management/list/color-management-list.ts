@@ -120,6 +120,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -209,6 +215,8 @@ from '../../../services/color-management.service';
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -468,6 +476,7 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
 
@@ -475,7 +484,7 @@ implements OnInit, OnDestroy
 
             type:'serial',
 
-            width:'80px',
+            width:'56px',
 
             align:'center'
         },
@@ -485,7 +494,7 @@ implements OnInit, OnDestroy
 
             field:'ColorCode',
 
-            width:'280px',
+            width:'140px',
 
             align:'center'
         },
@@ -494,6 +503,7 @@ implements OnInit, OnDestroy
             header:'Color Name',
 
             field:'ColorName',
+            width:'210px',
 
             align:'left'
         },
@@ -503,7 +513,7 @@ implements OnInit, OnDestroy
 
             field:'Status',
 
-            width:'200px',
+            width:'130px',
 
             type:'status',
 
@@ -517,7 +527,7 @@ implements OnInit, OnDestroy
 
             type:'actions',
 
-            width:'150px',
+            width:'140px',
 
             align:'center'
         }

@@ -130,6 +130,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -251,6 +257,8 @@ from '../../../../../../shared/components/controls/search-dropdown/search-dropdo
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -581,6 +589,7 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
 
@@ -588,7 +597,7 @@ implements OnInit, OnDestroy
 
             type:'serial',
 
-            width:'70px',
+            width:'56px',
 
             align:'center'
         },
@@ -599,7 +608,7 @@ implements OnInit, OnDestroy
 
             field:'ProductCode',
 
-            width:'170px',
+            width:'140px',
 
             align:'center'
         },
@@ -608,6 +617,7 @@ implements OnInit, OnDestroy
             header:'Product Name',
 
             field:'ProductName',
+            width:'210px',
 
             align:'left'
         },
@@ -617,7 +627,7 @@ implements OnInit, OnDestroy
 
             field:'CategoryName',
 
-            width:'200px',
+            width:'180px',
 
             align:'left'
         },
@@ -627,7 +637,7 @@ implements OnInit, OnDestroy
 
             field:'SubCategoryName',
 
-            width:'260px',
+            width:'180px',
 
             align:'left'
         },
@@ -642,7 +652,7 @@ implements OnInit, OnDestroy
 
             sortable:false,
 
-            width:'140px',
+            width:'130px',
 
             align:'left'
         },
@@ -652,7 +662,7 @@ implements OnInit, OnDestroy
 
             field:'ReorderLevel',
 
-            width:'110px',
+            width:'90px',
 
             align:'center'
         },

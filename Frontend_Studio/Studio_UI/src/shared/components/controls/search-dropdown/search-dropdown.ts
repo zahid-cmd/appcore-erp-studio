@@ -127,6 +127,19 @@ export class SearchDropdownComponent
     swatchField =
         '';
 
+    // Two-line rows (2026-11-16) : the option's code field. Empty =
+    // read it from labels written as "CODE - Name" (SUB-002-002-001 -
+    // Cash In Hand); the name is shown on top, the code under it
+    @Input()
+    codeField =
+        '';
+
+    // The list may be wider than the box so long names fit
+    @Input()
+    panelMinWidth:
+        number =
+        340;
+
     /* =====================================================
        OUTPUT
     ====================================================== */
@@ -161,8 +174,18 @@ export class SearchDropdownComponent
 
         return this.items.filter(item =>
 
-            String(
-                item[this.labelField]
+            (
+                String(
+                    item[this.labelField] ?? ''
+                )
+                +
+                ' '
+                +
+                (
+                    this.codeField
+                        ? String(item[this.codeField] ?? '')
+                        : ''
+                )
             )
             .toLowerCase()
             .includes(keyword)
@@ -231,6 +254,126 @@ export class SearchDropdownComponent
         return selected
             ? selected[this.labelField]
             : '';
+    }
+
+    /* =====================================================
+       NAME AND CODE (two-line rows)
+    ====================================================== */
+
+    // "SUB-002-002-001 - Cash In Hand" : a code (letters, then
+    // one or more -parts) , " - ", the name
+    private static readonly codeLabel =
+        /^([A-Z]{2,6}(?:-[A-Z0-9]+)+)\s+[-\u2013]\s+(.+)$/;
+
+    // Same object for the same label, so the rows are not rebuilt
+    // on every change detection
+    private partsCache =
+        new Map<string, { name:string; code:string }>();
+
+    parts
+    (
+        option:any
+    ):
+        { name:string; code:string }
+    {
+        const label =
+            String(option?.[this.labelField] ?? '');
+
+        const explicit =
+            this.codeField
+                ? String(option?.[this.codeField] ?? '').trim()
+                : '';
+
+        const key =
+            explicit + '\u0001' + label;
+
+        let result =
+            this.partsCache.get(key);
+
+        if (result)
+        {
+            return result;
+        }
+
+        if (explicit)
+        {
+            // The label may still start with the code : drop it
+            const name =
+                label.startsWith(explicit)
+                    ? label.slice(explicit.length).replace(/^\s*[-\u2013]\s*/, '')
+                    : label;
+
+            result =
+                { name: name || label, code: explicit };
+        }
+        else
+        {
+            const match =
+                SearchDropdownComponent.codeLabel.exec(label);
+
+            result =
+                match
+                    ? { name: match[2].trim(), code: match[1] }
+                    : { name: label, code: '' };
+        }
+
+        if (this.partsCache.size > 2000)
+        {
+            this.partsCache.clear();
+        }
+
+        this.partsCache.set(key, result);
+
+        return result;
+    }
+
+    // The closed box shows the name only (the full label is its
+    // tooltip)
+    get selectedName(): string
+    {
+        const label =
+            this.selectedLabel;
+
+        if (!label)
+        {
+            return '';
+        }
+
+        const selected =
+            this.items.find(
+                option =>
+                    option[this.valueField] == this.value
+            );
+
+        return selected
+            ? this.parts(selected).name
+            : label;
+    }
+
+    get selectedTitle(): string | null
+    {
+        const label =
+            this.selectedLabel;
+
+        if (!label)
+        {
+            return null;
+        }
+
+        const selected =
+            this.items.find(
+                option =>
+                    option[this.valueField] == this.value
+            );
+
+        const code =
+            selected
+                ? this.parts(selected).code
+                : '';
+
+        return code && !String(label).includes(code)
+            ? code + ' - ' + label
+            : String(label);
     }
 
     /* =====================================================

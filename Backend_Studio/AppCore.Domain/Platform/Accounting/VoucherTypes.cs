@@ -117,6 +117,44 @@ public static class VoucherTypes
 
     public const string SalesReturnAccessories = "SRAC";
 
+    // Workshop (Service Operations) : parts issued to a job card
+    // (journal Dr Workshop WIP / Cr inventory) and parts returned
+    // to the store (the reverse); posted under their own numbers.
+    // Also the DocumentType of their stock movements and
+    // allocations.
+    public const string WorkshopPartsIssue = "WPI";
+
+    public const string WorkshopPartsReturn = "WPR";
+
+    // Workshop : the service invoice of a job card (its journal
+    // and its VAT register rows) and the settlement of a free
+    // service claim by the brand.
+    public const string ServiceInvoice = "SVI";
+
+    public const string FreeServiceClaim = "FSC";
+
+    // Workshop : service estimates (numbers only, never posted;
+    // the versions of one estimate keep its number)
+    public const string ServiceEstimate = "EST";
+
+    // Workshop : job cards, parts requisitions, service returns
+    // and the free service claims sent to a brand (numbers only;
+    // the settlement of a claim is the FSC voucher above)
+    // (owner 2026-11-18 : the job card number is JOB-..., the same
+    // format as an invoice number)
+    public const string JobCard = "JOB";
+
+    public const string PartsRequisition = "PRQ";
+
+    public const string ServiceReturn = "SVR";
+
+    public const string FreeServiceClaimNo = "FCL";
+
+    // Workshop : a part bought from a local vendor for one job
+    // card, no stock (journal Dr Workshop WIP / Cr the vendor);
+    // posted under its own number
+    public const string WorkshopOutsourcedPart = "WOP";
+
 
     public static readonly string[] All =
     {
@@ -151,7 +189,17 @@ public static class VoucherTypes
         QuotationAccessories,
         SalesReturnMotorBikes,
         SalesReturnSpareParts,
-        SalesReturnAccessories
+        SalesReturnAccessories,
+        WorkshopPartsIssue,
+        WorkshopPartsReturn,
+        ServiceInvoice,
+        FreeServiceClaim,
+        ServiceEstimate,
+        JobCard,
+        PartsRequisition,
+        ServiceReturn,
+        FreeServiceClaimNo,
+        WorkshopOutsourcedPart
     };
 
 

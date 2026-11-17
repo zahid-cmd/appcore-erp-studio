@@ -7,7 +7,8 @@
     <app-page-header
         [title]="pageTitle"
         subtitle="Pricing &amp; Labels : DP, MRP and commission per model; one current price card per supplier"
-        icon="fas fa-motorcycle">
+        icon="fas fa-motorcycle"
+        art="bike">
 
         <div pageHeaderCenter>
 
@@ -73,6 +74,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="bike"
+                emptyTitle="No motor bike pricing yet"
+                emptySubtitle="Set prices for each model to start selling"
                 [rows]="pagedRows"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -105,43 +109,12 @@
 
     @if (summaryCount('All') > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryCount('All')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">In Force</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryCount('InForce')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Draft</span>
-                <b class="ics-summary-value">{{ summaryText(summaryCount('Draft')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Posted</span>
-                <b class="ics-summary-value">{{ summaryText(summaryCount('Posted')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Superseded</span>
-                <b class="ics-summary-value">{{ summaryText(summaryCount('Superseded')) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Cancelled</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryCount('Cancelled')) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                One current price card per supplier : a new card replaces the whole set from its Effective From
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="price cards"
+            art="bike"
+            note="One current price card per supplier : a new card replaces the whole set from its Effective From">
+        </app-summary-line>
     }
 
     <!-- =====================================================

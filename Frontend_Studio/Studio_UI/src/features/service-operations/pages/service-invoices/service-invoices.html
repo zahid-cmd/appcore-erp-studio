@@ -1,0 +1,619 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            title="Service Invoices"
+            subtitle="The bill of a job card : labour, the parts issued to it, outside work, VAT and its collection"
+            icon="fas fa-file-invoice">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search invoice, job card, customer, mobile..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="listActions"
+                    [rowActions]="rowActions"
+                    (rowAction)="onRowAction($event)"
+                    (view)="view($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Service Invoice History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="Posted at once with its collection; a wrong invoice is reversed with a Service Return"
+            icon="fas fa-file-invoice">
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Post"
+                    command1Icon="fas fa-floppy-disk"
+                    command1Permission="add"
+                    (command1Click)="onSave()"
+                    [command1Visible]="canEdit"
+                    command2Text="Print"
+                    command2Icon="fas fa-print"
+                    (command2Click)="print()"
+                    [command2Visible]="mode === 'view' && !!doc"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split jc-split appcore-scrollbar">
+
+                <!-- ============ LEFT : the invoice, its totals, its collection ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i class="fas fa-file-invoice"></i>
+                        <span>Service Invoice</span>
+
+                        @if (mode === 'view' && doc)
+                        {
+                            <span
+                                class="jc-status"
+                                [style.background]="statusColor">{{ doc.Status }}</span>
+                        }
+                    </header>
+
+                    <div class="jc-two">
+
+                        <app-textbox
+                            label="Invoice No"
+                            [value]="mode === 'view' ? (doc?.InvoiceNo ?? '') : 'Given when it is posted'"
+                            [disabled]="true">
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [disabled]="mode !== 'add'"
+                            [value]="$any(asDate(invoiceDate))"
+                            (valueChange)="onDate($event)">
+                        </app-datepicker>
+
+                    </div>
+
+                    @if (mode === 'add')
+                    {
+                        <app-search-dropdown
+                            label="Job Card"
+                            placeholder="Select the job card (Work Done or Ready)"
+                            [items]="jobCardItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="jobCardPublicId || null"
+                            [required]="true"
+                            (valueChange)="onJobCard($event)">
+                        </app-search-dropdown>
+                    }
+
+                    @if (doc)
+                    {
+                        <div class="jc-two">
+
+                            <app-textbox
+                                label="Job Card"
+                                [value]="doc.JobCardNo + '  (' + doc.JobType + ')'"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Service Center"
+                                [value]="doc.BranchName"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Customer"
+                                [value]="doc.CustomerName"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Mobile"
+                                [value]="doc.Mobile"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Model"
+                                [value]="doc.ModelName"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Bike"
+                                [value]="doc.RegistrationNo || doc.ChassisNo"
+                                [disabled]="true">
+                            </app-textbox>
+
+                        </div>
+
+                        <div class="jc-two">
+
+                            <app-textbox
+                                label="Discount"
+                                placeholder="0.00"
+                                [value]="discount"
+                                [maxLength]="12"
+                                [disabled]="!canEdit"
+                                (valueChange)="onDiscount($event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Remarks"
+                                placeholder="Optional"
+                                [value]="remarks"
+                                [maxLength]="500"
+                                [disabled]="!canEdit"
+                                (valueChange)="onRemarks($event)">
+                            </app-textbox>
+
+                        </div>
+
+                        <!-- the totals -->
+
+                        <div class="si-sum">
+                            <span>Labour</span><b>{{ money(doc.LabourTotal) }}</b>
+                            <span>Parts</span><b>{{ money(doc.PartsTotal) }}</b>
+                            <span>Outside work</span><b>{{ money(doc.OutsideTotal) }}</b>
+                            <span>VAT{{ pricing ? '  (calculating...)' : '' }}</span><b>{{ money(doc.VatTotal) }}</b>
+                            <span>Discount</span><b>{{ money(doc.Discount) }}</b>
+                            <span class="si-grand">Invoice total</span><b class="si-grand">{{ money(grandTotal) }}</b>
+                            <span>Collected</span><b>{{ money(paid) }}</b>
+                            <span [class.si-due]="due > 0">Due</span><b [class.si-due]="due > 0">{{ money(due) }}</b>
+                        </div>
+
+                        @for (text of blockers; track $index)
+                        {
+                            <span class="si-warn si-block"><i class="fas fa-circle-xmark"></i> {{ text }}</span>
+                        }
+
+                        @for (text of notes; track $index)
+                        {
+                            <span class="si-warn"><i class="fas fa-triangle-exclamation"></i> {{ text }}</span>
+                        }
+
+                        <!-- the collection -->
+
+                        @if (mode === 'add')
+                        {
+                            <header class="pf-card-head si-subhead">
+                                <i class="fas fa-hand-holding-dollar"></i>
+                                <span>Collection</span>
+                            </header>
+
+                            @for (pay of payments; track pay.key)
+                            {
+                                <div class="si-pay">
+
+                                    <app-search-dropdown
+                                        placeholder="Mode"
+                                        [items]="modeItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="pay.Mode"
+                                        (valueChange)="onPayMode(pay, $event)">
+                                    </app-search-dropdown>
+
+                                    <app-search-dropdown
+                                        [placeholder]="'The ' + pay.Mode + ' account'"
+                                        [items]="ledgerItems(pay.Mode)"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="pay.LedgerCode || null"
+                                        (valueChange)="onPayLedger(pay, $event)">
+                                    </app-search-dropdown>
+
+                                    <input
+                                        class="hp-input si-num"
+                                        inputmode="decimal"
+                                        maxlength="12"
+                                        placeholder="Amount"
+                                        [value]="pay.Amount"
+                                        (input)="onPay(pay, 'Amount', $event)">
+
+                                    <button
+                                        type="button"
+                                        class="jc-x"
+                                        title="Remove"
+                                        (click)="removePayment(pay)">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+
+                                    @if (pay.Mode === 'MFS')
+                                    {
+                                        <input
+                                            class="hp-input si-ref"
+                                            maxlength="100"
+                                            placeholder="Transaction ID"
+                                            [value]="pay.TransactionRef"
+                                            (input)="onPay(pay, 'TransactionRef', $event)">
+                                    }
+
+                                </div>
+                            }
+
+                            <div class="jc-buttons si-buttons">
+
+                                <button
+                                    type="button"
+                                    class="hp-add"
+                                    (click)="addPayment()">
+                                    <i class="fas fa-plus"></i>
+                                    Another collection line
+                                </button>
+
+                            </div>
+
+                            <label class="pf-switch">
+                                <input
+                                    type="checkbox"
+                                    [checked]="deliver"
+                                    (change)="onDeliver($event)">
+                                <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                                <span class="pf-switch-text">
+                                    <b>Deliver the bike now</b>
+                                    <small>The job card becomes Delivered with the invoice. Off : it stays Invoiced and the bike is delivered later from the invoice</small>
+                                </span>
+                            </label>
+
+                            @if (due > 0 && lookups && !(lookups.AllowCredit && lookups.CanCredit))
+                            {
+                                <span class="si-warn si-block"><i class="fas fa-circle-xmark"></i> {{ lookups.AllowCredit ? 'A due needs a user with the page action Credit Sale.' : 'Credit on service invoices is off : the invoice is collected in full.' }}</span>
+                            }
+                        }
+                        @else
+                        {
+                            @if (doc.Payments.length > 0)
+                            {
+                                <header class="pf-card-head si-subhead">
+                                    <i class="fas fa-hand-holding-dollar"></i>
+                                    <span>Collection  {{ doc.ReceiptVoucherNo }}</span>
+                                </header>
+
+                                <div class="si-sum">
+                                    @for (pay of doc.Payments; track $index)
+                                    {
+                                        <span>{{ pay.Mode }} : {{ pay.LedgerName || pay.LedgerCode }}{{ pay.TransactionRef ? '  (' + pay.TransactionRef + ')' : '' }}</span><b>{{ money(pay.Amount) }}</b>
+                                    }
+                                </div>
+                            }
+
+                            <div class="jc-two">
+
+                                <app-textbox
+                                    label="Bike"
+                                    [value]="doc.IsDelivered ? 'Delivered ' + dateTime(doc.DeliveredAt) : 'Not delivered yet'"
+                                    [disabled]="true">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Service Return"
+                                    [value]="doc.ReturnNo || '-'"
+                                    [disabled]="true">
+                                </app-textbox>
+
+                            </div>
+
+                            <div class="jc-buttons si-buttons">
+
+                                @if (doc.CanDeliver)
+                                {
+                                    <button
+                                        type="button"
+                                        class="hp-add"
+                                        [disabled]="isSaving"
+                                        (click)="deliverBike()">
+                                        <i class="fas fa-motorcycle"></i>
+                                        Deliver the bike
+                                    </button>
+                                }
+
+                                @if (doc.CanReturn)
+                                {
+                                    <button
+                                        type="button"
+                                        class="hp-add hp-danger"
+                                        (click)="returnInvoice()">
+                                        <i class="fas fa-rotate-left"></i>
+                                        Service return
+                                    </button>
+                                }
+
+                            </div>
+                        }
+                    }
+
+                    <span class="hp-note">Parts are billed as they were issued to the job card (Parts Issues less Parts Returns), at the price on the job card. A free service posts what the brand pays back to its claim ledger (Free Service Claims).</span>
+
+                </section>
+
+                <!-- ============ RIGHT : the lines ============ -->
+
+                <section class="pf-card jc-work">
+
+                    <header class="pf-card-head jc-head">
+
+                        <span class="si-title">
+                            <i class="fas fa-list"></i>
+                            Invoice Lines
+                        </span>
+
+                        <span class="jc-total">
+                            <small>Total</small>
+                            <b>{{ money(grandTotal) }}</b>
+                        </span>
+
+                    </header>
+
+                    @if (!doc)
+                    {
+                        <div class="pfx-empty">{{ pricing ? 'Reading the job card...' : 'Choose the job card : its labour and its issued parts come here.' }}</div>
+                    }
+                    @else
+                    {
+                        <div class="si-row jc-cols">
+                            <span></span>
+                            <span>Item</span>
+                            <span class="jc-right">Qty</span>
+                            <span class="jc-right">Rate</span>
+                            <span class="jc-right">Amount</span>
+                            <span class="jc-right">VAT</span>
+                            <span class="jc-right">Total</span>
+                        </div>
+
+                        <div class="si-group">Labour</div>
+
+                        @for (line of serviceLines; track $index; let i = $index)
+                        {
+                            <div class="si-row jc-item">
+                                <span class="jc-no">{{ i + 1 }}</span>
+                                <span class="jc-name">
+                                    <b>{{ line.ItemName }}</b>
+                                    <small>{{ line.IsFree ? 'Free' + (line.ClaimAmount > 0 ? ' : the brand pays back ' + money(line.ClaimAmount) : '') : line.ItemCode }}</small>
+                                </span>
+                                <span class="jc-amount">{{ line.Quantity }}</span>
+                                <span class="jc-amount">{{ money(line.Rate) }}</span>
+                                <span class="jc-amount">{{ money(line.Amount) }}</span>
+                                <span class="jc-amount">{{ line.VatAmount ? money(line.VatAmount) : '' }}</span>
+                                <span class="jc-amount">{{ money(line.Total) }}</span>
+                            </div>
+                        }
+                        @empty
+                        {
+                            <div class="pfx-empty si-none">No labour on the job card.</div>
+                        }
+
+                        <div class="si-group">Parts issued to the job</div>
+
+                        @for (line of partLines; track $index; let i = $index)
+                        {
+                            <div class="si-row jc-item">
+                                <span class="jc-no">{{ i + 1 }}</span>
+                                <span class="jc-name">
+                                    <b>{{ line.ItemName }}</b>
+                                    <small>{{ line.ItemCode }}</small>
+                                </span>
+                                <span class="jc-amount">{{ line.Quantity }}</span>
+                                <span class="jc-amount">{{ money(line.Rate) }}</span>
+                                <span class="jc-amount">{{ money(line.Amount) }}</span>
+                                <span class="jc-amount">{{ line.VatAmount ? money(line.VatAmount) : '' }}</span>
+                                <span class="jc-amount">{{ money(line.Total) }}</span>
+                            </div>
+                        }
+                        @empty
+                        {
+                            <div class="pfx-empty si-none">No parts were issued to the job card.</div>
+                        }
+
+                        <div class="si-group">Outside work</div>
+
+                        @if (mode === 'add')
+                        {
+                            @for (line of outsideOfCard; track $index; let i = $index)
+                            {
+                                <div class="si-row jc-item">
+                                    <span class="jc-no">{{ i + 1 }}</span>
+                                    <span class="jc-name">
+                                        <b>{{ line.ItemName }}</b>
+                                        <small>{{ line.ItemCode }}  |  {{ line.Note }}{{ line.Cost ? '  |  vendor ' + money(line.Cost) : '' }}  |  from the job card</small>
+                                    </span>
+                                    <span class="jc-amount">{{ line.Quantity }}</span>
+                                    <span class="jc-amount">{{ money(line.Rate) }}</span>
+                                    <span class="jc-amount">{{ money(line.Amount) }}</span>
+                                    <span class="jc-amount">{{ line.VatAmount ? money(line.VatAmount) : '' }}</span>
+                                    <span class="jc-amount">{{ money(line.Total) }}</span>
+                                </div>
+                            }
+
+                            @if (outside.length > 0)
+                            {
+                                <div class="si-out jc-cols">
+                                    <span></span>
+                                    <span>Work</span>
+                                    <span>Vendor</span>
+                                    <span class="jc-right">Vendor's charge</span>
+                                    <span class="jc-right">Billed</span>
+                                    <span></span>
+                                </div>
+                            }
+
+                            @for (line of outside; track line.key; let i = $index)
+                            {
+                                <div class="si-out jc-item">
+
+                                    <span class="jc-no">{{ i + 1 }}</span>
+
+                                    <input
+                                        class="hp-input jc-text"
+                                        maxlength="200"
+                                        placeholder="What was done outside"
+                                        [value]="line.ItemName"
+                                        (input)="onOutside(line, 'ItemName', $event)">
+
+                                    <input
+                                        class="hp-input jc-text"
+                                        maxlength="200"
+                                        placeholder="Who did it"
+                                        [value]="line.Note"
+                                        (input)="onOutside(line, 'Note', $event)">
+
+                                    <input
+                                        class="hp-input si-num"
+                                        inputmode="decimal"
+                                        maxlength="12"
+                                        [value]="line.Cost"
+                                        (input)="onOutside(line, 'Cost', $event)">
+
+                                    <input
+                                        class="hp-input si-num"
+                                        inputmode="decimal"
+                                        maxlength="12"
+                                        [value]="line.Amount"
+                                        (input)="onOutside(line, 'Amount', $event)">
+
+                                    <button
+                                        type="button"
+                                        class="jc-x"
+                                        title="Remove"
+                                        (click)="removeOutside(line)">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+
+                                </div>
+                            }
+
+                            <div class="jc-buttons si-buttons">
+
+                                <button
+                                    type="button"
+                                    class="hp-add"
+                                    (click)="addOutside()">
+                                    <i class="fas fa-plus"></i>
+                                    Outside work
+                                </button>
+
+                            </div>
+                        }
+                        @else
+                        {
+                            @for (line of outsideSaved; track $index; let i = $index)
+                            {
+                                <div class="si-row jc-item">
+                                    <span class="jc-no">{{ i + 1 }}</span>
+                                    <span class="jc-name">
+                                        <b>{{ line.ItemName }}</b>
+                                        <small>{{ line.Note }}{{ line.Cost ? '  |  vendor ' + money(line.Cost) : '' }}</small>
+                                    </span>
+                                    <span class="jc-amount">{{ line.Quantity }}</span>
+                                    <span class="jc-amount">{{ money(line.Rate) }}</span>
+                                    <span class="jc-amount">{{ money(line.Amount) }}</span>
+                                    <span class="jc-amount">{{ line.VatAmount ? money(line.VatAmount) : '' }}</span>
+                                    <span class="jc-amount">{{ money(line.Total) }}</span>
+                                </div>
+                            }
+                            @empty
+                            {
+                                <div class="pfx-empty si-none">No outside work.</div>
+                            }
+                        }
+                    }
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

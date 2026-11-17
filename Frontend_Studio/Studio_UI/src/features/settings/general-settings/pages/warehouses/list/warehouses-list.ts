@@ -117,6 +117,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -235,6 +241,8 @@ extends Warehouses
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -557,99 +565,71 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
+        // (# 56, codes 130, names 200-240, Status 130, Actions 140)
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'50px',
-
+            width:'56px',
             align:'center'
         },
 
         {
-            header:'Company',
-
-            field:'CompanyName',
-
-            width:'220px',
-
-            align:'left'
-        },
-
-        {
             header:'Warehouse Code',
-
             field:'WarehouseCode',
-
-            width:'180px',
-
+            width:'140px',
             align:'center'
         },
 
         {
             header:'Warehouse Name',
-
             field:'WarehouseName',
-
-            width:'220px',
-
+            width:'200px',
             align:'left'
         },
 
         {
             header:'Display Name',
-
             field:'DisplayName',
-
             width:'220px',
+            align:'left'
+        },
 
+        {
+            header:'Company',
+            field:'CompanyName',
+            width:'190px',
             align:'left'
         },
 
         {
             header:'Mobile',
-
             field:'Mobile',
-
             width:'150px',
-
             align:'center'
         },
 
         {
             header:'Default',
-
             field:'DefaultStatus',
-
-            width:'100px',
-
+            width:'110px',
             align:'center'
         },
 
         {
             header:'Status',
-
             field:'IsActive',
-
-            width:'120px',
-
-            align:'center',
-
-            type:'status'
+            type:'status',
+            width:'130px',
+            align:'center'
         },
 
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'150px',
-
+            width:'140px',
             align:'center'
         }
     ];

@@ -100,6 +100,12 @@ import
 }
 from '../../../../../../shared/components/layout/list-table/list-table';
 
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
 
 import
 {
@@ -185,6 +191,9 @@ from '../../../services/department.service';
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -359,6 +368,7 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every list
         {
             header:'#',
 
@@ -366,7 +376,7 @@ implements OnInit
 
             type:'serial',
 
-            width:'50px',
+            width:'56px',
 
             align:'center'
         },
@@ -376,7 +386,7 @@ implements OnInit
 
             field:'DepartmentCode',
 
-            width:'100px',
+            width:'140px',
 
             align:'center'
         },
@@ -386,7 +396,7 @@ implements OnInit
 
             field:'DepartmentName',
 
-            width:'320px',
+            width:'210px',
 
             align:'left'
         },
@@ -396,9 +406,19 @@ implements OnInit
 
             field:'DepartmentShortName',
 
+            width:'150px',
+
+            align:'left'
+        },
+
+        {
+            header:'Wing',
+
+            field:'WingName',
+
             width:'160px',
 
-            align:'center'
+            align:'left'
         },
 
         {
@@ -406,7 +426,7 @@ implements OnInit
 
             field:'IsActive',
 
-            width:'110px',
+            width:'130px',
 
             align:'center',
 
@@ -420,7 +440,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'120px',
+            width:'140px',
 
             align:'center'
         }
@@ -492,6 +512,20 @@ implements OnInit
             item?.DepartmentShortName
             ??
             item?.departmentShortName
+            ??
+            '',
+
+        WingId:
+            item?.WingId
+            ??
+            item?.wingId
+            ??
+            null,
+
+        WingName:
+            item?.WingName
+            ??
+            item?.wingName
             ??
             '',
 
@@ -1434,5 +1468,34 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const key = String(this.summaryText(this.summaryTotal)) + '|' + String(this.summaryText(this.summaryActive)) + '|' + String(this.summaryText(this.summaryTotal - this.summaryActive));
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:this.summaryText(this.summaryTotal), tone:'' },
+                    { label:'Active', value:this.summaryText(this.summaryActive), tone:'ok' },
+                    { label:'Inactive', value:this.summaryText(this.summaryTotal - this.summaryActive), tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

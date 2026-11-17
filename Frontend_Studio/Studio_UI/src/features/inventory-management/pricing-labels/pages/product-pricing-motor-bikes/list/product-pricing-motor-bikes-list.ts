@@ -77,6 +77,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -182,6 +188,8 @@ type PriceCardRow =
         PaginationComponent,
         ToastComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -308,15 +316,16 @@ export class ProductPricingMotorBikesList
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Card No', field:'CardNo', width:'190px', align:'left', sortable:true, flagField:'InForce', flagText:'In Force', flagTitleField:'InForceTitle' },
-        { header:'Supplier', field:'SupplierName', align:'left', sortable:true },
-        { header:'Effective From', field:'FromText', width:'130px', align:'center', sortable:true },
-        { header:'Effective To', field:'ToText', width:'130px', align:'center', sortable:true },
-        { header:'Models', field:'ProductCount', width:'90px', align:'right', sortable:true },
-        { header:'Reference', field:'Reference', width:'170px', align:'left', sortable:true },
-        { header:'Status', field:'Status', type:'status', width:'120px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'150px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Card No', field:'CardNo', width:'160px', align:'left', sortable:true, flagField:'InForce', flagText:'In Force', flagTitleField:'InForceTitle' },
+        { header:'Supplier', field:'SupplierName', width:'160px', align:'left', sortable:true },
+        { header:'Effective From', field:'FromText', width:'160px', align:'left', sortable:true },
+        { header:'Effective To', field:'ToText', width:'160px', align:'left', sortable:true },
+        { header:'Models', field:'ProductCount', width:'160px', align:'left', sortable:true },
+        { header:'Reference', field:'Reference', width:'160px', align:'left', sortable:true },
+        { header:'Status', field:'Status', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     //===========================================================
@@ -757,6 +766,47 @@ export class ProductPricingMotorBikesList
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryCount('All'))),
+            String(this.summaryText(this.summaryCount('InForce'))),
+            String(this.summaryText(this.summaryCount('Draft'))),
+            String(this.summaryText(this.summaryCount('Posted'))),
+            String(this.summaryText(this.summaryCount('Superseded'))),
+            String(this.summaryText(this.summaryCount('Cancelled')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'In Force', value:v[1], tone:'ok' },
+                    { label:'Draft', value:v[2], tone:'' },
+                    { label:'Posted', value:v[3], tone:'' },
+                    { label:'Superseded', value:v[4], tone:'' },
+                    { label:'Cancelled', value:v[5], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }
 

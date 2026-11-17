@@ -1,0 +1,492 @@
+<div class="app-list-page">
+
+    <app-page-header
+        title="Workshop Configuration"
+        subtitle="Bays, technicians, the check-in checklist, observations, diagnoses and the rules of a job card"
+        icon="fas fa-screwdriver-wrench">
+
+        <div pageHeaderCenter>
+            @if (isList)
+            {
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search code, name..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+            }
+        </div>
+
+        <div pageHeaderRight>
+            <app-command-center
+                command1Text="Save"
+                command1Icon="fas fa-floppy-disk"
+                command1Permission="add"
+                (command1Click)="onSave()"
+                command2Text="Refresh"
+                command2Icon="fas fa-rotate-right"
+                (command2Click)="onRefresh()"
+                rightCommandIcon="fas fa-clock-rotate-left"
+                rightCommandTitle="Activity history"
+                (rightCommandClick)="openHistory()">
+            </app-command-center>
+        </div>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <app-control-tabs
+            pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="tab"
+            (selectedTabChange)="onTab($event)">
+        </app-control-tabs>
+
+    </app-page-toolbar>
+
+    @if (isList)
+    {
+        <div
+            class="wc-layout"
+            [class.wc-layout-wide]="tab === 'diagnoses'">
+
+            <!-- ============ LEFT : the rows ============ -->
+
+            <app-page-canvas
+                [config]="canvasConfig">
+
+                <div canvasBody>
+                    <app-list-table
+                        [columns]="columns"
+                        [rows]="rows"
+                        [serialOffset]="(currentPage - 1) * pageSize"
+                        [loading]="loading"
+                        [error]="loadFailed"
+                        [actions]="rowActions"
+                        (edit)="edit($event)"
+                        (delete)="delete($event)"
+                        (sortChange)="onSort($event)">
+                    </app-list-table>
+                </div>
+
+                <app-pagination
+                    canvasFooter
+                    [totalRecords]="totalRecords"
+                    [currentPage]="currentPage"
+                    [pageSize]="pageSize"
+                    (pageChange)="onPageChange($event)"
+                    (pageSizeChange)="onPageSizeChange($event)">
+                </app-pagination>
+
+            </app-page-canvas>
+
+            <!-- ============ RIGHT : one row ============ -->
+
+            <section
+                class="pf-card wc-form"
+                [class.wc-form-wide]="tab === 'diagnoses'">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-pen-to-square"></i>
+                    <span>{{ formTitle }}</span>
+                </header>
+
+                @if (!isBayAdd)
+                {
+                    <app-textbox
+                        class="wc-f-code"
+                        label="Code"
+                        [value]="codeText"
+                        [disabled]="true">
+                    </app-textbox>
+                }
+
+                @if (isBayAdd)
+                {
+                    <app-textbox
+                        label="Number of Bays"
+                        placeholder="e.g. 4"
+                        inputMode="numeric"
+                        [value]="bayCount"
+                        [maxLength]="2"
+                        [required]="true"
+                        (valueChange)="onText('bayCount', $event)">
+                    </app-textbox>
+                }
+                @else if (tab === 'technicians')
+                {
+                    <app-search-dropdown
+                        label="Employee"
+                        placeholder="Select employee"
+                        [items]="employeeItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="employeeId || null"
+                        [required]="true"
+                        [disabled]="!!editId"
+                        (valueChange)="onEmployee($event)">
+                    </app-search-dropdown>
+                }
+                @else
+                {
+                    <app-textbox
+                        class="wc-f-name"
+                        [label]="nameLabel"
+                        [placeholder]="namePlaceholder"
+                        [value]="name"
+                        [maxLength]="150"
+                        [required]="true"
+                        (valueChange)="onText('name', $event)">
+                    </app-textbox>
+                }
+
+                @if (tab === 'bays' || tab === 'technicians')
+                {
+                    <app-search-dropdown
+                        label="Service Center"
+                        placeholder="Select service center"
+                        [items]="branches"
+                        labelField="Name"
+                        valueField="Id"
+                        [value]="branchId || null"
+                        [required]="true"
+                        (valueChange)="onBranch($event)">
+                    </app-search-dropdown>
+                }
+
+                @if (tab === 'technicians')
+                {
+                    <app-textbox
+                        label="Skill"
+                        placeholder="e.g. Engine, Electrical"
+                        [value]="skill"
+                        [maxLength]="150"
+                        (valueChange)="onText('skill', $event)">
+                    </app-textbox>
+                }
+
+                @if (tab === 'checklist')
+                {
+                    <app-textbox
+                        label="Order"
+                        placeholder="1, 2, 3..."
+                        inputMode="numeric"
+                        [value]="sortOrder"
+                        [maxLength]="4"
+                        (valueChange)="onText('sortOrder', $event)">
+                    </app-textbox>
+                }
+
+                @if (tab === 'outsideworks')
+                {
+                    <app-textbox
+                        label="Usual Charge"
+                        placeholder="What the customer usually pays"
+                        inputMode="decimal"
+                        [value]="rate"
+                        [maxLength]="12"
+                        (valueChange)="onText('rate', $event)">
+                    </app-textbox>
+                }
+
+                @if (tab === 'diagnoses')
+                {
+                    <app-search-dropdown
+                        class="wc-f-observation"
+                        label="For Observation"
+                        placeholder="Any observation"
+                        [items]="observationItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="observationId"
+                        (valueChange)="onObservation($event)">
+                    </app-search-dropdown>
+
+                    <app-search-dropdown
+                        class="wc-f-labour"
+                        label="Suggest Labour"
+                        placeholder="Add from the service charts"
+                        [items]="suggestServiceItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="suggestServicePick"
+                        (valueChange)="onSuggestService($event)">
+                    </app-search-dropdown>
+
+                    <app-search-dropdown
+                        class="wc-f-part"
+                        label="Suggest Part"
+                        placeholder="Add a spare part or accessory"
+                        [items]="suggestPartItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="suggestPartPick"
+                        (valueChange)="onSuggestPart($event)">
+                    </app-search-dropdown>
+
+                    @if (items.length > 0)
+                    {
+                        <div class="wc-items appcore-scrollbar">
+
+                            @for (item of items; track item.LineType + item.ItemKind + item.ItemId)
+                            {
+                                <div class="wc-item">
+
+                                    <span [class]="item.LineType === 'Part' ? 'wc-item-type wc-item-part' : 'wc-item-type'">{{ item.LineType === 'Part' ? 'Part' : 'Labour' }}</span>
+
+                                    <span
+                                        class="wc-item-name"
+                                        [title]="item.ItemCode + '  ' + item.ItemName">{{ item.ItemName }}</span>
+
+                                    @if (item.LineType === 'Part')
+                                    {
+                                        <input
+                                            class="wc-item-qty"
+                                            inputmode="decimal"
+                                            maxlength="6"
+                                            title="Quantity"
+                                            [value]="item.Quantity"
+                                            (input)="onItemQuantity(item, $event)">
+                                    }
+
+                                    <button
+                                        type="button"
+                                        class="wc-item-x"
+                                        title="Remove"
+                                        (click)="removeItem(item)">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+
+                                </div>
+                            }
+
+                        </div>
+                    }
+                }
+
+                <app-textbox
+                    class="wc-f-remarks"
+                    label="Remarks"
+                    placeholder="Optional"
+                    [value]="remarks"
+                    [maxLength]="500"
+                    (valueChange)="onText('remarks', $event)">
+                </app-textbox>
+
+                @if (isBayAdd)
+                {
+                    <app-textbox
+                        label="Bay Code (auto)"
+                        [value]="bayCodeSample"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <app-textbox
+                        label="Bay Name (auto)"
+                        placeholder="Choose the service center"
+                        [value]="bayNameSample"
+                        [disabled]="true">
+                    </app-textbox>
+
+                    <span class="hp-note wc-preview">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        {{ bayPreview }} All or nothing : if one bay fails, none is created.
+                    </span>
+                }
+
+                @if (!isBayAdd)
+                {
+                    <label class="pf-switch wc-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="isActive"
+                            (change)="onActive($event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Active</b>
+                            <small>{{ activeNote }}</small>
+                        </span>
+                    </label>
+                }
+
+                @if (tab === 'observations')
+                {
+                    <label class="pf-switch wc-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="isDefault"
+                            [disabled]="!isActive"
+                            (change)="onDefault($event)">
+                        <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                        <span class="pf-switch-text">
+                            <b>Default</b>
+                            <small>One only : a new job card and a new estimate start with it. Saving this one takes it from the other.</small>
+                        </span>
+                    </label>
+                }
+
+                <div class="wc-buttons">
+
+                    <button
+                        type="button"
+                        class="wc-btn wc-primary"
+                        [disabled]="isSaving"
+                        (click)="onAdd()">
+                        <i [class]="editId ? 'fas fa-check' : 'fas fa-plus'"></i>
+                        {{ editId ? 'Apply' : 'Add' }}
+                    </button>
+
+                    @if (editId)
+                    {
+                        <button
+                            type="button"
+                            class="wc-btn"
+                            (click)="clearForm()">
+                            <i class="fas fa-xmark"></i>
+                            Cancel
+                        </button>
+                    }
+
+                </div>
+
+                <span class="hp-note">{{ hasPending ? 'The list shows the rows waiting to be saved. Save writes them; Refresh drops them.' : 'Add puts the row on the list. Nothing is written until Save.' }}</span>
+
+            </section>
+
+        </div>
+    }
+    @else
+    {
+        <div class="wc-layout">
+
+            <section class="pf-card wc-form">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-toggle-on"></i>
+                    <span>Job Card Rules</span>
+                </header>
+
+                <!-- the switches, side by side -->
+
+                <div class="wc-switch-grid">
+
+                <label class="pf-switch wc-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="requireKm"
+                        (change)="onSwitch('requireKm', $event)">
+                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                    <span class="pf-switch-text">
+                        <b>KM reading is required</b>
+                        <small>A job card cannot be saved without the KM reading of the bike</small>
+                    </span>
+                </label>
+
+                <label class="pf-switch wc-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="requireChecklist"
+                        (change)="onSwitch('requireChecklist', $event)">
+                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                    <span class="pf-switch-text">
+                        <b>Check-in checklist is required</b>
+                        <small>Work cannot start until every checklist item of the job card is marked</small>
+                    </span>
+                </label>
+
+                <label class="pf-switch wc-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="requireEstimate"
+                        (change)="onSwitch('requireEstimate', $event)">
+                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                    <span class="pf-switch-text">
+                        <b>Estimate Driven Job Card</b>
+                        <small>On : a job card is made only from a service estimate (Create Job Card on the estimate), and work starts when the customer approved it. Free Service, Warranty, Rework and Internal jobs need no estimate. Off : job cards are made freely, an estimate is optional</small>
+                    </span>
+                </label>
+
+                <label class="pf-switch wc-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="issueWithoutRequisition"
+                        (change)="onSwitch('issueWithoutRequisition', $event)">
+                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                    <span class="pf-switch-text">
+                        <b>Issue without requisition</b>
+                        <small>Parts can be issued to a job card directly. Off : every parts issue needs a parts requisition</small>
+                    </span>
+                </label>
+
+                <label class="pf-switch wc-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="allowCreditInvoice"
+                        (change)="onSwitch('allowCreditInvoice', $event)">
+                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                    <span class="pf-switch-text">
+                        <b>Credit on service invoices</b>
+                        <small>A service invoice can be posted with a due, by a user with the page action Credit Sale. Off : every service invoice is collected in full</small>
+                    </span>
+                </label>
+
+                <label class="pf-switch wc-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="diagnosisSuggests"
+                        (change)="onSwitch('diagnosisSuggests', $event)">
+                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                    <span class="pf-switch-text">
+                        <b>A diagnosis puts its labour and parts on the estimate</b>
+                        <small>Picking a diagnosis on a service estimate adds the labour and the parts the diagnosis suggests (tab Diagnoses). They can still be changed or removed there. Off : the diagnosis is only written on the estimate</small>
+                    </span>
+                </label>
+
+                </div>
+
+                <app-search-dropdown
+                    label="Estimate Charge"
+                    placeholder="Select the service that is the Estimate Charge"
+                    [items]="chargeItems"
+                    labelField="label"
+                    valueField="value"
+                    [value]="estimateChargeServiceId"
+                    (valueChange)="onEstimateCharge($event)">
+                </app-search-dropdown>
+
+                <span class="hp-note">The charge of a service estimate : a customized service (Service Setup > Customized Services) with its rate and its income ledger. It is collected on the estimate when the customer does not take the service; when the estimate becomes a job card, a collected charge comes off the service invoice. An estimate is printed only when the charge was collected or a job card was made from it.</span>
+
+            </section>
+
+            <section class="pf-card wc-form">
+
+                <header class="pf-card-head">
+                    <i class="fas fa-circle-info"></i>
+                    <span>About the Workshop Setup</span>
+                </header>
+
+                <ul class="hp-list">
+                    <li>A bay is a work place of a service center; a job card can name the bay where the bike is worked on.</li>
+                    <li>A technician is an employee of a department under the Service Center wing (Human Resource Setup &gt; Department &gt; Wing). One technician can work on more than one job card; every start and stop is time stamped.</li>
+                    <li>The checklist items are copied to every new job card, in their order.</li>
+                    <li>An observation is a problem of a bike (seen, or told by the customer); a diagnosis is what was found. Both are picked on a service estimate and go to the job card as its complaints. Users with the page action Add Observation (Service Estimates) can add new ones from the estimate.</li>
+                    <li>More rules (estimate required, parts issue without requisition) come with their pages.</li>
+                </ul>
+
+            </section>
+
+        </div>
+    }
+
+    <app-history-drawer
+        [opened]="historyOpened"
+        title="Workshop Configuration History"
+        [items]="historyItems"
+        (closed)="closeHistory()">
+    </app-history-drawer>
+
+    <app-toast></app-toast>
+    <app-confirm-dialog></app-confirm-dialog>
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

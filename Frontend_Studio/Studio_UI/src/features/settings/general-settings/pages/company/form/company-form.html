@@ -1,472 +1,372 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-building"
-
+        art="company"
         [title]="pageTitle"
-
-        subtitle="Manage companies">
+        subtitle="The business : its name, registration and contact, shown on every print">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <!-- the form is split over three screens : no scrolling -->
+        <app-step-nav
+            pageToolbarRight
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-15 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            @if (loading)
+            {
+                <div class="ws-loading">
+                    <app-orbit-loader></app-orbit-loader>
+                    <span>Loading the company...</span>
+                </div>
+            }
+            @else
+            {
+                <!-- ================= LEFT : the fields ================= -->
+
+                <!-- the three steps share one place : as tall as the tallest -->
+                <div class="ws-steps">
+
+                    <div
+                        class="ws-step"
+                        [class.ws-step-off]="selectedTab !== 'company'">
+
+                    <!-- Company -->
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-building"></i>
+                            <span>Company</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+
+                            <app-textbox
+                                label="Company Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.CompanyCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="ws-span-2"
+                                label="Company Name"
+                                placeholder="The registered name"
+                                [(value)]="entity.CompanyName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Short Name"
+                                placeholder="For prints and lists"
+                                [(value)]="entity.CompanyShortName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+
+                            <app-textbox
+                                class="ws-span-2"
+                                label="Ownership Type"
+                                placeholder="As on the BIN certificate"
+                                [(value)]="entity.OwnershipType"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="ws-full"
+                                label="Economic Activity"
+                                placeholder="As on the BIN certificate (e.g. Sale and service of motorcycles)"
+                                [(value)]="entity.EconomicActivity"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+
+                        </div>
+
+                    </section>
+
+                    <!-- Registration -->
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-stamp"></i>
+                            <span>Registration</span>
+                            <small>Printed on VAT forms and invoices</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+
+                            <app-textbox
+                                label="BIN No."
+                                placeholder="VAT registration"
+                                [(value)]="entity.BINNo"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="TIN No."
+                                placeholder="Tax identification"
+                                [(value)]="entity.TINNo"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Trade License No."
+                                placeholder="Trade license"
+                                [(value)]="entity.TradeLicenseNo"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    </div>
+
+                    <div
+                        class="ws-step"
+                        [class.ws-step-off]="selectedTab !== 'contact'">
+
+                    <!-- Contact -->
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-address-card"></i>
+                            <span>Contact</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+
+                            <app-textbox
+                                label="Phone"
+                                placeholder="Land phone"
+                                [(value)]="entity.Phone"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Mobile"
+                                placeholder="01XXXXXXXXX"
+                                [(value)]="entity.Mobile"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
 
-            [columns]="4">
+                            <app-textbox
+                                label="Email"
+                                placeholder="info@company.com"
+                                [(value)]="entity.Email"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
 
+                            <app-textbox
+                                label="Website"
+                                placeholder="www.company.com"
+                                [(value)]="entity.Website"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
 
+                            <app-textbox
+                                label="Address Line 1"
+                                placeholder="House, road, area"
+                                [(value)]="entity.AddressLine1"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
 
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
+                            <app-textbox
+                                label="Address Line 2"
+                                placeholder="City, post code"
+                                [(value)]="entity.AddressLine2"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-textbox>
 
-            <app-form-section
+                        </div>
 
-                title="Basic Information"
+                    </section>
 
-                icon="fas fa-building">
+                    </div>
 
+                    <div
+                        class="ws-step"
+                        [class.ws-step-off]="selectedTab !== 'brand'">
 
+                    <div class="ws-pair cf-brand">
 
-                <!-- Company Code -->
+                        <!-- Logo -->
 
-                <app-textbox
+                        <section class="ws-card">
 
-                    label="Company Code"
+                            <header class="ws-card-head">
+                                <i class="fas fa-image"></i>
+                                <span>Logo</span>
+                            </header>
 
-                    placeholder="Auto generated"
+                            <app-logo-studio
+                                [imageUrl]="companyLogoPreviewUrl"
+                                [name]="entity.CompanyName"
+                                [disabled]="isViewMode"
+                                [busy]="logoUploading"
+                                (imageChange)="onCompanyLogoChange($event)">
+                            </app-logo-studio>
 
-                    [(value)]="entity.CompanyCode"
+                        </section>
 
-                    [readonly]="true"
+                        <!-- Remarks : half the height (owner 2026-11-15) -->
 
-                    [required]="true">
+                        <div class="cf-half">
 
-                </app-textbox>
+                            <section class="ws-card cf-remarks">
 
+                                <header class="ws-card-head">
+                                    <i class="fas fa-note-sticky"></i>
+                                    <span>Remarks</span>
+                                </header>
 
+                                <app-note-pad
+                                    placeholder="Anything to remember about the company"
+                                    note="Only for your team, never printed"
+                                    [maxLength]="500"
+                                    [(value)]="entity.Remarks"
+                                    (valueChange)="onValueChange()"
+                                    [disabled]="isViewMode">
+                                </app-note-pad>
 
-                <!-- Company Name -->
+                            </section>
 
-                <app-textbox
+                        </div>
 
-                    label="Company Name"
+                    </div>
 
-                    placeholder="Enter company name"
+                    </div>
 
-                    [(value)]="entity.CompanyName"
+                </div>
 
-                    (valueChange)="onValueChange()"
+                <!-- ================= RIGHT : the workspace ================= -->
 
-                    [disabled]="isViewMode"
+                <aside class="ws-panel">
 
-                    [required]="true">
+                    <div class="ws-hero">
 
-                </app-textbox>
+                        <app-workspace-art theme="company"></app-workspace-art>
 
+                        <div class="ws-identity">
 
+                            <b [class.ws-new]="!entity.CompanyName">{{ entity.CompanyName || 'New company' }}</b>
 
-                <!-- Short Name -->
+                            <div class="ws-chips">
 
-                <app-textbox
+                                @if (entity.CompanyCode)
+                                {
+                                    <span
+                                        class="ws-chip"
+                                        data-tone="info">{{ entity.CompanyCode }}</span>
+                                }
 
-                    label="Short Name"
+                                @if (entity.CompanyShortName)
+                                {
+                                    <span class="ws-chip">{{ entity.CompanyShortName }}</span>
+                                }
 
-                    placeholder="Enter short name"
 
-                    [(value)]="entity.CompanyShortName"
+                            </div>
 
-                    (valueChange)="onValueChange()"
+                        </div>
 
-                    [disabled]="isViewMode">
+                        <app-toggle-switch
+                            label="Status"
+                            onText="Active"
+                            offText="Inactive"
+                            [(value)]="entity.IsActive"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode">
+                        </app-toggle-switch>
 
-                </app-textbox>
+                        <ul class="ws-uses">
+                            <li><i class="fas fa-file-invoice"></i><span>Name, address and BIN head every invoice, voucher and report</span></li>
+                            <li><i class="fas fa-stamp"></i><span>BIN and TIN go on the VAT forms (Mushak)</span></li>
+                            <li><i class="fas fa-image"></i><span>The logo is printed on documents</span></li>
+                        </ul>
 
+                    </div>
 
+                </aside>
+            }
 
-                <!-- Website -->
-
-                <app-textbox
-
-                    label="Website"
-
-                    placeholder="Enter website"
-
-                    [(value)]="entity.Website"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Email -->
-
-                <app-textbox
-
-                    label="Email"
-
-                    placeholder="Enter email address"
-
-                    [(value)]="entity.Email"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 ADDRESS & CONTACT
-            ============================================== -->
-
-            <app-form-section
-
-                title="Address & Contact"
-
-                icon="fas fa-address-card">
-
-
-
-                <!-- Address Line 1 -->
-
-                <app-textbox
-
-                    label="Address Line 1"
-
-                    placeholder="Enter address line 1"
-
-                    [(value)]="entity.AddressLine1"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Address Line 2 -->
-
-                <app-textbox
-
-                    label="Address Line 2"
-
-                    placeholder="Enter address line 2"
-
-                    [(value)]="entity.AddressLine2"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Phone -->
-
-                <app-textbox
-
-                    label="Phone"
-
-                    placeholder="Enter phone number"
-
-                    [(value)]="entity.Phone"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Mobile -->
-
-                <app-textbox
-
-                    label="Mobile"
-
-                    placeholder="Enter mobile number"
-
-                    [(value)]="entity.Mobile"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Economic Activity -->
-
-                <app-textbox
-
-                    label="Economic Activity"
-
-                    placeholder="Enter economic activity"
-
-                    [(value)]="entity.EconomicActivity"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 BUSINESS INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Business Information"
-
-                icon="fas fa-briefcase">
-
-
-
-                <!-- BIN No. -->
-
-                <app-textbox
-
-                    label="BIN No."
-
-                    placeholder="Enter BIN number"
-
-                    [(value)]="entity.BINNo"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Ownership Type -->
-
-                <app-textbox
-
-                    label="Ownership Type"
-
-                    placeholder="Enter ownership type"
-
-                    [(value)]="entity.OwnershipType"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- TIN No. -->
-
-                <app-textbox
-
-                    label="TIN No."
-
-                    placeholder="Enter TIN number"
-
-                    [(value)]="entity.TINNo"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Trade License No. -->
-
-                <app-textbox
-
-                    label="Trade License No."
-
-                    placeholder="Enter trade license number"
-
-                    [(value)]="entity.TradeLicenseNo"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textbox>
-
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 CONFIGURATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Configuration"
-
-                icon="fas fa-sliders">
-
-
-
-                <!-- =========================================
-                     Company Logo
-                ========================================== -->
-
-                <app-image-hub
-
-                    [imageUrl]="companyLogoPreviewUrl"
-
-                    placeholder="No Company Logo"
-
-                    [disabled]="isViewMode"
-
-                    [readonly]="isViewMode"
-
-                    (imageChange)="onCompanyLogoChange($event)">
-
-                </app-image-hub>
-
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode">
-
-                </app-textarea>
-
-
-            </app-form-section>
-
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

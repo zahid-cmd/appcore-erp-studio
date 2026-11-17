@@ -1,0 +1,236 @@
+/* Service Reports and the Workshop Dashboard : the filter strip of
+   the toolbar, the totals line, the dashboard tiles */
+
+.sr-filters
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sr-label
+{
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sr-date
+{
+    width: 150px;
+}
+
+.sr-branch
+{
+    width: 230px;
+}
+
+.sr-totals
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #0f2a44;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.sr-cut
+{
+    color: #b45309;
+    font-size: 12px;
+}
+
+/* ---------- Workshop Dashboard ---------- */
+
+.wd-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    overflow: auto;
+}
+
+.wd-tiles
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+}
+
+.wd-tile
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1px solid #dbe3f0;
+    border-left-width: 4px;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.wd-tile small
+{
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.wd-tile b
+{
+    color: #0f2a44;
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+}
+
+.wd-tile span
+{
+    color: #64748b;
+    font-size: 11.5px;
+}
+
+.wd-blue { border-left-color: #2563eb; }
+.wd-green { border-left-color: #16a34a; }
+.wd-amber { border-left-color: #d97706; }
+.wd-red { border-left-color: #dc2626; }
+.wd-slate { border-left-color: #94a3b8; }
+
+.wd-strip
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wd-chip
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid #dbe3f0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #0f2a44;
+    font-size: 12.5px;
+}
+
+.wd-chip i
+{
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.wd-chip b
+{
+    font-variant-numeric: tabular-nums;
+}
+
+.wd-chip.wd-on
+{
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+.wd-card
+{
+    border: 1px solid #dbe3f0;
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.wd-card > header
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #0f2a44;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.wd-row
+{
+    display: grid;
+    grid-template-columns: 105px minmax(150px, 1.2fr) minmax(130px, 1fr) 130px 120px 150px 150px minmax(140px, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    font-size: 12.5px;
+}
+
+.wd-row.wd-head
+{
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.wd-row.wd-job
+{
+    cursor: pointer;
+}
+
+.wd-row.wd-job:hover
+{
+    background: #f7faff;
+}
+
+.wd-row small
+{
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.wd-late
+{
+    color: #b91c1c;
+    font-weight: 800;
+}
+
+.wd-status
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.wd-status i
+{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.wd-empty
+{
+    padding: 22px 14px;
+    color: #64748b;
+    font-size: 12.5px;
+    text-align: center;
+}
+
+.wd-bays
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    padding: 12px 14px;
+}

@@ -104,6 +104,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -215,6 +221,8 @@ type RuleRow =
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
@@ -472,16 +480,17 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Code', field:'VatCode', width:'100px', align:'center' },
-        { header:'VAT Type', field:'VatType', width:'150px', align:'left' },
-        { header:'VAT %', field:'RateText', width:'90px', align:'right' },
-        { header:'Input Credit Allowed', field:'FlagText', width:'200px', align:'center' },
-        { header:'Effective From', field:'EffectiveFromText', width:'120px', align:'center' },
-        { header:'Valid To', field:'ValidToText', width:'120px', align:'center' },
-        { header:'VAT Current Account', field:'LedgerText', align:'left' },
-        { header:'Status', field:'StatusText', type:'status', width:'150px', align:'center' },
-        { header:'Actions', field:'actions', type:'actions', width:'150px', align:'center', cellAlign:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Code', field:'VatCode', width:'140px', align:'center' },
+        { header:'VAT Type', field:'VatType', width:'160px', align:'left' },
+        { header:'VAT %', field:'RateText', width:'160px', align:'left' },
+        { header:'Input Credit Allowed', field:'FlagText', width:'160px', align:'left' },
+        { header:'Effective From', field:'EffectiveFromText', width:'160px', align:'left' },
+        { header:'Valid To', field:'ValidToText', width:'160px', align:'left' },
+        { header:'VAT Current Account', field:'LedgerText', width:'160px', align:'left' },
+        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center' },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center', cellAlign:'center' }
     ];
 
 
@@ -1668,5 +1677,40 @@ implements OnInit, OnDestroy
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.summaryActive)),
+            String(this.summaryText(this.summaryTotal - this.summaryActive))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Active', value:v[1], tone:'ok' },
+                    { label:'Inactive', value:v[2], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

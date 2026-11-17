@@ -85,6 +85,14 @@ public class FinalAccountsRowDto
 
     public bool IsRetainedEarnings { get; set; }
 
+    // Balance Sheet : the ledger's Account Group is non-current
+    // (asset / liability only; Account Group setting)
+    public bool IsNonCurrent { get; set; }
+
+    // The setting : MB / SP / AC / SV / "" (the ledger's own, else the
+    // one of its Account Class)
+    public string BusinessLine { get; set; } = string.Empty;
+
     // FinalAccountsSections
     public string Section { get; set; } = string.Empty;
 
@@ -236,4 +244,91 @@ public class FinalAccountsYearDto
     public string YearStart { get; set; } = string.Empty;
 
     public string YearEnd { get; set; } = string.Empty;
+}
+
+
+//===============================================================
+// Return on Investment : the figures the page works the ratios
+// from (ROI, ROCE, ROE, ROA, GMROI by business line). Averages,
+// ratios and the annualised rates are worked out on the page.
+//===============================================================
+
+// The investment on one date (Balance Sheet)
+public class RoiBaseDto
+{
+    public string Date { get; set; } = string.Empty;
+
+    // Equity + profit / loss for the year to date
+    public decimal Equity { get; set; }
+
+    public decimal NonCurrentLiabilities { get; set; }
+
+    public decimal CurrentLiabilities { get; set; }
+
+    public decimal TotalAssets { get; set; }
+
+    // Equity + Non-current Liabilities (= Net Assets)
+    public decimal CapitalEmployed { get; set; }
+}
+
+// One business line : gross profit of the period and its stock
+// (inventory / work in progress groups of its product categories)
+public class RoiLineDto
+{
+    // mb / sp / ac / service
+    public string Line { get; set; } = string.Empty;
+
+    public decimal Sales { get; set; }
+
+    public decimal GrossProfit { get; set; }
+
+    public decimal OpeningStock { get; set; }
+
+    public decimal ClosingStock { get; set; }
+}
+
+// One period (this period or the same period last year)
+public class RoiFiguresDto
+{
+    public string From { get; set; } = string.Empty;
+
+    public string To { get; set; } = string.Empty;
+
+    public decimal NetProfit { get; set; }
+
+    // Expense ledgers under the sub groups marked Finance cost
+    public decimal FinanceCosts { get; set; }
+
+    public decimal ProfitBeforeInterest { get; set; }
+
+    // The day before From
+    public RoiBaseDto Opening { get; set; } = new();
+
+    public RoiBaseDto Closing { get; set; } = new();
+
+    public List<RoiLineDto> Lines { get; set; } = new();
+}
+
+public class ReturnOnInvestmentDto
+{
+    public long BranchId { get; set; }
+
+    public string BranchName { get; set; } = string.Empty;
+
+    public bool ShowCancelled { get; set; }
+
+    // none / last-year
+    public string Compare { get; set; } = FinalAccountsCompare.None;
+
+    public string CompareLabel { get; set; } = string.Empty;
+
+    public string Message { get; set; } = string.Empty;
+
+    // "SUB-004-001-001 Financial Expenses" ... (empty : none
+    // marked, profit before interest = net profit)
+    public List<string> FinanceSubGroups { get; set; } = new();
+
+    public RoiFiguresDto Current { get; set; } = new();
+
+    public RoiFiguresDto? Previous { get; set; }
 }

@@ -40,6 +40,12 @@ import { ControlTabsComponent, ControlTab } from '../../../../../../shared/compo
 import { SearchBoxComponent } from '../../../../../../shared/components/utilities/search-box/search-box';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn, ListTableRowAction, ListTableRowActionEvent } from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { SearchDropdownComponent } from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
@@ -89,6 +95,8 @@ interface SummaryItem
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         SearchDropdownComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
@@ -232,17 +240,18 @@ implements OnInit, OnDestroy
 
     readonly columns: ListTableColumn[] =
     [
-        { header:'#',          field:'serial',       type:'serial', width:'50px',  align:'center' },
-        { header:'Date',       field:'DateText',     width:'140px', align:'center' },
-        { header:'Time',       field:'SlotText',     width:'170px', align:'center' },
-        { header:'Enquiry No', field:'EnquiryNo',    width:'140px', align:'center', priority:2 },
-        { header:'Customer',   field:'CustomerText', width:'230px', align:'left' },
-        { header:'Bike to Ride', field:'ModelName',  width:'190px', align:'left' },
-        { header:'Interest',   field:'InterestLevelName', width:'130px', align:'left', dotField:'InterestLevelColor', priority:3 },
+        // balanced widths, one scheme for every list
+        { header:'#',          field:'serial',       type:'serial', width:'56px',  align:'center' },
+        { header:'Date',       field:'DateText',     width:'130px', align:'center' },
+        { header:'Time',       field:'SlotText',     width:'160px', align:'left' },
+        { header:'Enquiry No', field:'EnquiryNo',    width:'160px', align:'left', priority:2 },
+        { header:'Customer',   field:'CustomerText', width:'160px', align:'left' },
+        { header:'Bike to Ride', field:'ModelName',  width:'160px', align:'left' },
+        { header:'Interest',   field:'InterestLevelName', width:'160px', align:'left', dotField:'InterestLevelColor', priority:3 },
         { header:'Executive',  field:'AdvisorName',  width:'160px', align:'left', priority:2 },
-        { header:'Moved',      field:'MovedText',    width:'80px',  align:'center', priority:3 },
-        { header:'Status',     field:'StatusText',   width:'170px', align:'left', dotField:'StatusColor' },
-        { header:'Actions',    field:'actions',      type:'actions', width:'130px', align:'center' }
+        { header:'Moved',      field:'MovedText',    width:'160px',  align:'left', priority:3 },
+        { header:'Status',     field:'StatusText',   width:'160px', align:'left', dotField:'StatusColor' },
+        { header:'Actions',    field:'actions',      type:'actions', width:'140px', align:'center' }
     ];
 
     // Table column → the API's sort key ('' = date + time)

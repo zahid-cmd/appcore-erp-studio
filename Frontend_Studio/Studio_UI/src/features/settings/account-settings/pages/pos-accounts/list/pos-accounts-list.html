@@ -8,9 +8,11 @@
 
         title="POS Accounts"
 
-        subtitle="Manage POS accounts"
+        subtitle="Card terminals : each settles into a linked bank account"
 
-        icon="fas fa-cash-register">
+        icon="fas fa-cash-register"
+
+        art="pos">
 
         <div pageHeaderCenter>
 
@@ -167,6 +169,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="pos"
+
+                emptyTitle="No POS account yet"
+
+                emptySubtitle="Add a card terminal and the bank account it settles into."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -208,24 +216,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="psa-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="psa-summary-item">
-                    <span class="psa-summary-label">{{ item.label }}</span>
-                    <b
-                        class="psa-summary-value"
-                        [class.psa-ok]="item.tone === 'ok'"
-                        [class.psa-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="psa-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="terminals"
+            art="pos"
+            note="All records">
+        </app-summary-line>
     }
 
 

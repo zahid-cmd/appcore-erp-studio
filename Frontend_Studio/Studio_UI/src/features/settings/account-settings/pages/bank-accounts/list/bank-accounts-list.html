@@ -8,9 +8,11 @@
 
         title="Bank Accounts"
 
-        subtitle="Manage bank accounts"
+        subtitle="Your bank accounts : collections, payments and loans"
 
-        icon="fas fa-building-columns">
+        icon="fas fa-building-columns"
+
+        art="bank">
 
         <div pageHeaderCenter>
 
@@ -167,6 +169,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="bank"
+
+                emptyTitle="No bank account yet"
+
+                emptySubtitle="Add a bank account : it becomes a ledger under its sub group."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -208,24 +216,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="bka-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="bka-summary-item">
-                    <span class="bka-summary-label">{{ item.label }}</span>
-                    <b
-                        class="bka-summary-value"
-                        [class.bka-ok]="item.tone === 'ok'"
-                        [class.bka-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="bka-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="accounts"
+            art="bank"
+            note="All records">
+        </app-summary-line>
     }
 
 

@@ -1,4 +1,4 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../../../../../shared/styles/app-workspace-form.css';
 
 /* =====================================================
    FINANCIAL YEARS FORM
@@ -8,10 +8,10 @@
    their labels and the duration hint are styled here.
 ===================================================== */
 
+/* (workspace layout 2026-11-16 : the host comes from the shared file) */
+
 :host
 {
-    display: block;
-
     --fy-border: #e2e8f0;
     --fy-border-focus: #26338a;
     --fy-focus-ring: rgba(38, 51, 138, 0.12);
@@ -31,7 +31,6 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 14px;
 }
 
 .fy-date-label
@@ -86,4 +85,16 @@
 {
     opacity: 0.5;
     cursor: not-allowed;
+}
+/* the Remarks note pad fills what is left of the step */
+
+.ws-notes > app-note-pad
+{
+    flex: 1 1 auto;
+}
+
+.fy-date-field app-datepicker
+{
+    display: block;
+    width: 100%;
 }

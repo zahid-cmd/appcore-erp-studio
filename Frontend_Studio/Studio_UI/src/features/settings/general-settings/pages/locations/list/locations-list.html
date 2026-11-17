@@ -7,7 +7,8 @@
     <app-page-header
         title="Locations"
         subtitle="Areas, thanas and upazilas used on customer addresses"
-        icon="fas fa-location-dot">
+        icon="fas fa-location-dot"
+        art="locations">
 
         <div pageHeaderCenter>
 
@@ -121,6 +122,9 @@
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
                 [error]="loadFailed"
+                emptyArt="locations"
+                emptyTitle="No location yet"
+                emptySubtitle="Add the areas, thanas and upazilas used on customer addresses."
                 (view)="view($event)"
                 (edit)="edit($event)"
                 (delete)="delete($event)"
@@ -152,24 +156,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="loc-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="loc-summary-item">
-                    <span class="loc-summary-label">{{ item.label }}</span>
-                    <b
-                        class="loc-summary-value"
-                        [class.loc-ok]="item.tone === 'ok'"
-                        [class.loc-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="loc-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="locations"
+            art="locations"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================

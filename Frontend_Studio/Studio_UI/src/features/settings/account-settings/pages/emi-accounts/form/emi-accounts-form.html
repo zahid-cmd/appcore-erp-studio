@@ -1,348 +1,249 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-credit-card"
-
+        art="card"
         [title]="pageTitle"
-
-        subtitle="EMI collection accounts (SSLCommerz / ShurjoPay / POS / QR / Online)">
+        subtitle="An EMI collection account (SSLCommerz / ShurjoPay / POS / QR / Online)">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div class="ws-step">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Belongs to</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Branch"
+                                [items]="branchItems"
+                                [(value)]="entity.Branch"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
 
-            [columns]="4">
+                            <app-textbox
+                                label="Account Sub Group"
+                                placeholder="SUB-002-002-005 - Cash With EMI"
+                                [value]="subGroupLabel"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="EMI Account Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.EmiAccountCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-credit-card"></i>
+                            <span>EMI Account</span>
+                            <small>The platform is fixed once saved</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <app-search-dropdown
+                                label="Platform"
+                                [items]="platformItems"
+                                [(value)]="entity.Platform"
+                                (valueChange)="onNamePartChange()"
+                                [placeholder]="noPlatformLeft ? 'All platforms already have an EMI account' : 'Select Option'"
+                                [disabled]="!isAddMode || isSaving || noPlatformLeft"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-search-dropdown
+                                label="Linked Bank Account"
+                                [items]="linkedBankAccountItems"
+                                [(value)]="entity.LinkedBankAccount"
+                                (valueChange)="onNamePartChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="EMI Account Name"
+                                placeholder="EMI - PLATFORM - BANK"
+                                [(value)]="entity.EmiAccountName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
+
+                    </section>
 
-            <!-- =================================================
-                 SECTION 01 : PARENT INFORMATION
-            ================================================== -->
+                </div>
 
-            <app-form-section
+            </div>
 
-                title="Parent Information"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                icon="fas fa-sitemap">
+            <aside class="ws-panel">
 
+                <div class="ws-hero">
 
-                <!-- Branch -->
+                    <app-workspace-art theme="card"></app-workspace-art>
 
-                <app-search-dropdown
+                    <div class="ws-identity">
 
-                    label="Branch"
+                        <b [class.ws-new]="!entity.EmiAccountName">{{ entity.EmiAccountName || 'New EMI account' }}</b>
 
-                    [items]="branchItems"
+                        <div class="ws-chips">
 
-                    [(value)]="entity.Branch"
+                            @if (entity.EmiAccountCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.EmiAccountCode }}</span>
+                            }
 
-                    (valueChange)="onValueChange()"
+                            @if (entity.Platform)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.Platform }}</span>
+                            }
 
-                    [disabled]="isViewMode || isSaving"
+                        </div>
 
-                    [required]="true">
+                    </div>
 
-                </app-search-dropdown>
+                    <app-toggle-switch
+                        label="Collection account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.CollectionAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="true">
+                    </app-toggle-switch>
 
+                    <app-toggle-switch
+                        label="Payment account"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.PaymentAccount"
+                        (valueChange)="onValueChange()"
+                        [disabled]="true">
+                    </app-toggle-switch>
 
-                <!-- Account Sub Group (reserved SUB-002-002-005, locked) -->
+                    <app-toggle-switch
+                        label="Branch exclusive"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.BranchExclusive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                <app-textbox
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                    label="Account Sub Group"
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-calendar-check"></i><span>Picked when a sale is paid by EMI</span></li>
+                        <li><i class="fas fa-building-columns"></i><span>The platform pays into its linked bank account</span></li>
+                    </ul>
 
-                    placeholder="SUB-002-002-005 - Cash With EMI"
+                </div>
 
-                    [value]="subGroupLabel"
+            </aside>
 
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- EMI Account Code -->
-
-                <app-textbox
-
-                    label="EMI Account Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.EmiAccountCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 02 : EMI ACCOUNT INFORMATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="EMI Account Information"
-
-                icon="fas fa-credit-card">
-
-
-                <!-- Platform (one EMI account per platform : used
-                     platforms are hidden; locked after saving) -->
-
-                <app-search-dropdown
-
-                    label="Platform"
-
-                    [items]="platformItems"
-
-                    [(value)]="entity.Platform"
-
-                    (valueChange)="onNamePartChange()"
-
-                    [placeholder]="noPlatformLeft ? 'All platforms already have an EMI account' : 'Select Option'"
-
-                    [disabled]="!isAddMode || isSaving || noPlatformLeft"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Linked Bank Account (settlement account) -->
-
-                <app-search-dropdown
-
-                    label="Linked Bank Account"
-
-                    [items]="linkedBankAccountItems"
-
-                    [(value)]="entity.LinkedBankAccount"
-
-                    (valueChange)="onNamePartChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- EMI Account Name (auto generated) -->
-
-                <app-textbox
-
-                    label="EMI Account Name"
-
-                    placeholder="EMI - PLATFORM - BANK"
-
-                    [(value)]="entity.EmiAccountName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 03 : CONFIGURATION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Configuration"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Collection Account (always Yes) -->
-
-                <app-dropdown
-
-                    label="Collection Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.CollectionAccount"
-
-                    [disabled]="true"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Payment Account (always No) -->
-
-                <app-dropdown
-
-                    label="Payment Account"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.PaymentAccount"
-
-                    [disabled]="true"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Branch Exclusive -->
-
-                <app-dropdown
-
-                    label="Branch Exclusive"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.BranchExclusive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 04 : STATUS & DESCRIPTION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Status & Description"
-
-                icon="fas fa-align-left">
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>

@@ -1,0 +1,421 @@
+/* =====================================================================
+   Workspace forms (2026-11-15) : the shared pieces of the redesigned
+   add / edit / view pages. Each page plans its own layout from them;
+   no fixed four-column grid.
+
+     .ws-body        the canvas body : fields left, workspace panel
+                     right (no page scroll; only this area scrolls)
+     .ws-column      a stack of cards
+     .ws-card        a card ; .ws-card-head its title row (icon,
+                     title, optional right part)
+     .ws-grid        fields in a grid ; .ws-cols-2 / .ws-cols-3 ;
+                     cells .ws-span-2 / .ws-full
+     .ws-pair        two cards side by side
+     No scrolling : a long form is split into steps (toolbar tabs
+     + shared app-step-nav), each step planned to fit the screen
+     .ws-panel       the workspace panel (art, identity, extras)
+     .ws-identity    the record's name, code and status
+     .ws-chip        a small pill ; data-tone ok / bad / info
+     .ws-uses        "Where it is used" notes
+     .ws-loading     the place holder while the record loads
+
+   Imported by each form's own stylesheet :
+     @import '<...>/shared/styles/app-workspace-form.css';
+   ===================================================================== */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.app-form-page
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+
+/* ----------------------------------------------------------------
+   Body : fields left, panel right
+   ---------------------------------------------------------------- */
+
+.ws-body
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+    /* the row is as tall as its content, never stretched to the
+       canvas height; the fields and the panel then share that one
+       height (owner 2026-11-15 : the tallest step sets it, both
+       sides follow) */
+    align-content: start;
+    align-items: stretch;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 4px 6px 12px;
+    box-sizing: border-box;
+}
+
+/* A form that does not fit one screen is split into steps (toolbar
+   tabs + app-step-nav), never scrolled : each step's cards are
+   planned to fit */
+
+.ws-body.ws-wide-panel
+{
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+}
+
+@media (max-width: 1100px)
+{
+    .ws-body,
+    .ws-body.ws-wide-panel
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.ws-column
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* Steps : all the steps sit in the same place, only the open one
+   shows, so the area is always as tall as the TALLEST step - every
+   step the same height, nothing jumps (owner 2026-11-15)
+
+     <div class="ws-steps">
+         <div class="ws-step" [class.ws-step-off]="selectedTab !== 'a'"> cards </div>
+         <div class="ws-step" [class.ws-step-off]="selectedTab !== 'b'"> cards </div>
+     </div>
+*/
+
+.ws-steps
+{
+    display: grid;
+    min-width: 0;
+}
+
+.ws-step
+{
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.ws-step-off
+{
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* the last card (or pair) of a step fills it to the common height;
+   the panel's last block likewise */
+.ws-step > :last-child,
+.ws-panel > :last-child
+{
+    flex: 1 1 auto;
+}
+
+
+/* ----------------------------------------------------------------
+   Cards
+   ---------------------------------------------------------------- */
+
+.ws-card
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 14px 16px 18px;
+    border: 1px solid #e3e9f3;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 10px 24px -16px rgba(30, 58, 138, .28);
+    box-sizing: border-box;
+}
+
+.ws-card-head
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 28px;
+    margin: -2px 0 2px;
+    color: #1e293b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.ws-card-head > i
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: #eef4ff;
+    color: #1e3a8a;
+    font-size: 13px;
+}
+
+.ws-card-head > small
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+
+/* ----------------------------------------------------------------
+   Field grids
+   ---------------------------------------------------------------- */
+
+.ws-grid
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    align-items: end;
+}
+
+.ws-cols-2
+{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ws-cols-3
+{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ws-span-2
+{
+    grid-column: span 2;
+}
+
+.ws-full
+{
+    grid-column: 1 / -1;
+}
+
+.ws-grid > *
+{
+    min-width: 0;
+}
+
+@media (max-width: 760px)
+{
+    .ws-cols-2,
+    .ws-cols-3
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ws-span-2
+    {
+        grid-column: auto;
+    }
+}
+
+/* two cards side by side (e.g. Logo | Remarks) */
+.ws-pair
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    align-items: stretch;
+}
+
+@media (max-width: 900px)
+{
+    .ws-pair
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* the controls fill their grid cell */
+.ws-grid > app-textbox,
+.ws-grid > app-textarea,
+.ws-grid > app-dropdown,
+.ws-grid > app-search-dropdown,
+.ws-card > app-textarea,
+.ws-card > app-image-hub
+{
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+app-search-dropdown,
+app-dropdown
+{
+    --dropdown-width: 100%;
+    width: 100%;
+}
+
+app-textarea
+{
+    --textarea-width: 100%;
+}
+
+
+/* ----------------------------------------------------------------
+   Workspace panel
+   ---------------------------------------------------------------- */
+
+.ws-panel
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+/* the drawing stays modest so the panel fits one screen */
+.ws-hero > app-workspace-art
+{
+    width: 100%;
+    max-width: 250px;
+    align-self: center;
+}
+
+.ws-hero
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 18px 16px;
+    border: 1px solid #dbe6f7;
+    border-radius: 16px;
+    background:
+        radial-gradient(120% 80% at 100% 0%, rgba(31, 107, 255, .10) 0%, transparent 60%),
+        linear-gradient(160deg, #ffffff 0%, #f6f9ff 60%, #eef4ff 100%);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 14px 28px -20px rgba(30, 58, 138, .35);
+    box-sizing: border-box;
+}
+
+.ws-identity
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.ws-identity > b
+{
+    overflow: hidden;
+    color: #0f2a44;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ws-identity > b.ws-new
+{
+    color: #64748b;
+    font-weight: 600;
+}
+
+.ws-chips
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ws-chip
+{
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.ws-chip[data-tone='info']
+{
+    background: #16307a;
+    color: #ffffff;
+}
+
+.ws-chip[data-tone='ok']
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ws-chip[data-tone='bad']
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.ws-uses
+{
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin: 0;
+    padding: 12px 0 0;
+    border-top: 1px dashed #c9daf5;
+    list-style: none;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.ws-uses > li
+{
+    display: flex;
+    gap: 9px;
+}
+
+.ws-uses > li > i
+{
+    width: 14px;
+    margin-top: 2px;
+    color: #1f6bff;
+    font-size: 12px;
+    text-align: center;
+}
+
+
+/* ----------------------------------------------------------------
+   Loading place holder
+   ---------------------------------------------------------------- */
+
+.ws-loading
+{
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 320px;
+    color: #64748b;
+    font-size: 14px;
+}

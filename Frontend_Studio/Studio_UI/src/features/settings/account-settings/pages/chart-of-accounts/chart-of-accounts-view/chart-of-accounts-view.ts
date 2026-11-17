@@ -36,22 +36,9 @@ from '../../../../../../shared/components/layout/page-header/page-header';
 
 import
 {
-    PageToolbarComponent
-}
-from '../../../../../../shared/components/layout/page-toolbar/page-toolbar';
-
-import
-{
-    ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
-
-import
-{
-    SearchDropdownComponent
-}
-from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
 
 import
 {
@@ -261,6 +248,61 @@ interface PreviewRow
 // Component
 //===============================================================
 
+//===============================================================
+// Level rail tile and focus card (redesign 2026-11-17)
+//===============================================================
+
+interface RailTile
+{
+    n:
+        number;
+
+    label:
+        string;
+
+    value:
+        number;
+
+    of:
+        string;
+
+    pick:
+        string;
+
+    on:
+        boolean;
+
+    step:
+        PathStep | null;
+}
+
+interface FocusCard
+{
+    title:
+        string;
+
+    code:
+        string;
+
+    kind:
+        string;
+
+    hint:
+        string;
+
+    trail:
+        PathStep[];
+
+    total:
+        number;
+
+    active:
+        number;
+
+    inactive:
+        number;
+}
+
 @Component(
 {
     selector:'chart-of-accounts-view',
@@ -272,10 +314,7 @@ interface PreviewRow
         CommonModule,
         FormsModule,
         PageHeaderComponent,
-        PageToolbarComponent,
-        ControlTabsComponent,
         SearchBoxComponent,
-        SearchDropdownComponent,
         CommandCenterComponent,
         EmptyStateComponent,
         ToastComponent
@@ -1784,6 +1823,107 @@ implements OnInit, OnDestroy
         this.refreshView();
 
         this.ensureLedgers();
+    }
+
+    //===========================================================
+    // Level Rail + Focus Card (redesign 2026-11-17)
+    //===========================================================
+
+    private static readonly FOCUS_KINDS =
+        ['Whole chart', 'Account class', 'Account group', 'Account sub group'];
+
+    private static readonly FOCUS_HINTS =
+        [
+            'Pick a class, group or sub group in the navigator',
+            'Level 1 : account groups sit under it',
+            'Level 2 : account sub groups sit under it',
+            'Level 3 : ledgers are made under it'
+        ];
+
+    get rail():
+        RailTile[]
+    {
+        const found =
+            this.selection
+                ? this.findNav(this.selection)
+                : null;
+
+        const depth =
+            found?.sub ? 3 : found?.grp ? 2 : found ? 1 : 0;
+
+        const tile =
+            (
+                n: number,
+                label: string,
+                value: number,
+                of: string,
+                pick: string
+            ):
+                RailTile =>
+                ({
+                    n,
+                    label,
+                    value,
+                    of,
+                    pick,
+                    on: depth === n,
+                    step: n <= depth ? (this.path[n] ?? null) : null
+                });
+
+        return [
+            tile(1, 'Classes', this.countClasses, found ? `of ${this.navClasses.length}` : 'in total', found?.cls.node.Name ?? ''),
+            tile(2, 'Groups', this.countGroups, found?.grp ? `of ${found.cls.groups.length} here` : (found ? 'in this' : 'in total'), found?.grp?.node.Name ?? ''),
+            tile(3, 'Sub Groups', this.countSubGroups, found?.sub && found.grp ? `of ${found.grp.subGroups.length} here` : (found ? 'in this' : 'in total'), found?.sub?.node.Name ?? ''),
+            tile(4, 'Ledgers', this.countLedgers, found ? 'in this' : 'in total', '')
+        ];
+    }
+
+    get focus():
+        FocusCard
+    {
+        const found =
+            this.selection
+                ? this.findNav(this.selection)
+                : null;
+
+        const depth =
+            found?.sub ? 3 : found?.grp ? 2 : found ? 1 : 0;
+
+        const node =
+            found?.sub?.node ?? found?.grp?.node ?? found?.cls.node ?? null;
+
+        const rows =
+            this.issuesOpen ? [] : this.previewRows;
+
+        const active =
+            rows.filter(row => row.status).length;
+
+        return {
+            title: node ? node.Name : 'All Classes',
+            code: node ? node.Code : '',
+            kind: ChartOfAccountsView.FOCUS_KINDS[depth] ?? '',
+            hint: ChartOfAccountsView.FOCUS_HINTS[depth] ?? '',
+            trail: this.path.slice(0, -1),
+            total: rows.length,
+            active,
+            inactive: rows.length - active
+        };
+    }
+
+    onRailClick
+    (
+        tile:
+            RailTile
+    ):
+        void
+    {
+        if
+        (
+            tile.step
+        )
+        {
+            this.onPathClick(tile.step);
+        }
     }
 
     clearSelection():

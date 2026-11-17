@@ -1,4 +1,4 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../../../../../shared/styles/app-workspace-form.css';
 
 
 /* Canvas footer : Display Name */
@@ -38,4 +38,22 @@
 {
     color:#94a3b8;
     font-weight:600;
+}
+
+/* Workspace layout (2026-11-16) : the fields left, the workspace panel
+   right; the Remarks note pad fills what is left of its card */
+
+.ws-notes > app-note-pad
+{
+    flex: 1 1 auto;
+}
+
+.pf-photo
+{
+    align-items: stretch;
+}
+
+.pf-photo-only > app-logo-studio
+{
+    max-width: 640px;
 }

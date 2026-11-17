@@ -58,6 +58,7 @@ import
     buildEquityMatrix,
     buildReceiptPayment,
     cashFlowTotals,
+    receiptPaymentVertical,
     equityLedgersShown,
     yearStartGuess
 }
@@ -290,9 +291,14 @@ export const RECEIPT_PAYMENT_PRINT:
             key:'receipt-payment',
             title:'Receipt & Payment Account',
             icon:'fas fa-receipt',
+            // Signature lines : only on the printed copy, a switch in the viewer (2026-11-16)
+            toggles:
+            [
+                { key:'signatures', label:'Signature lines', on:false }
+            ],
             render:
                 (data: ReceiptPaymentPrintData, kit: PrintKit) =>
-                    receiptPaymentHtml(data, kit, !!kit.landscape),
+                    withSignatures(receiptPaymentHtml(data, kit, !!kit.landscape), kit),
             css:
                 FLOWS_PRINT_CSS,
             excel:
@@ -334,6 +340,7 @@ function receiptPaymentHtml
             r.BranchName,
             [
                 ['Branch', r.BranchName],
+                ['Layout', data.request.layout === 'vertical' ? 'Vertical' : 'T-form'],
                 ['Down to', levelLabel(data.request.level)],
                 ['Contra transfers', data.request.showTransfers ? 'Shown' : 'Hidden'],
                 ['Cancelled', r.ShowCancelled ? 'Shown' : ''],
@@ -368,13 +375,8 @@ function receiptPaymentHtml
         Array.from({ length:count }, (_, i) => `<tr>${cell(s.receipts[i], false)}${cell(s.payments[i], true)}</tr>`)
             .join('');
 
-    const body =
-        `<div class="fa-band">
-  <div><span>Receipts</span><b>${e(amountOf(kit, r.Receipts, true))}</b></div>
-  <div><span>Payments</span><b>${e(amountOf(kit, r.Payments, true))}</b></div>
-  <div class="${isZero(s.receiptsTotal - s.paymentsTotal) ? 'ok' : 'bad'}"><span>Both sides</span><b>${isZero(s.receiptsTotal - s.paymentsTotal) ? 'Agree' : e(amountOf(kit, s.receiptsTotal - s.paymentsTotal, true))}</b></div>
-</div>
-<div class="fa-t">
+    const tform =
+        `<div class="fa-t">
 <div class="fa-t-title">Receipt &amp; Payment Account for ${e(period)}</div>
 <table class="pv-split fa-lines">
   <colgroup><col><col style="width:27mm"><col><col style="width:27mm"></colgroup>
@@ -382,7 +384,36 @@ function receiptPaymentHtml
   <tbody>${rows}</tbody>
   <tfoot><tr class="fa-tot"><td class="fa-r">Total</td><td class="fa-r">${e(amountOf(kit, s.receiptsTotal, true))}</td><td class="fa-r fa-cr">Total</td><td class="fa-r">${e(amountOf(kit, s.paymentsTotal, true))}</td></tr></tfoot>
 </table>
+</div>`;
+
+    const vertical =
+        `<table class="pv-split fa-lines">
+  <colgroup><col><col style="width:30mm"></colgroup>
+  <thead><tr><th>Particulars</th><th class="fa-r">Amount<small>${e(period)}</small></th></tr></thead>
+  <tbody>${receiptPaymentVertical(s)
+        .map
+        (
+            row =>
+            {
+                const css =
+                    row.kind === 'section' ? 'fa-sec'
+                    : row.kind === 'result' ? 'fa-res'
+                    : `fa-l${row.level}`;
+
+                return `<tr class="${css}"><td>${e(row.name)}${showCodes && row.code ? `<span class="fa-code">${e(row.code)}</span>` : ''}</td>`
+                    + `<td class="fa-r">${e(amountOf(kit, row.amount, row.kind !== 'node'))}</td></tr>`;
+            }
+        )
+        .join('')}</tbody>
+</table>`;
+
+    const body =
+        `<div class="fa-band">
+  <div><span>Receipts</span><b>${e(amountOf(kit, r.Receipts, true))}</b></div>
+  <div><span>Payments</span><b>${e(amountOf(kit, r.Payments, true))}</b></div>
+  <div class="${isZero(s.receiptsTotal - s.paymentsTotal) ? 'ok' : 'bad'}"><span>Both sides</span><b>${isZero(s.receiptsTotal - s.paymentsTotal) ? 'Agree' : e(amountOf(kit, s.receiptsTotal - s.paymentsTotal, true))}</b></div>
 </div>
+${data.request.layout === 'vertical' ? vertical : tform}
 ${r.Message ? `<div class="fa-fine">${e(r.Message)}</div>` : ''}`;
 
     return shell(kit, landscape, header, body);
@@ -511,9 +542,14 @@ export const CASH_FLOW_PRINT:
             key:'cash-flow',
             title:'Cash Flow Statement',
             icon:'fas fa-money-bill-transfer',
+            // Signature lines : only on the printed copy, a switch in the viewer (2026-11-16)
+            toggles:
+            [
+                { key:'signatures', label:'Signature lines', on:false }
+            ],
             render:
                 (data: CashFlowPrintData, kit: PrintKit) =>
-                    cashFlowHtml(data, kit, !!kit.landscape),
+                    withSignatures(cashFlowHtml(data, kit, !!kit.landscape), kit),
             css:
                 FLOWS_PRINT_CSS,
             excel:
@@ -725,9 +761,14 @@ export const CHANGES_IN_EQUITY_PRINT:
             key:'changes-in-equity',
             title:'Changes in Equity',
             icon:'fas fa-landmark',
+            // Signature lines : only on the printed copy, a switch in the viewer (2026-11-16)
+            toggles:
+            [
+                { key:'signatures', label:'Signature lines', on:false }
+            ],
             render:
                 (data: ChangesInEquityPrintData, kit: PrintKit) =>
-                    changesInEquityHtml(data, kit, !!kit.landscape),
+                    withSignatures(changesInEquityHtml(data, kit, !!kit.landscape), kit),
             css:
                 FLOWS_PRINT_CSS,
             excel:
@@ -942,4 +983,30 @@ function changesInEquitySheet
             ...ledgers
         ]
     };
+}
+
+
+//===============================================================
+// Prepared / Checked / Approved lines when the viewer's
+// "Signature lines" switch is on : inside the end block, so they
+// sit at the bottom of the last page (never on a page of their own)
+//===============================================================
+
+function withSignatures
+(
+    html:
+        string,
+    kit:
+        PrintKit
+):
+    string
+{
+    if (!kit.toggles?.['signatures'])
+    {
+        return html;
+    }
+
+    return html.replace(
+        '<div class="pv-end">',
+        '<div class="pv-end">' + kit.signatures(['Prepared by', 'Checked by', 'Approved by']));
 }

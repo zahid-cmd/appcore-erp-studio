@@ -10,7 +10,9 @@
 
         subtitle="Manage branch assignments"
 
-        icon="fas fa-code-branch">
+        icon="fas fa-code-branch"
+
+        art="people">
 
         <div pageHeaderCenter>
 
@@ -123,6 +125,12 @@
 
                 [columns]="columns"
 
+                emptyArt="people"
+
+                emptyTitle="No branch assignments yet"
+
+                emptySubtitle="Give a user the branches they work in"
+
                 [rows]="pagedBranchAssignments"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -173,28 +181,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="assignments"
+            art="people"
+            note="All records">
+        </app-summary-line>
     }
 
 

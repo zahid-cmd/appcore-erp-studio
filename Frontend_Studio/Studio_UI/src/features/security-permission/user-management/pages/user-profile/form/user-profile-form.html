@@ -6,6 +6,7 @@
 
     <app-page-header
         icon="fas fa-user"
+        art="people"
         [title]="pageTitle"
         subtitle="Manage user profiles">
 
@@ -33,12 +34,32 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
-            pageToolbarLeft
-            [tabs]="tabs"
-            [(selectedTab)]="selectedTab">
+        <app-step-tabs
 
-        </app-control-tabs>
+            pageToolbarLeft
+
+            [steps]="formSteps"
+
+            [current]="selectedTab"
+
+            (currentChange)="onTabChange($event)">
+
+        </app-step-tabs>
+
+
+        <!-- more than one screen : no scrolling -->
+
+        <app-step-nav
+
+            pageToolbarRight
+
+            [steps]="formSteps"
+
+            [current]="selectedTab"
+
+            (currentChange)="onTabChange($event)">
+
+        </app-step-nav>
 
     </app-page-toolbar>
 
@@ -46,182 +67,191 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
 
-        <app-form-grid
+        [config]="formConfig">
+
+        <div
             canvasBody
-            [columns]="4">
+            class="ws-body appcore-scrollbar">
 
-            <!-- =============================================
-                 SECTION 01
-                 USER PROFILE IDENTIFICATION
-            ============================================== -->
+            <!-- ================= LEFT : the fields (2026-11-16 workspace layout) ================= -->
 
-            <app-form-section
-                title="User Profile Identification"
-                icon="fas fa-id-card">
+            <div class="ws-steps">
 
-                <!-- =========================================
-                     USER PROFILE CODE
-                ========================================== -->
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
 
-                <app-textbox
-                    label="User Profile Code"
-                    placeholder="Auto generated"
-                    [(value)]="entity.ProfileCode"
-                    [readonly]="true"
-                    [required]="true">
+                    <section class="ws-card">
 
-                </app-textbox>
+                        <header class="ws-card-head">
+                            <i class="fas fa-id-card"></i>
+                            <span>User Profile Identification</span>
+                        </header>
 
-                <!-- =========================================
-                     USER NAME / LOGIN ID
-                ========================================== -->
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="User Profile Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.ProfileCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-                <app-textbox
-                    label="User Name / Login ID"
-                    placeholder="Enter user name / login ID"
-                    [(value)]="entity.UserName"
-                    (valueChange)="onValueChange()"
-                    [disabled]="isViewMode"
-                    [required]="true">
+                            <app-textbox
+                                label="User Name / Login ID"
+                                placeholder="Enter user name / login ID"
+                                [(value)]="entity.UserName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+                        </div>
 
-                </app-textbox>
+                    </section>
 
-            </app-form-section>
+                    <section class="ws-card">
 
-            <!-- =============================================
-                 SECTION 02
-                 PERSONAL INFORMATION
-            ============================================== -->
+                        <header class="ws-card-head">
+                            <i class="fas fa-user"></i>
+                            <span>Personal Information</span>
+                        </header>
 
-            <app-form-section
-                title="Personal Information"
-                icon="fas fa-user">
+                        <div class="ws-grid ws-cols-3">
+                            <app-textbox
+                                label="Display Name"
+                                placeholder="Enter display name"
+                                [(value)]="entity.DisplayName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
 
-                <!-- =========================================
-                     DISPLAY NAME
-                ========================================== -->
+                            <app-textbox
+                                label="Full Name"
+                                placeholder="Enter full name"
+                                [(value)]="entity.FullName"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
 
-                <app-textbox
-                    label="Display Name"
-                    placeholder="Enter display name"
-                    [(value)]="entity.DisplayName"
-                    (valueChange)="onValueChange()"
-                    [disabled]="isViewMode"
-                    [required]="true">
+                            <app-search-dropdown
+                                label="Designation"
+                                [items]="designations"
+                                labelField="DesignationName"
+                                valueField="DesignationId"
+                                [(value)]="entity.DesignationId"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode">
+                            </app-search-dropdown>
+                        </div>
 
-                </app-textbox>
+                    </section>
 
-                <!-- =========================================
-                     FULL NAME
-                ========================================== -->
+                    <section class="ws-card">
 
-                <app-textbox
-                    label="Full Name"
-                    placeholder="Enter full name"
-                    [(value)]="entity.FullName"
-                    (valueChange)="onValueChange()"
-                    [disabled]="isViewMode"
-                    [required]="true">
+                        <header class="ws-card-head">
+                            <i class="fas fa-address-card"></i>
+                            <span>Contact Information</span>
+                        </header>
 
-                </app-textbox>
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Email"
+                                placeholder="Enter email address"
+                                [(value)]="entity.Email"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
 
-                <!-- =========================================
-                     DESIGNATION
-                ========================================== -->
+                            <app-textbox
+                                label="Mobile No."
+                                placeholder="Enter mobile number"
+                                [(value)]="entity.MobileNo"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode"
+                                [required]="true">
+                            </app-textbox>
+                        </div>
 
-                <app-search-dropdown
-                    label="Designation"
-                    [items]="designations"
-                    labelField="DesignationName"
-                    valueField="DesignationId"
-                    [(value)]="entity.DesignationId"
-                    (valueChange)="onValueChange()"
-                    [disabled]="isViewMode">
+                    </section>
 
-                </app-search-dropdown>
+                </div>
 
-            </app-form-section>
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'step2'">
 
-            <!-- =============================================
-                 SECTION 03
-                 CONTACT INFORMATION
-            ============================================== -->
+                    <section class="ws-card pf-photo-only">
 
-            <app-form-section
-                title="Contact Information"
-                icon="fas fa-address-card">
+                        <header class="ws-card-head">
+                            <i class="fas fa-image"></i>
+                            <span>Photo</span>
+                        </header>
 
-                <!-- =========================================
-                     EMAIL
-                ========================================== -->
+                            <app-logo-studio
+                                badge="PHOTO"
+                                [imageUrl]="userPhotoPreviewUrl"
+                                [name]="''"
+                                [disabled]="isViewMode"
+                                [busy]="isViewMode"
+                                (imageChange)="onUserPhotoChange($event)">
+                            </app-logo-studio>
 
-                <app-textbox
-                    label="Email"
-                    placeholder="Enter email address"
-                    [(value)]="entity.Email"
-                    (valueChange)="onValueChange()"
-                    [disabled]="isViewMode"
-                    [required]="true">
+                    </section>
 
-                </app-textbox>
+                </div>
 
-                <!-- =========================================
-                     MOBILE NO.
-                ========================================== -->
+            </div>
 
-                <app-textbox
-                    label="Mobile No."
-                    placeholder="Enter mobile number"
-                    [(value)]="entity.MobileNo"
-                    (valueChange)="onValueChange()"
-                    [disabled]="isViewMode"
-                    [required]="true">
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                </app-textbox>
+            <aside class="ws-panel">
 
-                <!-- =========================================
-                     STATUS
-                ========================================== -->
+                <div class="ws-hero">
 
-                <app-dropdown
-                    label="Status"
-                    [items]="statusItems"
-                    [(value)]="entity.IsActive"
-                    (valueChange)="onValueChange()"
-                    [disabled]="isViewMode"
-                    [required]="true">
+                    <app-workspace-art theme="people"></app-workspace-art>
 
-                </app-dropdown>
+                    <div class="ws-identity">
 
-            </app-form-section>
+                        <b [class.ws-new]="!entity.DisplayName">{{ entity.DisplayName || 'New user' }}</b>
 
-            <!-- =============================================
-                 SECTION 04
-                 STATUS & PHOTO
-            ============================================== -->
+                        <div class="ws-chips">
 
-            <app-form-section
-                title="Status & Profile Photo"
-                icon="fas fa-right-to-bracket">
+                            @if (entity.ProfileCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.ProfileCode }}</span>
+                            }
 
-                <!-- =========================================
-                     USER PROFILE PHOTO
-                ========================================== -->
+                        </div>
 
-                <app-image-hub
-                    [imageUrl]="userPhotoPreviewUrl"
-                    placeholder="No Profile Photo"
-                    [disabled]="isViewMode"
-                    [readonly]="isViewMode"
-                    (imageChange)="onUserPhotoChange($event)">
+                    </div>
 
-                </app-image-hub>
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode">
+                    </app-toggle-switch>
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-right-to-bracket"></i><span>Signs in to the ERP</span></li>
+                        <li><i class="fas fa-user-tag"></i><span>Gets roles and branches</span></li>
+                        <li><i class="fas fa-clock-rotate-left"></i><span>Every action is logged under this user</span></li>
+                    </ul>
 
-            </app-form-section>
+                </div>
 
-        </app-form-grid>
+            </aside>
+
+        </div>
+
 
     </app-page-canvas>
 

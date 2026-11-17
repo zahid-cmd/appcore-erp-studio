@@ -8,9 +8,11 @@
 
         title="Company"
 
-        subtitle="Manage companies"
+        subtitle="The business : its name, registration and contact, shown on every print"
 
-        icon="fas fa-building">
+        icon="fas fa-building"
+
+        art="company">
 
         <div pageHeaderCenter>
 
@@ -107,6 +109,9 @@
                 [loading]="loading"
 
                 [error]="loadFailed"
+                emptyArt="company"
+                emptyTitle="No company yet"
+                emptySubtitle="Add the company first : its name, BIN, TIN and logo appear on invoices, vouchers and every print."
 
                 (view)="view($event)"
 
@@ -150,24 +155,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="cmp-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="cmp-summary-item">
-                    <span class="cmp-summary-label">{{ item.label }}</span>
-                    <b
-                        class="cmp-summary-value"
-                        [class.cmp-ok]="item.tone === 'ok'"
-                        [class.cmp-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="cmp-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="companies"
+            art="company"
+            note="All records">
+        </app-summary-line>
     }
 
 

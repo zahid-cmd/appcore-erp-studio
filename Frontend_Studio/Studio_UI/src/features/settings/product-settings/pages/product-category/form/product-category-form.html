@@ -1,423 +1,285 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-layer-group"
-
+        art="catalog"
         [title]="pageTitle"
-
-        subtitle="Manage product categories">
+        subtitle="A product category by type and brand : its inventory, WIP, COGS and sales groups">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <!-- more than one screen : no scrolling -->
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
-
-            [columns]="4">
-
-
-
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
-
-            <app-form-section
-
-                title="Basic Information"
-
-                icon="fas fa-layer-group">
-
-
-                <!-- Category Type : decides the code prefix (MB / SP / AC);
-                     locked once saved -->
-
-                <app-dropdown
-
-                    label="Category Type"
-
-                    [items]="categoryTypeItems"
-
-                    [(value)]="entity.CategoryType"
-
-                    (valueChange)="onCategoryTypeChange($event)"
-
-                    [disabled]="isViewMode || isSaving || isCategoryTypeLocked"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Category Code -->
-
-                <app-textbox
-
-                    label="Category Code"
-
-                    placeholder="Select a category type"
-
-                    [(value)]="entity.CategoryCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Brand -->
-
-                <app-search-dropdown
-
-                    label="Brand"
-
-                    [items]="brandItems"
-
-                    [(value)]="entity.BrandManagementId"
-
-                    (valueChange)="onBrandChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <!-- Category Name :
-                     Motor Bikes / Spare Parts : "<Brand> <Category Type>", built automatically
-                     Accessories               : typed (editable) -->
-
-                <app-textbox
-
-                    label="Category Name"
-
-                    [placeholder]="isAccessories ? 'Enter category name' : 'Select category type and brand'"
-
-                    [(value)]="entity.CategoryName"
-
-                    (valueChange)="onCategoryNameChange()"
-
-                    [readonly]="!isAccessories"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 INVENTORY ACCOUNT GROUPS
-            ============================================== -->
-
-            <app-form-section
-
-                title="Inventory Account Groups"
-
-                icon="fas fa-tags">
-
-
-                <!-- Inventory Group Code -->
-
-                <app-textbox
-
-                    label="Inventory Group Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.InventoryGroupCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- WIP Group Code -->
-
-                <app-textbox
-
-                    label="WIP Group Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.WipGroupCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- COGS Group Code -->
-
-                <app-textbox
-
-                    label="COGS Group Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.CogsGroupCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Sales Group Code (CLS-005 / 006 / 008) -->
-
-                <app-textbox
-
-                    label="Sales Group Code"
-
-                    placeholder="Auto generated"
-
-                    [value]="entity.SalesGroupCode ?? ''"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 ACCOUNT GROUP NAMES
-                 Built by the server as "<class prefix> - <Category Name>"
-                 and renamed with the category. Shown here as a preview.
-            ============================================== -->
-
-            <app-form-section
-
-                title="Account Group Names"
-
-                icon="fas fa-folder-tree">
-
-
-                <!-- Inventory Group Name -->
-
-                <app-textbox
-
-                    label="Inventory Group Name"
-
-                    placeholder="Follows the category name"
-
-                    [(value)]="entity.InventoryGroupName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- WIP Group Name -->
-
-                <app-textbox
-
-                    label="WIP Group Name"
-
-                    placeholder="Follows the category name"
-
-                    [(value)]="entity.WipGroupName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- COGS Group Name -->
-
-                <app-textbox
-
-                    label="COGS Group Name"
-
-                    placeholder="Follows the category name"
-
-                    [(value)]="entity.CogsGroupName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Sales Group Name (set by the server) -->
-
-                <app-textbox
-
-                    label="Sales Group Name"
-
-                    placeholder="Follows the category name"
-
-                    [value]="entity.SalesGroupName ?? ''"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Sub Category Creation Allowed -->
-
-                <app-dropdown
-
-                    label="Sub Category Creation Allowed"
-
-                    [items]="subCategoryCreationItems"
-
-                    [(value)]="entity.SubCategoryCreationAllowed"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-        </app-form-grid>
-
-
-        <!-- Canvas footer : the Category Name (read only) -->
-
-        <div canvasFooter class="pcat-footer">
-
-            <span class="pcat-footer-label">Category Name</span>
-
-            <b class="pcat-footer-name" [class.pcat-footer-empty]="!entity.CategoryName">{{ entity.CategoryName || 'Follows the category type and brand' }}</b>
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Category</span>
+                            <small>Accessories categories are named by hand</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-dropdown
+                                label="Category Type"
+                                [items]="categoryTypeItems"
+                                [(value)]="entity.CategoryType"
+                                (valueChange)="onCategoryTypeChange($event)"
+                                [disabled]="isViewMode || isSaving || isCategoryTypeLocked"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-textbox
+                                label="Category Code"
+                                placeholder="Select a category type"
+                                [(value)]="entity.CategoryCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-search-dropdown
+                                label="Brand"
+                                [items]="brandItems"
+                                [(value)]="entity.BrandManagementId"
+                                (valueChange)="onBrandChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Category Name"
+                                [placeholder]="isAccessories ? 'Enter category name' : 'Made from the type and brand'"
+                                [(value)]="entity.CategoryName"
+                                (valueChange)="onCategoryNameChange()"
+                                [readonly]="!isAccessories"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
+
+                    </section>
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'groups'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-folder-tree"></i>
+                            <span>Account Groups</span>
+                            <small>Made on save under the account class</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Inventory Group Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.InventoryGroupCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Inventory Group Name"
+                                placeholder="Follows the name"
+                                [(value)]="entity.InventoryGroupName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="WIP Group Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.WipGroupCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="WIP Group Name"
+                                placeholder="Follows the name"
+                                [(value)]="entity.WipGroupName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="COGS Group Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.CogsGroupCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="COGS Group Name"
+                                placeholder="Follows the name"
+                                [(value)]="entity.CogsGroupName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Sales Group Code"
+                                placeholder="Auto generated"
+                                [value]="entity.SalesGroupCode ?? ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Sales Group Name"
+                                placeholder="Follows the name"
+                                [value]="entity.SalesGroupName ?? ''"
+                                [readonly]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT : the workspace ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="catalog"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b [class.ws-new]="!entity.CategoryName">{{ entity.CategoryName || 'New product category' }}</b>
+
+                        <div class="ws-chips">
+
+                            @if (entity.CategoryCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.CategoryCode }}</span>
+                            }
+
+                            @if (entity.CategoryType)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.CategoryType }}</span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <app-toggle-switch
+                        label="Sub categories"
+                        onText="Allowed"
+                        offText="Not allowed"
+                        [(value)]="entity.SubCategoryCreationAllowed"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-sitemap"></i><span>Sub categories and products sit under it</span></li>
+                        <li><i class="fas fa-book"></i><span>Its account groups hold the stock, WIP, COGS and sales ledgers</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
 
         </div>
 
@@ -425,14 +287,12 @@
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>
 
 <app-confirm-dialog></app-confirm-dialog>
 
-<app-progress-dialog></app-progress-dialog>
+<app-progress-dialog></app-progress-dialog>

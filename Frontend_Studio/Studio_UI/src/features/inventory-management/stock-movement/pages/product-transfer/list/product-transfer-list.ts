@@ -79,6 +79,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -191,6 +197,8 @@ interface ListNotice
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -339,17 +347,18 @@ export class ProductTransferList
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Transfer No', field:'TransferNo', width:'150px', align:'center', sortable:true },
-        { header:'Date', field:'DateText', width:'115px', align:'center', sortable:true },
-        { header:'Product Type', field:'TypeText', width:'180px', align:'left', sortable:true },
-        { header:'From', field:'FromText', align:'left', sortable:true },
-        { header:'To', field:'ToText', align:'left', sortable:true },
-        { header:'Lines', field:'LineCount', width:'75px', align:'right', sortable:true },
-        { header:'Qty', field:'QtyText', width:'90px', align:'right', sortable:true },
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Transfer No', field:'TransferNo', width:'160px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
+        { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
+        { header:'From', field:'FromText', width:'160px', align:'left', sortable:true },
+        { header:'To', field:'ToText', width:'160px', align:'left', sortable:true },
+        { header:'Lines', field:'LineCount', width:'160px', align:'left', sortable:true },
+        { header:'Qty', field:'QtyText', width:'90px', align:'center', sortable:true },
         { header:'Value', field:'ValueText', width:'130px', align:'right', sortable:true },
-        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'200px', align:'center' }
+        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     // Extra row buttons before View / Edit / Delete
@@ -1117,6 +1126,47 @@ export class ProductTransferList
         this.historyOpened = false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.countOf('draft'))),
+            String(this.summaryText(this.countOf('in transit'))),
+            String(this.summaryText(this.countOf('completed'))),
+            String(this.summaryText(this.countOf('received'))),
+            String(this.summaryText(this.countOf('cancelled')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Draft', value:v[1], tone:'' },
+                    { label:'In Transit', value:v[2], tone:'' },
+                    { label:'Completed', value:v[3], tone:'' },
+                    { label:'Received', value:v[4], tone:'ok' },
+                    { label:'Cancelled', value:v[5], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }
 

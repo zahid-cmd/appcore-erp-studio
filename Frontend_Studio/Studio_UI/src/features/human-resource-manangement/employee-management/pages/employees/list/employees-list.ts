@@ -38,6 +38,12 @@ import { SearchDropdownComponent } from '../../../../../../shared/components/con
 import { SearchBoxComponent } from '../../../../../../shared/components/utilities/search-box/search-box';
 import { CommandCenterComponent } from '../../../../../../shared/components/utilities/command-center/command-center';
 import { ListTableComponent, ListTableColumn } from '../../../../../../shared/components/layout/list-table/list-table';
+
+import
+{
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
@@ -110,6 +116,8 @@ function dayText(value: string): string
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ToastComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
@@ -216,17 +224,18 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Code', field:'Code', width:'100px', align:'center' },
-        { header:'Employee Name', field:'FullName', width:'220px', align:'left' },
-        { header:'Mobile', field:'MobileNo', width:'130px', align:'center' },
-        { header:'Designation', field:'DesignationName', width:'170px', align:'left' },
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Code', field:'Code', width:'140px', align:'center' },
+        { header:'Employee Name', field:'FullName', width:'210px', align:'left' },
+        { header:'Mobile', field:'MobileNo', width:'150px', align:'center' },
+        { header:'Designation', field:'DesignationName', width:'160px', align:'left' },
         { header:'Department', field:'DepartmentName', width:'160px', align:'left' },
         { header:'Branch', field:'BranchName', width:'160px', align:'left' },
-        { header:'Joined', field:'JoiningText', width:'120px', align:'center' },
-        { header:'Gross Salary', field:'GrossText', width:'130px', align:'right' },
-        { header:'Status', field:'IsActive', type:'status', width:'110px', align:'center' },
-        { header:'Actions', field:'actions', type:'actions', width:'120px', align:'center' }
+        { header:'Joined', field:'JoiningText', width:'160px', align:'left' },
+        { header:'Gross Salary', field:'GrossText', width:'160px', align:'left' },
+        { header:'Status', field:'IsActive', type:'status', width:'130px', align:'center' },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     ngOnInit():

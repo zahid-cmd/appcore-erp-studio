@@ -128,6 +128,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -207,6 +213,8 @@ from '../../../services/product-category.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ToastComponent,
         ProgressDialogComponent
@@ -448,11 +456,12 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
@@ -464,7 +473,7 @@ implements OnInit, OnDestroy
         {
             header:'Category Name',
             field:'CategoryName',
-            width:'220px',
+            width:'210px',
             align:'left'
         },
         {
@@ -476,25 +485,25 @@ implements OnInit, OnDestroy
         {
             header:'Inventory Group',
             field:'InventoryGroupCode',
-            width:'160px',
+            width:'150px',
             align:'center'
         },
         {
             header:'WIP Group',
             field:'WipGroupCode',
-            width:'160px',
+            width:'150px',
             align:'center'
         },
         {
             header:'COGS Group',
             field:'CogsGroupCode',
-            width:'160px',
+            width:'150px',
             align:'center'
         },
         {
             header:'Sub Category',
             field:'SubCategoryCreationAllowed',
-            width:'150px',
+            width:'130px',
             align:'center',
             type:'boolean'
         },
@@ -502,14 +511,14 @@ implements OnInit, OnDestroy
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'120px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'140px',
             align:'center'
         }
     ];

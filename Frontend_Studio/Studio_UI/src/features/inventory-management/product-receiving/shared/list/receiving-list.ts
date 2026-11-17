@@ -78,6 +78,12 @@ from '../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../shared/components/controls/pagination/pagination';
@@ -159,6 +165,8 @@ type ReceivingRow =
         SearchBoxComponent,
         CommandCenterComponent,
         ListTableComponent,
+
+        SummaryLineComponent,
         PaginationComponent,
         ToastComponent
     ],
@@ -641,5 +649,40 @@ export class ReceivingList
         {
             this.router.navigate([this.page.route, 'view', row.PublicId]);
         }
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            String(this.summaryText(this.summaryTotal)),
+            String(this.summaryText(this.countOf('posted'))),
+            String(this.summaryText(this.countOf('cancelled')))
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'Total', value:v[0], tone:'' },
+                    { label:'Posted', value:v[1], tone:'ok' },
+                    { label:'Cancelled', value:v[2], tone:'bad' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

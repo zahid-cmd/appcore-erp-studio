@@ -112,6 +112,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -219,6 +225,8 @@ extends Wing
         PaginationComponent,
 
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
 
         ConfirmDialogComponent,
 
@@ -493,77 +501,57 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
+        // (# 56, codes 130, names 200-240, Status 130, Actions 140)
         {
             header:'#',
-
             field:'serial',
-
             type:'serial',
-
-            width:'80px',
-
+            width:'56px',
             align:'center'
         },
 
         {
-            header:'Company',
-
-            field:'CompanyName',
-
-            width:'280px',
-
-            align:'left'
-        },
-
-        {
             header:'Wing Code',
-
             field:'WingCode',
-
-            width:'280px',
-
+            width:'130px',
             align:'center'
         },
 
         {
             header:'Wing Name',
-
             field:'WingName',
+            width:'220px',
+            align:'left'
+        },
 
+        {
+            header:'Company',
+            field:'CompanyName',
+            width:'220px',
             align:'left'
         },
 
         {
             header:'Remarks',
-
             field:'Remarks',
-
-            width:'350px',
-
+            width:'300px',
             align:'left'
         },
 
         {
             header:'Status',
-
             field:'IsActive',
-
-            width:'200px',
-
-            align:'center',
-
-            type:'status'
+            type:'status',
+            width:'130px',
+            align:'center'
         },
 
         {
             header:'Actions',
-
             field:'actions',
-
             type:'actions',
-
-            width:'150px',
-
+            width:'140px',
             align:'center'
         }
     ];

@@ -74,9 +74,40 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
 
 import
 {
@@ -210,17 +241,21 @@ from '../../../services/account-class.service';
         PageHeaderComponent,
         PageToolbarComponent,
         CommandCenterComponent,
-        ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
+
+        WorkspaceArtComponent,
+
+        StepTabsComponent,
+
+        ToggleSwitchComponent,
+
+        NotePadComponent,
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-        TextareaComponent,
         DropdownComponent,
         SearchDropdownComponent,
 
@@ -308,6 +343,19 @@ implements OnInit, OnDestroy
         string =
         'general';
 
+    // Workspace layout : the canvas body scrolls inside, never the
+    // page (2026-11-16)
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
+
     //===========================================================
     // Tabs
     //===========================================================
@@ -357,6 +405,16 @@ implements OnInit, OnDestroy
     allAccountClasses:
         AccountClass[]
         = [];
+
+    // Cash flow statement : where the movement of its ledgers shows
+    cashFlowItems:
+        any[]
+    =
+    [
+        { label:'Operating', value:'Operating' },
+        { label:'Investing', value:'Investing' },
+        { label:'Financing', value:'Financing' }
+    ];
 
     // Classes a group can be created under
     accountClasses:
@@ -419,6 +477,8 @@ implements OnInit, OnDestroy
             GroupCode:'',
             GroupName:'',
             AllowManualSubGroup:false,
+            IsNonCurrent:false,
+            CashFlowActivity:'Operating',
             Remarks:'',
             IsActive:true
         };
@@ -736,6 +796,8 @@ implements OnInit, OnDestroy
             GroupCode:'',
             GroupName:'',
             AllowManualSubGroup:true,
+            IsNonCurrent:false,
+            CashFlowActivity:'Operating',
             Remarks:'',
             IsActive:true
         };
@@ -902,6 +964,32 @@ implements OnInit, OnDestroy
     //===========================================================
     // Account Class Change
     //===========================================================
+
+    //===========================================================
+    // Balance Sheet term : asset / liability / inventory classes
+    //===========================================================
+
+    get showsTerm():
+        boolean
+    {
+        const accountClassId =
+            Number(this.entity.AccountClassId);
+
+        const selectedClass =
+            this.accountClasses.find(x => x.AccountClassId === accountClassId);
+
+        if (!selectedClass)
+        {
+            return false;
+        }
+
+        // by the Statement Type of the class, never by its name
+        const type =
+            String(selectedClass.StatementType ?? '');
+
+        return type === 'Asset'
+            || type === 'Liability';
+    }
 
     onAccountClassChange():
         void
@@ -1073,6 +1161,22 @@ implements OnInit, OnDestroy
                                 ??
                                 false
                             ),
+
+                        IsNonCurrent:
+                            Boolean(
+                                response?.IsNonCurrent
+                                ??
+                                response?.isNonCurrent
+                                ??
+                                false
+                            ),
+
+                        CashFlowActivity:
+                            response?.CashFlowActivity
+                            ??
+                            response?.cashFlowActivity
+                            ??
+                            'Operating',
 
                         Remarks:
                             response?.Remarks
@@ -1489,6 +1593,12 @@ implements OnInit, OnDestroy
             AllowManualSubGroup:
                 this.entity.AllowManualSubGroup,
 
+            IsNonCurrent:
+                this.showsTerm && !!this.entity.IsNonCurrent,
+
+            CashFlowActivity:
+                this.entity.CashFlowActivity || 'Operating',
+
             Remarks:
                 this.entity.Remarks?.trim()
                 ??
@@ -1592,6 +1702,12 @@ implements OnInit, OnDestroy
 
             AllowManualSubGroup:
                 this.entity.AllowManualSubGroup,
+
+            IsNonCurrent:
+                this.showsTerm && !!this.entity.IsNonCurrent,
+
+            CashFlowActivity:
+                this.entity.CashFlowActivity || 'Operating',
 
             Remarks:
                 this.entity.Remarks?.trim()

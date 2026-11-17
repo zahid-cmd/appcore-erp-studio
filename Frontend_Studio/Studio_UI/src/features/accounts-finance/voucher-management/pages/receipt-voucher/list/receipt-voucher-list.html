@@ -7,7 +7,8 @@
     <app-page-header
         title="Receipt Voucher"
         subtitle="Money received : Draft → Approved → Posted"
-        icon="fas fa-file-invoice-dollar">
+        icon="fas fa-file-invoice-dollar"
+        art="ledger">
 
         <div pageHeaderCenter>
 
@@ -87,6 +88,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="ledger"
+                emptyTitle="No receipts yet"
+                emptySubtitle="Add the first one with Add."
                 [rows]="receiptVouchers"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"
@@ -122,25 +126,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="rv-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="rv-summary-item">
-                    <span class="rv-summary-label">{{ item.label }}</span>
-                    <b
-                        class="rv-summary-value"
-                        [class.rv-ok]="item.tone === 'ok'"
-                        [class.rv-bad]="item.tone === 'bad'"
-                        [class.rv-muted]="item.tone === 'muted'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="rv-summary-note">
-                Matching the ledger type and search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="receipts"
+            art="ledger"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================

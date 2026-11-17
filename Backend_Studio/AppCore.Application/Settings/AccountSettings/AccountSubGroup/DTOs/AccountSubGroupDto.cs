@@ -111,6 +111,15 @@ public class AccountSubGroupDto
         set;
     }
 
+    // Expense sub group that holds finance costs (interest, bank
+    // charges) : added back for Profit before interest (ROI /
+    // ROCE). Ignored for other classes.
+    public bool IsFinanceCost
+    {
+        get;
+        set;
+    }
+
 
     public string Remarks
     {

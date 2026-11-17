@@ -1101,6 +1101,83 @@ implements OnInit
     }
 
 
+    // Kind of a cell for the soft marks : core / granted / scheduled / off / none
+    lineKind
+    (
+        status:
+            BranchLineStatus | undefined
+    ):
+        string
+    {
+        switch
+        (
+            status?.Source
+        )
+        {
+            case 'Core':
+                return 'core';
+
+            case 'Granted':
+                return 'granted';
+
+            case 'Gifts Only':
+            case 'Scheduled':
+                return 'scheduled';
+
+            case 'Expired':
+            case 'Inactive':
+                return 'off';
+
+            default:
+                return 'none';
+        }
+    }
+
+
+    // Lines a branch runs now (core, granted, gifts only)
+    lineCount
+    (
+        row:
+            BranchBusinessLines
+    ):
+        number
+    {
+        return this.lines.filter(
+            line =>
+            {
+                const kind =
+                    this.lineKind(this.lineStatus(row, line));
+
+                return kind === 'core' || kind === 'granted' || (this.lineStatus(row, line)?.Source === 'Gifts Only');
+            }
+        ).length;
+    }
+
+
+    // One tile per business line : core and granted counts + a mark per branch
+    get lineSummary():
+        { line: string; core: number; granted: number; marks: string[] }[]
+    {
+        return this.lines.map(
+            line =>
+            {
+                const kinds =
+                    this.filteredOverview.map(
+                        row =>
+                            this.lineKind(this.lineStatus(row, line))
+                    );
+
+                return {
+                    line,
+                    core: kinds.filter(kind => kind === 'core').length,
+                    granted: kinds.filter(kind => kind === 'granted').length,
+                    marks: kinds
+                };
+            }
+        );
+    }
+
+
     // Text under a granted / scheduled / expired chip
     lineHint
     (

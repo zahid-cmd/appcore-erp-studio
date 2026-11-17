@@ -7,7 +7,8 @@
     <app-page-header
         title="Registration Profiles"
         subtitle="Registration Processing : one profile per chassis the dealer registers (from Sales Invoices - MB)"
-        icon="fa-solid fa-folder-tree">
+        icon="fa-solid fa-folder-tree"
+        art="bike">
 
         <div pageHeaderCenter>
 
@@ -78,6 +79,9 @@
 
             <app-list-table
                 [columns]="columns"
+                emptyArt="bike"
+                emptyTitle="No registrations yet"
+                emptySubtitle="Bikes sent for BRTA registration will appear here"
                 [rows]="pagedRows"
                 [serialOffset]="(currentPage - 1) * pageSize"
                 [loading]="loading"

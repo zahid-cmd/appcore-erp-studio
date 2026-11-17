@@ -7,10 +7,17 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.AccountsFinance.FinancialStatements;
+using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.Persistence;
 
 using FinancialYearsEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.FinancialYears;
+
+using AccountGroupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.AccountGroup;
+
+using AccountSubGroupEntity =
+    AppCore.Domain.Entities.Settings.AccountSettings.AccountSubGroup;
 
 using ProductCategoryEntity =
     AppCore.Domain.Entities.Settings.ProductSettings.ProductCategory;
@@ -116,14 +123,6 @@ public class FinalAccountsRepository
         (value ?? string.Empty).Trim();
 
 
-    private static bool Has
-    (
-        string text,
-        params string[] words
-    ) =>
-        words.Any(word => text.Contains(word, StringComparison.OrdinalIgnoreCase));
-
-
     private static bool IsLastDayOfMonth(DateOnly date) =>
         date.Day == DateTime.DaysInMonth(date.Year, date.Month);
 
@@ -156,46 +155,21 @@ public class FinalAccountsRepository
     }
 
 
-    // Business line from a name : accessories, spare parts /
-    // lubricants, service, motor bikes ("" = none)
-    private static string LineOf
+    // Business line of a row : the setting of the ledger, else of
+    // its Account Class (MB / SP / AC / SV), as the key the report
+    // uses ("" = none). Never from a name.
+    private static string LineKey
     (
-        params string?[] texts
-    )
-    {
-        foreach (string? value in texts)
+        string? businessLine
+    ) =>
+        BusinessLines.Normalize(businessLine) switch
         {
-            string text =
-                Clean(value);
-
-            if (text.Length == 0)
-            {
-                continue;
-            }
-
-            if (Has(text, "accessor"))
-            {
-                return LineAccessories;
-            }
-
-            if (Has(text, "spare", "lubric", "part"))
-            {
-                return LineParts;
-            }
-
-            if (Has(text, "service"))
-            {
-                return LineService;
-            }
-
-            if (Has(text, "bike", "motor"))
-            {
-                return LineBikes;
-            }
-        }
-
-        return string.Empty;
-    }
+            BusinessLines.MotorBikes => LineBikes,
+            BusinessLines.SpareParts => LineParts,
+            BusinessLines.Accessories => LineAccessories,
+            BusinessLines.Service => LineService,
+            _ => string.Empty
+        };
 
 
     // COGS account group → business line (Product Categories)
@@ -218,7 +192,7 @@ public class FinalAccountsRepository
                 Clean(category.CogsGroupCode);
 
             string line =
-                LineOf(category.CategoryType);
+                LineKey(BusinessLines.OfCategoryType(category.CategoryType));
 
             if (code.Length > 0 && line.Length > 0 && !lines.ContainsKey(code))
             {
@@ -230,32 +204,28 @@ public class FinalAccountsRepository
     }
 
 
+    // What a ledger is : the Statement Type of its Account Class
+    // (Trial Balance). Not in the chart : by its normal side.
+    // Never from a name.
+    private static string TypeOf
+    (
+        TrialBalanceRowDto row
+    ) =>
+        StatementTypes.Resolve(null, row.StatementType, row.Mode);
+
+
     // Section of an income / expense ledger
     private static string ProfitLossSection
     (
         TrialBalanceRowDto row
-    )
-    {
-        string code =
-            Clean(row.ClassCode).ToUpperInvariant();
-
-        string name =
-            Clean(row.ClassName);
-
-        if (code.StartsWith("COGS-") || Has(name, "cost of"))
+    ) =>
+        TypeOf(row) switch
         {
-            return FinalAccountsSections.Cogs;
-        }
-
-        if (Has(name, "income", "revenue", "sale"))
-        {
-            return Has(name, "other")
-                ? FinalAccountsSections.OtherIncome
-                : FinalAccountsSections.Sales;
-        }
-
-        return FinalAccountsSections.Expense;
-    }
+            StatementTypes.Cogs => FinalAccountsSections.Cogs,
+            StatementTypes.Income => FinalAccountsSections.Sales,
+            StatementTypes.OtherIncome => FinalAccountsSections.OtherIncome,
+            _ => FinalAccountsSections.Expense
+        };
 
 
     // Section of a balance-sheet ledger
@@ -269,36 +239,12 @@ public class FinalAccountsRepository
             return FinalAccountsSections.Equity;
         }
 
-        string code =
-            Clean(row.ClassCode).ToUpperInvariant();
-
-        string name =
-            Clean(row.ClassName);
-
-        if (code.StartsWith("INV-") || code.StartsWith("WIP-"))
+        return TypeOf(row) switch
         {
-            return FinalAccountsSections.Asset;
-        }
-
-        if (Has(name, "equity", "capital", "reserve"))
-        {
-            return FinalAccountsSections.Equity;
-        }
-
-        if (Has(name, "liabilit", "payable", "loan", "borrow"))
-        {
-            return FinalAccountsSections.Liability;
-        }
-
-        if (Has(name, "asset", "receivable", "inventor", "stock", "progress"))
-        {
-            return FinalAccountsSections.Asset;
-        }
-
-        // Not in the chart / unknown class : by its normal side
-        return string.Equals(row.Mode, Cr, StringComparison.OrdinalIgnoreCase)
-            ? FinalAccountsSections.Liability
-            : FinalAccountsSections.Asset;
+            StatementTypes.Equity => FinalAccountsSections.Equity,
+            StatementTypes.Liability => FinalAccountsSections.Liability,
+            _ => FinalAccountsSections.Asset
+        };
     }
 
 
@@ -345,6 +291,7 @@ public class FinalAccountsRepository
             SubGroupName = row.SubGroupName,
             IsActive = row.IsActive,
             IsRetainedEarnings = row.IsRetainedEarnings,
+            BusinessLine = row.BusinessLine,
             Section = section
         };
 
@@ -593,14 +540,14 @@ public class FinalAccountsRepository
             if (row.Section == FinalAccountsSections.Sales)
             {
                 row.Line =
-                    LineOf(row.ClassName, row.GroupName, row.SubGroupName, row.LedgerName);
+                    LineKey(row.BusinessLine);
             }
             else if (row.Section == FinalAccountsSections.Cogs)
             {
                 row.Line =
                     cogsLines.GetValueOrDefault(Clean(row.GroupCode))
                     ?? cogsLines.GetValueOrDefault(Clean(row.SubGroupCode))
-                    ?? LineOf(row.GroupName, row.SubGroupName, row.LedgerName);
+                    ?? LineKey(row.BusinessLine);
             }
         }
 
@@ -763,6 +710,28 @@ public class FinalAccountsRepository
                         ? row.Closing
                         : -row.Closing);
 
+        //=======================================================
+        // Term : non-current asset / liability groups (Account
+        // Group setting); the rest are current
+        //=======================================================
+
+        HashSet<string> nonCurrent =
+            (await _context
+                .Set<AccountGroupEntity>()
+                .AsNoTracking()
+                .Where(x => x.IsNonCurrent && !x.IsDeleted)
+                .Select(x => x.GroupCode)
+                .ToListAsync())
+            .Select(Clean)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (FinalAccountsRowDto row in rows)
+        {
+            row.IsNonCurrent =
+                (row.Section == FinalAccountsSections.Asset || row.Section == FinalAccountsSections.Liability)
+                && nonCurrent.Contains(Clean(row.GroupCode));
+        }
+
         BalanceSheetDto result =
             new()
             {
@@ -819,5 +788,270 @@ public class FinalAccountsRepository
             Money(totals.Assets - totals.LiabilitiesAndEquity);
 
         return totals;
+    }
+
+
+    //===========================================================
+    // Return on Investment
+    //
+    //   This period (and, compare = last-year, the same dates a
+    //   year earlier) : net profit and finance costs from the
+    //   Profit & Loss, the investment from the Balance Sheet on
+    //   the day before From and on To, gross profit and stock by
+    //   business line. The page works out the averages and the
+    //   ratios.
+    //===========================================================
+
+    public async Task<ReturnOnInvestmentDto> GetReturnOnInvestmentAsync
+    (
+        long userId,
+        string? from,
+        string? to,
+        long branchId,
+        bool showCancelled,
+        string? compare
+    )
+    {
+        DateOnly end =
+            ParseDate(to) ?? Today();
+
+        DateOnly start =
+            ParseDate(from)
+            ?? (await YearOfAsync(end))?.Start
+            ?? new DateOnly(end.Year, 1, 1);
+
+        if (start > end)
+        {
+            (start, end) = (end, start);
+        }
+
+        // Sub groups marked Finance cost (Account Sub Group)
+        var finance =
+            await _context
+                .Set<AccountSubGroupEntity>()
+                .AsNoTracking()
+                .Where(x => x.IsFinanceCost && !x.IsDeleted)
+                .OrderBy(x => x.SubGroupCode)
+                .Select(x => new { x.SubGroupCode, x.SubGroupName })
+                .ToListAsync();
+
+        HashSet<string> financeCodes =
+            finance
+                .Select(x => Clean(x.SubGroupCode))
+                .Where(x => x.Length > 0)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Dictionary<string, string> stockLines =
+            await StockLinesAsync();
+
+        var current =
+            await RoiFiguresAsync(userId, start, end, branchId, showCancelled, financeCodes, stockLines);
+
+        string mode =
+            Clean(compare).ToLowerInvariant() == FinalAccountsCompare.LastYear
+                ? FinalAccountsCompare.LastYear
+                : FinalAccountsCompare.None;
+
+        RoiFiguresDto? previous =
+            mode == FinalAccountsCompare.LastYear
+                ? (await RoiFiguresAsync(
+                    userId,
+                    start.AddYears(-1),
+                    end.AddYears(-1),
+                    branchId,
+                    showCancelled,
+                    financeCodes,
+                    stockLines)).Figures
+                : null;
+
+        return new ReturnOnInvestmentDto
+        {
+            BranchId = branchId,
+            BranchName = current.BranchName,
+            ShowCancelled = showCancelled,
+            Compare = mode,
+            CompareLabel = mode == FinalAccountsCompare.LastYear ? "Same period last year" : string.Empty,
+            Message = current.Message,
+            FinanceSubGroups =
+                finance
+                    .Select(x => $"{Clean(x.SubGroupCode)} {Clean(x.SubGroupName)}".Trim())
+                    .ToList(),
+            Current = current.Figures,
+            Previous = previous
+        };
+    }
+
+
+    // Inventory / work in progress account group → business line
+    // (Product Categories, by code)
+    private async Task<Dictionary<string, string>> StockLinesAsync()
+    {
+        var categories =
+            await _context
+                .Set<ProductCategoryEntity>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .Select(x => new { x.InventoryGroupCode, x.WipGroupCode, x.CategoryType })
+                .ToListAsync();
+
+        Dictionary<string, string> lines =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var category in categories)
+        {
+            string line =
+                LineKey(BusinessLines.OfCategoryType(category.CategoryType));
+
+            if (line.Length == 0)
+            {
+                continue;
+            }
+
+            foreach (string code in new[] { Clean(category.InventoryGroupCode), Clean(category.WipGroupCode) })
+            {
+                if (code.Length > 0 && !lines.ContainsKey(code))
+                {
+                    lines[code] = line;
+                }
+            }
+        }
+
+        return lines;
+    }
+
+
+    private async Task<(RoiFiguresDto Figures, string BranchName, string Message)> RoiFiguresAsync
+    (
+        long userId,
+        DateOnly start,
+        DateOnly end,
+        long branchId,
+        bool showCancelled,
+        HashSet<string> financeCodes,
+        Dictionary<string, string> stockLines
+    )
+    {
+        ProfitLossDto profitLoss =
+            await GetProfitLossAsync(
+                userId,
+                DateText(start),
+                DateText(end),
+                branchId,
+                showCancelled,
+                FinalAccountsCompare.None);
+
+        DateOnly openingDate =
+            start.AddDays(-1);
+
+        BalanceSheetDto opening =
+            await GetBalanceSheetAsync(
+                userId,
+                DateText(openingDate),
+                branchId,
+                showCancelled,
+                FinalAccountsCompare.None);
+
+        BalanceSheetDto closing =
+            await GetBalanceSheetAsync(
+                userId,
+                DateText(end),
+                branchId,
+                showCancelled,
+                FinalAccountsCompare.None);
+
+        decimal financeCosts =
+            Money(
+                profitLoss.Rows
+                    .Where(x => x.Section == FinalAccountsSections.Expense
+                        && financeCodes.Contains(Clean(x.SubGroupCode)))
+                    .Sum(x => x.Amount));
+
+        decimal netProfit =
+            profitLoss.Totals.NetProfit;
+
+        // Business lines : gross profit (sales − cost of goods sold
+        // of the line) and stock on both dates
+        decimal LineSum(string line, string section) =>
+            Money(
+                profitLoss.Rows
+                    .Where(x => x.Section == section && x.Line == line)
+                    .Sum(x => x.Amount));
+
+        string StockLine(FinalAccountsRowDto row) =>
+            stockLines.GetValueOrDefault(Clean(row.GroupCode))
+            ?? stockLines.GetValueOrDefault(Clean(row.SubGroupCode))
+            ?? string.Empty;
+
+        decimal Stock(BalanceSheetDto sheet, string line) =>
+            Money(
+                sheet.Rows
+                    .Where(x => x.Section == FinalAccountsSections.Asset && StockLine(x) == line)
+                    .Sum(x => x.Amount));
+
+        List<RoiLineDto> lines =
+            new[] { LineBikes, LineParts, LineAccessories, LineService }
+                .Select
+                (
+                    line =>
+                    {
+                        decimal sales =
+                            LineSum(line, FinalAccountsSections.Sales);
+
+                        return new RoiLineDto
+                        {
+                            Line = line,
+                            Sales = sales,
+                            GrossProfit = Money(sales - LineSum(line, FinalAccountsSections.Cogs)),
+                            OpeningStock = Stock(opening, line),
+                            ClosingStock = Stock(closing, line)
+                        };
+                    }
+                )
+                .ToList();
+
+        RoiFiguresDto figures =
+            new()
+            {
+                From = DateText(start),
+                To = DateText(end),
+                NetProfit = netProfit,
+                FinanceCosts = financeCosts,
+                ProfitBeforeInterest = Money(netProfit + financeCosts),
+                Opening = RoiBase(opening),
+                Closing = RoiBase(closing),
+                Lines = lines
+            };
+
+        return (figures, profitLoss.BranchName, JoinMessages(profitLoss.Message));
+    }
+
+
+    // The investment on the Balance Sheet date
+    private static RoiBaseDto RoiBase
+    (
+        BalanceSheetDto sheet
+    )
+    {
+        BalanceSheetTotalsDto t =
+            sheet.Totals;
+
+        decimal nonCurrent =
+            Money(
+                sheet.Rows
+                    .Where(x => x.Section == FinalAccountsSections.Liability && x.IsNonCurrent)
+                    .Sum(x => x.Amount));
+
+        decimal equity =
+            Money(t.Equity + t.ProfitToDate);
+
+        return new RoiBaseDto
+        {
+            Date = sheet.AsOn,
+            Equity = equity,
+            NonCurrentLiabilities = nonCurrent,
+            CurrentLiabilities = Money(t.Liabilities - nonCurrent),
+            TotalAssets = t.Assets,
+            CapitalEmployed = Money(equity + nonCurrent)
+        };
     }
 }

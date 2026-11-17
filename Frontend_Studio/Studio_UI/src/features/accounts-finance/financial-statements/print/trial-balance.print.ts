@@ -277,9 +277,14 @@ export const TRIAL_BALANCE_PRINT:
             key:'trial-balance',
             title:'Trial Balance',
             icon:'fas fa-scale-balanced',
+            // Signature lines : only on the printed copy, a switch in the viewer (2026-11-16)
+            toggles:
+            [
+                { key:'signatures', label:'Signature lines', on:false }
+            ],
             render:
                 (data: TrialBalancePrintData, kit: PrintKit) =>
-                    trialBalanceHtml(data, kit, !!kit.landscape),
+                    withSignatures(trialBalanceHtml(data, kit, !!kit.landscape), kit),
             css:
                 TRIAL_BALANCE_PRINT_CSS,
             excel:
@@ -594,4 +599,30 @@ function trialBalanceSheet
             total
         ]
     };
+}
+
+
+//===============================================================
+// Prepared / Checked / Approved lines when the viewer's
+// "Signature lines" switch is on : inside the end block, so they
+// sit at the bottom of the last page (never on a page of their own)
+//===============================================================
+
+function withSignatures
+(
+    html:
+        string,
+    kit:
+        PrintKit
+):
+    string
+{
+    if (!kit.toggles?.['signatures'])
+    {
+        return html;
+    }
+
+    return html.replace(
+        '<div class="pv-end">',
+        '<div class="pv-end">' + kit.signatures(['Prepared by', 'Checked by', 'Approved by']));
 }

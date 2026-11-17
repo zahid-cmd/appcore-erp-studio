@@ -136,6 +136,20 @@ export class DepartmentService
                                     ??
                                     '',
 
+                                WingId:
+                                    department.WingId
+                                    ??
+                                    department.wingId
+                                    ??
+                                    null,
+
+                                WingName:
+                                    department.WingName
+                                    ??
+                                    department.wingName
+                                    ??
+                                    '',
+
                                 Remarks:
                                     department.Remarks
                                     ??
@@ -168,6 +182,43 @@ export class DepartmentService
         return this.http.get<string>(
             `${this.apiUrl}/next-code`
         );
+    }
+
+
+    //===========================================================
+    // The wings a department can belong to (the Wing dropdown)
+    //===========================================================
+
+    getWings():
+        Observable<{ label: string; value: number }[]>
+    {
+        return this.http
+            .get<any[]>(
+                `${this.apiUrl}/wings`
+            )
+            .pipe(
+                map(
+                    wings =>
+                        (Array.isArray(wings) ? wings : []).map(
+                            wing =>
+                            ({
+                                label:
+                                    wing.wingName
+                                    ??
+                                    wing.WingName
+                                    ??
+                                    '',
+
+                                value:
+                                    Number(
+                                        wing.wingId
+                                        ??
+                                        wing.WingId
+                                    )
+                            })
+                        )
+                )
+            );
     }
 
 

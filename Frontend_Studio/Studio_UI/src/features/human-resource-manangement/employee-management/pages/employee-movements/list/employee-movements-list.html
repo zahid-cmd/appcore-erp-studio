@@ -7,7 +7,8 @@
     <app-page-header
         title="Employee Movements"
         subtitle="Increment, promotion, transfer, confirmation and separation"
-        icon="fas fa-people-arrows">
+        icon="fas fa-people-arrows"
+        art="people">
 
         <div pageHeaderCenter>
             <app-search-box
@@ -59,6 +60,9 @@
         <div canvasBody>
             <app-list-table
                 [columns]="columns"
+                emptyArt="people"
+                emptyTitle="No movement yet"
+                emptySubtitle="Transfers, promotions and separations show here."
                 [rows]="rows"
                 [actions]="tableActions"
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -87,24 +91,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="empl-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="empl-summary-item">
-                    <span class="empl-summary-label">{{ item.label }}</span>
-                    <b
-                        class="empl-summary-value"
-                        [class.empl-ok]="item.tone === 'ok'"
-                        [class.empl-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="empl-summary-note">
-                Saving a movement changes the employee record at once
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="movements"
+            art="people"
+            note="All records">
+        </app-summary-line>
     }
 
     <app-history-drawer

@@ -10,7 +10,9 @@
 
         subtitle="Manage user profiles"
 
-        icon="fas fa-user">
+        icon="fas fa-user"
+
+        art="people">
 
         <div pageHeaderCenter>
 
@@ -100,6 +102,12 @@
 
                 [columns]="columns"
 
+                emptyArt="people"
+
+                emptyTitle="No users yet"
+
+                emptySubtitle="Create a user to let someone sign in"
+
                 [rows]="pagedUserProfiles"
 
                 [serialOffset]="(currentPage - 1) * pageSize"
@@ -150,28 +158,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Inactive</span>
-                <b class="ics-summary-value ics-bad">{{ summaryText(summaryTotal - summaryActive) }}</b>
-            </span>
-
-            <span class="ics-summary-note">
-                Matching the search
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="users"
+            art="people"
+            note="Matching the search">
+        </app-summary-line>
     }
 
 

@@ -139,6 +139,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -265,6 +271,8 @@ const MONTHS =
         TextboxComponent,
         PaymentDeskComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent
@@ -352,16 +360,17 @@ export class MembershipFeesCollectionList
 
     readonly columns: ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'45px', align:'center' },
-        { header:'Membership No', field:'MembershipNo', width:'130px', align:'left', sortable:true },
-        { header:'Card', field:'CardName', width:'110px', align:'left', sortable:true },
-        { header:'Customer', field:'CustomerText', width:'200px', align:'left', sortable:true },
-        { header:'Chassis', field:'ChassisNo', width:'150px', align:'left', sortable:true, priority:2 },
-        { header:'Date', field:'DateText', width:'100px', align:'center', sortable:true },
-        { header:'Fee (Tk)', field:'AmountText', width:'100px', align:'right', sortable:true },
-        { header:'Voucher', field:'VoucherText', width:'200px', align:'left', sortable:true, priority:2 },
-        { header:'Status', field:'StatusText', type:'status', width:'110px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'150px', align:'center' }
+        // balanced widths, one scheme for every list
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
+        { header:'Membership No', field:'MembershipNo', width:'160px', align:'left', sortable:true },
+        { header:'Card', field:'CardName', width:'160px', align:'left', sortable:true },
+        { header:'Customer', field:'CustomerText', width:'160px', align:'left', sortable:true },
+        { header:'Chassis', field:'ChassisNo', width:'160px', align:'left', sortable:true, priority:2 },
+        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
+        { header:'Fee (Tk)', field:'AmountText', width:'160px', align:'left', sortable:true },
+        { header:'Voucher', field:'VoucherText', width:'160px', align:'left', sortable:true, priority:2 },
+        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
     ];
 
     readonly rowActions: ListTableRowAction[] =
@@ -1277,5 +1286,40 @@ export class MembershipFeesCollectionList
         this.historyOpened = false;
 
         this.cdr.detectChanges();
+    }
+
+
+    //===========================================================
+    // Summary Line items (cached, so the binding keeps its reference)
+    //===========================================================
+
+    private summaryCache:
+        { key:string; items:{ label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[] } =
+        { key:'', items:[] };
+
+    get summaryItems():
+        { label:string; value:string; tone:'' | 'ok' | 'bad' | 'warn' }[]
+    {
+        const v: string[] =
+        [
+            `${this.countOf('To Collect')} · ${this.money(this.totalOf('To Collect'))}`,
+            `${this.countOf('Paid')} · ${this.money(this.totalOf('Paid'))}`,
+            `${this.countOf('Refunded')} · ${this.money(this.totalOf('Refunded'))}`
+        ];
+        const key = v.join('|');
+        if (this.summaryCache.key !== key)
+        {
+            this.summaryCache =
+            {
+                key,
+                items:
+                [
+                    { label:'To collect', value:v[0], tone:'bad' },
+                    { label:'Collected', value:v[1], tone:'ok' },
+                    { label:'Refunded', value:v[2], tone:'' }
+                ]
+            };
+        }
+        return this.summaryCache.items;
     }
 }

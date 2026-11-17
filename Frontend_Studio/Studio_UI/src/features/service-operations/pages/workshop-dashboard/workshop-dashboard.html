@@ -1,0 +1,200 @@
+<div class="app-list-page">
+
+    <app-page-header
+        title="Workshop Dashboard"
+        subtitle="The workshop now : the bikes in it, who works on them, the bays and the money of today"
+        icon="fas fa-gauge-high">
+
+        <div pageHeaderCenter>
+
+            <app-search-box
+                [value]="searchText"
+                placeholder="Search job card, customer, bike, technician..."
+                (valueChange)="onSearch($event)">
+            </app-search-box>
+
+        </div>
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="load()"
+                [command2Visible]="false"
+                [command3Visible]="false">
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <app-page-toolbar>
+
+        <div
+            pageToolbarLeft
+            class="sr-filters">
+
+            <app-search-dropdown
+                class="sr-branch"
+                placeholder="All service centers"
+                [items]="branchItems"
+                labelField="label"
+                valueField="value"
+                [value]="branchId"
+                (valueChange)="onBranch($event)">
+            </app-search-dropdown>
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="sr-totals">
+            <b>{{ data?.Today ?? '' }}</b>
+        </div>
+
+    </app-page-toolbar>
+
+    <div class="wd-body appcore-scrollbar">
+
+        @if (data)
+        {
+            <!-- the figures -->
+
+            <div class="wd-tiles">
+
+                @for (tile of data.Tiles; track tile.Label)
+                {
+                    <div
+                        class="wd-tile"
+                        [ngClass]="'wd-' + tile.Tone">
+                        <small>{{ tile.Label }}</small>
+                        <b>{{ tile.Value }}</b>
+                        <span>{{ tile.Hint }}</span>
+                    </div>
+                }
+
+            </div>
+
+            <!-- the open job cards by status : a click filters the list -->
+
+            <div class="wd-strip">
+
+                @for (item of data.Statuses; track item.Label)
+                {
+                    <button
+                        type="button"
+                        class="wd-chip"
+                        [class.wd-on]="status === item.Label"
+                        (click)="onStatus(item.Label)">
+                        <i [style.background]="color(item.Label)"></i>
+                        {{ item.Label }}
+                        <b>{{ item.Value }}</b>
+                    </button>
+                }
+
+            </div>
+
+            <!-- the bikes in the workshop -->
+
+            <section class="wd-card">
+
+                <header>
+                    <i class="fas fa-motorcycle"></i>
+                    Bikes in the workshop{{ status ? ' : ' + status : '' }}  ({{ jobs.length }})
+                </header>
+
+                <div class="wd-row wd-head">
+                    <span>Job Card</span>
+                    <span>Customer</span>
+                    <span>Bike</span>
+                    <span>Type</span>
+                    <span>Status</span>
+                    <span>Checked In</span>
+                    <span>Promised</span>
+                    <span>Working Now</span>
+                </div>
+
+                @for (job of jobs; track job.PublicId)
+                {
+                    <div
+                        class="wd-row wd-job"
+                        title="Open the job card"
+                        (click)="open(job)">
+
+                        <b>{{ job.JobCardNo }}</b>
+
+                        <span>
+                            {{ job.CustomerName }}
+                            <small>{{ job.Mobile }}</small>
+                        </span>
+
+                        <span>
+                            {{ job.BikeNo }}
+                            <small>{{ job.ModelName }}</small>
+                        </span>
+
+                        <span>{{ job.JobType }}</span>
+
+                        <span class="wd-status">
+                            <i [style.background]="color(job.Status)"></i>
+                            {{ job.Status }}
+                        </span>
+
+                        <span>{{ dateTime(job.CheckInAt) }}</span>
+
+                        <span [class.wd-late]="job.IsLate">{{ dateTime(job.PromisedAt) || '-' }}{{ job.IsLate ? '  (late)' : '' }}</span>
+
+                        <span>
+                            {{ job.Technicians || '-' }}
+                            <small>{{ job.Bays }}</small>
+                        </span>
+
+                    </div>
+                }
+                @empty
+                {
+                    <div class="wd-empty">No bike is in the workshop{{ status || searchText ? ' for this filter' : '' }}.</div>
+                }
+
+            </section>
+
+            <!-- the bays -->
+
+            @if (data.Bays.length > 0)
+            {
+                <section class="wd-card">
+
+                    <header>
+                        <i class="fas fa-warehouse"></i>
+                        Bays
+                    </header>
+
+                    <div class="wd-bays">
+
+                        @for (bay of data.Bays; track $index)
+                        {
+                            <div
+                                class="wd-tile"
+                                [ngClass]="'wd-' + bay.Tone">
+                                <small>{{ bay.Label }}</small>
+                                <b>{{ bay.Value }}</b>
+                                <span>{{ bay.Hint }}</span>
+                            </div>
+                        }
+
+                    </div>
+
+                </section>
+            }
+        }
+        @else
+        {
+            <div class="wd-empty">{{ loading ? 'Reading the workshop...' : 'The workshop dashboard could not be loaded.' }}</div>
+        }
+
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

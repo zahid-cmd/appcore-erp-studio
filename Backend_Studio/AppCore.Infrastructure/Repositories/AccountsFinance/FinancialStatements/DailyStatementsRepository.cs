@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.AccountsFinance.FinancialStatements;
 using AppCore.Domain.Entities.SalesOperations.Shared;
+using AppCore.Domain.Platform.Accounting;
 using AppCore.Infrastructure.Persistence;
 
 using VoucherEntriesEntity =
@@ -203,20 +204,6 @@ public class DailyStatementsRepository
         (value ?? string.Empty).Trim();
 
 
-    private static bool Has
-    (
-        string? text,
-        params string[] words
-    )
-    {
-        string value =
-            Clean(text);
-
-        return value.Length > 0
-            && words.Any(word => value.Contains(word, StringComparison.OrdinalIgnoreCase));
-    }
-
-
     private static bool IsMoney(string? ledgerType) =>
         MoneyTypes.Contains(Clean(ledgerType).ToUpperInvariant());
 
@@ -294,45 +281,21 @@ public class DailyStatementsRepository
     }
 
 
-    // Business line from a name
-    private static string LineOf
+    // Business line of a row : the setting of the ledger, else of
+    // its Account Class (MB / SP / AC / SV), as the key the report
+    // uses ("" = none). Never from a name.
+    private static string LineKey
     (
-        params string?[] texts
-    )
-    {
-        foreach (string? value in texts)
+        string? businessLine
+    ) =>
+        BusinessLines.Normalize(businessLine) switch
         {
-            string text =
-                Clean(value);
-
-            if (text.Length == 0)
-            {
-                continue;
-            }
-
-            if (Has(text, "accessor"))
-            {
-                return LineAccessories;
-            }
-
-            if (Has(text, "spare", "lubric", "part"))
-            {
-                return LineParts;
-            }
-
-            if (Has(text, "service"))
-            {
-                return LineService;
-            }
-
-            if (Has(text, "bike", "motor"))
-            {
-                return LineBikes;
-            }
-        }
-
-        return string.Empty;
-    }
+            BusinessLines.MotorBikes => LineBikes,
+            BusinessLines.SpareParts => LineParts,
+            BusinessLines.Accessories => LineAccessories,
+            BusinessLines.Service => LineService,
+            _ => string.Empty
+        };
 
 
     // Letters of a document number : "SIMB-0101-..." -> SIMB
@@ -366,7 +329,8 @@ public class DailyStatementsRepository
             : string.Empty;
 
 
-    // Same section rule as the Profit & Loss
+    // Same section rule as the Profit & Loss : the Statement Type
+    // of the Account Class, never a name
     private static string SectionOf
     (
         TrialBalanceRowDto? row
@@ -377,20 +341,13 @@ public class DailyStatementsRepository
             return string.Empty;
         }
 
-        string code =
-            Clean(row.ClassCode).ToUpperInvariant();
-
-        if (code.StartsWith("COGS-") || Has(row.ClassName, "cost of"))
+        return StatementTypes.Normalize(row.StatementType) switch
         {
-            return Cogs;
-        }
-
-        if (Has(row.ClassName, "income", "revenue", "sale"))
-        {
-            return Has(row.ClassName, "other") ? OtherIncome : Sales;
-        }
-
-        return Expense;
+            StatementTypes.Cogs => Cogs,
+            StatementTypes.Income => Sales,
+            StatementTypes.OtherIncome => OtherIncome,
+            _ => Expense
+        };
     }
 
 
@@ -638,9 +595,9 @@ public class DailyStatementsRepository
                     TrialBalanceRowDto? chartRow =
                         chart.GetValueOrDefault(item.Code);
 
-                    if (SectionOf(chartRow) == Sales || Has(chartRow?.ClassName, "service"))
+                    if (SectionOf(chartRow) == Sales)
                     {
-                        line = LineOf(chartRow?.ClassName, chartRow?.GroupName, item.Name);
+                        line = LineKey(chartRow?.BusinessLine);
 
                         if (line.Length > 0)
                         {
@@ -961,7 +918,7 @@ public class DailyStatementsRepository
                 Clean(category.CogsGroupCode);
 
             string line =
-                LineOf(category.CategoryType);
+                LineKey(BusinessLines.OfCategoryType(category.CategoryType));
 
             if (code.Length > 0 && line.Length > 0 && !cogsLines.ContainsKey(code))
             {
@@ -981,7 +938,7 @@ public class DailyStatementsRepository
             if (section == Sales)
             {
                 string line =
-                    LineOf(row.ClassName, row.GroupName, row.SubGroupName, row.LedgerName);
+                    LineKey(row.BusinessLine);
 
                 if (checks.TryGetValue(line, out InvoiceProfitCheckDto? check))
                 {
@@ -993,7 +950,7 @@ public class DailyStatementsRepository
                 string line =
                     cogsLines.GetValueOrDefault(Clean(row.GroupCode))
                     ?? cogsLines.GetValueOrDefault(Clean(row.SubGroupCode))
-                    ?? LineOf(row.GroupName, row.SubGroupName, row.LedgerName);
+                    ?? LineKey(row.BusinessLine);
 
                 if (checks.TryGetValue(line, out InvoiceProfitCheckDto? check))
                 {

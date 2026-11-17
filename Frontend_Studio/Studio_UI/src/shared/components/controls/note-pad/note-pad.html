@@ -1,0 +1,61 @@
+<div
+    class="np"
+    [class.np-off]="disabled">
+
+    <div class="np-paper">
+
+        <span class="np-margin"></span>
+
+        <textarea
+            #paper
+            class="np-text"
+            [value]="value ?? ''"
+            [placeholder]="disabled ? '' : placeholder"
+            [attr.maxlength]="maxLength > 0 ? maxLength : null"
+            [readOnly]="disabled"
+            (input)="onInput(paper.value)">
+        </textarea>
+
+    </div>
+
+    <div class="np-foot">
+
+        @if (!disabled)
+        {
+            <button
+                type="button"
+                class="np-chip"
+                title="Put today's date"
+                (click)="stampDate()">
+                <i class="fas fa-calendar-day"></i>
+                Date
+            </button>
+
+            <button
+                type="button"
+                class="np-chip"
+                title="Start a bullet line"
+                (click)="bullet()">
+                <i class="fas fa-list-ul"></i>
+                Bullet
+            </button>
+        }
+
+        @if (note)
+        {
+            <span class="np-note">
+                <i class="fas fa-lock"></i>
+                {{ note }}
+            </span>
+        }
+
+        @if (maxLength > 0)
+        {
+            <span
+                class="np-count"
+                [class.np-full]="nearFull">{{ length }} / {{ maxLength }}</span>
+        }
+
+    </div>
+
+</div>

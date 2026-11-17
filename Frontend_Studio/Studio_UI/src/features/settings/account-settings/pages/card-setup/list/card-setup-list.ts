@@ -110,6 +110,12 @@ from '../../../../../../shared/components/layout/list-table/list-table';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     PaginationComponent
 }
 from '../../../../../../shared/components/controls/pagination/pagination';
@@ -189,6 +195,8 @@ from '../../../services/card-setup.service';
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
+
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent
@@ -423,49 +431,50 @@ implements OnInit, OnDestroy
     readonly columns:
         ListTableColumn[] =
     [
+        // balanced widths, one scheme for every Settings list
         {
             header:'#',
             field:'serial',
             type:'serial',
-            width:'60px',
+            width:'56px',
             align:'center'
         },
         {
             header:'Card Code',
             field:'CardCode',
-            width:'160px',
+            width:'140px',
             align:'center'
         },
         {
             header:'Card Name',
             field:'CardName',
-            width:'240px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Short Name',
             field:'ShortName',
-            width:'160px',
+            width:'150px',
             align:'left'
         },
         {
             header:'Issuing Bank',
             field:'IssuingBank',
-            width:'260px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'120px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'110px',
+            width:'140px',
             align:'center'
         }
     ];

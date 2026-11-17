@@ -1,0 +1,38 @@
+@import '../../../../service-operations/pages/job-cards/job-cards.css';
+
+/* Sales Warranty Records : the view is the job card form (left the
+   record, right its part coverages); only what differs is here */
+
+.swr-title
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #0f2a44;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+/* # | part | until | km | notes | state */
+
+.swr-row
+{
+    display: grid;
+    grid-template-columns: 30px minmax(160px, 1.2fr) 120px 90px minmax(140px, 1fr) 110px;
+    align-items: center;
+    gap: 8px;
+}
+
+.swr-state
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.swr-state i
+{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}

@@ -8,9 +8,11 @@
 
         title="Wing"
 
-        subtitle="Manage wings"
+        subtitle="Groups of branches under the company, e.g. Sales, Service, Accessories"
 
-        icon="fas fa-layer-group">
+        icon="fas fa-layer-group"
+
+        art="wings">
 
         <div pageHeaderCenter>
 
@@ -108,6 +110,12 @@
 
                 [error]="loadFailed"
 
+                emptyArt="wings"
+
+                emptyTitle="No wing yet"
+
+                emptySubtitle="Add a wing first : every branch belongs to one, and reports can be grouped by it."
+
                 (view)="view($event)"
 
                 (edit)="edit($event)"
@@ -150,24 +158,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="wng-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="wng-summary-item">
-                    <span class="wng-summary-label">{{ item.label }}</span>
-                    <b
-                        class="wng-summary-value"
-                        [class.wng-ok]="item.tone === 'ok'"
-                        [class.wng-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="wng-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="wings"
+            art="wings"
+            note="All records">
+        </app-summary-line>
     }
 
 

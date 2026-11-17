@@ -1,0 +1,518 @@
+<div class="app-list-page">
+
+    @if (mode === 'list')
+    {
+        <app-page-header
+            [title]="words.title"
+            [subtitle]="words.subtitle"
+            [icon]="words.icon">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    [placeholder]="words.search"
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        @if (kind === 'requisition')
+        {
+            <app-page-toolbar>
+
+                <app-control-tabs
+                    pageToolbarLeft
+                    [tabs]="tabs"
+                    [selectedTab]="selectedTab"
+                    (selectedTabChange)="onTab($event)">
+                </app-control-tabs>
+
+            </app-page-toolbar>
+        }
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="listActions"
+                    [rowActions]="rowActions"
+                    (rowAction)="onRowAction($event)"
+                    (view)="view($event)"
+                    (edit)="edit($event)"
+                    (sortChange)="onSort($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            [title]="words.one + ' History'"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+    }
+    @else
+    {
+        <app-page-header
+            [title]="pageTitle"
+            [subtitle]="words.subtitle"
+            [icon]="words.icon">
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    [command1Text]="saveText"
+                    command1Icon="fas fa-floppy-disk"
+                    [command1Permission]="mode === 'edit' ? 'update' : 'add'"
+                    (command1Click)="onSave()"
+                    [command1Visible]="canEdit"
+                    command2Text="Print"
+                    command2Icon="fas fa-print"
+                    (command2Click)="print()"
+                    [command2Visible]="!!doc"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-arrow-left"
+                    rightCommandTitle="Back to the list"
+                    (rightCommandClick)="goToList()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="hp-split jc-split appcore-scrollbar">
+
+                <!-- ============ LEFT : the document and its job card ============ -->
+
+                <section class="pf-card">
+
+                    <header class="pf-card-head">
+                        <i [class]="words.icon"></i>
+                        <span>{{ words.one }}</span>
+
+                        @if (doc)
+                        {
+                            <span
+                                class="jc-status"
+                                [style.background]="statusColor">{{ doc.Status }}</span>
+                        }
+                    </header>
+
+                    <div class="jc-two">
+
+                        <app-textbox
+                            [label]="words.noLabel"
+                            [value]="docNo"
+                            [disabled]="true">
+                        </app-textbox>
+
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [disabled]="!canEdit"
+                            [value]="$any(asDate(docDate))"
+                            (valueChange)="onDate($event)">
+                        </app-datepicker>
+
+                    </div>
+
+                    <!-- a new document : what it is made from -->
+
+                    @if (mode === 'add' && kind === 'return')
+                    {
+                        <app-search-dropdown
+                            label="Parts Issue"
+                            placeholder="Select the issue the parts come back of"
+                            [items]="issueItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="issuePublicId || null"
+                            [required]="true"
+                            (valueChange)="onIssue($event)">
+                        </app-search-dropdown>
+                    }
+
+                    @if (mode === 'add' && kind !== 'return')
+                    {
+                        <app-search-dropdown
+                            label="Job Card"
+                            placeholder="Select the job card"
+                            [items]="jobCardItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="jobCardPublicId || null"
+                            [required]="true"
+                            (valueChange)="onJobCard($event)">
+                        </app-search-dropdown>
+                    }
+
+                    @if (mode === 'add' && kind === 'issue')
+                    {
+                        <app-search-dropdown
+                            label="Requisition"
+                            [placeholder]="lookups?.IssueWithoutRequisition ? 'Optional : the requisition the parts are for' : 'Select the requisition'"
+                            [items]="requisitionItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="requisitionPublicId || null"
+                            [required]="!lookups?.IssueWithoutRequisition"
+                            (valueChange)="onRequisition($event)">
+                        </app-search-dropdown>
+                    }
+
+                    <!-- the job card -->
+
+                    @if (head)
+                    {
+                        <div class="jc-two">
+
+                            <app-textbox
+                                label="Job Card"
+                                [value]="head.JobCardNo + '  (' + head.JobCardStatus + ')'"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Service Center"
+                                [value]="head.BranchName"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Customer"
+                                [value]="head.CustomerName"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Mobile"
+                                [value]="head.Mobile"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Model"
+                                [value]="head.ModelName"
+                                [disabled]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Bike"
+                                [value]="head.BikeNo"
+                                [disabled]="true">
+                            </app-textbox>
+
+                        </div>
+                    }
+
+                    @if (doc && doc.SourceNo)
+                    {
+                        <app-textbox
+                            [label]="kind === 'issue' ? 'Requisition' : 'Parts Issue'"
+                            [value]="doc.SourceNo"
+                            [disabled]="true">
+                        </app-textbox>
+                    }
+
+                    <!-- warehouse and person -->
+
+                    @if (kind === 'issue' && mode === 'add')
+                    {
+                        <app-search-dropdown
+                            label="Warehouse"
+                            placeholder="The warehouse the parts go out of"
+                            [items]="warehouseItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="warehouseId"
+                            [required]="true"
+                            [disabled]="!jobCardPublicId"
+                            (valueChange)="onWarehouse($event)">
+                        </app-search-dropdown>
+                    }
+
+                    @if (kind !== 'requisition' && (mode !== 'add' || kind === 'return') && head)
+                    {
+                        <app-textbox
+                            label="Warehouse"
+                            [value]="head.WarehouseName"
+                            [disabled]="true">
+                        </app-textbox>
+                    }
+
+                    @if (kind !== 'return')
+                    {
+                        @if (canEdit)
+                        {
+                            <app-search-dropdown
+                                [label]="kind === 'requisition' ? 'Requested By' : 'Technician'"
+                                [placeholder]="kind === 'requisition' ? 'Optional : who asks for the parts' : 'Optional : who takes the parts'"
+                                [items]="personItems"
+                                labelField="label"
+                                valueField="value"
+                                [value]="personId"
+                                (valueChange)="onPerson($event)">
+                            </app-search-dropdown>
+                        }
+                        @else if (doc)
+                        {
+                            <app-textbox
+                                [label]="kind === 'requisition' ? 'Requested By' : 'Technician'"
+                                [value]="doc.PersonName"
+                                [disabled]="true">
+                            </app-textbox>
+                        }
+                    }
+
+                    <app-textbox
+                        label="Remarks"
+                        placeholder="Optional"
+                        [value]="remarks"
+                        [maxLength]="500"
+                        [disabled]="!canEdit"
+                        (valueChange)="onRemarks($event)">
+                    </app-textbox>
+
+                    <!-- what can be done with a saved document -->
+
+                    @if (doc && mode !== 'add')
+                    {
+                        <div class="jc-buttons pd-buttons">
+
+                            @if (canIssue)
+                            {
+                                <button
+                                    type="button"
+                                    class="hp-add"
+                                    (click)="issueParts()">
+                                    <i class="fas fa-dolly"></i>
+                                    Issue parts
+                                </button>
+                            }
+
+                            @if (kind === 'requisition' && mode === 'edit')
+                            {
+                                @for (status of doc.NextStatuses; track status)
+                                {
+                                    <button
+                                        type="button"
+                                        class="hp-add hp-danger"
+                                        [disabled]="isSaving"
+                                        (click)="changeStatus(status)">
+                                        <i class="fas fa-ban"></i>
+                                        {{ status }}
+                                    </button>
+                                }
+                            }
+
+                            @if (kind === 'issue' && doc.CanReturn)
+                            {
+                                <button
+                                    type="button"
+                                    class="hp-add"
+                                    (click)="returnParts()">
+                                    <i class="fas fa-rotate-left"></i>
+                                    Return parts
+                                </button>
+                            }
+
+                        </div>
+                    }
+
+                    @switch (kind)
+                    {
+                        @case ('requisition')
+                        {
+                            <span class="hp-note">A requisition can be changed while it is Open. Parts are issued against it on Parts Issues; what the store cannot give is on Parts Back-Orders.</span>
+                        }
+                        @case ('issue')
+                        {
+                            <span class="hp-note">An issue is posted at once : the oldest stock of the warehouse goes out first and its cost goes to Workshop WIP. It cannot be changed; unused parts come back with a Parts Return.</span>
+                        }
+                        @case ('return')
+                        {
+                            <span class="hp-note">A return is posted at once : the parts go back to the warehouse of the issue at the cost they went out. After the job is invoiced a Service Return is used instead.</span>
+                        }
+                    }
+
+                </section>
+
+                <!-- ============ RIGHT : the parts ============ -->
+
+                <section class="pf-card jc-work">
+
+                    <header class="pf-card-head jc-head">
+
+                        <span class="pd-title">
+                            <i class="fas fa-gears"></i>
+                            Parts
+                        </span>
+
+                        <span class="jc-total">
+                            <small>{{ doc && kind !== 'requisition' ? 'Cost' : 'Quantity' }}</small>
+                            <b>{{ doc && kind !== 'requisition' ? money(doc.TotalCost) : totalQuantity }}</b>
+                        </span>
+
+                    </header>
+
+                    @if (mode === 'add' && !jobCardPublicId)
+                    {
+                        <div class="pfx-empty">{{ kind === 'return' ? 'Choose the parts issue : its parts come here.' : 'Choose the job card first.' }}</div>
+                    }
+                    @else
+                    {
+                        @if (canPick)
+                        {
+                            <div class="jc-pick pd-pick">
+
+                                <app-search-dropdown
+                                    placeholder="Add a spare part, a lubricant or an accessory"
+                                    [items]="partItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="partPick"
+                                    (valueChange)="onPartPick($event)">
+                                </app-search-dropdown>
+
+                            </div>
+                        }
+
+                        @if (lines.length > 0)
+                        {
+                            <div class="jc-row jc-row-line jc-cols">
+                                <span></span>
+                                <span>Part</span>
+                                <span>Note</span>
+                                <span class="jc-right">{{ kind === 'return' && mode === 'add' ? 'Return' : 'Qty' }}</span>
+                                <span class="jc-right">{{ colA }}</span>
+                                <span class="jc-right">{{ colB }}</span>
+                                <span></span>
+                            </div>
+                        }
+
+                        @for (line of lines; track line.key; let i = $index)
+                        {
+                            <div
+                                class="jc-row jc-row-line jc-item"
+                                [class.pd-short]="isShort(line)">
+
+                                <span class="jc-no">{{ i + 1 }}</span>
+
+                                <span class="jc-name">
+                                    <b>{{ line.ItemName }}</b>
+                                    <small>{{ line.ItemCode }}</small>
+                                </span>
+
+                                <input
+                                    class="hp-input jc-text"
+                                    maxlength="200"
+                                    [value]="line.Note"
+                                    [disabled]="!canEdit"
+                                    (input)="onLine(line, 'Note', $event)">
+
+                                <input
+                                    class="hp-input"
+                                    inputmode="decimal"
+                                    maxlength="8"
+                                    [value]="line.Quantity"
+                                    [disabled]="!canEdit"
+                                    (input)="onLine(line, 'Quantity', $event)">
+
+                                <span class="jc-amount">{{ textA(line) }}</span>
+
+                                <span class="jc-amount">{{ textB(line) }}</span>
+
+                                @if (canEdit && kind !== 'return')
+                                {
+                                    <button
+                                        type="button"
+                                        class="jc-x"
+                                        title="Remove"
+                                        (click)="removeLine(line)">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+                                }
+                                @else
+                                {
+                                    <span></span>
+                                }
+
+                            </div>
+                        }
+                        @empty
+                        {
+                            <div class="pfx-empty">
+                                @if (kind === 'return')
+                                {
+                                    Nothing of this issue can come back any more.
+                                }
+                                @else if (kind === 'issue' && requisitionPublicId)
+                                {
+                                    This requisition waits for nothing any more.
+                                }
+                                @else
+                                {
+                                    No part is on the form.
+                                }
+                            </div>
+                        }
+                    }
+
+                </section>
+
+            </div>
+
+        </app-page-canvas>
+    }
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

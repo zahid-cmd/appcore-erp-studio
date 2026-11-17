@@ -2753,6 +2753,263 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Service Operations : the workshop and the job cards (MANUAL :
+    // ServiceOperations_Workshop_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopBays>
+    WorkshopBayRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopTechnicians>
+    WorkshopTechnicianRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopChecklistItems>
+    WorkshopChecklistItemRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopConfiguration>
+    WorkshopConfigurationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCards>
+    JobCardRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardComplaints>
+    JobCardComplaintRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardServices>
+    JobCardServiceRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardParts>
+    JobCardPartRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardWorkEntries>
+    JobCardWorkEntryRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardChecklist>
+    JobCardChecklistRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardStatusHistory>
+    JobCardStatusHistoryRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardTechnicians>
+    JobCardTechnicianRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardObservations>
+    JobCardObservationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // (MANUAL : ServiceOperations_JobCard_ServiceBikes.sql)
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopServiceBikes>
+    WorkshopServiceBikeRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Operations : service estimates (MANUAL :
+    // ServiceOperations_Estimates_Engine.sql, hand-written page)
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.ServiceEstimates>
+    ServiceEstimateRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.ServiceEstimateLines>
+    ServiceEstimateLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Operations : observations and diagnoses
+    // (MANUAL : ServiceOperations_Diagnosis_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopObservations>
+    WorkshopObservationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopDiagnoses>
+    WorkshopDiagnosisRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopDiagnosisItems>
+    WorkshopDiagnosisItemRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.ServiceEstimateObservations>
+    ServiceEstimateObservationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Operations : parts outsourced for a job card (MANUAL :
+    // ServiceOperations_Outsourced_Parts.sql, hand-written)
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.JobCardOutsourcedParts>
+    JobCardOutsourcedPartRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Operations : the list of outside works (MANUAL :
+    // ServiceOperations_Outside_Works.sql, hand-written)
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.WorkshopOutsideWorks>
+    WorkshopOutsideWorkRows
+    {
+    get;
+    set;
+    } = null!;
+
+    // Service Operations : parts requisitions, issues, returns
+    // (MANUAL : ServiceOperations_Parts_Engine.sql, hand-written pages)
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.PartsRequisitions>
+    PartsRequisitionRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.PartsRequisitionLines>
+    PartsRequisitionLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.PartsIssues>
+    PartsIssueRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.PartsIssueLines>
+    PartsIssueLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.PartsReturns>
+    PartsReturnRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.PartsReturnLines>
+    PartsReturnLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.PartsReturnAllocations>
+    PartsReturnAllocationRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.ServiceInvoices>
+    ServiceInvoiceRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.ServiceInvoiceLines>
+    ServiceInvoiceLineRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.ServiceInvoicePayments>
+    ServiceInvoicePaymentRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.ServiceReturns>
+    ServiceReturnRows
+    {
+    get;
+    set;
+    } = null!;
+
+    public DbSet<AppCore.Domain.Entities.ServiceOperations.FreeServiceClaims>
+    FreeServiceClaimRows
+    {
+    get;
+    set;
+    } = null!;
+
 
     //===========================================================
     // Configure Entity Models

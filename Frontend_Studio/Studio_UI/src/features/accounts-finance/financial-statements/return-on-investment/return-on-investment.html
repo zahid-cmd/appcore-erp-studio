@@ -1,0 +1,429 @@
+<div class="app-list-page lr-page tb-page fa-page roi-page" [attr.data-render]="renderTick()">
+
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
+
+    <app-page-header
+        title="Return on Investment"
+        titleMark="ROI"
+        subtitle="What every taka invested in the business earned"
+        icon="fas fa-arrow-trend-up">
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                command1Title="Back to the default filter : this financial year, all allotted branches, nothing loaded"
+                (command1Click)="refresh()"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                command2Activity="Print"
+                command2Title="Print or save as Excel (from the print viewer)"
+                (command2Click)="print()">
+
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+    <!-- =====================================================
+         BODY : filter bar | canvas
+    ====================================================== -->
+
+    <div class="lr-body">
+
+        <!-- ---------------- FILTER ---------------- -->
+
+        <aside class="lr-filter">
+
+            <div class="lr-filter-head">
+                <span>Return on Investment Filter</span>
+            </div>
+
+            <div class="lr-filter-body appcore-scrollbar">
+
+                <div class="lr-field">
+                    <label>From</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="fromDate"
+                        (valueChange)="onFromChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>To</label>
+                    <app-datepicker
+                        class="lr-date"
+                        [value]="toDate"
+                        [minDate]="fromDate"
+                        (valueChange)="onToChange($event)">
+                    </app-datepicker>
+                </div>
+
+                <div class="lr-field">
+                    <label>Branch</label>
+                    <app-search-dropdown
+                        class="lr-dd"
+                        placeholder="All Allotted Branches"
+                        [items]="branchItems"
+                        labelField="label"
+                        valueField="value"
+                        [value]="$any(branchId)"
+                        (valueChange)="onBranchChange($event)">
+                    </app-search-dropdown>
+                    <span class="lr-hint">Only the branches you are allotted to. "All" adds them together.</span>
+                </div>
+
+                <div class="lr-field">
+                    <label>Compare with</label>
+                    <div class="fa-choices fa-choices-row" role="radiogroup" aria-label="Compare with">
+                        @for (item of compareOptions; track item.value)
+                        {
+                            <button
+                                type="button"
+                                role="radio"
+                                class="fa-choice"
+                                [class.on]="compare === item.value"
+                                [attr.aria-checked]="compare === item.value"
+                                [title]="item.title"
+                                (click)="setCompare(item.value)">
+                                {{ item.short }}
+                            </button>
+                        }
+                    </div>
+                    <span class="lr-hint">{{ compareHint }}</span>
+                </div>
+
+                @if (branchesError)
+                {
+                    <div class="lr-note lr-error">{{ branchesError }}</div>
+                }
+
+                <div class="tb-opts">
+                    <b>Display</b>
+                    <label class="lr-switch">
+                        <input
+                            type="checkbox"
+                            [checked]="showCancelled"
+                            (change)="onCancelledChange($event)">
+                        <span class="lr-switch-track"><i></i></span>
+                        <span>Show cancelled vouchers <em>(on Submit)</em></span>
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="lr-filter-foot">
+
+                <span class="fa-foot-note" title="Net profit and finance costs from the Profit & Loss of the period; the investment from the Balance Sheet on the day before From and on To, averaged. Capital Employed = Equity + Non-current Liabilities (Account Group term). Finance costs = the expense sub groups marked Finance cost on Account Sub Group.">
+                    <i class="fas fa-circle-info"></i>
+                    <span>Profit &amp; Loss of the period over the average Balance Sheet investment.</span>
+                </span>
+
+                <button
+                    type="button"
+                    class="lr-btn lr-btn-primary"
+                    [disabled]="branchesLoading || loading || !!branchesError"
+                    (click)="submit()">
+                    Submit
+                </button>
+
+            </div>
+
+        </aside>
+
+        <!-- ---------------- CANVAS ---------------- -->
+
+        <section class="lr-canvas">
+
+            <!-- Switch bar : one line over the canvas -->
+            <div class="lr-switchbar">
+
+                <span class="lr-switchbar-title"><i class="fas fa-sliders"></i> View</span>
+
+                <span class="lr-seg" role="group" aria-label="Rates">
+                    <button
+                        type="button"
+                        [class.on]="!annualise"
+                        title="The rates of the chosen period as they are"
+                        (click)="setAnnualise(false)">
+                        <i class="fas fa-calendar-day"></i> Period rate
+                    </button>
+                    <button
+                        type="button"
+                        [class.on]="annualise"
+                        title="The period's rates scaled to a full year (× 365 ÷ days), so any period compares with a year"
+                        (click)="setAnnualise(true)">
+                        <i class="fas fa-calendar"></i> Annualised
+                    </button>
+                </span>
+
+            </div>
+
+            @if (!loaded)
+            {
+                <div class="lr-empty">
+                    <i class="fas fa-arrow-trend-up lr-empty-ico"></i>
+                    <b>Choose the period and branch, then press Submit</b>
+                    <span>ROI, ROCE, ROE and ROA on the average investment of the period, with the stock return (GMROI) of each business line.</span>
+                </div>
+            }
+            @else if (loading)
+            {
+                <div class="tb-loading">
+                    <app-orbit-loader
+                        title="Loading Return on Investment"
+                        message="Reading the profit &amp; loss and the balance sheets of the period…">
+                    </app-orbit-loader>
+                </div>
+            }
+            @else if (loadError)
+            {
+                <div class="lr-empty lr-error"><i class="fas fa-triangle-exclamation"></i> {{ loadError }}</div>
+            }
+            @else if (report && view)
+            {
+                <div class="lr-view">
+
+                    <!-- Head : title | ratio tiles | period -->
+                    <div class="lr-card lr-head">
+
+                        <div class="lr-head-info">
+                            <div class="lr-head-title">
+                                <b>Return on Investment</b>
+                                <span class="lr-pill">{{ annualise ? 'Annualised' : 'Period rate' }}</span>
+                                @if (report.ShowCancelled)
+                                {
+                                    <span class="lr-pill lr-pill-warn">Cancelled shown</span>
+                                }
+                            </div>
+                            <div class="lr-head-sub">
+                                <span class="lr-clip">{{ monthsText }} · average of {{ date(view.current.Opening.Date) }} and {{ date(view.current.Closing.Date) }}{{ hasCompare ? ' · compared with ' + report.CompareLabel.toLowerCase() : '' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="lr-figs">
+                            @for (q of view.ratios; track q.key; let i = $index)
+                            {
+                                <div
+                                    [class.lr-fig-main]="i === 0"
+                                    [attr.data-ratio]="q.key"
+                                    [title]="q.formula">
+                                    <span>{{ q.label }}</span>
+                                    <b>{{ pct(q.shown) }}</b>
+                                    @if (hasCompare)
+                                    {
+                                        <em [class.is-up]="pointsUp(q)">{{ points(q) }}</em>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="lr-head-period">
+                            <b>{{ date(view.current.From) }} – {{ date(view.current.To) }}</b>
+                            <span>{{ report.BranchName }}</span>
+                        </div>
+
+                    </div>
+
+                    @if (report.Message)
+                    {
+                        <div class="lr-note"><i class="fas fa-circle-info"></i> {{ report.Message }}</div>
+                    }
+
+                    <div class="fa-main has-insights">
+
+                        <!-- ============ STATEMENT ============ -->
+                        <div class="lr-card tb-tcard fa-tcard">
+
+                            <div class="tb-scroll appcore-scrollbar">
+
+                                <!-- Return -->
+                                <table class="lr-table tb-table fa-table roi-table">
+                                    <colgroup>
+                                        <col>
+                                        <col class="c-bal">
+                                        @if (hasCompare)
+                                        {
+                                            <col class="c-bal">
+                                            <col class="c-bal">
+                                        }
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="tb-acc-h"><span>Return</span></th>
+                                            <th class="r fa-col-h"><b>This period</b><span>{{ date(view.current.From) }} – {{ date(view.current.To) }}</span></th>
+                                            @if (view.previous; as prev)
+                                            {
+                                                <th class="r fa-col-h"><b>Last year</b><span>{{ date(prev.From) }} – {{ date(prev.To) }}</span></th>
+                                                <th class="r fa-col-h"><b>Change</b></th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="tb-row fa-row tb-l1">
+                                            <td class="tb-acc"><span class="tb-name"><span class="lr-clip">Net Profit</span><span class="lr-dim roi-note">from Profit &amp; Loss</span></span></td>
+                                            <td class="r lr-bal">{{ money(view.current.NetProfit) }}</td>
+                                            @if (view.previous; as prev)
+                                            {
+                                                <td class="r lr-bal">{{ money(prev.NetProfit) }}</td>
+                                                <td class="r lr-bal">{{ money(view.current.NetProfit - prev.NetProfit) }}</td>
+                                            }
+                                        </tr>
+                                        <tr class="tb-row fa-row tb-l1">
+                                            <td class="tb-acc" [title]="financeText"><span class="tb-name"><span class="lr-clip">Add : Finance costs</span><span class="lr-dim roi-note lr-clip">{{ financeText }}</span></span></td>
+                                            <td class="r lr-bal">{{ money(view.current.FinanceCosts) }}</td>
+                                            @if (view.previous; as prev)
+                                            {
+                                                <td class="r lr-bal">{{ money(prev.FinanceCosts) }}</td>
+                                                <td class="r lr-bal">{{ money(view.current.FinanceCosts - prev.FinanceCosts) }}</td>
+                                            }
+                                        </tr>
+                                        <tr class="tb-row fa-row fa-result">
+                                            <td class="tb-acc"><span class="tb-name"><span class="lr-clip">Profit before interest</span></span></td>
+                                            <td class="r lr-bal">{{ total(view.current.ProfitBeforeInterest) }}</td>
+                                            @if (view.previous; as prev)
+                                            {
+                                                <td class="r lr-bal">{{ total(prev.ProfitBeforeInterest) }}</td>
+                                                <td class="r lr-bal">{{ total(view.current.ProfitBeforeInterest - prev.ProfitBeforeInterest) }}</td>
+                                            }
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <!-- Investment -->
+                                <table class="lr-table tb-table fa-table roi-table">
+                                    <colgroup>
+                                        <col>
+                                        <col class="c-bal">
+                                        <col class="c-bal">
+                                        <col class="c-bal">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="tb-acc-h"><span>Investment</span></th>
+                                            <th class="r fa-col-h"><b>Opening</b><span>{{ date(view.current.Opening.Date) }}</span></th>
+                                            <th class="r fa-col-h"><b>Closing</b><span>{{ date(view.current.Closing.Date) }}</span></th>
+                                            <th class="r fa-col-h roi-avg-h"><b>Average</b><span>(opening + closing) ÷ 2</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (row of investmentRows(); track row.key)
+                                        {
+                                            <tr class="tb-row fa-row" [ngClass]="row.result ? 'fa-result' : 'tb-l1'">
+                                                <td class="tb-acc"><span class="tb-name"><span class="lr-clip">{{ row.name }}</span>@if (row.note) {<span class="lr-dim roi-note">{{ row.note }}</span>}</span></td>
+                                                <td class="r lr-bal">{{ money(baseValue(view.current.Opening, row.key)) }}</td>
+                                                <td class="r lr-bal">{{ money(baseValue(view.current.Closing, row.key)) }}</td>
+                                                <td class="r lr-bal roi-avg">{{ money(baseValue(view.average, row.key)) }}</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+
+                                <!-- Ratios -->
+                                <table class="lr-table tb-table fa-table roi-table">
+                                    <colgroup>
+                                        <col class="roi-c-ratio">
+                                        <col>
+                                        <col class="c-bal">
+                                        <col class="c-bal">
+                                        @if (hasCompare)
+                                        {
+                                            <col class="c-bal">
+                                        }
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th class="tb-acc-h"><span>Ratio</span></th>
+                                            <th><span>How it is worked out</span></th>
+                                            <th class="r fa-col-h"><b>This period</b><span>{{ monthsText }}</span></th>
+                                            <th class="r fa-col-h roi-avg-h"><b>Annualised</b><span>× 365 ÷ {{ view.days }}</span></th>
+                                            @if (hasCompare)
+                                            {
+                                                <th class="r fa-col-h"><b>Last year</b><span>{{ annualise ? 'annualised' : 'period rate' }}</span></th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (q of view.ratios; track q.key; let i = $index)
+                                        {
+                                            <tr class="tb-row fa-row tb-l1" [class.roi-head-row]="i === 0">
+                                                <td class="tb-acc"><span class="tb-name"><b>{{ q.label }}</b></span></td>
+                                                <td class="roi-formula">{{ q.formula }}</td>
+                                                <td class="r lr-bal">{{ pct(q.period) }}</td>
+                                                <td class="r lr-bal roi-avg">{{ pct(q.annual) }}</td>
+                                                @if (hasCompare)
+                                                {
+                                                    <td class="r lr-bal">{{ pct(q.previous) }}</td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                        <!-- ============ STOCK RETURN ============ -->
+                        <aside class="lr-card fs-insights roi-lines" aria-label="Stock return by business line">
+
+                            <h3 class="fs-ins-title">Stock return by business line</h3>
+                            <span class="roi-sub">GMROI : gross profit per taka of average stock{{ annualise ? ', annualised' : '' }}</span>
+
+                            @for (line of view.lines; track line.key)
+                            {
+                                <div class="roi-line" [class.is-best]="line.best" [class.is-nostock]="line.gmroi === null">
+                                    <div class="roi-line-top">
+                                        <b>{{ line.name }}</b>
+                                        <strong>{{ line.gmroi === null ? total(line.grossProfit) : times(line.gmroi) }}</strong>
+                                    </div>
+                                    @if (line.gmroi !== null)
+                                    {
+                                        <div class="roi-bar"><i [style.width.%]="line.width"></i></div>
+                                        <div class="roi-line-foot">
+                                            <span>Gross profit {{ money(line.grossProfit) }}</span>
+                                            <span>Avg stock {{ money(line.averageStock) }}</span>
+                                        </div>
+                                        @if (line.best)
+                                        {
+                                            <em>Hardest-working stock</em>
+                                        }
+                                    }
+                                    @else
+                                    {
+                                        <div class="roi-line-foot">
+                                            <span>Gross profit only : no stock on hand</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            @empty
+                            {
+                                <div class="lr-note">No sales or stock in a business line for the period.</div>
+                            }
+
+                            <div class="fs-result" [class.is-loss]="view.payback === null">
+                                <span>Payback on capital</span>
+                                <b>{{ years(view.payback) }}</b>
+                                <em>{{ view.payback === null ? 'No profit in the period : the capital is not earning itself back' : 'At this ROI (annualised), the capital employed earns itself back in this time' }}</em>
+                            </div>
+
+                        </aside>
+
+                    </div>
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+    <app-toast></app-toast>
+
+</div>

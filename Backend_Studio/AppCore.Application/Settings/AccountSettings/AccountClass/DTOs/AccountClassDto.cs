@@ -76,6 +76,22 @@ public class AccountClassDto
     // Configuration
     //===========================================================
 
+    // What the class is for the financial statements : Asset /
+    // Liability / Equity / Income / Other Income / Cost of Goods
+    // Sold / Expense. Fixed for the inventory family.
+    public string StatementType
+    {
+        get;
+        set;
+    } = string.Empty;
+
+    // Business line of its ledgers : MB / SP / AC / SV ("" : none)
+    public string BusinessLine
+    {
+        get;
+        set;
+    } = string.Empty;
+
     public string Remarks
     {
         get;

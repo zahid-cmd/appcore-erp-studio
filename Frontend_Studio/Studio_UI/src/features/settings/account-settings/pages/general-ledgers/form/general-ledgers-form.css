@@ -1,1 +1,44 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../../../../../shared/styles/app-workspace-form.css';
+
+/* Workspace layout (2026-11-16) : the fields left, the workspace panel
+   right; the Remarks note pad fills what is left of the step */
+
+.ws-notes > app-note-pad
+{
+    flex: 1 1 auto;
+}
+
+/* One row per card (2026-11-17) : Class | Mode | Group | Sub Group,
+   then Code | Name (2) | Business Line, so the form fits the screen
+   without a scroll; the Remarks note pad takes the rest */
+
+.gl-cols-4
+{
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.7fr) minmax(0, 1.2fr) minmax(0, 1.2fr);
+}
+
+.ws-grid.gl-cols-4 > .ws-span-2
+{
+    grid-column: span 2;
+}
+
+@media (max-width: 1280px)
+{
+    .gl-cols-4
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px)
+{
+    .gl-cols-4
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ws-grid.gl-cols-4 > .ws-span-2
+    {
+        grid-column: auto;
+    }
+}

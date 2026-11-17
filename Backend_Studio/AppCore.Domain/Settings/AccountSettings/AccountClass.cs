@@ -71,6 +71,23 @@ public class AccountClass
         set;
     } = false;
 
+    // What the class is for the financial statements : Asset /
+    // Liability / Equity / Income / Other Income / Cost of Goods
+    // Sold / Expense (StatementTypes). The statements go by this,
+    // never by the class name.
+    public string StatementType
+    {
+        get;
+        set;
+    } = string.Empty;
+
+    // Business line of its ledgers : MB / SP / AC / SV ("" : none)
+    public string BusinessLine
+    {
+        get;
+        set;
+    } = string.Empty;
+
 
     //===========================================================
     // Configuration

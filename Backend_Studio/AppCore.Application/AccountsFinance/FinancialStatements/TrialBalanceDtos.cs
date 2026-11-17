@@ -89,6 +89,19 @@ public class TrialBalanceRowDto
     // Income / expense ledger (opening from the year start)
     public bool IsNominal { get; set; }
 
+    // What the ledger is (the setting of its Account Class) : Asset /
+    // Liability / Equity / Income / Other Income / Cost of Goods
+    // Sold / Expense. "" : not in the chart.
+    public string StatementType { get; set; } = string.Empty;
+
+    // Business line : MB / SP / AC / SV / "" (the ledger's own, else
+    // the one of its Account Class)
+    public string BusinessLine { get; set; } = string.Empty;
+
+    // Cash flow : Operating / Investing / Financing (the setting of
+    // its Account Group)
+    public string CashFlowActivity { get; set; } = "Operating";
+
     public bool IsActive { get; set; }
 
     // The Retained Earnings ledger (its opening holds the

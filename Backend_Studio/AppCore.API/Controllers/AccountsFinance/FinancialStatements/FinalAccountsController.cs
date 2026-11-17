@@ -24,6 +24,8 @@ namespace AppCore.Api.Controllers.AccountsFinance.FinancialStatements;
 //       compare : none / last-year / previous
 //   GET balance-sheet?asOn=&branchId=&showCancelled=&compare=
 //       compare : none / last-year / year-end
+//   GET return-on-investment?from=&to=&branchId=&showCancelled=&compare=
+//       compare : none / last-year
 //
 // Branches : the Trial Balance list (trial-balance/branches).
 // branchId 0 = all allotted branches.
@@ -154,5 +156,33 @@ public class FinalAccountsController : ControllerBase
                         showCancelled,
                         compare)),
             "Failed to load the balance sheet.");
+    }
+
+
+    //===========================================================
+    // Return on Investment
+    //===========================================================
+
+    [HttpGet("return-on-investment")]
+    public Task<IActionResult> GetReturnOnInvestment(
+        [FromQuery] string? from,
+        [FromQuery] string? to,
+        [FromQuery] long branchId,
+        [FromQuery] bool showCancelled,
+        [FromQuery] string? compare)
+    {
+        long userId = UserId;
+
+        return Run(
+            async () =>
+                Ok(
+                    await _repository.GetReturnOnInvestmentAsync(
+                        userId,
+                        from,
+                        to,
+                        branchId,
+                        showCancelled,
+                        compare)),
+            "Failed to load the return on investment.");
     }
 }

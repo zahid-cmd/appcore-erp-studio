@@ -1,342 +1,251 @@
 <div class="app-form-page">
 
-
     <!-- =====================================================
-         SECTION 01 : PAGE HEADER
+         PAGE HEADER
     ====================================================== -->
 
     <app-page-header
-
         icon="fas fa-calendar-days"
-
+        art="financial-years"
         [title]="pageTitle"
-
-        subtitle="Manage financial years">
+        subtitle="An accounting year : its dates, whether it is the current one, and when it closes">
 
         <app-command-center
-
             pageHeaderRight
-
             [command1Text]="saveButtonText"
-
             command1Icon="fas fa-floppy-disk"
-
             (command1Click)="onSave()"
-
             [command1Visible]="!isViewMode"
-
             command2Text="Clear"
-
             command2Icon="fas fa-broom"
-
             (command2Click)="onClear()"
-
             [command2Visible]="!isViewMode"
-
             [command3Visible]="false"
-
             rightCommandIcon="fas fa-arrow-left"
-
+            rightCommandTitle="Back to the list"
             (rightCommandClick)="onBackToList()">
-
         </app-command-center>
 
     </app-page-header>
 
-
-
     <!-- =====================================================
-         SECTION 02 : PAGE TOOLBAR
+         PAGE TOOLBAR : one screen, one light step
     ====================================================== -->
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
-
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+            [steps]="tabs"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
     </app-page-toolbar>
 
-
-
     <!-- =====================================================
-         SECTION 03 : PAGE CANVAS
+         PAGE CANVAS : the fields left, the workspace right
+         (2026-11-16 workspace layout)
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
 
-            [columns]="4">
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div class="ws-step">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-calendar-days"></i>
+                            <span>Financial Year</span>
+                            <small>The name follows the dates</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+                            <app-textbox
+                                label="Financial Year Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.FinancialYearCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Financial Year Name"
+                                placeholder="Made from the dates (FY YYYY-YYYY)"
+                                [(value)]="entity.FinancialYearName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-calendar-week"></i>
+                            <span>Period</span>
+                        </header>
+
+                        <div class="ws-grid ws-cols-3">
+                            <div class="fy-date-field">
+                                <label class="fy-date-label">
+                                    Start Date <span class="fy-required">*</span>
+                                </label>
+                                <app-datepicker
+                                    placeholder="Select start date"
+                                    [value]="$any(startDateValue)"
+                                    (valueChange)="onStartDateChange($event)"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-datepicker>
+                            </div>
+
+                            <div class="fy-date-field">
+                                <label class="fy-date-label">
+                                    End Date <span class="fy-required">*</span>
+                                </label>
+                                <app-datepicker
+                                    placeholder="Select end date"
+                                    [value]="$any(endDateValue)"
+                                    (valueChange)="onEndDateChange($event)"
+                                    [disabled]="isViewMode || isSaving">
+                                </app-datepicker>
+                            </div>
+
+                            <app-dropdown
+                                label="Year Status"
+                                [items]="yearStatusItems"
+                                [(value)]="entity.YearStatus"
+                                (valueChange)="onYearStatusChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-dropdown>
 
 
-            <!-- =================================================
-                 SECTION 01 : FINANCIAL YEAR INFORMATION
-            ================================================== -->
+                            @if (durationText)
+                            {
+                                <div
+                                    class="fy-duration ws-full"
+                                    [class.fy-duration-invalid]="!durationIsValid">
+                                    <i class="fas fa-hourglass-half"></i>
+                                    <span>{{ durationText }}</span>
+                                    @if (!isViewMode)
+                                    {
+                                        <button
+                                            type="button"
+                                            class="fy-reset-link"
+                                            (click)="resetEndDate()"
+                                            [disabled]="isSaving">
+                                            Set 12 months
+                                        </button>
+                                    }
+                                </div>
+                            }
 
-            <app-form-section
+                        </div>
 
-                title="Financial Year Information"
+                    </section>
 
-                icon="fas fa-calendar-days">
+                    <section class="ws-card ws-notes">
 
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
 
-                <!-- Financial Year Code -->
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
 
-                <app-textbox
-
-                    label="Financial Year Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.FinancialYearCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Financial Year Name (auto generated) -->
-
-                <app-textbox
-
-                    label="Financial Year Name"
-
-                    placeholder="FY YYYY-YYYY"
-
-                    [(value)]="entity.FinancialYearName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 02 : PERIOD
-            ================================================== -->
-
-            <app-form-section
-
-                title="Period"
-
-                icon="fas fa-calendar-week">
-
-
-                <!-- Start Date -->
-
-                <div class="fy-date-field">
-
-                    <label class="fy-date-label">
-
-                        Start Date <span class="fy-required">*</span>
-
-                    </label>
-
-                    <app-datepicker
-
-                        placeholder="Select start date"
-
-                        [value]="$any(startDateValue)"
-
-                        (valueChange)="onStartDateChange($event)"
-
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-datepicker>
+                    </section>
 
                 </div>
 
+            </div>
 
-                <!-- End Date -->
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                <div class="fy-date-field">
+            <aside class="ws-panel">
 
-                    <label class="fy-date-label">
+                <div class="ws-hero">
 
-                        End Date <span class="fy-required">*</span>
+                    <app-workspace-art theme="financial-years"></app-workspace-art>
 
-                    </label>
+                    <div class="ws-identity">
 
-                    <app-datepicker
+                        <b [class.ws-new]="!entity.FinancialYearName">{{ entity.FinancialYearName || 'New financial year' }}</b>
 
-                        placeholder="Select end date"
+                        <div class="ws-chips">
 
-                        [value]="$any(endDateValue)"
+                            @if (entity.FinancialYearCode)
+                            {
+                                <span
+                                    class="ws-chip"
+                                data-tone="info">{{ entity.FinancialYearCode }}</span>
+                            }
 
-                        (valueChange)="onEndDateChange($event)"
+                            @if (entity.YearStatus)
+                            {
+                                <span
+                                    class="ws-chip"
+                                    [attr.data-tone]="entity.YearStatus === 'Open' ? 'ok' : 'bad'">{{ entity.YearStatus }}</span>
+                            }
 
-                        [disabled]="isViewMode || isSaving">
-
-                    </app-datepicker>
-
-                </div>
-
-
-                <!-- Duration -->
-
-                @if (durationText)
-                {
-                    <div
-
-                        class="fy-duration"
-
-                        [class.fy-duration-invalid]="!durationIsValid">
-
-                        <i class="fas fa-hourglass-half"></i>
-
-                        <span>{{ durationText }}</span>
-
-                        @if (!isViewMode)
-                        {
-                            <button
-
-                                type="button"
-
-                                class="fy-reset-link"
-
-                                (click)="resetEndDate()"
-
-                                [disabled]="isSaving">
-
-                                Set 12 months
-
-                            </button>
-                        }
+                        </div>
 
                     </div>
-                }
 
-            </app-form-section>
+                    <app-toggle-switch
+                        label="Current year"
+                        onText="Yes"
+                        offText="No"
+                        [(value)]="entity.IsCurrent"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving || entity.YearStatus !== 'Open'">
+                    </app-toggle-switch>
 
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.Status"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-file-invoice-dollar"></i><span>Vouchers, invoices and stock are dated inside the current year</span></li>
+                        <li><i class="fas fa-lock"></i><span>A closed or locked year takes no new entries</span></li>
+                        <li><i class="fas fa-chart-line"></i><span>Reports and the opening balances follow the year</span></li>
+                    </ul>
 
-            <!-- =================================================
-                 SECTION 03 : CONFIGURATION
-            ================================================== -->
+                </div>
 
-            <app-form-section
+            </aside>
 
-                title="Configuration"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Current Year -->
-
-                <app-dropdown
-
-                    label="Current Year"
-
-                    [items]="yesNoItems"
-
-                    [(value)]="entity.IsCurrent"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving || entity.YearStatus !== 'Open'"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Year Status -->
-
-                <app-dropdown
-
-                    label="Year Status"
-
-                    [items]="yearStatusItems"
-
-                    [(value)]="entity.YearStatus"
-
-                    (valueChange)="onYearStatusChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-            </app-form-section>
-
-
-
-            <!-- =================================================
-                 SECTION 04 : STATUS & DESCRIPTION
-            ================================================== -->
-
-            <app-form-section
-
-                title="Status & Description"
-
-                icon="fas fa-align-left">
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.Status"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 
 </div>
 
-
-
 <!-- =====================================================
-     SECTION 04 : UTILITIES
+     UTILITIES
 ====================================================== -->
 
 <app-toast></app-toast>
