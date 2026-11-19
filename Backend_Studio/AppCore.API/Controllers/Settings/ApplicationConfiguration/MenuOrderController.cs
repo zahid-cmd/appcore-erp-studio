@@ -203,6 +203,38 @@ public class MenuOrderController : ControllerBase
         Dictionary<long, NavigationSubmenu> pages =
             await _context.Set<NavigationSubmenu>().Where(m => !m.IsDeleted).ToDictionaryAsync(m => m.Id);
 
+        // Modules : DisplayOrder is unique over the whole table
+        // (deleted and hidden modules keep theirs). The modules sent
+        // keep the order they were sent in, numbered 1, 2, 3 ...
+        // skipping every number held by a module that was not sent.
+        List<MenuOrderItemDto> moduleItems = items
+            .Where(i => string.Equals((i.Kind ?? string.Empty).Trim(), "module", StringComparison.OrdinalIgnoreCase)
+                        && modules.ContainsKey(i.Id) && !Hidden(modules[i.Id].RouteKey))
+            .GroupBy(i => i.Id).Select(g => g.First())
+            .OrderBy(i => i.DisplayOrder)
+            .ToList();
+
+        HashSet<long> sentModuleIds = moduleItems.Select(i => i.Id).ToHashSet();
+
+        HashSet<int> heldByOthers = (await _context.Set<NavigationModule>().AsNoTracking()
+                .Where(m => !sentModuleIds.Contains(m.Id))
+                .Select(m => m.DisplayOrder)
+                .ToListAsync())
+            .ToHashSet();
+
+        int nextModuleOrder = 1;
+        foreach (MenuOrderItemDto item in moduleItems)
+        {
+            while (heldByOthers.Contains(nextModuleOrder))
+            {
+                nextModuleOrder++;
+            }
+
+            item.DisplayOrder = nextModuleOrder++;
+        }
+
+        Dictionary<long, int> moduleFinal = new();
+
         int changed = 0;
 
         foreach (MenuOrderItemDto item in items)
@@ -221,7 +253,8 @@ public class MenuOrderController : ControllerBase
 
                     if (module.DisplayOrder != order || (!moduleLocked && module.IsActive != item.IsActive))
                     {
-                        module.DisplayOrder = order;
+                        // the number is written by SQL below (unique index)
+                        moduleFinal[module.Id] = order;
                         module.IsActive = moduleLocked || item.IsActive;
                         module.ModifiedBy = userId;
                         module.ModifiedDate = now;
@@ -283,32 +316,52 @@ public class MenuOrderController : ControllerBase
             return Ok(new { Changed = 0, Message = "Nothing changed." });
         }
 
-        // Saved in two steps inside one transaction : first every
-        // moved row gets a free number (10000+), then its real one.
-        // Swapping two rows can never meet an index that wants each
-        // number used once per parent. All or nothing.
+        // Modules : "DisplayOrder" is unique over the whole table.
+        // Every module that was sent first moves to a free negative
+        // number (minus its Id), then gets its final number : no
+        // order of the updates can meet the index. Menus and pages
+        // have no such index and are saved by EF. One transaction :
+        // all or nothing.
+        Dictionary<long, int> finals = moduleItems.ToDictionary(i => i.Id, i => i.DisplayOrder);
+
+        List<int> clash = finals.Values.GroupBy(v => v).Where(g => g.Count() > 1).Select(g => g.Key)
+            .Concat(finals.Values.Where(heldByOthers.Contains))
+            .Distinct().OrderBy(v => v).ToList();
+
+        if (clash.Count > 0)
+        {
+            return StatusCode(500, new { message = "The menu order could not be saved : module number(s) "
+                + string.Join(", ", clash) + " would be used twice. Nothing was changed." });
+        }
+
         try
         {
             await using var tx = await _context.Database.BeginTransactionAsync();
 
-            var moved = _context.ChangeTracker.Entries()
-                .Where(e => e.State == EntityState.Modified
-                            && e.Properties.Any(p => p.Metadata.Name == "DisplayOrder" && p.IsModified))
-                .ToList();
-
-            var final = moved.ToDictionary(e => e, e => (int)e.Property("DisplayOrder").CurrentValue!);
-
-            int temp = 10000;
-            foreach (var e in moved)
+            if (moduleFinal.Count > 0)
             {
-                e.Property("DisplayOrder").CurrentValue = temp++;
-            }
+                long[] ids = finals.Keys.ToArray();
 
-            await _context.SaveChangesAsync();
+                await _context.Database.ExecuteSqlInterpolatedAsync(
+                    $"UPDATE \"NavigationModules\" SET \"DisplayOrder\" = -\"Id\" WHERE \"Id\" = ANY({ids})");
 
-            foreach (var pair in final)
-            {
-                pair.Key.Property("DisplayOrder").CurrentValue = pair.Value;
+                foreach (var pair in finals)
+                {
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"NavigationModules\" SET \"DisplayOrder\" = {pair.Value} WHERE \"Id\" = {pair.Key}");
+                }
+
+                // EF must not write the module numbers again
+                foreach (var pair in finals)
+                {
+                    if (modules.TryGetValue(pair.Key, out NavigationModule? m))
+                    {
+                        var entry = _context.Entry(m);
+                        entry.Property(x => x.DisplayOrder).CurrentValue = pair.Value;
+                        entry.Property(x => x.DisplayOrder).OriginalValue = pair.Value;
+                        entry.Property(x => x.DisplayOrder).IsModified = false;
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();
