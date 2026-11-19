@@ -143,6 +143,10 @@ implements OnChanges
     // Tooltip; empty = the button text
     @Input() command1Title = '';
 
+    // Looks disabled but is still clicked, so the page can tell
+    // why (a toast) : e.g. Add when the Console limit is reached
+    @Input() command1Disabled = false;
+
     @Input()
     command1Permission:
         'add'

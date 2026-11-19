@@ -10,6 +10,8 @@
             *ngIf="isCommand1Visible()"
             type="button"
             class="command-button"
+            [class.is-disabled]="command1Disabled"
+            [attr.aria-disabled]="command1Disabled ? 'true' : null"
             [appTooltip]="command1Title || command1Text"
             (click)="onCommand1Click()">
 

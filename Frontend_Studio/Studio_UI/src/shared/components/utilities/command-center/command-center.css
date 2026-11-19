@@ -400,3 +400,18 @@
         width: 110px;
     }
 }
+
+/* =========================================================
+   A command that looks disabled but can still be clicked
+   (the page explains why with a toast)
+========================================================= */
+
+.command-button.is-disabled,
+.command-button.is-disabled:hover
+{
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: grayscale(0.4);
+    transform: none;
+    box-shadow: none;
+}

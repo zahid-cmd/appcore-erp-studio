@@ -293,6 +293,18 @@ implements OnInit, OnDestroy
     private readonly toast =
         inject(ToastService);
 
+    //===========================================================
+    // Branch limit (Console : Tenants.MaxBranches) : when it is
+    // reached, Add stays on the page but looks disabled, and a
+    // click says why (owner 2026-11-20)
+    //===========================================================
+
+    limitReached =
+        false;
+
+    limitMessage =
+        '';
+
     private readonly router =
         inject(Router);
 
@@ -1037,6 +1049,8 @@ implements OnInit, OnDestroy
     loadItems():
         void
     {
+        this.checkLimit();
+
         this.loading =
             true;
 
@@ -1607,9 +1621,46 @@ implements OnInit, OnDestroy
     // Add
     //===========================================================
 
+    private checkLimit():
+        void
+    {
+        this.branchesService
+            .getLimit()
+            .subscribe(
+            {
+                next:
+                    limit =>
+                    {
+                        this.limitReached =
+                            !!limit?.Reached;
+
+                        this.limitMessage =
+                            limit?.Message ?? '';
+
+                        this.cdr.detectChanges();
+                    },
+
+                // unknown : Add stays enabled, the save checks
+                error:
+                    () => {}
+            });
+    }
+
+
     add():
         void
     {
+        if (this.limitReached)
+        {
+            this.toast.warning(
+                'Branch Limit Reached',
+
+                this.limitMessage
+            );
+
+            return;
+        }
+
         // the branch limit set in the Console : warn here, not
         // after the form is filled in
         this.branchesService

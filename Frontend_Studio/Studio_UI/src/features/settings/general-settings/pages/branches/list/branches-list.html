@@ -40,6 +40,10 @@
 
                 (command1Click)="add()"
 
+                [command1Disabled]="limitReached"
+
+                [command1Title]="limitReached ? limitMessage : 'Add'"
+
                 command2Text="Refresh"
 
                 command2Icon="fas fa-rotate-right"
