@@ -145,6 +145,11 @@ export interface ShelfOptions
     // "last from this supplier" strip is hidden
     salesMode?:
         boolean;
+
+    // A click on a card already picked adds one to its quantity
+    // (Job Card Requirements, 2026-11-18); off = the click does nothing
+    reclickAddsQty?:
+        boolean;
 }
 
 

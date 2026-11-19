@@ -590,6 +590,14 @@ implements OnInit
     issueWithoutRequisition =
         true;
 
+    // Parts Issue To Multiple Job Cards
+    issueToMultipleJobs =
+        false;
+
+    // Bulk Parts Issue Per Job
+    issueBulkPerJob =
+        false;
+
     allowCreditInvoice =
         false;
 
@@ -695,6 +703,8 @@ implements OnInit
                     this.requireKm = setup?.Switches?.RequireKm !== false;
                     this.requireChecklist = !!setup?.Switches?.RequireChecklist;
                     this.requireEstimate = !!setup?.Switches?.RequireEstimate;
+                    this.issueToMultipleJobs = !!setup?.Switches?.IssueToMultipleJobs;
+                    this.issueBulkPerJob = !!setup?.Switches?.IssueBulkPerJob;
                     this.issueWithoutRequisition = setup?.Switches?.IssueWithoutRequisition !== false;
                     this.allowCreditInvoice = !!setup?.Switches?.AllowCreditInvoice;
                     this.diagnosisSuggests = !!setup?.Switches?.DiagnosisSuggests;
@@ -1466,7 +1476,7 @@ implements OnInit
     // Switches
     //===========================================================
 
-    onSwitch(field: 'requireKm' | 'requireChecklist' | 'requireEstimate' | 'issueWithoutRequisition' | 'allowCreditInvoice' | 'diagnosisSuggests', event: Event):
+    onSwitch(field: 'requireKm' | 'requireChecklist' | 'requireEstimate' | 'issueWithoutRequisition' | 'issueToMultipleJobs' | 'issueBulkPerJob' | 'allowCreditInvoice' | 'diagnosisSuggests', event: Event):
         void
     {
         this[field] = (event.target as HTMLInputElement).checked;
@@ -1492,7 +1502,7 @@ implements OnInit
 
         this.progress.show('Saving', 'Saving the workshop switches...');
 
-        this.ws.saveSwitches({ RequireKm:this.requireKm, RequireChecklist:this.requireChecklist, RequireEstimate:this.requireEstimate, IssueWithoutRequisition:this.issueWithoutRequisition, AllowCreditInvoice:this.allowCreditInvoice, EstimateChargeServiceId:this.estimateChargeServiceId || null, DiagnosisSuggests:this.diagnosisSuggests }).subscribe(
+        this.ws.saveSwitches({ RequireKm:this.requireKm, RequireChecklist:this.requireChecklist, RequireEstimate:this.requireEstimate, IssueWithoutRequisition:this.issueWithoutRequisition, IssueToMultipleJobs:this.issueToMultipleJobs, IssueBulkPerJob:this.issueBulkPerJob, AllowCreditInvoice:this.allowCreditInvoice, EstimateChargeServiceId:this.estimateChargeServiceId || null, DiagnosisSuggests:this.diagnosisSuggests }).subscribe(
         {
             next:() =>
                 this.progress.finish(() =>

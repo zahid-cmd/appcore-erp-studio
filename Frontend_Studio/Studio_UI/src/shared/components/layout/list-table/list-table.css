@@ -1692,3 +1692,89 @@ td.right .action-buttons
 {
     background: #f1f5fc;
 }
+
+
+
+/* =====================================================
+   STACK (text cells with subField) : the value and a
+   small second line under it; the row keeps its height
+===================================================== */
+
+.list-table-stack
+{
+    display: inline-flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    max-width: 100%;
+
+    line-height: 1.15;
+
+    vertical-align: middle;
+}
+
+.list-table-stack-main,
+.list-table-stack-sub
+{
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+.list-table-stack-sub
+{
+    color: #64748b;
+
+    font-size: 11px;
+
+    font-weight: 600;
+
+    letter-spacing: .2px;
+}
+
+
+/* the serial token of the second line : 1118 small, 002 big and
+   green (as on the job dropdowns), || before it */
+.list-table-stack-bar
+{
+    margin: 0 7px;
+
+    color: #cbd5e1;
+
+    font-weight: 700;
+}
+
+.list-table-stack-figure
+{
+    display: inline-flex;
+
+    align-items: baseline;
+
+    gap: 3px;
+
+    line-height: 1;
+}
+
+.list-table-stack-figure small
+{
+    color: #64748b;
+
+    font-size: 11px;
+
+    font-weight: 600;
+}
+
+.list-table-stack-figure b
+{
+    color: #16a34a;
+
+    font-size: 17px;
+
+    font-weight: 800;
+
+    letter-spacing: .5px;
+}

@@ -104,6 +104,8 @@ export interface TenantDetail
     TrialEndsOn: string | null;
     DatabaseServerId: number | null;
     DatabaseName: string | null;
+    MaxCompanies: number;
+    MaxBranches: number | null;
     TimeZone: string;
     Currency: string;
     AppVersion: string | null;
@@ -118,6 +120,33 @@ export interface TenantDetail
     History: { FromStatus: string | null; ToStatus: string; Reason: string | null; ChangedDate: string }[];
 }
 
+// Create database (api/tenants/{id}/database, 2026-11-19)
+export interface TenantDatabasePlan
+{
+    DatabaseName: string | null;
+    LoginName: string | null;
+    CredentialKey: string | null;
+    Server: string | null;
+    Template: string | null;
+    TemplateVersion: string | null;
+    Problems: string[];
+    CanCreate: boolean;
+}
+
+// shown ONCE : nothing of the passwords is kept
+export interface TenantDatabaseResult
+{
+    DatabaseName: string;
+    Server: string;
+    LoginName: string;
+    CredentialKey: string;
+    LoginPassword: string;
+    AdminUser: string;
+    AdminPassword: string;
+    FinancialYear: string;
+    SettingsSnippet: string;
+}
+
 export interface TenantSave
 {
     TenantCode: string;
@@ -130,6 +159,10 @@ export interface TenantSave
     TrialEndsOn: string | null;
     Remarks: string | null;
     HostNames: string[];
+
+    // limits the ERP enforces (MaxBranches null = no limit)
+    MaxCompanies: number | null;
+    MaxBranches: number | null;
 }
 
 export interface ServerRow

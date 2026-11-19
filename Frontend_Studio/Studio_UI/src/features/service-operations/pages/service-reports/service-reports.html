@@ -21,7 +21,11 @@
                 command1Text="Refresh"
                 command1Icon="fas fa-rotate-right"
                 (command1Click)="load()"
-                [command2Visible]="false"
+                command2Text="Print"
+                command2Icon="fas fa-print"
+                command2Title="Print the report, job by job"
+                [command2Visible]="!!words.print"
+                (command2Click)="print()"
                 [command3Visible]="false">
             </app-command-center>
 
@@ -35,21 +39,24 @@
             pageToolbarLeft
             class="sr-filters">
 
-            <span class="sr-label">From</span>
+            @if (!words.asOf)
+            {
+                <span class="sr-label">From</span>
 
-            <app-datepicker
-                class="sr-date"
-                [value]="$any(asDate(from))"
-                (valueChange)="onFrom($event)">
-            </app-datepicker>
+                <app-datepicker
+                    class="sr-date"
+                    [value]="$any(asDate(from))"
+                    (valueChange)="onFrom($event)">
+                </app-datepicker>
 
-            <span class="sr-label">To</span>
+                <span class="sr-label">To</span>
 
-            <app-datepicker
-                class="sr-date"
-                [value]="$any(asDate(to))"
-                (valueChange)="onTo($event)">
-            </app-datepicker>
+                <app-datepicker
+                    class="sr-date"
+                    [value]="$any(asDate(to))"
+                    (valueChange)="onTo($event)">
+                </app-datepicker>
+            }
 
             <app-search-dropdown
                 class="sr-branch"

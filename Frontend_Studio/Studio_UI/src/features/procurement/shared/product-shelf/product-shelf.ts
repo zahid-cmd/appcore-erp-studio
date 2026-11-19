@@ -828,6 +828,27 @@ export class ProductShelfComponent
     ):
         void
     {
+        // Picked already, clicked again : one more of it (only the
+        // pages that ask for it : options.reclickAddsQty)
+        const picked =
+            this.options.reclickAddsQty
+                ? this.tray.find(x => x.product.code === item.code)
+                : undefined;
+
+        if
+        (
+            picked
+        )
+        {
+            picked.qtyText =
+                String(poRound(this.num(picked.qtyText) + 1, 2));
+
+            this.confirmDiscard =
+                false;
+
+            return;
+        }
+
         if
         (
             this.isPicked(item.code)

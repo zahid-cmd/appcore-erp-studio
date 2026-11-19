@@ -11,6 +11,10 @@ public class Product
     public Guid PublicId { get; set; }
     public string ProductCode { get; set; } = string.Empty;
     public string ProductName { get; set; } = string.Empty;
+
+    // TW / AU / RE / CO : part of the database names
+    // (06_Multi_Product_Databases.sql)
+    public string? ShortCode { get; set; }
     public string Industry { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string Status { get; set; } = "Planned";
@@ -29,6 +33,20 @@ public class ProductModule
     public int DisplayOrder { get; set; }
 }
 
+public class ProductTemplate
+{
+    public long ProductTemplateId { get; set; }
+    public long ProductId { get; set; }
+    public string TemplateName { get; set; } = string.Empty;
+    public string DatabaseName { get; set; } = string.Empty;
+    public string? SchemaVersion { get; set; }
+    public bool IsCurrent { get; set; }
+    public DateTime CreatedDate { get; set; }
+
+    // where the template database is (06_Multi_Product_Databases.sql)
+    public long? DatabaseServerId { get; set; }
+}
+
 public class DatabaseServer
 {
     public long DatabaseServerId { get; set; }
@@ -38,6 +56,9 @@ public class DatabaseServer
     public int Port { get; set; } = 5432;
     public string CredentialKey { get; set; } = string.Empty;
     public string Status { get; set; } = "Active";
+
+    // the product whose databases live here (empty = any)
+    public long? ProductId { get; set; }
     public DateTime CreatedDate { get; set; }
 }
 
@@ -76,8 +97,18 @@ public class Tenant
     public string Currency { get; set; } = "BDT";
     public string Status { get; set; } = "Provisioning";
     public DateOnly? TrialEndsOn { get; set; }
+
+    // limits the ERP enforces (05_Tenant_Limits.sql) : the client
+    // makes his own company and branches, up to these numbers
+    public int MaxCompanies { get; set; } = 1;
+    public int? MaxBranches { get; set; }
+
     public string? AppVersion { get; set; }
     public string? SchemaVersion { get; set; }
+
+    // the client database's own login : key into the ERP server's
+    // Tenancy:Credentials (06_Multi_Product_Databases.sql)
+    public string? CredentialKey { get; set; }
     public string? Remarks { get; set; }
     public DateTime CreatedDate { get; set; }
     public long? CreatedBy { get; set; }

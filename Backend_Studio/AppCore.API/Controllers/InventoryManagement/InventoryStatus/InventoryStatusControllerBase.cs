@@ -202,6 +202,35 @@ public abstract class InventoryStatusControllerBase : ControllerBase
         [FromQuery] string? from,
         [FromQuery] string? to)
     {
+        // Spare Parts & Lubricants Stock > Accessories (owner
+        // 2026-11-18) : the accessories that have come to the branch
+        // (a transfer from the accessories shop) - only the ones
+        // with stock here, on hand or in transit
+        if (PageType == "SP")
+        {
+            return Run(
+                async () =>
+                {
+                    var stock =
+                        await _repository.GetStockAsync(
+                            "AC",
+                            branchId,
+                            warehouseId,
+                            await CanViewCostAsync(),
+                            false,
+                            DateOf(from),
+                            DateOf(to));
+
+                    stock.Rows =
+                        stock.Rows
+                            .Where(x => x.OnHand != 0 || x.InTransit != 0)
+                            .ToList();
+
+                    return Ok(stock);
+                },
+                "Failed to load the accessories.");
+        }
+
         if (PageType != "MB")
         {
             return Task.FromResult<IActionResult>(
@@ -227,6 +256,28 @@ public abstract class InventoryStatusControllerBase : ControllerBase
         [FromQuery] long branchId,
         [FromQuery] long warehouseId)
     {
+        // Spare Parts & Lubricants Stock > Accessories : the card of
+        // an accessory
+        if (PageType == "SP")
+        {
+            return Run(
+                async () =>
+                {
+                    InventoryStockCardDto? card =
+                        await _repository.GetCardAsync(
+                            "AC",
+                            productId,
+                            branchId,
+                            warehouseId,
+                            await CanViewCostAsync());
+
+                    return card == null
+                        ? NotFound("Accessory not found.")
+                        : Ok(card);
+                },
+                "Failed to load the stock card.");
+        }
+
         if (PageType != "MB")
         {
             return Task.FromResult<IActionResult>(

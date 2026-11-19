@@ -4229,3 +4229,73 @@
     color: #1e293b;
     font-weight: 700;
 }
+
+
+/*===============================================================
+  LAYOUT 2026-11-18 : Transfer Information is one row across the
+  page; the left column holds only the Add <item> card (or the
+  view's receive / details), so nothing clips at the bottom
+===============================================================*/
+
+.pt-info-strip
+{
+    flex: 0 0 auto;
+}
+
+.pt-info-strip .pa-fields
+{
+    grid-template-columns:
+        minmax(300px, auto)
+        minmax(150px, 0.6fr)
+        minmax(160px, 0.7fr)
+        minmax(0, 1.3fr)
+        minmax(0, 1.3fr);
+    align-items: end;
+    padding: 10px 16px 14px;
+}
+
+.pt-info-strip .pa-fields > .pa-span-all
+{
+    grid-column: auto;
+}
+
+.pt-info-strip .pa-type-line
+{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    align-self: end;
+}
+
+:host ::ng-deep .pt-info-strip .pa-fields .textbox-container,
+:host ::ng-deep .pt-info-strip .pa-fields .datepicker-container,
+:host ::ng-deep .pt-info-strip .pa-fields .dropdown-container
+{
+    margin-bottom: 0;
+}
+
+.pa-left > .pa-pick-card
+{
+    flex: 1 0 auto;
+}
+
+@media (max-width: 1400px)
+{
+    .pt-info-strip .pa-fields
+    {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .pt-info-strip .pa-fields > .pt-wh
+    {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 900px)
+{
+    .pt-info-strip .pa-fields
+    {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

@@ -243,6 +243,10 @@ public class JobCardsController
                 await Can(activity)
                 || await CanOn(JobCardStageRules.AssignmentRoute, "Update")
                 || await CanOn(JobCardStageRules.AssignmentRoute, "Add"),
+            JobCardStageRules.RequirementActivity =>
+                await Can(JobCardStageRules.WorkActivity)
+                || await CanOn(JobCardStageRules.RequirementRoute, "Update")
+                || await CanOn(JobCardStageRules.RequirementRoute, "Add"),
             _ => await Can(activity)
         };
 
@@ -331,6 +335,15 @@ public class JobCardsController
     [HttpPut("{publicId:guid}/assignment")]
     public Task<IActionResult> Assign(Guid publicId, [FromBody] AssignJobCardDto? dto) =>
         Stage(JobCardStageRules.AssignActivity, userId => _repository.AssignAsync(publicId, dto ?? new AssignJobCardDto(), userId), "The job card could not be assigned.");
+
+    // Job Card Requirements : the parts and the service charges
+    [HttpGet("{publicId:guid}/requirement")]
+    public Task<IActionResult> GetRequirement(Guid publicId) =>
+        Run(async () => Ok(await _repository.GetRequirementAsync(publicId)), "The requirement could not be read.");
+
+    [HttpPut("{publicId:guid}/requirement")]
+    public Task<IActionResult> SaveRequirement(Guid publicId, [FromBody] SaveJobRequirementDto? dto) =>
+        Stage(JobCardStageRules.RequirementActivity, userId => _repository.SaveRequirementAsync(publicId, dto ?? new SaveJobRequirementDto(), userId), "The requirement could not be saved.");
 
     [HttpPut("{publicId:guid}/status")]
     public Task<IActionResult> ChangeStatus(Guid publicId, [FromBody] JobCardStatusChangeDto? dto) =>

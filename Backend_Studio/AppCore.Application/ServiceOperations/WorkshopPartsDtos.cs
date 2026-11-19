@@ -55,6 +55,9 @@ public class PartsDocumentDto
 
     public string DocumentNo { get; set; } = string.Empty;
 
+    // An issue : the Material Issue Slip it is on
+    public string MisNo { get; set; } = string.Empty;
+
     // yyyy-MM-dd
     public string DocumentDate { get; set; } = string.Empty;
 
@@ -162,6 +165,143 @@ public class PostPartsIssueDto
 
     // SourceLineId : the requisition line
     public List<PartsLineDto> Lines { get; set; } = new();
+}
+
+
+//===============================================================
+// The Material Issue Slip (MIS) : the parts allocated to one or
+// more job cards (Job Card Requirements) go out of one warehouse
+//===============================================================
+
+// A part a job card still waits for
+public class MisPartDto
+{
+    public string ItemKind { get; set; } = string.Empty;
+
+    public long ItemId { get; set; }
+
+    public string ItemCode { get; set; } = string.Empty;
+
+    public string ItemName { get; set; } = string.Empty;
+
+    public decimal Allocated { get; set; }
+
+    // issued less returned
+    public decimal Issued { get; set; }
+
+    public decimal Remaining { get; set; }
+
+    public string Note { get; set; } = string.Empty;
+
+    // rack - shelf - bin in the default warehouse of the service
+    // center ("" : not set)
+    public string Location { get; set; } = string.Empty;
+}
+
+// A job card with parts still to issue
+public class MisJobDto
+{
+    public Guid PublicId { get; set; }
+
+    public long BranchId { get; set; }
+
+    public string BranchName { get; set; } = string.Empty;
+
+    public string JobCardNo { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public string CustomerName { get; set; } = string.Empty;
+
+    public string Mobile { get; set; } = string.Empty;
+
+    public string ModelName { get; set; } = string.Empty;
+
+    public string BikeNo { get; set; } = string.Empty;
+
+    // 1118004 : the month and the day of the job, then its serial
+    public string SerialToken { get; set; } = string.Empty;
+
+    public List<MisPartDto> Parts { get; set; } = new();
+}
+
+public class MisLookupsDto
+{
+    // yyyy-MM-dd (the business day)
+    public string Today { get; set; } = string.Empty;
+
+    // The next MIS No of every service center (Id : the service
+    // center, Code : its name, Name : the number). A preview : the number is taken
+    // when the slip is posted
+    public List<WsLookupDto> NextNos { get; set; } = new();
+
+    public List<MisJobDto> Jobs { get; set; } = new();
+
+    public List<WsLookupDto> Warehouses { get; set; } = new();
+
+    public List<WsLookupDto> Technicians { get; set; } = new();
+
+    // Switch Parts Issue To Multiple Job Cards
+    public bool MultipleJobs { get; set; }
+
+    // Switch Bulk Parts Issue Per Job
+    public bool BulkPerJob { get; set; }
+}
+
+public class PostMisJobDto
+{
+    public Guid JobCardPublicId { get; set; }
+
+    public List<PartsLineDto> Lines { get; set; } = new();
+}
+
+public class PostMisDto
+{
+    public string IssueDate { get; set; } = string.Empty;
+
+    public long WarehouseId { get; set; }
+
+    public long? WorkshopTechnicianId { get; set; }
+
+    public string Remarks { get; set; } = string.Empty;
+
+    public List<PostMisJobDto> Jobs { get; set; } = new();
+}
+
+// A slip : its head and the issue of every job card on it
+public class MisDto
+{
+    // The first issue of the slip : the key of the page
+    public Guid PublicId { get; set; }
+
+    public string MisNo { get; set; } = string.Empty;
+
+    public string DocumentDate { get; set; } = string.Empty;
+
+    public long BranchId { get; set; }
+
+    public string BranchName { get; set; } = string.Empty;
+
+    public string WarehouseName { get; set; } = string.Empty;
+
+    public string PersonName { get; set; } = string.Empty;
+
+    public string Remarks { get; set; } = string.Empty;
+
+    public int JobCount { get; set; }
+
+    // "JOB-..., JOB-..."
+    public string JobText { get; set; } = string.Empty;
+
+    public string CustomerText { get; set; } = string.Empty;
+
+    public decimal TotalQuantity { get; set; }
+
+    public decimal TotalCost { get; set; }
+
+    public string Status { get; set; } = string.Empty;
+
+    public List<PartsDocumentDto> Jobs { get; set; } = new();
 }
 
 
@@ -274,4 +414,209 @@ public class PartsBackOrderDto
 
     // In the other branches of the company
     public decimal ElsewhereOnHand { get; set; }
+}
+
+
+//===============================================================
+// Location Chart of a job (owner 2026-11-18) : where the parts
+// allocated to it sit in the default warehouse of the service
+// center - the rack, the shelf and the bin of Rack Management.
+// Read only : a pick list for the store.
+//===============================================================
+
+// One bin of an item : the zone, the rack, the shelf and the bin
+public class PartBinDto
+{
+    public string Zone { get; set; } = string.Empty;
+
+    // "Rack A"
+    public string Rack { get; set; } = string.Empty;
+
+    // "SLF-A-03"
+    public string Shelf { get; set; } = string.Empty;
+
+    // "05" : the bin of the shelf
+    public string Bin { get; set; } = string.Empty;
+
+    // "A-03-05"
+    public string Code { get; set; } = string.Empty;
+}
+
+// Where an item sits : "A-03-05", more bins "A-03-05, B-01-02"
+public class PartPlaceDto
+{
+    // bin by bin
+    public List<PartBinDto> Bins { get; set; } = new();
+
+    public string ItemKind { get; set; } = string.Empty;
+
+    public long ItemId { get; set; }
+
+    public string Zone { get; set; } = string.Empty;
+
+    public string Rack { get; set; } = string.Empty;
+
+    public string Location { get; set; } = string.Empty;
+}
+
+public class LocationChartLineDto
+{
+    public string ItemKind { get; set; } = string.Empty;
+
+    public long ItemId { get; set; }
+
+    public string ItemCode { get; set; } = string.Empty;
+
+    public string ItemName { get; set; } = string.Empty;
+
+    public string Zone { get; set; } = string.Empty;
+
+    public string Rack { get; set; } = string.Empty;
+
+    public string Location { get; set; } = string.Empty;
+
+    // bin by bin
+    public List<PartBinDto> Bins { get; set; } = new();
+
+    public decimal Allocated { get; set; }
+
+    public decimal Issued { get; set; }
+
+    public decimal Waiting { get; set; }
+
+    public decimal Stock { get; set; }
+}
+
+public class LocationChartDto
+{
+    public Guid PublicId { get; set; }
+
+    public string JobCardNo { get; set; } = string.Empty;
+
+    // 1118004 : the month and the day of the job, then its serial
+    public string SerialToken { get; set; } = string.Empty;
+
+    public string JobDate { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public long BranchId { get; set; }
+
+    public string BranchName { get; set; } = string.Empty;
+
+    public string WarehouseName { get; set; } = string.Empty;
+
+    public string CustomerName { get; set; } = string.Empty;
+
+    public string Mobile { get; set; } = string.Empty;
+
+    public string ModelName { get; set; } = string.Empty;
+
+    public string BikeNo { get; set; } = string.Empty;
+
+    public string TechnicianName { get; set; } = string.Empty;
+
+    // the allocated parts, in the order of the walk through the store
+    public List<LocationChartLineDto> Lines { get; set; } = new();
+
+    // every placed item of the warehouse (the page shows the place
+    // of a part before it is saved)
+    public List<PartPlaceDto> Places { get; set; } = new();
+}
+
+
+
+//===============================================================
+// Parts Return by job (owner 2026-11-19) : the page works as the
+// Parts Issue page - the job card, then its part, with what the job
+// was allocated and what it has got. The parts come back of the
+// issues of the job, the newest first.
+//===============================================================
+
+// A part that sits on a job
+public class ReturnPartDto
+{
+    public string ItemKind { get; set; } = string.Empty;
+
+    public long ItemId { get; set; }
+
+    public string ItemCode { get; set; } = string.Empty;
+
+    public string ItemName { get; set; } = string.Empty;
+
+    public decimal Allocated { get; set; }
+
+    // all that went out to the job
+    public decimal Issued { get; set; }
+
+    // what came back already
+    public decimal Returned { get; set; }
+
+    // issued less returned : what can still come back
+    public decimal OnJob { get; set; }
+
+    // the unit cost of what sits on the job (the cost it went out
+    // at, less what came back, a piece)
+    public decimal Rate { get; set; }
+
+    // rack - shelf - bin in the default warehouse of the service
+    // center ("" : not set)
+    public string Location { get; set; } = string.Empty;
+}
+
+// A job card with parts on it
+public class ReturnJobDto
+{
+    public Guid PublicId { get; set; }
+
+    public long BranchId { get; set; }
+
+    public string BranchName { get; set; } = string.Empty;
+
+    public string JobCardNo { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public string CustomerName { get; set; } = string.Empty;
+
+    public string ModelName { get; set; } = string.Empty;
+
+    public string BikeNo { get; set; } = string.Empty;
+
+    public string SerialToken { get; set; } = string.Empty;
+
+    public List<ReturnPartDto> Parts { get; set; } = new();
+}
+
+public class ReturnLookupsDto
+{
+    // yyyy-MM-dd (the business day)
+    public string Today { get; set; } = string.Empty;
+
+    public List<ReturnJobDto> Jobs { get; set; } = new();
+}
+
+public class PostJobReturnLineDto
+{
+    public string ItemKind { get; set; } = string.Empty;
+
+    public long ItemId { get; set; }
+
+    public decimal Quantity { get; set; }
+}
+
+public class PostJobReturnDto
+{
+    public Guid JobCardPublicId { get; set; }
+
+    public List<PostJobReturnLineDto> Lines { get; set; } = new();
+}
+
+public class PostJobReturnsDto
+{
+    public string ReturnDate { get; set; } = string.Empty;
+
+    public string Remarks { get; set; } = string.Empty;
+
+    public List<PostJobReturnDto> Jobs { get; set; } = new();
 }

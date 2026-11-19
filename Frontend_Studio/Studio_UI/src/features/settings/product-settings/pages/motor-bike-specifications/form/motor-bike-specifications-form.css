@@ -1,4 +1,4 @@
-@import '../../../../../../shared/styles/app-form-page.css';
+@import '../../../../../../shared/styles/app-workspace-form.css';
 
 /* =====================================================
    Motor Bike Specifications Form
@@ -340,4 +340,47 @@
     padding: 18px 14px;
     color: #94a3b8;
     font-size: 13px;
+}
+
+
+/* =====================================================
+   Workspace layout (2026-11-19) : three steps, the fields
+   left and the workspace panel right
+===================================================== */
+
+.mbs-cols-4
+{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ws-notes > app-note-pad
+{
+    flex: 1 1 auto;
+}
+
+/* BRTA note card : the hint without its own box */
+.mbs-form17 .mbs-hint
+{
+    margin: 12px 16px 16px;
+}
+
+/* Technical step : the section list and rows fill the card */
+.mbs-tech-card
+{
+    min-height: 0;
+}
+
+.mbs-tech-card > .mbs-tech
+{
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 420px;
+}
+
+@media (max-width: 1300px)
+{
+    .mbs-cols-4
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }

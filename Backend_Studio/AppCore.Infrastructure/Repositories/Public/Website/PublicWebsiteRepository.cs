@@ -720,7 +720,7 @@ public class PublicWebsiteRepository : IPublicWebsiteRepository
                     ShowSpecs = spec?.ShowOnWebsite,
                     Engine = spec is { ShowOnWebsite: true } ? EngineLine(spec) : string.Empty,
                     Mileage = spec is { ShowOnWebsite: true } ? Clean(spec.Mileage) : string.Empty,
-                    TopSpeed = spec is { ShowOnWebsite: true } && spec.TopSpeedKmh > 0 ? $"{spec.TopSpeedKmh} km/h" : string.Empty,
+                    TopSpeed = spec is { ShowOnWebsite: true } ? TopSpeedText(spec) : string.Empty,
                     Specs = spec is { ShowOnWebsite: true } ? SpecSheet(spec, specItems) : new()
                 }
             );
@@ -760,8 +760,8 @@ public class PublicWebsiteRepository : IPublicWebsiteRepository
                 ("Motor power", N(spec.MotorPowerWatts, "W")),
                 ("Engine", N(spec.EngineCc, "cc")),
                 (spec.MotorPowerWatts > 0 ? "Battery" : "Horse power", Clean(spec.HorsePower)),
-                (spec.MotorPowerWatts > 0 ? "Range" : "Mileage", Clean(spec.Mileage)),
-                ("Top speed", spec.TopSpeedKmh > 0 ? $"{spec.TopSpeedKmh} km/h" : string.Empty),
+                ("Mileage", Clean(spec.Mileage)),
+                ("Top speed", TopSpeedText(spec)),
                 ("RPM", spec.Rpm > 0 ? spec.Rpm.ToString(CultureInfo.InvariantCulture) : string.Empty),
                 ("Body type", Clean(spec.BodyType)),
                 ("Seating", spec.SeatingCapacity > 0 ? $"{spec.SeatingCapacity} person" : string.Empty),
@@ -927,4 +927,11 @@ public class PublicWebsiteRepository : IPublicWebsiteRepository
     {
         return (value ?? string.Empty).Trim();
     }
+
+
+    // Top speed as typed (2026-11-19); older rows only have the km/h number
+    private static string TopSpeedText(MotorBikeSpecificationsEntity spec) =>
+        !string.IsNullOrWhiteSpace(spec.TopSpeed)
+            ? spec.TopSpeed.Trim()
+            : spec.TopSpeedKmh > 0 ? $"{spec.TopSpeedKmh} km/h" : string.Empty;
 }

@@ -575,6 +575,50 @@ implements OnInit, OnDestroy
         void
     {
         this.initializeMode();
+
+        this.checkAddLimit();
+    }
+
+
+
+    //===========================================================
+    // Limit (set in the Console) : the Add form opened by its
+    // address while no more may be added
+    //===========================================================
+
+    private checkAddLimit():
+        void
+    {
+        if
+        (
+            this.mode !== 'add'
+        )
+        {
+            return;
+        }
+
+        this.companyservice
+            .getLimit()
+            .subscribe(
+            {
+                next:
+                    limit =>
+                    {
+                        if (limit?.Reached)
+                        {
+                            this.toast.warning(
+                                'Company Limit Reached',
+
+                                limit.Message
+                            );
+
+                            this.onBackToList();
+                        }
+                    },
+
+                error:
+                    () => undefined
+            });
     }
 
 

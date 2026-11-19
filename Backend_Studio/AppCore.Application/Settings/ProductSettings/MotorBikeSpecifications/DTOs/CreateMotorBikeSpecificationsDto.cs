@@ -44,6 +44,9 @@ public class CreateMotorBikeSpecificationsDto
 
     public int TopSpeedKmh { get; set; }
 
+    // Top speed as typed, e.g. "25-35 km/h"
+    public string TopSpeed { get; set; } = string.Empty;
+
     public int WheelBaseMm { get; set; }
 
     public int LengthMm { get; set; }

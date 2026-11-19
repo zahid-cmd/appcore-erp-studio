@@ -72,6 +72,18 @@ export interface InventoryStockRow
     SalesQty:
         number;
 
+    // Came on hand / went out of hand in the period, whatever the
+    // document (sale, workshop issue, damage, transfer ...)
+    InQty:
+        number;
+
+    OutQty:
+        number;
+
+    // On hand at the start of the period : Opening + In - Out = On Hand
+    OpeningOnHand:
+        number;
+
     InTransit:
         number;
 

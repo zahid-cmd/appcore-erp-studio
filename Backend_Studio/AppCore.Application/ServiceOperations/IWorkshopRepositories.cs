@@ -82,6 +82,12 @@ public interface IJobCardsRepository
 
     Task<JobCardDto> ChangeStatusAsync(Guid publicId, JobCardStatusChangeDto dto, long userId);
 
+    // Job Card Requirements : the parts and the service charges of
+    // an assigned job. An Assigned card becomes Allocated.
+    Task<JobRequirementDto> GetRequirementAsync(Guid publicId);
+
+    Task<JobRequirementDto> SaveRequirementAsync(Guid publicId, SaveJobRequirementDto dto, long userId);
+
     // A technician starts on the job now
     Task<JobCardDto> StartWorkAsync(Guid publicId, StartJobCardWorkDto dto, long userId);
 
@@ -177,6 +183,19 @@ public interface IWorkshopPartsRepository
 
     Task<PartsDocumentDto> PostIssueAsync(PostPartsIssueDto dto, long userId);
 
+    // Material Issue Slips : the allocated parts of one or more job
+    // cards go out
+    Task<MisLookupsDto> GetMisLookupsAsync();
+
+    // Location Chart : the rack, shelf and bin of the parts of a job
+    Task<LocationChartDto> GetLocationChartAsync(Guid jobCardPublicId);
+
+    Task<List<MisDto>> GetMisListAsync();
+
+    Task<MisDto> GetMisAsync(Guid issuePublicId);
+
+    Task<MisDto> PostMisAsync(PostMisDto dto, long userId);
+
     //-----------------------------------------------------------
     // Returns (posted at once : stock in, Dr inventory / Cr WIP)
     //-----------------------------------------------------------
@@ -186,6 +205,12 @@ public interface IWorkshopPartsRepository
     Task<PartsDocumentDto> GetReturnAsync(Guid publicId);
 
     Task<PartsDocumentDto> PostReturnAsync(PostPartsReturnDto dto, long userId);
+
+    // Parts Return by job : the jobs with parts on them, and the
+    // return of their parts (a return a parts issue it touches)
+    Task<ReturnLookupsDto> GetReturnLookupsAsync();
+
+    Task<List<PartsDocumentDto>> PostJobReturnsAsync(PostJobReturnsDto dto, long userId);
 
     // Requisition lines the service center has not enough stock for
     Task<List<PartsBackOrderDto>> GetBackOrdersAsync();
@@ -211,6 +236,13 @@ public interface IServiceInvoicesRepository
     Task<ServiceInvoiceDto> PostAsync(SaveServiceInvoiceDto dto, bool canCredit, long userId);
 
     Task<ServiceInvoiceDto> DeliverAsync(Guid publicId, long userId);
+
+    // Job Closing : the jobs whose work can be closed
+    Task<ClosingLookupsDto> GetClosingLookupsAsync();
+
+    // Job Closing : the parts, the issues, the returns and the
+    // findings of a job (the job card is put in by the API)
+    Task<ClosingDetailDto> GetClosingDetailAsync(Guid jobCardPublicId);
 
     Task<List<ServiceReturnDto>> GetReturnsAsync();
 

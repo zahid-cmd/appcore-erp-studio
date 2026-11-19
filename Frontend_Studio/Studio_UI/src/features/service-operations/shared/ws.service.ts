@@ -39,20 +39,31 @@ import
     JobCardMotorBike,
     AssignJobCardSimple,
     OutsourcedParts,
+    OutsourcingJobs,
     SaveOutsourcedPart,
     WorkshopOutsideWork,
     WorkshopOutsideWorksSetup,
     JobCardLookups,
+    JobRequirement,
+    SaveJobRequirement,
     PartsBackOrder,
     PartsDocument,
     PartsKind,
     PartsLookups,
     PartsOption,
     PartsStock,
+    Mis,
+    LocationChart,
+    MisLookups,
+    PostMis,
     PostPartsIssue,
     PostPartsReturn,
+    PostJobReturns,
+    ReturnLookups,
     PostServiceReturn,
     SaveServiceInvoice,
+    ClosingLookups,
+    ClosingDetail,
     ServiceInvoice,
     ServiceInvoiceLookups,
     ServiceReturn,
@@ -311,6 +322,42 @@ export class WsService
 
     // By chassis / engine / registration no, mobile or customer name
     // (3 letters at least)
+    // The page Job Outsourcing (its own permissions) : the jobs in
+    // work, the works and the parts to pick from, the entries of a job
+    private readonly outsourcing =
+        'workshop-management/job-outsourcing';
+
+    getOutsourcingJobs(): Observable<OutsourcingJobs>
+    {
+        return this.get<OutsourcingJobs>(`${this.outsourcing}/jobs`);
+    }
+
+    getOutsourcingWorks(): Observable<WorkshopOutsideWork[]>
+    {
+        return this.get<WorkshopOutsideWork[]>(`${this.outsourcing}/outside-works`);
+    }
+
+    getOutsourcingParts(branchId: number): Observable<WsPartOption[]>
+    {
+        return this.get<WsPartOption[]>(`${this.outsourcing}/parts`, new HttpParams().set('branchId', String(branchId)));
+    }
+
+    getJobOutsourcing(jobCardPublicId: string): Observable<OutsourcedParts>
+    {
+        return this.get<OutsourcedParts>(`${this.outsourcing}/${jobCardPublicId}`);
+    }
+
+    // saved and posted at once (Dr Workshop WIP, Cr the vendor)
+    addJobOutsourcing(jobCardPublicId: string, body: SaveOutsourcedPart): Observable<OutsourcedParts>
+    {
+        return this.post<OutsourcedParts>(`${this.outsourcing}/${jobCardPublicId}`, body);
+    }
+
+    cancelJobOutsourcing(jobCardPublicId: string, publicId: string, reason: string): Observable<OutsourcedParts>
+    {
+        return this.put<OutsourcedParts>(`${this.outsourcing}/${jobCardPublicId}/${publicId}/cancel`, { Reason:reason });
+    }
+
     // Parts Outsourcing : the parts bought outside for a job card
     getOutsourcedParts(jobCardPublicId: string): Observable<OutsourcedParts>
     {
@@ -377,6 +424,18 @@ export class WsService
     assignJobCardSimple(publicId: string, body: AssignJobCardSimple): Observable<JobCard>
     {
         return this.put<JobCard>(`${this.cards}/${publicId}/assignment`, body);
+    }
+
+    // Job Card Requirements : the parts and the service charges of
+    // an assigned job (saving makes it Allocated)
+    getJobRequirement(publicId: string): Observable<JobRequirement>
+    {
+        return this.get<JobRequirement>(`${this.cards}/${publicId}/requirement`);
+    }
+
+    saveJobRequirement(publicId: string, body: SaveJobRequirement): Observable<JobRequirement>
+    {
+        return this.put<JobRequirement>(`${this.cards}/${publicId}/requirement`, body);
     }
 
     changeJobCardStatus(publicId: string, status: string, note: string): Observable<JobCard>
@@ -581,6 +640,34 @@ export class WsService
         return this.get<PartsDocument>(`${WS_PARTS_PAGES.issue}/requisition/${publicId}`);
     }
 
+    // Material Issue Slips (MIS) : the page Parts Issues
+    getMisList(): Observable<Mis[]>
+    {
+        return this.get<Mis[]>(`${WS_PARTS_PAGES.issue}/mis`);
+    }
+
+    getMisLookups(): Observable<MisLookups>
+    {
+        return this.get<MisLookups>(`${WS_PARTS_PAGES.issue}/mis/lookups`);
+    }
+
+    // publicId : the first issue of the slip
+    getMis(publicId: string): Observable<Mis>
+    {
+        return this.get<Mis>(`${WS_PARTS_PAGES.issue}/mis/${publicId}`);
+    }
+
+    // Location Chart : the rack, shelf and bin of the parts of a job
+    getLocationChart(jobCardPublicId: string): Observable<LocationChart>
+    {
+        return this.get<LocationChart>(`${WS_PARTS_PAGES.issue}/location-chart/${jobCardPublicId}`);
+    }
+
+    postMis(body: PostMis): Observable<Mis>
+    {
+        return this.post<Mis>(`${WS_PARTS_PAGES.issue}/mis`, body);
+    }
+
     postPartsIssue(body: PostPartsIssue): Observable<PartsDocument>
     {
         return this.post<PartsDocument>(WS_PARTS_PAGES.issue, body);
@@ -595,6 +682,18 @@ export class WsService
     postPartsReturn(body: PostPartsReturn): Observable<PartsDocument>
     {
         return this.post<PartsDocument>(WS_PARTS_PAGES.return, body);
+    }
+
+    // Parts Return by job : the jobs with parts on them
+    getReturnJobs(): Observable<ReturnLookups>
+    {
+        return this.get<ReturnLookups>(`${WS_PARTS_PAGES.return}/jobs`);
+    }
+
+    // a return (its own number) a parts issue it touches
+    postJobReturns(body: PostJobReturns): Observable<PartsDocument[]>
+    {
+        return this.post<PartsDocument[]>(`${WS_PARTS_PAGES.return}/by-job`, body);
     }
 
     getPartsBackOrders(): Observable<PartsBackOrder[]>
@@ -637,6 +736,39 @@ export class WsService
     deliverInvoice(publicId: string): Observable<ServiceInvoice>
     {
         return this.put<ServiceInvoice>(`${WS_BILLING_PAGES.invoices}/${publicId}/deliver`, {});
+    }
+
+    //-----------------------------------------------------------
+    // Job Closing : the job is priced and billed, no money
+    //-----------------------------------------------------------
+
+    getClosingLookups(): Observable<ClosingLookups>
+    {
+        return this.get<ClosingLookups>(`${WS_BILLING_PAGES.closing}/lookups`);
+    }
+
+    // the bills (the heads only)
+    getClosedJobs(): Observable<ServiceInvoice[]>
+    {
+        return this.get<ServiceInvoice[]>(WS_BILLING_PAGES.closing);
+    }
+
+    // The whole job before it is closed : the job card, its parts,
+    // the issues, the returns, the complaints and observations
+    getClosingJob(publicId: string): Observable<ClosingDetail>
+    {
+        return this.get<ClosingDetail>(`${WS_BILLING_PAGES.closing}/job/${publicId}`);
+    }
+
+    // The bill of a job as it will be posted, nothing saved
+    priceClosing(body: SaveServiceInvoice): Observable<ServiceInvoice>
+    {
+        return this.post<ServiceInvoice>(`${WS_BILLING_PAGES.closing}/price`, body);
+    }
+
+    postClosing(body: SaveServiceInvoice): Observable<ServiceInvoice>
+    {
+        return this.post<ServiceInvoice>(WS_BILLING_PAGES.closing, body);
     }
 
     getServiceReturns(): Observable<ServiceReturn[]>

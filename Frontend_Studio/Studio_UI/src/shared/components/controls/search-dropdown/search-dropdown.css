@@ -831,3 +831,39 @@
     max-height: 320px;
 }
 
+
+/* the row the up / down arrows stand on (2026-11-18) */
+.dropdown-option.active
+{
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+
+/* the big figure at the right of a row : the serial token of a
+   job (2026-11-18) */
+.dropdown-figure
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    margin-left: 12px;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.dropdown-figure small
+{
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.dropdown-figure b
+{
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #16a34a;
+}

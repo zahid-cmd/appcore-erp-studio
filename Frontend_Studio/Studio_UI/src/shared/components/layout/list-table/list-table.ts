@@ -104,6 +104,13 @@ export interface ListTableColumn
   // painted in row[dotField]; the value moves to the icon's
   // tooltip. Sorting stays on field.
   dotIcon?: string;
+  // Text cells : a small second line under the value, taken from
+  // row[subField] (e.g. the part number under the part name). No
+  // second line when it is empty.
+  subField?: string;
+  // Text cells : a serial token after the second line, as a figure
+  // (1118 small, 002 big and green), || between; row[subFigureField]
+  subFigureField?: string;
   // Image cells : the hover preview's tiny header (title =
   // row[previewTitleField]) and footer ("label value" chips)
   previewTitleField?: string;
@@ -1138,6 +1145,59 @@ private readonly navigationContextSubscription =
     any
   {
     return row[column.field];
+  }
+
+  // The figure of the second line (subFigureField) : its small
+  // lead and its big tail (the last three characters)
+  getSubFigure(
+    row: any,
+    column: ListTableColumn
+  ):
+    string
+  {
+    const value =
+      column.subFigureField ? row[column.subFigureField] : '';
+
+    return value === null || value === undefined
+      ? ''
+      : String(value).trim();
+  }
+
+  getSubFigureLead(
+    row: any,
+    column: ListTableColumn
+  ):
+    string
+  {
+    const text = this.getSubFigure(row, column);
+
+    return text.length > 3 ? text.substring(0, text.length - 3) : '';
+  }
+
+  getSubFigureTail(
+    row: any,
+    column: ListTableColumn
+  ):
+    string
+  {
+    const text = this.getSubFigure(row, column);
+
+    return text.length > 3 ? text.substring(text.length - 3) : text;
+  }
+
+  // The small second line of a text cell (subField)
+  getSubValue(
+    row: any,
+    column: ListTableColumn
+  ):
+    string
+  {
+    const value =
+      column.subField ? row[column.subField] : '';
+
+    return value === null || value === undefined
+      ? ''
+      : String(value).trim();
   }
 
 

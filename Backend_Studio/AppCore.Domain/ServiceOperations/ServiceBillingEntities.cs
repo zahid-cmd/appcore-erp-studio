@@ -54,7 +54,12 @@ public class ServiceInvoices
 
     public decimal VatTotal { get; set; }
 
+    // The discount of the bill as a whole (the round off) : no line
+    // carries it
     public decimal Discount { get; set; }
+
+    // The discounts given on the lines, together
+    public decimal LineDiscount { get; set; }
 
     public decimal GrandTotal { get; set; }
 
@@ -113,6 +118,12 @@ public class ServiceInvoiceLines
     public decimal Rate { get; set; }
 
     public decimal Amount { get; set; }
+
+    // The discount of the line : as typed ("10%" or "50.00") and
+    // its amount. VAT is counted on Amount - Discount
+    public string DiscountText { get; set; } = string.Empty;
+
+    public decimal Discount { get; set; }
 
     public bool IsFree { get; set; }
 

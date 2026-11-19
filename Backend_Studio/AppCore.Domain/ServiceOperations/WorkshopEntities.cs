@@ -144,6 +144,15 @@ public class WorkshopConfiguration
     // Parts can be issued to a job card without a requisition
     public bool IssueWithoutRequisition { get; set; } = true;
 
+    // Parts Issue To Multiple Job Cards : one MIS slip can carry
+    // the parts of several job cards (off : one job card a slip)
+    public bool IssueToMultipleJobs { get; set; }
+
+    // Bulk Parts Issue Per Job : picking a job card on a slip puts
+    // all its waiting parts on it (off : the store keeper adds the
+    // parts one by one - job card, part, quantity)
+    public bool IssueBulkPerJob { get; set; }
+
     // A service invoice can be posted with a due (by a user with
     // the page action Credit Sale)
     public bool AllowCreditInvoice { get; set; }
@@ -306,6 +315,12 @@ public class JobCardComplaints
     public int LineNo { get; set; }
 
     public string Complaint { get; set; } = string.Empty;
+
+    // Job Closing : '' (not marked) / Solved / Needs Further Work /
+    // Not Done, with a note
+    public string Result { get; set; } = string.Empty;
+
+    public string ResultNote { get; set; } = string.Empty;
 }
 
 // What the opening desk sees on the bike (the observations of
@@ -323,6 +338,12 @@ public class JobCardObservations
     public string Observation { get; set; } = string.Empty;
 
     public string Note { get; set; } = string.Empty;
+
+    // Job Closing : '' (not marked) / Solved / Needs Further Work /
+    // Not Done, with a note
+    public string Result { get; set; } = string.Empty;
+
+    public string ResultNote { get; set; } = string.Empty;
 }
 
 // A bike we do not sell (another brand, model or colour), added

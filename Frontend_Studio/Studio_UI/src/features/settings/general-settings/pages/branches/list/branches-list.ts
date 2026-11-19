@@ -578,7 +578,7 @@ implements OnInit, OnDestroy
 
     [
         // balanced widths, one scheme for every Settings list
-        // (# 56, codes 130, names 200-240, Status 130, Actions 140)
+        // (# 56, code 180 so it never clips, names 230, Status 120, Actions 130)
         {
             header:'#',
             field:'serial',
@@ -590,42 +590,42 @@ implements OnInit, OnDestroy
         {
             header:'Branch Code',
             field:'BranchCode',
-            width:'130px',
+            width:'180px',
             align:'center'
         },
 
         {
             header:'Branch Name',
             field:'BranchName',
-            width:'220px',
+            width:'230px',
             align:'left'
         },
 
         {
             header:'Short Name',
             field:'ShortName',
-            width:'150px',
+            width:'140px',
             align:'left'
         },
 
         {
             header:'Wing',
             field:'WingName',
-            width:'150px',
+            width:'160px',
             align:'left'
         },
 
         {
             header:'Company',
             field:'CompanyName',
-            width:'190px',
+            width:'160px',
             align:'left'
         },
 
         {
             header:'Mobile',
             field:'Mobile',
-            width:'150px',
+            width:'140px',
             align:'center'
         },
 
@@ -640,7 +640,7 @@ implements OnInit, OnDestroy
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'130px',
+            width:'120px',
             align:'center'
         },
 
@@ -648,7 +648,7 @@ implements OnInit, OnDestroy
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'140px',
+            width:'130px',
             align:'center'
         }
     ];
@@ -1610,6 +1610,39 @@ implements OnInit, OnDestroy
     add():
         void
     {
+        // the branch limit set in the Console : warn here, not
+        // after the form is filled in
+        this.branchesService
+            .getLimit()
+            .subscribe(
+            {
+                next:
+                    limit =>
+                    {
+                        if (limit?.Reached)
+                        {
+                            this.toast.warning(
+                                'Branch Limit Reached',
+
+                                limit.Message
+                            );
+
+                            return;
+                        }
+
+                        this.openAddForm();
+                    },
+
+                // the save checks again
+                error:
+                    () => this.openAddForm()
+            });
+    }
+
+
+    private openAddForm():
+        void
+    {
         void this.router.navigate(
         [
             'add'
@@ -1943,7 +1976,16 @@ implements OnInit, OnDestroy
                             this.toast.error(
                                 'Restore Failed',
 
-                                'Failed to restore branch.'
+                                // 409 : above the branch limit set in the Console
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                                &&
+                                typeof error.error === 'string'
+                                &&
+                                error.error.trim()
+                                    ? error.error
+                                    : 'Failed to restore branch.'
                             );
                         }
                     );

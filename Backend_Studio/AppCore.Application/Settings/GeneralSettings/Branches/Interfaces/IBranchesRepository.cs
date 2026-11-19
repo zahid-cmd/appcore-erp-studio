@@ -102,4 +102,8 @@ public interface IBranchesRepository
 
     Task<BranchesDefaultsDto> GetDefaultsAsync(
         long wingId);
+
+    // The limit set in the Console : null while one more may be
+    // added, else the message to show the client
+    Task<string?> GetLimitMessageAsync();
 }

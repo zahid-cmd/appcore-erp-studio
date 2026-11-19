@@ -82,6 +82,7 @@ export const serviceOperationsRoutes:
                     { path:'edit/:id', data:{ breadcrumb:'Edit Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
                     { path:'view/:id', data:{ breadcrumb:'View Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
                     // stage 2 : the Assignment page
+                    { path:'assign', data:{ breadcrumb:'Job Assignment' }, loadComponent:() => import('../pages/job-card-assign/job-card-assign').then(m => m.JobCardAssignPage) },
                     { path:'assign/:id', data:{ breadcrumb:'Assign Job Card' }, loadComponent:() => import('../pages/job-card-assign/job-card-assign').then(m => m.JobCardAssignPage) }
                 ]
             },
@@ -108,6 +109,7 @@ export const serviceOperationsRoutes:
                     { path:'list', data:{ breadcrumb:'Job Card Assignment' }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
                     { path:'add', data:{ breadcrumb:'New Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) },
                     { path:'edit/:id', data:{ breadcrumb:'Assign Job Card' }, loadComponent:() => import('../pages/job-card-assign/job-card-assign').then(m => m.JobCardAssignPage) },
+                    { path:'assign', data:{ breadcrumb:'Job Assignment' }, loadComponent:() => import('../pages/job-card-assign/job-card-assign').then(m => m.JobCardAssignPage) },
                     { path:'assign/:id', data:{ breadcrumb:'Assign Job Card' }, loadComponent:() => import('../pages/job-card-assign/job-card-assign').then(m => m.JobCardAssignPage) },
                     { path:'view/:id', data:{ breadcrumb:'View Job', simple:true }, loadComponent:() => import('../pages/job-cards/job-cards').then(m => m.JobCardsPage) }
                 ]
@@ -125,15 +127,18 @@ export const serviceOperationsRoutes:
                 ]
             },
             {
+                // Job Card Requirements (owner 2026-11-18) : in the place
+                // of Parts Requisitions; the address stays, so the
+                // permissions of the roles stay
                 path:'parts-requisitions',
-                data:{ breadcrumb:'Parts Requisitions' },
+                data:{ breadcrumb:'Job Card Requirements' },
                 children:
                 [
                     { path:'', redirectTo:'list', pathMatch:'full' },
-                    { path:'list', data:{ breadcrumb:'Parts Requisitions' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
-                    { path:'add', data:{ breadcrumb:'Add Parts Requisition' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
-                    { path:'edit/:id', data:{ breadcrumb:'Edit Parts Requisition' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
-                    { path:'view/:id', data:{ breadcrumb:'View Parts Requisition' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) }
+                    { path:'list', data:{ breadcrumb:'Job Card Requirements' }, loadComponent:() => import('../pages/job-card-requirements/job-card-requirements').then(m => m.JobCardRequirementsPage) },
+                    { path:'add', data:{ breadcrumb:'Add Requirement' }, loadComponent:() => import('../pages/job-card-requirements/job-card-requirements').then(m => m.JobCardRequirementsPage) },
+                    { path:'edit/:id', data:{ breadcrumb:'Update Requirement' }, loadComponent:() => import('../pages/job-card-requirements/job-card-requirements').then(m => m.JobCardRequirementsPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Requirement' }, loadComponent:() => import('../pages/job-card-requirements/job-card-requirements').then(m => m.JobCardRequirementsPage) }
                 ]
             },
             {
@@ -142,9 +147,9 @@ export const serviceOperationsRoutes:
                 children:
                 [
                     { path:'', redirectTo:'list', pathMatch:'full' },
-                    { path:'list', data:{ breadcrumb:'Parts Issues' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
-                    { path:'add', data:{ breadcrumb:'Add Parts Issue' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
-                    { path:'view/:id', data:{ breadcrumb:'View Parts Issue' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) }
+                    { path:'list', data:{ breadcrumb:'Parts Issues' }, loadComponent:() => import('../pages/parts-issues/parts-issues').then(m => m.PartsIssuesPage) },
+                    { path:'add', data:{ breadcrumb:'Add Parts Issue' }, loadComponent:() => import('../pages/parts-issues/parts-issues').then(m => m.PartsIssuesPage) },
+                    { path:'view/:id', data:{ breadcrumb:'View Parts Issue' }, loadComponent:() => import('../pages/parts-issues/parts-issues').then(m => m.PartsIssuesPage) }
                 ]
             },
             {
@@ -154,8 +159,33 @@ export const serviceOperationsRoutes:
                 [
                     { path:'', redirectTo:'list', pathMatch:'full' },
                     { path:'list', data:{ breadcrumb:'Parts Returns' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
-                    { path:'add', data:{ breadcrumb:'Add Parts Return' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) },
+                    // the form works as the Parts Issue page : per job, per part (owner 2026-11-19)
+                    { path:'add', data:{ breadcrumb:'Add Parts Return' }, loadComponent:() => import('../pages/parts-returns/parts-returns').then(m => m.PartsReturnsPage) },
                     { path:'view/:id', data:{ breadcrumb:'View Parts Return' }, loadComponent:() => import('../pages/parts-documents/parts-documents').then(m => m.PartsDocumentsPage) }
+                ]
+            },
+            // the outside works and the parts bought outside for a job in
+            // work : the list of the jobs, the entries of a job (owner
+            // 2026-11-19)
+            {
+                path:'job-outsourcing',
+                data:{ breadcrumb:'Job Outsourcing' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Job Outsourcing' }, loadComponent:() => import('../pages/job-outsourcing/job-outsourcing').then(m => m.JobOutsourcingPage) },
+                    { path:'add', data:{ breadcrumb:'Add Outsourcing' }, loadComponent:() => import('../pages/job-outsourcing/job-outsourcing').then(m => m.JobOutsourcingPage) }
+                ]
+            },
+            // stage 4 : the job is priced and billed (owner 2026-11-19)
+            {
+                path:'job-closing',
+                data:{ breadcrumb:'Job Card Closing' },
+                children:
+                [
+                    { path:'', redirectTo:'list', pathMatch:'full' },
+                    { path:'list', data:{ breadcrumb:'Job Card Closing' }, loadComponent:() => import('../pages/job-closing/job-closing').then(m => m.JobClosingPage) },
+                    { path:'add', data:{ breadcrumb:'Close Job' }, loadComponent:() => import('../pages/job-closing/job-closing').then(m => m.JobClosingPage) }
                 ]
             },
             { path:'workshop-dashboard', data:{ breadcrumb:'Workshop Dashboard' }, loadComponent:() => import('../pages/workshop-dashboard/workshop-dashboard').then(m => m.WorkshopDashboardPage) },
@@ -244,7 +274,8 @@ export const serviceOperationsRoutes:
             { path:'job-card-register', data:{ breadcrumb:'Job Card Register' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) },
             { path:'technician-performance', data:{ breadcrumb:'Technician Performance' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) },
             { path:'parts-consumption', data:{ breadcrumb:'Parts Consumption' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) },
-            { path:'service-due-list', data:{ breadcrumb:'Service Due List' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) }
+            { path:'service-due-list', data:{ breadcrumb:'Service Due List' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) },
+            { path:'work-in-progress', data:{ breadcrumb:'Work In Progress' }, loadComponent:() => import('../pages/service-reports/service-reports').then(m => m.ServiceReportsPage) }
         ]
     },
 

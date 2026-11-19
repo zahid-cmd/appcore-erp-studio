@@ -3,25 +3,63 @@
 @import '../../../../shared/styles/app-workspace-form.css';
 
 /* ==============================================================
-   JOB CARD ASSIGNMENT
-   Row 1 : the job (read only) | the serial token
-   Row 2 : services and time   | the people
+   JOB CARD ASSIGNMENT (owner 2026-11-18)
+
+   The page is as tall as the New Job page : a toolbar, then the
+   canvas, which the cards fill to the bottom (no scroll).
+
+   Row 1 : the job (picked, then read only cards) | the serial
+           token, narrow
+   Row 2 : Services & Time, the whole width - it takes the room
+           that is left (the picked services)
+   Row 3 : People, the whole width, the fields in one row
 ============================================================== */
+
+/* the cards and the panel fill the canvas */
+.ja-body
+{
+    align-content: stretch;
+}
+
+.ja-body .ws-step
+{
+    min-height: 0;
+}
 
 .ja-grid
 {
+    flex: 1 1 auto;
+    min-height: 0;
     display: grid;
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-columns: minmax(0, 1fr) 250px;
+    /* the manpower (the main task) takes the room that is left */
+    grid-template-rows: auto auto minmax(0, 1fr);
     gap: 14px;
     align-items: stretch;
 }
 
+.ja-grid > :nth-child(3),
+.ja-grid > :nth-child(4)
+{
+    grid-column: 1 / -1;
+}
+
+.ja-grid > .se-card
+{
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* the headers : as on the New Job page */
 .ja-grid .se-card-header
 {
+    flex: 0 0 auto;
     height: 50px;
 }
 
-.ja-grid .se-card-header > small
+.ja-grid .se-card-header > small,
+.ja-tool-note > b
 {
     margin-left: auto;
     padding: 1px 10px;
@@ -32,13 +70,36 @@
     font-weight: 600;
 }
 
-/* the job : label over value, three in a row */
+/* the toolbar : what the page is, and how many jobs wait */
+.ja-tool-note
+{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    color: var(--app-text-muted, #64748b);
+    font-size: 13px;
+}
+
+.ja-tool-note > b
+{
+    margin-left: 0;
+    font-size: 12px;
+}
+
+/* one field a row */
+.ja-one
+{
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* the job : each fact a small read only card */
 .ja-facts
 {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px 16px;
-    padding: 12px 16px 14px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    padding: 2px 16px 14px;
 }
 
 .ja-facts > div,
@@ -48,6 +109,14 @@
     flex-direction: column;
     gap: 2px;
     min-width: 0;
+}
+
+.ja-facts > div
+{
+    padding: 6px 10px;
+    border: 1px solid var(--app-border, #e2e8f0);
+    border-radius: 9px;
+    background: #f8fafc;
 }
 
 .ja-facts span,
@@ -70,27 +139,28 @@
     grid-column: 1 / -1;
 }
 
+.ja-facts > div.ja-wide
+{
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
 /* the observations : small pills */
 .ja-facts em
 {
     display: inline-block;
-    margin: 0 6px 4px 0;
+    margin: 0 6px 0 0;
     padding: 2px 10px;
     border: 1px solid #e2e8f0;
     border-radius: 999px;
-    background: #f8fafc;
+    background: #ffffff;
     font-style: normal;
     font-size: 12px;
     font-weight: 500;
 }
 
 /* the serial token : the date regular, the serial big and green */
-.ja-token
-{
-    display: flex;
-    flex-direction: column;
-}
-
 .ja-token-no
 {
     flex: 1 1 auto;
@@ -99,7 +169,7 @@
     justify-content: center;
     align-content: center;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 10px;
     min-height: 64px;
     padding: 0 10px;
     line-height: 1;
@@ -110,33 +180,38 @@
 
 .ja-token-no > span
 {
-    font-size: 30px;
+    font-size: 24px;
     font-weight: 500;
 }
 
 .ja-token-no > b
 {
-    font-size: 68px;
+    font-size: 54px;
     font-weight: 800;
     letter-spacing: 2px;
     color: #16a34a;
 }
 
-/* one field a row */
-.ja-one
+/* Add Service and the four time fields in one row */
+.ja-times
 {
-    grid-template-columns: minmax(0, 1fr);
+    flex: 0 0 auto;
+    grid-template-columns: minmax(0, 1.7fr) repeat(3, minmax(0, 1fr)) minmax(0, 1.2fr);
+    align-items: start;
 }
 
-/* the picked services */
+/* the picked services : they take the room that is left */
 .ja-services
 {
+    flex: 1 1 auto;
+    min-height: 34px;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
     gap: 6px;
-    max-height: 132px;
     overflow: auto;
-    margin: 0 16px 4px;
+    margin: 0 16px 12px;
 }
 
 .ja-service
@@ -144,7 +219,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 10px;
+    padding: 4px 6px 4px 10px;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     background: #f8fafc;
@@ -152,8 +227,9 @@
 
 .ja-service > b
 {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-width: 0;
+    max-width: 260px;
     font-size: 13px;
     font-weight: 600;
     overflow: hidden;
@@ -189,7 +265,9 @@
 
 .ja-none
 {
-    padding: 8px 10px;
+    flex: 1 1 auto;
+    align-self: flex-start;
+    padding: 6px 10px;
     border: 1px dashed #cbd5e1;
     border-radius: 8px;
     color: #64748b;
@@ -207,15 +285,28 @@
 
 .ja-time > small
 {
-    min-height: 14px;
+    min-height: 12px;
     color: #16a34a;
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 600;
 }
 
 .ja-time > small.is-bad
 {
     color: #b91c1c;
+}
+
+/* the manpower : two rows, wide fields
+   row 1 : engineer | foreman | technician
+   row 2 : bay | note (two columns wide) */
+.ja-people
+{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ja-people > :nth-child(5)
+{
+    grid-column: span 2;
 }
 
 /* the panel */
@@ -229,10 +320,145 @@
     border-radius: 10px;
 }
 
-@media (max-width: 1100px)
+/* a low screen : tighter, so that nothing scrolls */
+@media (max-height: 860px)
 {
     .ja-grid
     {
+        gap: 8px;
+    }
+
+    .ja-grid .se-card-header
+    {
+        height: 36px;
+        min-height: 36px;
+    }
+
+    .ja-facts
+    {
+        gap: 6px;
+        padding-bottom: 8px;
+    }
+
+    .ja-facts > div
+    {
+        padding: 3px 10px;
+    }
+
+    .ja-token-no > b
+    {
+        font-size: 44px;
+    }
+}
+
+@media (max-width: 1100px)
+{
+    .ja-body
+    {
+        align-content: start;
+    }
+
+    .ja-grid
+    {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+    }
+
+    .ja-facts
+    {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .ja-times,
+    .ja-people
+    {
         grid-template-columns: minmax(0, 1fr);
     }
+
+    .ja-people > :nth-child(5)
+    {
+        grid-column: auto;
+    }
+}
+
+/* the jobs are being loaded */
+.ja-loading
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+/* --------------------------------------------------------------
+   The Observations tab (owner 2026-11-18) : the observations of
+   the job card, read only - as the list of the New Job page.
+-------------------------------------------------------------- */
+
+.ja-obs
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.ja-obs .se-card-header > small
+{
+    margin-left: auto;
+    padding: 1px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ja-obs-rows
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 6px 20px 12px;
+}
+
+.ja-obs-row
+{
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 12px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid #edf1f6;
+    font-size: 14px;
+}
+
+.ja-obs-row > span
+{
+    color: #94a3b8;
+    text-align: center;
+}
+
+.ja-obs-row > b
+{
+    font-weight: 600;
+}
+
+.ja-obs-row > em
+{
+    color: #475569;
+    font-style: normal;
+    overflow-wrap: anywhere;
+}
+
+.ja-obs-empty
+{
+    padding: 22px 0;
+    color: #64748b;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* the status of the header : white on its colour */
+.jc-state
+{
+    color: #ffffff;
 }

@@ -21,7 +21,13 @@ public static class PostingPurposes
 
     public const string InterBranch = "INTER-BRANCH";
 
+    // Opening Stock credit ledger, one per product type
+    // (2026-11-18) : OPENING-STOCK stays the Motor Bikes one
     public const string OpeningStock = "OPENING-STOCK";
+
+    public const string OpeningStockSpareParts = "OPENING-STOCK-SP";
+
+    public const string OpeningStockAccessories = "OPENING-STOCK-AC";
 
     // Charges the company bears (expense)
     public const string BankCharges = "BANK-CHARGES";
@@ -102,6 +108,25 @@ public static class PostingPurposes
             "SV" => VatServiceCharges,
             _ => throw new InvalidOperationException(
                 $"No VAT ledger purpose for product type '{productType}'.")
+        };
+    }
+
+
+    //===========================================================
+    // Opening Stock purpose of a product / page type
+    //   MB · SP (lubricants too) · AC
+    //===========================================================
+
+    public static string OpeningStockFor(
+        string productType)
+    {
+        return (productType ?? string.Empty).Trim().ToUpperInvariant() switch
+        {
+            "MB" => OpeningStock,
+            "SP" or "LB" => OpeningStockSpareParts,
+            "AC" => OpeningStockAccessories,
+            _ => throw new InvalidOperationException(
+                $"No Opening Stock ledger purpose for product type '{productType}'.")
         };
     }
 

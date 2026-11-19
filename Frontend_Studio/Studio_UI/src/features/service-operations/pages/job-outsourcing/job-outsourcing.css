@@ -1,0 +1,67 @@
+/* Job Outsourcing (owner 2026-11-19) : built as the Close Job page -
+   its styles (the rows, the pop-up, the panel), and the few of its
+   own below */
+@import '../job-closing/job-closing.css';
+
+/* the head : the job card alone */
+.mi-headrow.jo-headrow
+{
+    grid-template-columns: minmax(0, 460px);
+}
+
+.jo-tip
+{
+    color: #64748b;
+    font-size: 12.5px;
+}
+
+.jo-tip > i
+{
+    color: #1d4ed8;
+    margin-right: 5px;
+}
+
+
+/* ==============================================================
+   The right panel, balanced (owner 2026-11-19) : a larger drawing,
+   the two counts, the figures as ruled lines of their own height
+   (not stretched), the note at the foot
+============================================================== */
+
+.ws-panel > .ws-hero
+{
+    gap: 10px;
+    padding: 12px 16px 12px;
+}
+
+.ws-hero > app-workspace-art
+{
+    max-width: 160px;
+    align-self: center;
+}
+
+.ws-hero > .jc-totals
+{
+    flex: 0 0 auto;
+    gap: 0;
+    padding: 4px 16px 10px;
+}
+
+.ws-hero > .jc-totals > div
+{
+    padding: 8px 0;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.ws-hero > .jc-totals > .jc-grand
+{
+    margin-top: 0;
+    padding: 10px 0 2px;
+    border-top: 0;
+    border-bottom: 0;
+}
+
+.ws-hero > .jc-hint
+{
+    margin-top: auto;
+}

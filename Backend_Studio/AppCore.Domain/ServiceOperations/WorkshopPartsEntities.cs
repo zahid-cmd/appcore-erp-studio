@@ -93,6 +93,11 @@ public class PartsIssues
 
     public string IssueNo { get; set; } = string.Empty;
 
+    // The Material Issue Slip the issue is on (MIS-...); one slip
+    // can carry the issues of several job cards. Empty : an issue
+    // of before the slips
+    public string MisNo { get; set; } = string.Empty;
+
     public DateOnly IssueDate { get; set; }
 
     public long BranchId { get; set; }

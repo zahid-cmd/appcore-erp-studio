@@ -152,6 +152,7 @@ public class MotorBikeSpecificationsRepository
                 Rpm = x.Rpm,
                 Mileage = x.Mileage,
                 TopSpeedKmh = x.TopSpeedKmh,
+                TopSpeed = x.TopSpeed,
                 WheelBaseMm = x.WheelBaseMm,
                 LengthMm = x.LengthMm,
                 WidthMm = x.WidthMm,
@@ -627,6 +628,7 @@ public class MotorBikeSpecificationsRepository
         int Rpm,
         string Mileage,
         int TopSpeedKmh,
+        string TopSpeed,
         int WheelBaseMm,
         int LengthMm,
         int WidthMm,
@@ -853,7 +855,10 @@ public class MotorBikeSpecificationsRepository
         }
 
         string mileage =
-            Text(dto.Mileage, 60, electric ? "Range" : "Mileage");
+            Text(dto.Mileage, 60, "Mileage");
+
+        string topSpeed =
+            Text(dto.TopSpeed, 60, "Top Speed");
 
         if (dto.TopSpeedKmh < 0 || dto.TopSpeedKmh > 400)
         {
@@ -958,7 +963,7 @@ public class MotorBikeSpecificationsRepository
 
         return new CleanInput(
             model, cc, watts, fuel, cylinders, vehicleClass, bodyType, dto.SeatingCapacity,
-            unladen, laden, maker, country, horsePower, dto.Rpm, mileage, dto.TopSpeedKmh,
+            unladen, laden, maker, country, horsePower, dto.Rpm, mileage, dto.TopSpeedKmh, topSpeed,
             dto.WheelBaseMm, dto.LengthMm, dto.WidthMm, dto.HeightMm,
             dto.TyreCount, frontTyre, rearTyre, dto.AxleCount, items, remarks);
     }
@@ -987,6 +992,7 @@ public class MotorBikeSpecificationsRepository
         entity.Rpm = input.Rpm;
         entity.Mileage = input.Mileage;
         entity.TopSpeedKmh = input.TopSpeedKmh;
+        entity.TopSpeed = input.TopSpeed;
         entity.WheelBaseMm = input.WheelBaseMm;
         entity.LengthMm = input.LengthMm;
         entity.WidthMm = input.WidthMm;

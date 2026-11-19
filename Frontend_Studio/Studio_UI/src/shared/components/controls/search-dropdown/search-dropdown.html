@@ -153,6 +153,8 @@
 
                 class="dropdown-panel"
 
+                (keydown)="onPanelKey($event)"
+
                 (click)="$event.stopPropagation()">
 
                 <!-- =============================================
@@ -194,8 +196,11 @@
 
                             *ngFor="
                                 let option of filteredItems;
+                                let rowIndex = index;
                                 trackBy: trackOption
                             "
+
+                            [class.active]="rowIndex === activeIndex"
 
                             [class.selected]="
                                 option[valueField]
@@ -227,6 +232,18 @@
                                     *ngIf="parts(option).code">{{ parts(option).code }}</span>
 
                             </div>
+
+                            <span
+
+                                class="dropdown-figure"
+
+                                *ngIf="figureField && option[figureField]">
+
+                                <small>{{ figure(option).lead }}</small>
+
+                                <b>{{ figure(option).tail }}</b>
+
+                            </span>
 
                             <span
 

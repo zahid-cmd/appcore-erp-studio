@@ -9,6 +9,7 @@ using AppCore.Infrastructure.Persistence.Paging;
 
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.Branches.DTOs;
+using AppCore.Application.Platform.Tenancy;
 
 using BranchesEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Branches;
@@ -58,16 +59,67 @@ public class BranchesRepository : IBranchesRepository
 
     private readonly AppDbContext _context;
 
+    // Tenancy : the branch limit of this client (set in the Console)
+    private readonly ITenantLimits _limits;
+
 
     //===========================================================
     // Constructor
     //===========================================================
 
     public BranchesRepository(
-        AppDbContext context)
+        AppDbContext context,
+        ITenantLimits limits)
     {
         _context =
             context;
+
+        _limits =
+            limits;
+    }
+
+
+    //===========================================================
+    // Branch Limit (Console : Tenants.MaxBranches)
+    //
+    // The client makes his own branches, up to the number set on
+    // his tenant in the Console. No tenant found or an empty
+    // limit : no check.
+    //===========================================================
+
+    private async Task EnsureBranchLimitAsync()
+    {
+        string? message =
+            await GetLimitMessageAsync();
+
+        if (message is not null)
+        {
+            throw new InvalidOperationException(message);
+        }
+    }
+
+
+    // null while one more branch may be added, else the message
+    public async Task<string?> GetLimitMessageAsync()
+    {
+        int? limit =
+            (await _limits.GetAsync())?.MaxBranches;
+
+        if (limit is null)
+        {
+            return null;
+        }
+
+        int count =
+            await _context
+                .Set<BranchesEntity>()
+                .AsNoTracking()
+                .CountAsync(x => !x.IsDeleted);
+
+        return count >= limit.Value
+            ? $"Your subscription allows {limit.Value} branch(es) and {count} already exist. " +
+              "Please contact AppCore Technologies to add more branches."
+            : null;
     }
 
 
@@ -641,6 +693,9 @@ public class BranchesRepository : IBranchesRepository
             long userId
         )
     {
+        await EnsureBranchLimitAsync();
+
+
         //===========================================================
         // Resolve Company
         //===========================================================
@@ -1837,6 +1892,9 @@ public class BranchesRepository : IBranchesRepository
         {
             return false;
         }
+
+
+        await EnsureBranchLimitAsync();
 
 
         //===========================================================

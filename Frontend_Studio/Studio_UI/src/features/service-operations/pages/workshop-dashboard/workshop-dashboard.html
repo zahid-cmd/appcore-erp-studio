@@ -1,8 +1,13 @@
 <div class="app-list-page">
 
+    <!-- =====================================================
+         WORKSHOP DASHBOARD (tabs, owner 2026-11-19)
+         Service Ramps | Bikes | Technicians | Figures
+    ====================================================== -->
+
     <app-page-header
         title="Workshop Dashboard"
-        subtitle="The workshop now : the bikes in it, who works on them, the bays and the money of today"
+        subtitle="The workshop now : ramps, bikes, technicians"
         icon="fas fa-gauge-high">
 
         <div pageHeaderCenter>
@@ -31,8 +36,15 @@
 
     <app-page-toolbar>
 
-        <div
+        <app-control-tabs
             pageToolbarLeft
+            [tabs]="tabs"
+            [selectedTab]="tab"
+            (selectedTabChange)="onTab($event)">
+        </app-control-tabs>
+
+        <div
+            pageToolbarRight
             class="sr-filters">
 
             <app-search-dropdown
@@ -45,141 +57,318 @@
                 (valueChange)="onBranch($event)">
             </app-search-dropdown>
 
-        </div>
+            <b class="wd-today">{{ day(data?.Today ?? '') }}</b>
 
-        <div
-            pageToolbarRight
-            class="sr-totals">
-            <b>{{ data?.Today ?? '' }}</b>
         </div>
 
     </app-page-toolbar>
 
+    <!-- ================= BIKES : the shared list table ================= -->
+
+    @if (tab === 'bikes' && data)
+    {
+        <!-- the open job cards by status : a click filters the list -->
+
+        <div class="wd-strip wd-list-strip">
+
+            @for (item of data.Statuses; track item.Label)
+            {
+                <button
+                    type="button"
+                    class="wd-chip"
+                    [class.wd-on]="status === item.Label"
+                    (click)="onStatus(item.Label)">
+                    <i [style.background]="color(item.Label)"></i>
+                    {{ item.Label }}
+                    <b>{{ item.Value }}</b>
+                </button>
+            }
+
+        </div>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="bikeColumns"
+                    [rows]="bikeRows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [actions]="listActions"
+                    emptyTitle="No bike"
+                    [emptySubtitle]="status || searchText ? 'No bike is in the workshop for this filter.' : 'No bike is in the workshop.'"
+                    (cellClick)="onBikeCell($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="jobs.length"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+    }
+    @else
+    {
     <div class="wd-body appcore-scrollbar">
 
         @if (data)
         {
-            <!-- the figures -->
+            <!-- ================= SERVICE RAMPS ================= -->
 
-            <div class="wd-tiles">
-
-                @for (tile of data.Tiles; track tile.Label)
-                {
-                    <div
-                        class="wd-tile"
-                        [ngClass]="'wd-' + tile.Tone">
-                        <small>{{ tile.Label }}</small>
-                        <b>{{ tile.Value }}</b>
-                        <span>{{ tile.Hint }}</span>
-                    </div>
-                }
-
-            </div>
-
-            <!-- the open job cards by status : a click filters the list -->
-
-            <div class="wd-strip">
-
-                @for (item of data.Statuses; track item.Label)
-                {
-                    <button
-                        type="button"
-                        class="wd-chip"
-                        [class.wd-on]="status === item.Label"
-                        (click)="onStatus(item.Label)">
-                        <i [style.background]="color(item.Label)"></i>
-                        {{ item.Label }}
-                        <b>{{ item.Value }}</b>
-                    </button>
-                }
-
-            </div>
-
-            <!-- the bikes in the workshop -->
-
-            <section class="wd-card">
-
-                <header>
-                    <i class="fas fa-motorcycle"></i>
-                    Bikes in the workshop{{ status ? ' : ' + status : '' }}  ({{ jobs.length }})
-                </header>
-
-                <div class="wd-row wd-head">
-                    <span>Job Card</span>
-                    <span>Customer</span>
-                    <span>Bike</span>
-                    <span>Type</span>
-                    <span>Status</span>
-                    <span>Checked In</span>
-                    <span>Promised</span>
-                    <span>Working Now</span>
+            @if (tab === 'ramps')
+            {
+                <div class="wd-strip">
+                    <span class="wd-chip"><i style="background:#2563eb"></i>Ramps <b>{{ ramps.length }}</b></span>
+                    <span class="wd-chip"><i style="background:#0ea5e9"></i>Occupied <b>{{ rampsBusy }}</b></span>
+                    <span class="wd-chip"><i style="background:#16a34a"></i>Free <b>{{ ramps.length - rampsBusy }}</b></span>
+                    <span class="wd-chip"><i style="background:#d97706"></i>Jobs waiting for a ramp <b>{{ rampsWaiting }}</b></span>
                 </div>
 
-                @for (job of jobs; track job.PublicId)
-                {
-                    <div
-                        class="wd-row wd-job"
-                        title="Open the job card"
-                        (click)="open(job)">
+                <div class="wd-ramps">
 
-                        <b>{{ job.JobCardNo }}</b>
+                    @for (ramp of ramps; track ramp.Name + ramp.BranchName)
+                    {
+                        <article
+                            class="wd-ramp"
+                            [class.wd-ramp-free]="ramp.Jobs.length === 0"
+                            [class.wd-ramp-queue]="ramp.Jobs.length > 1">
 
-                        <span>
-                            {{ job.CustomerName }}
-                            <small>{{ job.Mobile }}</small>
-                        </span>
+                            <header>
+                                <span class="wd-ramp-icon"><i class="fas fa-warehouse"></i></span>
+                                <span class="wd-ramp-name">
+                                    <b>{{ ramp.Name }}</b>
+                                    <small>{{ ramp.BranchName }}</small>
+                                </span>
+                                <em>{{ ramp.Jobs.length === 0 ? 'Free' : ramp.Jobs[0].Working ? 'Working' : 'Occupied' }}</em>
+                            </header>
 
-                        <span>
-                            {{ job.BikeNo }}
-                            <small>{{ job.ModelName }}</small>
-                        </span>
+                            @if (ramp.Jobs.length > 0)
+                            {
+                                <div
+                                    class="wd-ramp-job"
+                                    title="Open the job card"
+                                    (click)="open(ramp.Jobs[0])">
 
-                        <span>{{ job.JobType }}</span>
+                                    <b>{{ ramp.Jobs[0].JobCardNo }}</b>
 
-                        <span class="wd-status">
-                            <i [style.background]="color(job.Status)"></i>
-                            {{ job.Status }}
-                        </span>
+                                    <div><i class="fas fa-user"></i><span>{{ ramp.Jobs[0].CustomerName || '-' }}</span></div>
 
-                        <span>{{ dateTime(job.CheckInAt) }}</span>
+                                    <div><i class="fas fa-motorcycle"></i><span>{{ ramp.Jobs[0].BikeNo || '-' }}  <small>{{ ramp.Jobs[0].ModelName }}</small></span></div>
 
-                        <span [class.wd-late]="job.IsLate">{{ dateTime(job.PromisedAt) || '-' }}{{ job.IsLate ? '  (late)' : '' }}</span>
+                                    <div><i class="fas fa-user-gear"></i><span>{{ ramp.Jobs[0].TechnicianName || 'No technician' }}</span></div>
 
-                        <span>
-                            {{ job.Technicians || '-' }}
-                            <small>{{ job.Bays }}</small>
-                        </span>
+                                    <div class="wd-ramp-foot">
 
-                    </div>
-                }
-                @empty
-                {
-                    <div class="wd-empty">No bike is in the workshop{{ status || searchText ? ' for this filter' : '' }}.</div>
-                }
+                                        <span class="wd-status">
+                                            <i [style.background]="color(ramp.Jobs[0].Status)"></i>
+                                            {{ ramp.Jobs[0].Status }}
+                                        </span>
 
-            </section>
+                                        <span [class.wd-late]="ramp.Jobs[0].IsLate">{{ ramp.Jobs[0].PromisedAt ? dateTime(ramp.Jobs[0].PromisedAt) : 'No promise' }}{{ ramp.Jobs[0].IsLate ? '  (late)' : '' }}</span>
 
-            <!-- the bays -->
+                                    </div>
 
-            @if (data.Bays.length > 0)
+                                </div>
+
+                                <div class="wd-ramp-next">
+
+                                    @if (ramp.Jobs.length > 1)
+                                    {
+                                        <small>Next on this ramp</small>
+
+                                        @for (job of ramp.Jobs.slice(1); track job.PublicId; let i = $index)
+                                        {
+                                            <span
+                                                class="wd-queue-chip"
+                                                [title]="job.CustomerName + '  -  ' + job.Status + '  (open the job card)'"
+                                                (click)="open(job)">
+                                                {{ i + 1 }}.  {{ job.JobCardNo }}
+                                            </span>
+                                        }
+                                    }
+                                    @else
+                                    {
+                                        <small>No job waits for this ramp</small>
+                                    }
+
+                                </div>
+                            }
+                            @else
+                            {
+                                <div class="wd-ramp-empty">
+                                    <i class="fas fa-circle-check"></i>
+                                    <span>Free : ready for a job</span>
+                                </div>
+                            }
+
+                        </article>
+                    }
+                    @empty
+                    {
+                        <div class="wd-empty">No service ramp (bay) is set for this service center.</div>
+                    }
+
+                </div>
+            }
+
+            <!-- ================= TECHNICIANS ================= -->
+
+            @if (tab === 'technicians')
+            {
+                <div class="wd-strip">
+                    <span class="wd-chip"><i style="background:#2563eb"></i>Technicians with a job <b>{{ queues.length }}</b></span>
+                    <span class="wd-chip"><i style="background:#16a34a"></i>No queue <b>{{ queues.length - queuesWaiting }}</b></span>
+                    <span class="wd-chip"><i style="background:#d97706"></i>With a queue <b>{{ queuesWaiting }}</b></span>
+                    <span class="wd-chip"><i style="background:#dc2626"></i>Jobs waiting <b>{{ waitingCount }}</b></span>
+                </div>
+
+                <div class="wd-ramps">
+
+                    @for (queue of queues; track queue.TechnicianName + queue.InHand.JobCardNo)
+                    {
+                        <article
+                            class="wd-ramp"
+                            [class.wd-ramp-queue]="queue.Waiting.length > 0">
+
+                            <header>
+                                <span class="wd-ramp-icon"><i class="fas fa-user-gear"></i></span>
+                                <span class="wd-ramp-name">
+                                    <b>{{ queue.TechnicianName || '-' }}</b>
+                                    <small>{{ queue.Waiting.length + 1 }} {{ queue.Waiting.length === 0 ? 'job' : 'jobs' }}</small>
+                                </span>
+                                <em>{{ queue.Waiting.length === 0 ? 'No queue' : queue.Waiting.length + ' waiting' }}</em>
+                            </header>
+
+                            <div
+                                class="wd-ramp-job"
+                                title="Open the job card"
+                                (click)="open(queue.InHand)">
+
+                                <small>In hand</small>
+
+                                <b>{{ queue.InHand.JobCardNo }}</b>
+
+                                <div><i class="fas fa-user"></i><span>{{ queue.InHand.CustomerName || '-' }}</span></div>
+
+                                <div class="wd-ramp-foot">
+                                    <span class="wd-status">
+                                        <i [style.background]="color(queue.InHand.Status)"></i>
+                                        {{ queue.InHand.Status }}
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            <div class="wd-ramp-next wd-ramp-list">
+
+                                @for (job of queue.Waiting; track job.PublicId; let i = $index)
+                                {
+                                    <div
+                                        class="wd-wait"
+                                        title="Open the job card"
+                                        (click)="open(job)">
+                                        <b>{{ i + 1 }}</b>
+                                        <span>
+                                            {{ job.JobCardNo }}
+                                            <small>{{ job.CustomerName }}  -  {{ job.Status }}</small>
+                                        </span>
+                                    </div>
+                                }
+                                @empty
+                                {
+                                    <small>No job waits for this technician</small>
+                                }
+
+                            </div>
+
+                        </article>
+                    }
+                    @empty
+                    {
+                        <div class="wd-empty">No technician has a job in hand{{ searchText ? ' for this search' : '' }}.</div>
+                    }
+
+                </div>
+            }
+
+            <!-- ================= FIGURES ================= -->
+
+            @if (tab === 'figures')
             {
                 <section class="wd-card">
 
                     <header>
-                        <i class="fas fa-warehouse"></i>
-                        Bays
+                        <i class="fas fa-screwdriver-wrench"></i>
+                        The workshop now
                     </header>
 
-                    <div class="wd-bays">
+                    <div class="wd-figures">
 
-                        @for (bay of data.Bays; track $index)
+                        @for (tile of workTiles; track tile.Label)
                         {
                             <div
-                                class="wd-tile"
-                                [ngClass]="'wd-' + bay.Tone">
-                                <small>{{ bay.Label }}</small>
-                                <b>{{ bay.Value }}</b>
-                                <span>{{ bay.Hint }}</span>
+                                class="wd-tile wd-figure"
+                                [ngClass]="'wd-' + tile.Tone">
+                                <small>{{ tile.Label }}</small>
+                                <b>{{ tile.Value }}</b>
+                                <span>{{ tile.Hint }}</span>
+                            </div>
+                        }
+
+                    </div>
+
+                </section>
+
+                <section class="wd-card">
+
+                    <header>
+                        <i class="fas fa-coins"></i>
+                        Money
+                    </header>
+
+                    <div class="wd-figures">
+
+                        @for (tile of moneyTiles; track tile.Label)
+                        {
+                            <div
+                                class="wd-tile wd-figure"
+                                [ngClass]="'wd-' + tile.Tone">
+                                <small>{{ tile.Label }}</small>
+                                <b>{{ tile.Value }}</b>
+                                <span>{{ tile.Hint }}</span>
+                            </div>
+                        }
+
+                    </div>
+
+                </section>
+
+                <section class="wd-card wd-fill">
+
+                    <header>
+                        <i class="fas fa-chart-simple"></i>
+                        Job cards by status
+                    </header>
+
+                    <div class="wd-bars">
+
+                        @for (item of data.Statuses; track item.Label)
+                        {
+                            <div
+                                class="wd-bar"
+                                title="Show these bikes"
+                                (click)="showStatus(item.Label)">
+                                <span>{{ item.Label }}</span>
+                                <div><i [style.width.%]="barWidth(item.Value)" [style.background]="color(item.Label)"></i></div>
+                                <b>{{ item.Value }}</b>
                             </div>
                         }
 
@@ -194,6 +383,7 @@
         }
 
     </div>
+    }
 
     <app-toast></app-toast>
 

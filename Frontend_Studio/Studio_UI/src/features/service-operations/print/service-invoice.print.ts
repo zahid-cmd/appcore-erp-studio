@@ -114,18 +114,22 @@ function serviceInvoiceHtml(doc: ServiceInvoice, kit: PrintKit): string
     const lines =
         doc.Lines ?? [];
 
+    // a column Discount, only when a line carries one
+    const discounted =
+        lines.some(x => !!x.Discount);
+
     let serial = 0;
 
     const row =
         (x: ServiceInvoiceLine): string =>
-            `<tr><td class="sip-no">${++serial}</td><td>${e(x.ItemName)}${x.IsFree ? ' <i>(free)</i>' : ''}${x.LineType === 'Outside' && x.Note ? ` <i>(${e(x.Note)})</i>` : ''}</td><td>${e(x.ItemCode)}</td><td class="sip-r">${e(x.Quantity)}</td><td class="sip-r">${wsMoney(x.Rate)}</td><td class="sip-r">${wsMoney(x.Amount)}</td><td class="sip-r">${x.VatAmount ? wsMoney(x.VatAmount) : ''}</td><td class="sip-r">${wsMoney(x.Total)}</td></tr>`;
+            `<tr><td class="sip-no">${++serial}</td><td>${e(x.ItemName)}${x.IsFree ? ' <i>(free)</i>' : ''}${x.LineType === 'Outside' && x.Note ? ` <i>(${e(x.Note)})</i>` : ''}</td><td>${e(x.ItemCode)}</td><td class="sip-r">${e(x.Quantity)}</td><td class="sip-r">${wsMoney(x.Rate)}</td><td class="sip-r">${wsMoney(x.Amount)}</td>${discounted ? `<td class="sip-r">${x.Discount ? wsMoney(x.Discount) : ''}</td>` : ''}<td class="sip-r">${x.VatAmount ? wsMoney(x.VatAmount) : ''}</td><td class="sip-r">${wsMoney(x.Total)}</td></tr>`;
 
     const group =
         (title: string, type: string): string =>
         {
             const rows = lines.filter(x => x.LineType === type);
 
-            return rows.length === 0 ? '' : `<tr class="sip-group"><td colspan="8">${e(title)}</td></tr>${rows.map(row).join('')}`;
+            return rows.length === 0 ? '' : `<tr class="sip-group"><td colspan="${discounted ? 9 : 8}">${e(title)}</td></tr>${rows.map(row).join('')}`;
         };
 
     const sum =
@@ -170,7 +174,7 @@ ${fact('Receipt', doc.ReceiptVoucherNo)}
 
 <div class="sip-title">Services and Parts</div>
 <table class="pv-split sip-lines">
-  <thead><tr><th class="sip-no">#</th><th>Description</th><th>Code</th><th class="sip-r">Qty</th><th class="sip-r">Rate</th><th class="sip-r">Amount</th><th class="sip-r">VAT</th><th class="sip-r">Total</th></tr></thead>
+  <thead><tr><th class="sip-no">#</th><th>Description</th><th>Code</th><th class="sip-r">Qty</th><th class="sip-r">Rate</th><th class="sip-r">Amount</th>${discounted ? '<th class="sip-r">Discount</th>' : ''}<th class="sip-r">VAT</th><th class="sip-r">Total</th></tr></thead>
   <tbody>${group('Labour', 'Service')}${group('Parts', 'Part')}${group('Outside Work', 'Outside')}</tbody>
 </table>
 
@@ -185,8 +189,9 @@ ${fact('Receipt', doc.ReceiptVoucherNo)}
     ${sum('Labour', doc.LabourTotal)}
     ${sum('Parts', doc.PartsTotal)}
     ${doc.OutsideTotal ? sum('Outside work', doc.OutsideTotal) : ''}
+    ${doc.LineDiscount ? sum('Item discount', -doc.LineDiscount) : ''}
     ${doc.VatTotal ? sum('VAT', doc.VatTotal) : ''}
-    ${doc.Discount ? sum('Discount', -doc.Discount) : ''}
+    ${doc.Discount ? sum(doc.LineDiscount ? 'Round off' : 'Discount', -doc.Discount) : ''}
     ${sum('Invoice Total', doc.GrandTotal, 'sip-grand')}
     ${sum('Collected', doc.PaidAmount)}
     ${sum('Due', doc.DueAmount)}

@@ -64,6 +64,8 @@ export interface ProductLedgerFilters
     Categories:ProductLedgerCategory[];
     SubCategories:ProductLedgerSubCategory[];
     Products:ProductLedgerProduct[];
+    // SP page : branches that also run Accessories (Business Configuration)
+    AccessoryBranchIds?:number[];
 }
 
 

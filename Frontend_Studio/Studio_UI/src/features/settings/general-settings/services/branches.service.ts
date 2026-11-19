@@ -383,4 +383,16 @@ export class BranchesService
                 )
             );
     }
+
+    //===========================================================
+    // Limit (set in the Console) : may one more be added?
+    //===========================================================
+
+    getLimit():
+        Observable<{ Reached: boolean; Message: string }>
+    {
+        return this.http.get<{ Reached: boolean; Message: string }>(
+            `${this.apiUrl}/limit`
+        );
+    }
 }

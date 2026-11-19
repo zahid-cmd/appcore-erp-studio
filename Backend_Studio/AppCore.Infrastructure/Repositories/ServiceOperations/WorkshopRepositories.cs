@@ -45,6 +45,10 @@ internal static class Ws
     // The service engineer, the bay and the technicians are given
     public const string Assigned = "Assigned";
 
+    // Job Card Requirements : the parts and the service charges of
+    // the job are allocated (ready for parts and service issue)
+    public const string Allocated = "Allocated";
+
     public const string InProgress = "In Progress";
 
     public const string WaitingParts = "Waiting Parts";
@@ -60,16 +64,22 @@ internal static class Ws
     public const string Cancelled = "Cancelled";
 
     // The lines of the card may still be changed
-    public static readonly string[] Editable = { Open, Assigned, InProgress, WaitingParts };
+    public static readonly string[] Editable = { Open, Assigned, Allocated, InProgress, WaitingParts };
 
     // Work, parts and outsourcing can go on : the card is assigned
     // and not done (the stages go strictly in order)
-    public static readonly string[] Workable = { Assigned, InProgress, WaitingParts };
+    public static readonly string[] Workable = { Allocated, InProgress, WaitingParts };
+
+    // Job Card Requirements : the parts and the service charges can
+    // be allocated (an assigned card that is not in work yet)
+    public static readonly string[] Allocatable = { Assigned, Allocated };
 
     public static string NotWorkable(string jobCardNo, string status) =>
         status == Open
             ? $"{jobCardNo} is not assigned yet : assign it first (Job Card Assignment)."
-            : $"{jobCardNo} is {status}";
+            : status == Assigned
+                ? $"{jobCardNo} has no parts or service charges allocated yet : allocate them first (Job Card Requirements)."
+                : $"{jobCardNo} is {status}";
 
     // The stage a card has reached : 1 Opening, 2 Assignment,
     // 3 Work, 4 Closing, 5 Billing, 6 Delivery (0 : cancelled).
@@ -79,7 +89,7 @@ internal static class Ws
         status switch
         {
             Open => 1,
-            Assigned => 2,
+            Assigned or Allocated => 2,
             InProgress or WaitingParts or WorkDone or Ready => 3,
             Invoiced => 5,
             Delivered => 6,
@@ -96,7 +106,9 @@ internal static class Ws
         {
             // Assigned comes by Job Card Assignment only
             Open => new() { Cancelled },
-            Assigned => new() { InProgress, Open, Cancelled },
+            // Allocated comes by Job Card Requirements only
+            Assigned => new() { Open, Cancelled },
+            Allocated => new() { InProgress, Cancelled },
             InProgress => new() { WaitingParts, WorkDone, Cancelled },
             WaitingParts => new() { InProgress, Cancelled },
             WorkDone => new() { Ready, InProgress },
@@ -288,6 +300,8 @@ internal static class Ws
             RequireChecklist = row.RequireChecklist,
             RequireEstimate = row.RequireEstimate,
             IssueWithoutRequisition = row.IssueWithoutRequisition,
+            IssueToMultipleJobs = row.IssueToMultipleJobs,
+            IssueBulkPerJob = row.IssueBulkPerJob,
             AllowCreditInvoice = row.AllowCreditInvoice,
             EstimateChargeServiceId = row.EstimateChargeServiceId,
             DiagnosisSuggests = row.DiagnosisSuggests
@@ -791,6 +805,8 @@ public class WorkshopSetupRepository
         row.RequireChecklist = dto.RequireChecklist;
         row.RequireEstimate = dto.RequireEstimate;
         row.IssueWithoutRequisition = dto.IssueWithoutRequisition;
+        row.IssueToMultipleJobs = dto.IssueToMultipleJobs;
+        row.IssueBulkPerJob = dto.IssueBulkPerJob;
         row.AllowCreditInvoice = dto.AllowCreditInvoice;
         row.DiagnosisSuggests = dto.DiagnosisSuggests;
 
@@ -812,7 +828,7 @@ public class WorkshopSetupRepository
 
         await _context.SaveChangesAsync();
 
-        Ws.AddHistory(_context, Entity, row.WorkshopConfigurationId, "Update", "Workshop Switches Updated", $"Km reading needed : {(row.RequireKm ? "yes" : "no")}; checklist needed before work starts : {(row.RequireChecklist ? "yes" : "no")}; Estimate Driven Job Card : {(row.RequireEstimate ? "yes" : "no")}; Estimate Charge : {chargeName}; parts issue without a requisition : {(row.IssueWithoutRequisition ? "yes" : "no")}; credit on service invoices : {(row.AllowCreditInvoice ? "yes" : "no")}; a diagnosis puts its labour and parts on the estimate : {(row.DiagnosisSuggests ? "yes" : "no")}.", userId);
+        Ws.AddHistory(_context, Entity, row.WorkshopConfigurationId, "Update", "Workshop Switches Updated", $"Km reading needed : {(row.RequireKm ? "yes" : "no")}; checklist needed before work starts : {(row.RequireChecklist ? "yes" : "no")}; Estimate Driven Job Card : {(row.RequireEstimate ? "yes" : "no")}; Estimate Charge : {chargeName}; parts issue without a requisition : {(row.IssueWithoutRequisition ? "yes" : "no")}; parts issue to multiple job cards : {(row.IssueToMultipleJobs ? "yes" : "no")}; bulk parts issue per job : {(row.IssueBulkPerJob ? "yes" : "no")}; credit on service invoices : {(row.AllowCreditInvoice ? "yes" : "no")}; a diagnosis puts its labour and parts on the estimate : {(row.DiagnosisSuggests ? "yes" : "no")}.", userId);
 
         await _context.SaveChangesAsync();
     }
@@ -937,8 +953,8 @@ public class JobCardsRepository
         // ... and the bays and the technicians that have a job now
         var busy =
             await Cards.AsNoTracking()
-                .Where(x => !x.IsDeleted && Ws.Workable.Contains(x.Status))
-                .OrderBy(x => x.JobCardId)
+                .Where(x => !x.IsDeleted && (x.Status == Ws.Assigned || Ws.Workable.Contains(x.Status)))
+                .OrderByDescending(x => x.JobCardId)
                 .Select(x => new { x.JobCardNo, x.WorkshopBayId, x.TechnicianEmployeeId })
                 .ToListAsync();
 
@@ -1445,6 +1461,7 @@ public class JobCardsRepository
             BayName = Names.Of(names.Bays, c.WorkshopBayId),
             AssignedAt = c.AssignedAt,
             CanAssign = Ws.Editable.Contains(c.Status),
+            CanAllocate = Ws.Allocatable.Contains(c.Status),
             CanWorkOn = Ws.Workable.Contains(c.Status),
             WelcomeTokenNo = c.WelcomeTokenNo,
             PurchaseDate = c.PurchaseDate == null ? string.Empty : HrCalendar.Day(c.PurchaseDate),
@@ -1490,10 +1507,32 @@ public class JobCardsRepository
         ILookup<long, JobCardTechnicians> assigned =
             (await _context.Set<JobCardTechnicians>().AsNoTracking().ToListAsync()).ToLookup(x => x.JobCardId);
 
+        // A technician takes several jobs (owner 2026-11-19) : the
+        // first that is not done is the job in hand, the later ones
+        // wait until their work starts.
+        string[] inHand = { Ws.Assigned, Ws.Allocated, Ws.InProgress, Ws.WaitingParts };
+
+        var waitingBehind = new Dictionary<long, string>();
+
+        foreach (var queue in cards
+            .Where(x => x.TechnicianEmployeeId != null && inHand.Contains(x.Status))
+            .OrderBy(x => x.JobCardId)
+            .GroupBy(x => x.TechnicianEmployeeId!.Value))
+        {
+            JobCards first = queue.First();
+
+            foreach (JobCards later in queue.Skip(1).Where(x => x.Status == Ws.Assigned || x.Status == Ws.Allocated))
+            {
+                waitingBehind[later.JobCardId] = first.JobCardNo;
+            }
+        }
+
         return cards
             .Select(c =>
             {
                 JobCardDto dto = Head(c, names);
+
+                dto.WaitingBehind = waitingBehind.GetValueOrDefault(c.JobCardId, string.Empty);
 
                 if (estimates.TryGetValue(c.JobCardId, out ServiceEstimates? estimate))
                 {
@@ -1727,10 +1766,10 @@ public class JobCardsRepository
                     throw new InvalidOperationException($"{estimateName} is {fromEstimate.Status} : a job card cannot be made from it.");
                 }
             }
-            else if (switches.RequireEstimate && !Est.NoEstimateJobTypes.Contains(jobType))
-            {
-                throw new InvalidOperationException("A job card is made from an estimate : open the estimate in Service Estimates and press Create Job Card. (Workshop Configuration, switch : Estimate Driven Job Card.)");
-            }
+
+            // The switch Estimate Driven Job Card blocks nothing any
+            // more (owner 2026-11-18) : it only brings the estimate of
+            // the job to Job Card Requirements
         }
 
         JobCards entity;
@@ -1861,15 +1900,23 @@ public class JobCardsRepository
         // The customer and the job
         //-------------------------------------------------------
 
-        // Serviced last : the newest other job card of a bike sold by
-        // us; otherwise what the opening desk was told
+        // Serviced last : the immediate previous job card of the bike
+        // (a bike sold by us : by the bike; another one : by its
+        // chassis no); otherwise what the opening desk was told
+        string lastChassis = (entity.ChassisNo ?? string.Empty).Trim();
+
         DateOnly? servicedHere =
-            entity.ServiceVehicleId == null
-                ? null
-                : await Cards.AsNoTracking()
+            entity.ServiceVehicleId != null
+                ? await Cards.AsNoTracking()
                     .Where(x => !x.IsDeleted && x.Status != Ws.Cancelled
                              && x.ServiceVehicleId == entity.ServiceVehicleId && x.JobCardId != entity.JobCardId)
-                    .MaxAsync(x => (DateOnly?)x.JobDate);
+                    .MaxAsync(x => (DateOnly?)x.JobDate)
+                : lastChassis.Length == 0
+                    ? null
+                    : await Cards.AsNoTracking()
+                        .Where(x => !x.IsDeleted && x.Status != Ws.Cancelled
+                                 && x.ChassisNo == lastChassis && x.JobCardId != entity.JobCardId && x.JobDate <= jobDate)
+                        .MaxAsync(x => (DateOnly?)x.JobDate);
 
         if (servicedHere != null)
         {
@@ -1878,6 +1925,15 @@ public class JobCardsRepository
         else if (dto.LastServiceDate != null)
         {
             entity.LastServiceDate = HrCalendar.ParseDay(dto.LastServiceDate);
+        }
+
+        // The New Job page (it sends the two dates) : the purchase
+        // date or the last service date is needed, one of the two
+        if ((dto.PurchaseDate != null || dto.LastServiceDate != null)
+            && jobType != Ws.Internal
+            && entity.PurchaseDate == null && entity.LastServiceDate == null)
+        {
+            throw new InvalidOperationException("Give the purchase date or the last service date of the bike : one of the two is needed.");
         }
 
         if (entity.PurchaseDate > jobDate || entity.LastServiceDate > jobDate)
@@ -2293,17 +2349,10 @@ public class JobCardsRepository
 
     // Work starts : the job card must be made from an estimate when
     // the switch says so (not for jobs the customer does not pay for)
-    private async Task NeedEstimateAsync(JobCards card)
-    {
-        if (Est.NoEstimateJobTypes.Contains(card.JobType)
-            || !(await Ws.SwitchesAsync(_context)).RequireEstimate
-            || await Est.ApprovedAsync(_context, card.JobCardId))
-        {
-            return;
-        }
-
-        throw new InvalidOperationException($"{card.JobCardNo} was not made from an estimate. (Workshop Configuration, switch : Estimate Driven Job Card.)");
-    }
+    // (owner 2026-11-18 : the switch blocks nothing any more; a job
+    // without an estimate works like any other)
+    private Task NeedEstimateAsync(JobCards card) =>
+        Task.CompletedTask;
 
     private void SetStatus(JobCards card, string status, string note, long userId)
     {
@@ -2548,6 +2597,325 @@ public class JobCardsRepository
         return await FullAsync(card);
     }
 
+    //-----------------------------------------------------------
+    // Job Card Requirements (owner 2026-11-18) : the parts and the
+    // service charges an assigned job needs - its projection. They
+    // are the lines of the card. An Assigned card becomes Allocated
+    // (ready for parts and service issue); with every line taken
+    // off again it goes back to Assigned.
+    //-----------------------------------------------------------
+
+    // The estimate of a job : the one the card carries; else, with
+    // the switch Estimate Driven Job Card on, the newest live
+    // estimate of the same bike in the same service center
+    private async Task<ServiceEstimates?> EstimateOfAsync(JobCards card, WorkshopSwitchesDto switches)
+    {
+        ServiceEstimates? linked =
+            (await Est.LiveByCardAsync(_context, card.JobCardId)).Values.FirstOrDefault();
+
+        if (linked != null || !switches.RequireEstimate)
+        {
+            return linked;
+        }
+
+        string chassis = (card.ChassisNo ?? string.Empty).Trim();
+
+        if (card.ServiceVehicleId == null && chassis.Length == 0)
+        {
+            return null;
+        }
+
+        return await _context.Set<ServiceEstimates>().AsNoTracking()
+            .Where(x => !x.IsDeleted && x.JobCardId == null && x.BranchId == card.BranchId && Est.Live.Contains(x.Status)
+                && ((card.ServiceVehicleId != null && x.ServiceVehicleId == card.ServiceVehicleId)
+                    || (chassis.Length > 0 && x.ChassisNo == chassis)))
+            .OrderByDescending(x => x.ServiceEstimateId)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<JobRequirementDto> GetRequirementAsync(Guid publicId)
+    {
+        JobCards card = await LoadAsync(publicId);
+
+        var result = new JobRequirementDto { Card = await FullAsync(card) };
+
+        WorkshopSwitchesDto switches = await Ws.SwitchesAsync(_context);
+
+        // The switch off : the estimate does not come here
+        ServiceEstimates? estimate = switches.RequireEstimate ? await EstimateOfAsync(card, switches) : null;
+
+        if (estimate != null)
+        {
+            List<ServiceEstimateLines> lines =
+                await _context.Set<ServiceEstimateLines>().AsNoTracking()
+                    .Where(x => x.ServiceEstimateId == estimate.ServiceEstimateId)
+                    .OrderBy(x => x.LineNo)
+                    .ToListAsync();
+
+            result.Estimate =
+                new JobRequirementEstimateDto
+                {
+                    PublicId = estimate.PublicId,
+                    Name = Est.Name(estimate.EstimateNo, estimate.Version),
+                    Status = estimate.Status,
+                    Linked = estimate.JobCardId == card.JobCardId,
+                    ChargeTotal = estimate.ChargeTotal,
+                    ChargeCollected = estimate.ChargeCollected,
+                    Services =
+                        lines.Where(x => x.LineType == Est.Service)
+                            .Select(x => new JobCardServiceDto { ItemKind = x.ItemKind, ItemId = x.ItemId, ItemCode = x.ItemCode, ItemName = x.ItemName, Quantity = x.Quantity, Rate = x.Rate, Amount = x.Amount, IsFree = x.IsFree, Note = x.Note })
+                            .ToList(),
+                    Parts =
+                        lines.Where(x => x.LineType == Est.Part)
+                            .Select(x => new JobCardPartDto { ItemKind = x.ItemKind, ItemId = x.ItemId, ItemCode = x.ItemCode, ItemName = x.ItemName, Quantity = x.Quantity, Rate = x.Rate, Amount = x.Amount, Note = x.Note })
+                            .ToList()
+                };
+        }
+
+        Dictionary<string, decimal> issuedItems = await Wp.IssuedByItemAsync(_context, card.JobCardId);
+
+        result.IssuedQuantity = issuedItems.Values.Sum();
+
+        result.IssuedItems =
+            issuedItems
+                .Where(x => x.Value > 0m)
+                .Select(x => new JobIssuedItemDto { ItemKind = x.Key.Split(':')[0], ItemId = long.Parse(x.Key.Split(':')[1]), Quantity = x.Value })
+                .ToList();
+
+        return result;
+    }
+
+    public async Task<JobRequirementDto> SaveRequirementAsync(Guid publicId, SaveJobRequirementDto dto, long userId)
+    {
+        JobCards card = await LoadAsync(publicId);
+
+        if (!Ws.Allocatable.Contains(card.Status))
+        {
+            throw new InvalidOperationException(
+                card.Status == Ws.Open
+                    ? Ws.NotWorkable(card.JobCardNo, card.Status)
+                    : $"{card.JobCardNo} is {card.Status} : its requirement cannot be changed any more.");
+        }
+
+        //-------------------------------------------------------
+        // The service charges : a catalogue service at its rate, a
+        // typed one at what was typed
+        //-------------------------------------------------------
+
+        ServiceEnquiriesDefaultsDto catalogue = await _enquiries.GetDefaultsAsync(card.JobDate);
+
+        var services = new List<JobCardServices>();
+
+        foreach (JobCardServiceDto line in dto.Services ?? new())
+        {
+            string kind = (line.ItemKind ?? string.Empty).Trim();
+
+            ServiceItemOptionDto? item =
+                kind == "Other" || line.ItemId == null
+                    ? null
+                    : catalogue.ServiceItems.FirstOrDefault(x => x.Kind == kind && x.Id == line.ItemId);
+
+            string name = item?.Name ?? Ws.Clean(line.ItemName, 200, "Service");
+
+            if (name.Length == 0)
+            {
+                continue;
+            }
+
+            decimal quantity = line.Quantity <= 0 ? 1 : Ws.Round(line.Quantity);
+
+            // The charge of a service can be changed here (the
+            // service manager allocates it); a free one stays free
+            decimal rate = Ws.Round(line.Rate);
+
+            if (rate < 0)
+            {
+                throw new InvalidOperationException($"{name} : the charge cannot be below zero.");
+            }
+
+            services.Add(
+                new JobCardServices
+                {
+                    JobCardId = card.JobCardId,
+                    LineNo = services.Count + 1,
+                    ItemKind = item != null || line.ItemId != null ? kind : "Other",
+                    ItemId = item != null ? item.Id : (kind == "Other" ? null : line.ItemId),
+                    ItemCode = item?.Code ?? Ws.Clean(line.ItemCode, 40, "Service Code"),
+                    ItemName = name,
+                    Quantity = quantity,
+                    Rate = rate,
+                    Amount = Ws.Round(quantity * rate),
+                    IsFree = item != null ? item.IsFree : line.IsFree,
+                    Note = Ws.Clean(line.Note, 200, "Note")
+                });
+        }
+
+        //-------------------------------------------------------
+        // The parts : of the business lines the service center runs
+        //-------------------------------------------------------
+
+        var parts = new List<JobCardParts>();
+
+        if ((dto.Parts ?? new()).Count > 0)
+        {
+            List<PartOptionDto> partCatalogue = await _enquiries.GetPartsAsync();
+
+            HashSet<string> branchLines = await Ws.BranchLinesAsync(_context, card.BranchId);
+
+            HashSet<string> hadParts =
+                (await _context.Set<JobCardParts>().AsNoTracking()
+                    .Where(x => x.JobCardId == card.JobCardId && x.ItemId != null)
+                    .Select(x => new { x.ItemKind, x.ItemId })
+                    .ToListAsync())
+                .Select(x => $"{x.ItemKind}:{x.ItemId}")
+                .ToHashSet();
+
+            foreach (JobCardPartDto line in dto.Parts!)
+            {
+                string kind = (line.ItemKind ?? string.Empty).Trim();
+
+                if (kind != "Other" && line.ItemId != null && !branchLines.Contains(Ws.PartLine(kind)) && !hadParts.Contains($"{kind}:{line.ItemId}"))
+                {
+                    throw new InvalidOperationException($"{Ws.Clean(line.ItemName, 200, "Part")} : {Ws.PartLine(kind)} is not a business line of this service center (Settings > Business Configuration). Remove the line.");
+                }
+
+                PartOptionDto? item =
+                    kind == "Other" || line.ItemId == null
+                        ? null
+                        : partCatalogue.FirstOrDefault(x => x.Kind == kind && x.Id == line.ItemId);
+
+                string name = item?.Name ?? Ws.Clean(line.ItemName, 200, "Part");
+
+                if (name.Length == 0)
+                {
+                    continue;
+                }
+
+                decimal quantity = Ws.Round(line.Quantity);
+
+                if (quantity <= 0)
+                {
+                    throw new InvalidOperationException($"{name} : give the quantity.");
+                }
+
+                if (parts.Any(x => x.ItemKind == kind && x.ItemId != null && x.ItemId == line.ItemId))
+                {
+                    throw new InvalidOperationException($"{name} is on the requirement twice : keep one line and change its quantity.");
+                }
+
+                decimal rate = item?.Price ?? Ws.Round(line.Rate);
+
+                if (rate < 0)
+                {
+                    throw new InvalidOperationException($"{name} : the rate cannot be below zero.");
+                }
+
+                parts.Add(
+                    new JobCardParts
+                    {
+                        JobCardId = card.JobCardId,
+                        LineNo = parts.Count + 1,
+                        ItemKind = item != null || line.ItemId != null ? kind : "Other",
+                        ItemId = item != null ? item.Id : (kind == "Other" ? null : line.ItemId),
+                        ItemCode = item?.Code ?? Ws.Clean(line.ItemCode, 40, "Part Code"),
+                        ItemName = name,
+                        Quantity = quantity,
+                        Rate = rate,
+                        Amount = Ws.Round(quantity * rate),
+                        Note = Ws.Clean(line.Note, 200, "Note")
+                    });
+            }
+        }
+
+        bool empty = services.Count == 0 && parts.Count == 0;
+
+        if (empty && card.Status == Ws.Assigned)
+        {
+            throw new InvalidOperationException("Add a part or a service charge at least.");
+        }
+
+        // A part that is with the job (issued, not returned) cannot
+        // leave the requirement, nor go below what was issued
+        foreach (KeyValuePair<string, decimal> issued in await Wp.IssuedByItemAsync(_context, card.JobCardId))
+        {
+            if (issued.Value <= 0m)
+            {
+                continue;
+            }
+
+            JobCardParts? kept = parts.FirstOrDefault(x => x.ItemId != null && $"{x.ItemKind}:{x.ItemId}" == issued.Key);
+
+            if (kept == null)
+            {
+                throw new InvalidOperationException($"{card.JobCardNo} holds an issued part ({Wp.Qty(issued.Value)}) that is not on the requirement any more : return it first (Parts Returns).");
+            }
+
+            if (kept.Quantity < issued.Value)
+            {
+                throw new InvalidOperationException($"{kept.ItemName} : {Wp.Qty(issued.Value)} is issued to {card.JobCardNo} already. The quantity cannot go below that (return the parts first, Parts Returns).");
+            }
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        _context.Set<JobCardServices>().RemoveRange(await _context.Set<JobCardServices>().Where(x => x.JobCardId == card.JobCardId).ToListAsync());
+        _context.Set<JobCardParts>().RemoveRange(await _context.Set<JobCardParts>().Where(x => x.JobCardId == card.JobCardId).ToListAsync());
+
+        _context.Set<JobCardServices>().AddRange(services);
+        _context.Set<JobCardParts>().AddRange(parts);
+
+        card.LabourTotal = services.Sum(x => x.Amount);
+        card.PartsTotal = parts.Sum(x => x.Amount);
+        card.ModifiedBy = userId;
+        card.ModifiedDate = DateTime.UtcNow;
+
+        // The estimate the lines came from carries the card
+        WorkshopSwitchesDto switches = await Ws.SwitchesAsync(_context);
+
+        if (dto.EstimatePublicId != null && switches.RequireEstimate && !empty)
+        {
+            ServiceEstimates? estimate =
+                await _context.Set<ServiceEstimates>().FirstOrDefaultAsync(x => x.PublicId == dto.EstimatePublicId && !x.IsDeleted);
+
+            if (estimate != null && estimate.JobCardId == null && Est.Live.Contains(estimate.Status))
+            {
+                string estimateName = Est.Name(estimate.EstimateNo, estimate.Version);
+
+                estimate.JobCardId = card.JobCardId;
+                estimate.Status = Est.Converted;
+                estimate.StatusDate = DateTime.UtcNow;
+                estimate.StatusNote = $"Job card {card.JobCardNo}";
+                estimate.ModifiedBy = userId;
+                estimate.ModifiedDate = DateTime.UtcNow;
+
+                Ws.AddHistory(_context, "ServiceEstimates", estimate.ServiceEstimateId, "Status", "Estimate Converted", $"{estimateName} is the requirement of job card {card.JobCardNo}.", userId);
+            }
+        }
+
+        string note = Ws.Clean(dto.Note, 200, "Note");
+
+        string what = $"{parts.Count} part line(s) {card.PartsTotal:N2}, {services.Count} service charge(s) {card.LabourTotal:N2}.{(note.Length > 0 ? " " + note : string.Empty)}";
+
+        if (empty)
+        {
+            SetStatus(card, Ws.Assigned, "The requirement was taken off.", userId);
+        }
+        else if (card.Status == Ws.Assigned)
+        {
+            SetStatus(card, Ws.Allocated, what, userId);
+        }
+        else
+        {
+            Ws.AddHistory(_context, Entity, card.JobCardId, "Update", "Job Card Requirement Changed", $"{card.JobCardNo} : {what}", userId);
+        }
+
+        await _context.SaveChangesAsync();
+
+        await transaction.CommitAsync();
+
+        return await GetRequirementAsync(publicId);
+    }
+
     public async Task<JobCardDto> ChangeStatusAsync(Guid publicId, JobCardStatusChangeDto dto, long userId)
     {
         JobCards card = await LoadAsync(publicId);
@@ -2577,6 +2945,29 @@ public class JobCardsRepository
                 throw new InvalidOperationException($"{card.JobCardNo} holds issued parts : return them (Parts Returns) before it is cancelled.");
             }
 
+            // Not yet in work : nothing may be allocated to it (the
+            // parts of the requirement are taken off first)
+            if (Ws.Allocatable.Contains(card.Status)
+                && await _context.Set<JobCardParts>().AsNoTracking().AnyAsync(x => x.JobCardId == card.JobCardId))
+            {
+                throw new InvalidOperationException($"{card.JobCardNo} has parts allocated : remove them (Job Card Requirements) before it is cancelled.");
+            }
+
+            // Its service charges are taken off first
+            if (await _context.Set<JobCardServices>().AsNoTracking().AnyAsync(x => x.JobCardId == card.JobCardId))
+            {
+                throw new InvalidOperationException($"{card.JobCardNo} has service charges allocated : remove them (Job Card Requirements) before it is cancelled.");
+            }
+
+            // A job with an estimate : not before the Estimate Charge
+            // is collected (the estimate work is paid for)
+            ServiceEstimates? estimate = await EstimateOfAsync(card, await Ws.SwitchesAsync(_context));
+
+            if (estimate != null && estimate.ChargeTotal > 0m && !estimate.ChargeCollected)
+            {
+                throw new InvalidOperationException($"{card.JobCardNo} has the estimate {Est.Name(estimate.EstimateNo, estimate.Version)} : collect its Estimate Charge (Service Estimates) before the job card is cancelled.");
+            }
+
             // The parts bought outside for it are cancelled first
             if ((await Wo.PostedAsync(_context, card.JobCardId)).Count > 0)
             {
@@ -2598,7 +2989,7 @@ public class JobCardsRepository
             card.CancelReason = string.Empty;
         }
 
-        if (status == Ws.InProgress && card.Status == Ws.Assigned)
+        if (status == Ws.InProgress && card.Status == Ws.Allocated)
         {
             await NeedChecklistAsync(card);
         }
@@ -2660,7 +3051,7 @@ public class JobCardsRepository
             throw new InvalidOperationException("The technician is working on this job card already.");
         }
 
-        if (card.Status == Ws.Assigned)
+        if (card.Status == Ws.Allocated)
         {
             await NeedChecklistAsync(card);
         }

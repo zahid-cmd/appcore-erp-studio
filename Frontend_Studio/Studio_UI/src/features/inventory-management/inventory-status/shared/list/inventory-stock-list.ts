@@ -221,6 +221,9 @@ type StockRow =
     InventoryStockRow
     &
     {
+        OpeningText:string;
+        InText:string;
+        OutText:string;
         InTransitText:string;
         OnHandText:string;
         TotalText:string;
@@ -567,6 +570,19 @@ implements OnInit
         Option[] =
         [{ label:'All Branches', value:0 }];
 
+    // The stock card says whose stock it shows : the branch, then
+    // the warehouse (when one is picked)
+    get cardScopeText(): string
+    {
+        const branch =
+            this.branchId ? (this.branchItems.find(x => x.value === this.branchId)?.label ?? '') : 'All Branches';
+
+        const warehouse =
+            !this.isBikesTab && this.warehouseId ? (this.warehouseItems.find(x => x.value === this.warehouseId)?.label ?? '') : '';
+
+        return [branch, warehouse].filter(x => !!x).join('  -  ');
+    }
+
     warehouseItems:
         Option[] =
         [{ label:'All Warehouses', value:0 }];
@@ -846,6 +862,9 @@ implements OnInit
                 return {
                     grand,
                     ItemName:`${label} · ${rows.length} ${word}${rows.length === 1 ? '' : 's'}`,
+                    OpeningText:formatQuantity(sum(x => x.OpeningOnHand)),
+                    InText:formatQuantity(sum(x => x.InQty)),
+                    OutText:formatQuantity(sum(x => x.OutQty)),
                     InTransitText:formatQuantity(sum(x => x.InTransit)),
                     OnHandText:formatQuantity(sum(x => x.OnHand)),
                     TotalText:formatQuantity(sum(x => x.Total)),
@@ -1634,6 +1653,9 @@ implements OnInit
     {
         return {
             ...row,
+            OpeningText:row.OpeningOnHand ? formatQuantity(row.OpeningOnHand) : '–',
+            InText:row.InQty ? formatQuantity(row.InQty) : '–',
+            OutText:row.OutQty ? formatQuantity(row.OutQty) : '–',
             InTransitText:row.InTransit ? formatQuantity(row.InTransit) : '–',
             OnHandText:formatQuantity(row.OnHand),
             TotalText:formatQuantity(row.Total),
@@ -1668,7 +1690,7 @@ implements OnInit
                 ? [
                     // Cost is always incl. VAT (the input VAT claimed at
                     // purchase is added back; owner 2026-11-06)
-                    { header:'Avg. Cost', field:'AverageCostText', width:'115px', align:'right', sortable:true },
+                    { header:'Avg. Cost', field:'AverageCostText', width:'105px', align:'right', sortable:true },
                     { header:'Stock Value', field:'StockValueText', width:'125px', align:'right', sortable:true, link:true, linkTitle:PLACES_TITLE }
                 ]
                 : [];
@@ -1676,10 +1698,18 @@ implements OnInit
         const quantities:
             ListTableColumn[] =
         [
-            { header:'In Transit', field:'InTransitText', width:'95px', align:'right', sortable:true },
-            { header:'On Hand', field:'OnHandText', width:'90px', align:'right', sortable:true, link:true, linkTitle:PLACES_TITLE },
-            { header:'Total', field:'TotalText', width:'75px', align:'right', sortable:true, link:true, linkTitle:PLACES_TITLE },
-            { header:'Re-order', field:'ReorderText', width:'85px', align:'right', sortable:true }
+            // The period of the toolbar : on hand at its start, all
+            // that came on hand, all that went out (sale, workshop
+            // issue, damage, transfer). Opening + In - Out = On Hand
+            // One width for all the quantities (owner 2026-11-18 :
+            // balanced, a figure such as 4,000 is never cut)
+            { header:'Opening', field:'OpeningText', width:'88px', align:'right', sortable:true },
+            { header:'In', field:'InText', width:'88px', align:'right', sortable:true },
+            { header:'Out', field:'OutText', width:'88px', align:'right', sortable:true },
+            { header:'In Transit', field:'InTransitText', width:'88px', align:'right', sortable:true },
+            { header:'On Hand', field:'OnHandText', width:'88px', align:'right', sortable:true, link:true, linkTitle:PLACES_TITLE },
+            { header:'Total', field:'TotalText', width:'88px', align:'right', sortable:true, link:true, linkTitle:PLACES_TITLE },
+            { header:'Re-order', field:'ReorderText', width:'88px', align:'right', sortable:true }
         ];
 
         const product:
@@ -1687,16 +1717,17 @@ implements OnInit
             page.pageType === 'MB'
                 ? [
                     { header:'Code', field:'ProductCode', width:'145px', align:'center', sortable:true },
-                    { header:'Model', field:'ItemName', width:'320px', align:'left', sortable:true },
+                    { header:'Model', field:'ItemName', width:'270px', align:'left', sortable:true },
                     // A motorcycle painted in the bike's colour (the name on hover)
                     { header:'Colour', field:'ColorName', width:'80px', align:'center', sortable:true, dotField:'ColorHex', dotIcon:'fas fa-motorcycle' }
                 ]
                 : [
-                    { header:'Code', field:'ProductCode', width:'150px', align:'center', sortable:true },
-                    { header:'Part No', field:'PartNumber', width:'120px', align:'left', sortable:true },
-                    { header:page.productHeader, field:'ItemName', width:'210px', align:'left', sortable:true },
-                    { header:'Category', field:'CategoryName', width:'140px', align:'left', sortable:true },
-                    { header:'Location', field:'Location', width:'110px', align:'left', sortable:true }
+                    { header:'Code', field:'ProductCode', width:'140px', align:'center', sortable:true },
+                    // the part number : a small line under the name
+                    // (owner 2026-11-18), no column of its own
+                    { header:page.productHeader, field:'ItemName', width:'230px', align:'left', sortable:true, subField:'PartNumber' },
+                    { header:'Category', field:'CategoryName', width:'130px', align:'left', sortable:true },
+                    { header:'Location', field:'Location', width:'100px', align:'left', sortable:true }
                 ];
 
         this.stockColumns =
@@ -1737,11 +1768,10 @@ implements OnInit
         this.accessoryColumns =
         [
             { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-            { header:'Code', field:'ProductCode', width:'150px', align:'center', sortable:true },
-            { header:'Part No', field:'PartNumber', width:'120px', align:'left', sortable:true },
-            { header:'Accessory', field:'ItemName', width:'230px', align:'left', sortable:true },
-            { header:'Sub Category', field:'SubCategoryName', width:'170px', align:'left', sortable:true },
-            { header:'Location', field:'Location', width:'110px', align:'left', sortable:true },
+            { header:'Code', field:'ProductCode', width:'140px', align:'center', sortable:true },
+            { header:'Accessory', field:'ItemName', width:'230px', align:'left', sortable:true, subField:'PartNumber' },
+            { header:'Sub Category', field:'SubCategoryName', width:'130px', align:'left', sortable:true },
+            { header:'Location', field:'Location', width:'100px', align:'left', sortable:true },
             ...quantities,
             ...cost,
             { header:'Status', field:'StockStatus', type:'status', width:'135px', align:'center', sortable:true },
@@ -2130,6 +2160,9 @@ implements OnInit
         const raw:
             Record<string, string> =
         {
+            OpeningText:'OpeningOnHand',
+            InText:'InQty',
+            OutText:'OutQty',
             InTransitText:'InTransit',
             OnHandText:'OnHand',
             TotalText:'Total',

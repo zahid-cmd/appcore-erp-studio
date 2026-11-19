@@ -127,7 +127,11 @@ export const STOCK_SP_PAGE:
     tabs:
     [
         { id:'spare-parts', label:'Spare Parts', kind:'Spare Parts' },
-        { id:'lubricants', label:'Lubricants', kind:'Lubricants' }
+        { id:'lubricants', label:'Lubricants', kind:'Lubricants' },
+        // The accessories that have come to the branch by a transfer
+        // (a service center holds them for its jobs). Only the ones
+        // with stock here are listed (owner 2026-11-18)
+        { id:'accessories', label:'Accessories', kind:'Accessories', accessories:true }
     ],
     showLocation:true,
     showPartNumber:true

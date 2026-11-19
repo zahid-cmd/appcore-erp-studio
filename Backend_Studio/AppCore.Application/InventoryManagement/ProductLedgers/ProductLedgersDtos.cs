@@ -43,6 +43,12 @@ public class ProductLedgerFiltersDto
     public List<ProductLedgerSubCategoryDto> SubCategories { get; set; } = new();
 
     public List<ProductLedgerProductDto> Products { get; set; } = new();
+
+    // SP page (owner 2026-11-19) : the service centers that run
+    // Accessories today (Business Configuration : Services and
+    // Accessories) - for them the Stock Type list offers Accessories,
+    // and only their accessories stock shows on the page
+    public List<long> AccessoryBranchIds { get; set; } = new();
 }
 
 

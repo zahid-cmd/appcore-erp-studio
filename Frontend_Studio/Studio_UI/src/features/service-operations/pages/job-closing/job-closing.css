@@ -1,0 +1,770 @@
+/* Job Closing (owner 2026-11-19) : built as the Parts Issue page -
+   its styles, and the few of its own below */
+@import '../parts-issues/parts-issues.css';
+
+/* the head : job card | date | item discount % | item discount amount | round off | remarks */
+.mi-headrow.jc-headrow
+{
+    grid-template-columns: minmax(0, 1.7fr) 160px 110px 130px 120px minmax(0, 1fr);
+}
+
+/* the bill : # | item | qty | rate | amount | discount | VAT | total */
+.jc-row
+{
+    display: grid;
+    grid-template-columns: 30px minmax(0, 2fr) 70px 100px 110px 110px 90px 120px;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 16px;
+}
+
+.jc-row.jr-line
+{
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* the bar of a kind of line : its total at the right */
+.mi-job.jc-group em
+{
+    margin-left: auto;
+    font-style: normal;
+    font-weight: 800;
+    color: #0f2a44;
+    font-variant-numeric: tabular-nums;
+}
+
+/* what stops the closing, what to know */
+.jc-notes
+{
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.jc-note
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 12.5px;
+}
+
+.jc-note.jc-note-stop
+{
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+/* the totals of the bill */
+.jc-totals
+{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    font-size: 12.5px;
+    color: #334155;
+}
+
+.jc-totals > div
+{
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.jc-totals b
+{
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.jc-totals > .jc-grand
+{
+    margin-top: 4px;
+    padding-top: 7px;
+    border-top: 1px dashed #cbd5e1;
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f2a44;
+}
+
+.jc-totals > .jc-grand b
+{
+    font-size: 20px;
+    color: #15803d;
+}
+
+
+/* ==============================================================
+   The whole job before it is closed (owner 2026-11-19) : the tabs
+   The Bill | Parts | Complaints & Observations | Job Details
+============================================================== */
+
+/* the discount of a line : 10% or an amount */
+.jr-input.jc-disc
+{
+    height: 28px;
+    padding: 0 8px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.jr-input.jc-disc::placeholder
+{
+    color: #cbd5e1;
+}
+
+/* the parts : # | part | allocated | issued | returned | on job | remaining | rate */
+.jc-row.jc-row-parts
+{
+    grid-template-columns: 30px minmax(0, 2fr) 90px 80px 90px 80px 100px 100px;
+}
+
+/* an issue / a return : # | document | date | part | qty | returned / against | cost */
+.jc-row.jc-row-move
+{
+    grid-template-columns: 30px minmax(0, 1.3fr) 110px minmax(0, 1.6fr) 80px minmax(0, 1fr) 110px;
+}
+
+/* a finding : # | what | result | note */
+.jc-row.jc-row-find
+{
+    grid-template-columns: 30px minmax(0, 1.6fr) 200px minmax(0, 1.4fr);
+}
+
+/* the services : # | service | qty | rate | amount */
+.jc-row.jc-row-serv
+{
+    grid-template-columns: 30px minmax(0, 2fr) 80px 110px 120px;
+}
+
+/* the work : # | technician | bay | start | end | time | note */
+.jc-row.jc-row-work
+{
+    grid-template-columns: 30px minmax(0, 1.2fr) minmax(0, 0.8fr) 150px 150px 80px minmax(0, 1.4fr);
+}
+
+/* the checklist, the statuses : # | what | result / when | note */
+.jc-row.jc-row-three
+{
+    grid-template-columns: 30px minmax(0, 1.4fr) 170px minmax(0, 1.6fr);
+}
+
+/* a quantity that is left out of the bill */
+.jc-left-out
+{
+    color: #b45309;
+    font-weight: 700;
+}
+
+/* Complaint / Observation */
+.jc-kind
+{
+    display: inline-block;
+    margin-right: 8px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 18px;
+    vertical-align: middle;
+}
+
+.jc-kind.is-seen
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* the result of a finding, of a checklist item */
+.jr-input.jc-result
+{
+    height: 30px;
+    padding: 0 8px;
+}
+
+.jr-input.jc-result.is-solved
+{
+    border-color: #86efac;
+    background: #f0fdf4;
+    color: #15803d;
+    font-weight: 600;
+}
+
+.jr-input.jc-result.is-open
+{
+    border-color: #fcd34d;
+    background: #fffbeb;
+    color: #92400e;
+    font-weight: 600;
+}
+
+.jc-mark
+{
+    font-weight: 700;
+    color: #475569;
+}
+
+.jc-mark.is-ok
+{
+    color: #15803d;
+}
+
+.jc-mark.is-bad
+{
+    color: #b91c1c;
+}
+
+/* the facts of the opening : four in a row, inside the scroll */
+.jr-rows > .jr-facts
+{
+    flex: 0 0 auto;
+}
+
+.jr-rows > .mi-job,
+.jr-rows > .jc-row
+{
+    flex: 0 0 auto;
+}
+
+/* a short line under a bar : nothing of that kind */
+.jc-none
+{
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    color: #94a3b8;
+    font-size: 12.5px;
+}
+
+/* the item discount of the totals */
+.jc-totals .jc-less b
+{
+    color: #b45309;
+}
+
+
+/* ==============================================================
+   No scroll on the Close Job form (owner 2026-11-19) : the panel
+   fits the screen - a smaller drawing, one line in place of the
+   three notes; only the lines of a tab scroll
+============================================================== */
+
+.ws-body.jr-body
+{
+    overflow: hidden;
+}
+
+.ws-panel
+{
+    min-height: 0;
+}
+
+.ws-panel > .ws-hero
+{
+    min-height: 0;
+    gap: 9px;
+    padding: 10px 16px 12px;
+    overflow: hidden;
+}
+
+.ws-hero > app-workspace-art
+{
+    max-width: 150px;
+}
+
+.ws-hero > .jc-totals
+{
+    margin-top: 0;
+    padding: 8px 12px;
+    gap: 4px;
+}
+
+.jc-hint
+{
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.jc-hint > i
+{
+    color: #1d4ed8;
+    margin-right: 4px;
+}
+
+
+/* outsourcing : # | entry | date | work / part | vendor | qty | cost | billed */
+.jc-row.jc-row-out
+{
+    grid-template-columns: 30px minmax(0, 1.1fr) 100px minmax(0, 1.6fr) minmax(0, 1.2fr) 70px 100px 110px 30px;
+}
+
+
+/* ==============================================================
+   The totals of the bill fill the panel (owner 2026-11-19) : the
+   box takes the free height, its lines are spread and larger
+============================================================== */
+
+.ws-hero > .jc-totals
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    justify-content: space-between;
+    padding: 14px 16px;
+    font-size: 15px;
+}
+
+.jc-totals > div
+{
+    align-items: center;
+}
+
+.jc-totals b
+{
+    font-size: 16px;
+}
+
+.jc-totals > .jc-grand
+{
+    margin-top: 2px;
+    padding-top: 12px;
+    font-size: 17px;
+}
+
+.jc-totals > .jc-grand b
+{
+    font-size: 28px;
+}
+
+
+/* ==============================================================
+   Outsourcing is entered on Close Job (owner 2026-11-19) : the two
+   buttons of the card header, the entry form, the cancel line
+============================================================== */
+
+.jo-adds
+{
+    display: inline-flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.jo-btn
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #c7d7f5;
+    border-radius: 8px;
+    background: #f4f8ff;
+    color: #1d4ed8;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.jo-btn:hover
+{
+    background: #e6efff;
+}
+
+.jo-btn:disabled
+{
+    opacity: .55;
+    cursor: default;
+}
+
+.jo-btn.jo-btn-save
+{
+    align-self: end;
+    height: 38px;
+    border-color: #1d4ed8;
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+.jo-btn.jo-btn-stop
+{
+    height: 38px;
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.jo-form
+{
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px 12px;
+    border-bottom: 1px solid #dbe6f7;
+    background: #f8fbff;
+}
+
+.jo-title
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #0f2a44;
+}
+
+.jo-title > span
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.jo-grid
+{
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px 12px;
+}
+
+.jo-grid > .jo-two
+{
+    grid-column: span 2;
+}
+
+.jo-foot
+{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.jo-foot > a
+{
+    color: #1d4ed8;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.jo-foot > b
+{
+    margin-left: auto;
+    color: #0f2a44;
+    font-variant-numeric: tabular-nums;
+}
+
+.jo-foot > b.jo-warn
+{
+    color: #b45309;
+}
+
+.jo-cancel
+{
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 14px;
+    border-bottom: 1px solid #edf1f6;
+    background: #fffaf5;
+}
+
+.jr-line.jo-off
+{
+    opacity: .5;
+    text-decoration: line-through;
+}
+
+
+/* ==============================================================
+   The outsourcing entry is a pop-up (owner 2026-11-19) : an Add
+   button on each section header opens it
+============================================================== */
+
+.jc-group > .jo-btn.jo-add
+{
+    margin-left: auto;
+    height: 26px;
+}
+
+.jo-back
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, .45);
+}
+
+.jo-pop
+{
+    width: min(980px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 18px 16px;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px -20px rgba(15, 23, 42, .55);
+}
+
+.jo-pop > .jo-title
+{
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 15px;
+}
+
+.jo-pop > .jo-grid
+{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px 14px;
+}
+
+
+/* ==============================================================
+   The outsourcing pop-up, designed (owner 2026-11-19) : a header
+   band, the fields, the figures of the entry, the buttons. It
+   stays open after an entry : the next one is typed at once
+============================================================== */
+
+.jo-pop
+{
+    width: min(900px, 100%);
+    gap: 0;
+    padding: 0;
+    border-radius: 16px;
+    border: 1px solid #dbe6f7;
+}
+
+.jo-head
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    color: #ffffff;
+}
+
+.jo-ico
+{
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, .18);
+    font-size: 17px;
+}
+
+.jo-head-text
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.jo-head-text > b
+{
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.jo-head-text > small
+{
+    font-size: 12.5px;
+    opacity: .85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.jo-close
+{
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .16);
+    color: #ffffff;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.jo-close:hover
+{
+    background: rgba(255, 255, 255, .30);
+}
+
+.jo-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 18px 14px;
+}
+
+.jo-body > .jo-grid
+{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px 14px;
+}
+
+.jo-link
+{
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 10px;
+    font-size: 12.5px;
+}
+
+.jo-link > a
+{
+    color: #1d4ed8;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.jo-stats
+{
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 10px;
+}
+
+.jo-stats > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 9px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.jo-stats span
+{
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.jo-stats b
+{
+    font-size: 18px;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.jo-stats > .jo-gain
+{
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.jo-stats > .jo-gain b
+{
+    color: #15803d;
+}
+
+.jo-stats > .jo-loss
+{
+    border-color: #fed7aa;
+    background: #fff7ed;
+}
+
+.jo-stats > .jo-loss b
+{
+    color: #b45309;
+}
+
+.jo-pop > .jo-foot
+{
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 12px 18px;
+    border-top: 1px solid #e2e8f0;
+    border-radius: 0 0 16px 16px;
+    background: #f8fafc;
+}
+
+.jo-pop > .jo-foot > span
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.jo-foot > .jo-done
+{
+    color: #15803d;
+    font-weight: 700;
+}
+
+.jo-btn.jo-btn-plain
+{
+    height: 38px;
+    padding: 0 18px;
+    border-color: #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+.jo-pop .jo-btn.jo-btn-save
+{
+    align-self: auto;
+    padding: 0 20px;
+    font-size: 13px;
+}
+
+
+/* Close Job only shows the outsourcing : where it is entered */
+.jo-where
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
+}

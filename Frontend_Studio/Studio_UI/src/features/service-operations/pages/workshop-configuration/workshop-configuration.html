@@ -421,6 +421,30 @@
                 <label class="pf-switch wc-switch">
                     <input
                         type="checkbox"
+                        [checked]="issueToMultipleJobs"
+                        (change)="onSwitch('issueToMultipleJobs', $event)">
+                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                    <span class="pf-switch-text">
+                        <b>Parts Issue To Multiple Job Cards</b>
+                        <small>One parts issue slip (MIS) can carry the parts of several job cards. Off : one job card a slip</small>
+                    </span>
+                </label>
+
+                <label class="pf-switch wc-switch">
+                    <input
+                        type="checkbox"
+                        [checked]="issueBulkPerJob"
+                        (change)="onSwitch('issueBulkPerJob', $event)">
+                    <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>
+                    <span class="pf-switch-text">
+                        <b>Bulk Issue Per Job</b>
+                        <small>Picking a job card on a parts issue slip puts all its waiting parts on it. Off : the store keeper adds the parts one by one (job card, part, quantity)</small>
+                    </span>
+                </label>
+
+                <label class="pf-switch wc-switch">
+                    <input
+                        type="checkbox"
                         [checked]="allowCreditInvoice"
                         (change)="onSwitch('allowCreditInvoice', $event)">
                     <span class="pf-switch-track"><span class="pf-switch-knob"></span></span>

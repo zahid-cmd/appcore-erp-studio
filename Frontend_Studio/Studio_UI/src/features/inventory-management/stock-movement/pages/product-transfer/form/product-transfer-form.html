@@ -178,106 +178,106 @@
                 }
             }
 
+            <!-- SECTION 1 : TRANSFER INFORMATION : one row across the page (2026-11-18) -->
+            <div class="pof-card pa-info-card pt-info-strip">
+
+                <div class="pof-card-header">
+                    <i class="fas fa-right-left"></i>
+                    <span>Transfer Information</span>
+                </div>
+
+                <div class="pa-fields">
+
+                    <div class="pa-span-all pa-type-line">
+                        <span class="pa-field-label">Product Type <b class="pof-req">*</b></span>
+                        @if (isView)
+                        {
+                            <span class="pa-type-read">
+                                <i [class]="info.icon"></i>
+                                {{ info.title }}
+                            </span>
+                        }
+                        @else
+                        {
+                            <app-control-segment
+                                class="pa-type-seg"
+                                name="pt-type"
+                                [items]="typeSegments"
+                                [value]="type"
+                                [disabled]="mode !== 'add' || rows.length > 0 || loading"
+                                (valueChange)="onTypeChange($event)">
+                            </app-control-segment>
+                        }
+                    </div>
+
+                    <app-textbox
+                        label="Transfer No"
+                        placeholder="On save"
+                        [value]="numberText"
+                        [readonly]="true">
+                    </app-textbox>
+
+                    @if (isView)
+                    {
+                        <app-textbox
+                            label="Transfer Date"
+                            [value]="date(doc?.TransferDate ?? '')"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            class="pa-span-all"
+                            label="From Warehouse"
+                            [value]="fromText"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            class="pa-span-all"
+                            label="To Warehouse"
+                            [value]="toText"
+                            [readonly]="true">
+                        </app-textbox>
+                    }
+                    @else
+                    {
+                        <app-datepicker
+                            label="Transfer Date"
+                            [required]="true"
+                            [value]="transferDate"
+                            (valueChange)="onDateChange($event)">
+                        </app-datepicker>
+
+                        <app-search-dropdown
+                            class="pa-span-all pt-wh"
+                            label="From Warehouse"
+                            placeholder="Warehouse the stock leaves"
+                            [required]="true"
+                            [items]="fromItems"
+                            [value]="fromWarehouseId || null"
+                            [disabled]="rows.length > 0"
+                            (valueChange)="onFromChange($event)">
+                        </app-search-dropdown>
+
+                        <app-search-dropdown
+                            class="pa-span-all pt-wh"
+                            label="To Warehouse"
+                            placeholder="Warehouse the stock goes to"
+                            [required]="true"
+                            [items]="toItems"
+                            [value]="toWarehouseId || null"
+                            (valueChange)="onToChange($event)">
+                        </app-search-dropdown>
+                    }
+
+                </div>
+
+            </div>
+
             <div class="pa-split">
 
-                <!-- LEFT : Information + Add <item> (view : details, receive) -->
+                <!-- LEFT : Add <item> (view : details, receive) -->
                 <div class="pa-left pof-col-left appcore-scrollbar">
-
-                    <!-- SECTION 1 : TRANSFER INFORMATION -->
-                    <div class="pof-card pa-info-card">
-
-                        <div class="pof-card-header">
-                            <i class="fas fa-right-left"></i>
-                            <span>Transfer Information</span>
-                        </div>
-
-                        <div class="pa-fields">
-
-                            <div class="pa-span-all pa-type-line">
-                                <span class="pa-field-label">Product Type <b class="pof-req">*</b></span>
-                                @if (isView)
-                                {
-                                    <span class="pa-type-read">
-                                        <i [class]="info.icon"></i>
-                                        {{ info.title }}
-                                    </span>
-                                }
-                                @else
-                                {
-                                    <app-control-segment
-                                        class="pa-type-seg"
-                                        name="pt-type"
-                                        [items]="typeSegments"
-                                        [value]="type"
-                                        [disabled]="mode !== 'add' || rows.length > 0 || loading"
-                                        (valueChange)="onTypeChange($event)">
-                                    </app-control-segment>
-                                }
-                            </div>
-
-                            <app-textbox
-                                label="Transfer No"
-                                placeholder="On save"
-                                [value]="numberText"
-                                [readonly]="true">
-                            </app-textbox>
-
-                            @if (isView)
-                            {
-                                <app-textbox
-                                    label="Transfer Date"
-                                    [value]="date(doc?.TransferDate ?? '')"
-                                    [readonly]="true">
-                                </app-textbox>
-
-                                <app-textbox
-                                    class="pa-span-all"
-                                    label="From Warehouse"
-                                    [value]="fromText"
-                                    [readonly]="true">
-                                </app-textbox>
-
-                                <app-textbox
-                                    class="pa-span-all"
-                                    label="To Warehouse"
-                                    [value]="toText"
-                                    [readonly]="true">
-                                </app-textbox>
-                            }
-                            @else
-                            {
-                                <app-datepicker
-                                    label="Transfer Date"
-                                    [required]="true"
-                                    [value]="transferDate"
-                                    (valueChange)="onDateChange($event)">
-                                </app-datepicker>
-
-                                <app-search-dropdown
-                                    class="pa-span-all pt-wh"
-                                    label="From Warehouse"
-                                    placeholder="Warehouse the stock leaves"
-                                    [required]="true"
-                                    [items]="fromItems"
-                                    [value]="fromWarehouseId || null"
-                                    [disabled]="rows.length > 0"
-                                    (valueChange)="onFromChange($event)">
-                                </app-search-dropdown>
-
-                                <app-search-dropdown
-                                    class="pa-span-all pt-wh"
-                                    label="To Warehouse"
-                                    placeholder="Warehouse the stock goes to"
-                                    [required]="true"
-                                    [items]="toItems"
-                                    [value]="toWarehouseId || null"
-                                    (valueChange)="onToChange($event)">
-                                </app-search-dropdown>
-                            }
-
-                        </div>
-
-                    </div>
 
                     @if (isView)
                     {

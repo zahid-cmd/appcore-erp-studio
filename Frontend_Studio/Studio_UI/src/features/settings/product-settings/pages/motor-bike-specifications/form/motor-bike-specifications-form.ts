@@ -57,25 +57,45 @@ import
 from '../../../../../../shared/components/utilities/command-center/command-center';
 import
 {
-    ControlTabsComponent,
     ControlTab
 }
 from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
 import
 {
-    FormGridComponent
+    WorkspaceArtComponent
 }
-from '../../../../../../shared/components/layout/form-grid/form-grid';
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
 import
 {
-    FormSectionComponent
+    StepTabsComponent
 }
-from '../../../../../../shared/components/layout/form-section/form-section';
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
 //===============================================================
 // Form Controls
 //===============================================================
@@ -84,11 +104,6 @@ import
     TextboxComponent
 }
 from '../../../../../../shared/components/controls/textbox/textbox';
-import
-{
-    TextareaComponent
-}
-from '../../../../../../shared/components/controls/textarea/textarea';
 import
 {
     DropdownComponent
@@ -243,16 +258,17 @@ function toNumber
         PageHeaderComponent,
         PageToolbarComponent,
         CommandCenterComponent,
-        ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
+        WorkspaceArtComponent,
+        StepTabsComponent,
+        StepNavComponent,
         //=======================================================
         // Form Controls
         //=======================================================
         TextboxComponent,
-        TextareaComponent,
         DropdownComponent,
+        ToggleSwitchComponent,
+        NotePadComponent,
         SearchDropdownComponent,
         //=======================================================
         // Utilities
@@ -272,12 +288,15 @@ function toNumber
 //===============================================================
 // Motor Bike Specifications Form
 //
-// Tab 1 : Specification, two pages (Next / Back on the toolbar)
-//         page 1 : Bike Model, Engine / Motor, Body & Maker,
-//                  Website & Remarks
-//         page 2 : Size & Tyres (weights, dimensions, tyres, axles)
-// Tab 2 : Technical Specifications (sections › label / value).
-// Tab 1 holds what BRTA Form-17 asks for the model.
+// Workspace layout (2026-11-19) : three light steps, the fields
+// left and the workspace panel right (status, chips, uses)
+//   general   : Registration Data (Bike Model, Engine / Motor,
+//               Body & Maker, Remarks)
+//   size      : Size & Tyres (weights, tyres, axles, dimensions)
+//   technical : Technical Specifications (sections > label / value)
+// Steps 1 - 2 hold what BRTA Form-17 asks for the model. The
+// website switch is no longer on this page (ShowOnWebsite is kept
+// as it is when saving).
 //===============================================================
 
 export class MotorBikeSpecificationsForm
@@ -333,10 +352,30 @@ implements OnInit, OnDestroy
         string =
         'general';
 
-    // Specification tab : page 1 (registration data) / 2 (size & tyres)
-    formPage:
-        1 | 2 =
-        1;
+    // Page 1 (registration data) / 2 (size & tyres) of the
+    // specification : now the steps 'general' / 'size'
+    get formPage():
+        1 | 2
+    {
+        return this.selectedTab === 'size' ? 2 : 1;
+    }
+
+    set formPage(page: 1 | 2)
+    {
+        this.selectedTab =
+            page === 2 ? 'size' : 'general';
+    }
+
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
 
     get showPager():
         boolean
@@ -368,7 +407,11 @@ implements OnInit, OnDestroy
         return [
             {
                 id:'general',
-                label:this.tabTitle
+                label:'Registration Data'
+            },
+            {
+                id:'size',
+                label:'Size & Tyres'
             },
             {
                 id:'technical',
@@ -632,6 +675,7 @@ implements OnInit, OnDestroy
             Rpm:0,
             Mileage:'',
             TopSpeedKmh:0,
+            TopSpeed:'',
             WheelBaseMm:0,
             LengthMm:0,
             WidthMm:0,
@@ -1313,6 +1357,7 @@ implements OnInit, OnDestroy
                         Rpm:copy.Rpm,
                         Mileage:copy.Mileage,
                         TopSpeedKmh:copy.TopSpeedKmh,
+                        TopSpeed:copy.TopSpeed ?? '',
                         WheelBaseMm:copy.WheelBaseMm,
                         LengthMm:copy.LengthMm,
                         WidthMm:copy.WidthMm,
@@ -2127,6 +2172,8 @@ implements OnInit, OnDestroy
                 (e.Mileage ?? '').trim(),
             TopSpeedKmh:
                 e.TopSpeedKmh,
+            TopSpeed:
+                (e.TopSpeed ?? '').trim(),
             WheelBaseMm:
                 e.WheelBaseMm,
             LengthMm:

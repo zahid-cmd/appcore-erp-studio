@@ -122,6 +122,18 @@ from '../../../../../../shared/components/controls/pagination/pagination';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
+    DropdownComponent
+}
+from '../../../../../../shared/components/controls/dropdown/dropdown';
+
+import
+{
     SearchDropdownComponent
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
@@ -230,6 +242,8 @@ function powerText
         PageToolbarComponent,
         ControlTabsComponent,
         SearchDropdownComponent,
+        DropdownComponent,
+        SummaryLineComponent,
         SearchBoxComponent,
         CommandCenterComponent,
         PageCanvasComponent,
@@ -283,16 +297,28 @@ implements OnInit, OnDestroy
 
 
     //===========================================================
-    // Page Tabs : All / Website / Hidden
+    // Page Tab : All Specifications; Active / Inactive is the
+    // Status dropdown on the toolbar (2026-11-19 : the website
+    // switch left this page)
     //===========================================================
 
     tabs:
         ControlTab[] =
     [
-        { id:'all', label:'All Specifications' },
-        { id:'website', label:'On Website' },
-        { id:'hidden', label:'Hidden' }
+        { id:'all', label:'All Specifications' }
     ];
+
+    statusFilterItems:
+        { label:string; value:string }[] =
+    [
+        { label:'All Status', value:'all' },
+        { label:'Active', value:'active' },
+        { label:'Inactive', value:'inactive' }
+    ];
+
+    selectedStatus:
+        string =
+        'all';
 
     selectedTab:
         string =
@@ -572,6 +598,20 @@ implements OnInit, OnDestroy
     }
 
 
+    onStatusFilterChange
+    (
+        value:
+            string | null
+    ):
+        void
+    {
+        this.selectedStatus =
+            value || 'all';
+
+        this.reload();
+    }
+
+
     onTabChange
     (
         tabId:
@@ -795,9 +835,6 @@ implements OnInit, OnDestroy
 
         this.cdr.detectChanges();
 
-        const tab =
-            this.selectedTab;
-
         const query:
             MotorBikeSpecificationsPageQuery =
         {
@@ -817,14 +854,14 @@ implements OnInit, OnDestroy
                 this.sortDirection,
 
             status:
-                null,
-
-            showOnWebsite:
-                tab === 'website'
+                this.selectedStatus === 'active'
                     ? true
-                    : tab === 'hidden'
+                    : this.selectedStatus === 'inactive'
                         ? false
                         : null,
+
+            showOnWebsite:
+                null,
 
             brandManagementId:
                 this.selectedBrandId
@@ -925,7 +962,6 @@ implements OnInit, OnDestroy
             { label:'Total', value:value('Total'), tone:'' },
             { label:'Active', value:value('Active'), tone:'ok' },
             { label:'Inactive', value:value('Inactive'), tone:'bad' },
-            { label:'On Website', value:value('OnWebsite'), tone:'' },
             { label:'Models without Specification', value:value('WithoutSpecification'), tone:Number(counts['WithoutSpecification'] ?? 0) > 0 ? 'warn' : '' }
         ];
     }
@@ -1034,6 +1070,9 @@ implements OnInit, OnDestroy
 
         this.selectedBrandId =
             null;
+
+        this.selectedStatus =
+            'all';
 
         this.selectedTab =
             'all';

@@ -411,6 +411,21 @@ public class InventoryStatusRepository
                                     x.MovementType == "Purchase" || x.MovementType == "PurchaseCancel" || OpeningMoves.Contains(x.MovementType)
                                         ? x.QuantityIn - x.QuantityOut
                                         : 0m),
+                                // on hand, in the period : all that came in,
+                                // all that went out
+                                In = g.Sum(x =>
+                                    x.DocumentDate >= start && x.Bucket == BucketOnHand
+                                        ? x.QuantityIn
+                                        : 0m),
+                                Out = g.Sum(x =>
+                                    x.DocumentDate >= start && x.Bucket == BucketOnHand
+                                        ? x.QuantityOut
+                                        : 0m),
+                                // on hand before the period
+                                OpenOnHand = g.Sum(x =>
+                                    x.DocumentDate < start && x.Bucket == BucketOnHand
+                                        ? x.QuantityIn - x.QuantityOut
+                                        : 0m),
                                 Moved = g.Count(x => x.DocumentDate >= start)
                             }
                     )
@@ -453,6 +468,12 @@ public class InventoryStatusRepository
                             row.PurchaseQty = flow.Purchase;
 
                             row.SalesQty = flow.Sales;
+
+                            row.InQty = flow.In;
+
+                            row.OutQty = flow.Out;
+
+                            row.OpeningOnHand = flow.OpenOnHand;
 
                             // Purchased (or opened) at some time, or
                             // moved in the period (e.g. a transfer)

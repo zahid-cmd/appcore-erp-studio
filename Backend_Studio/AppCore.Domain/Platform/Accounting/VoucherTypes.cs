@@ -126,6 +126,11 @@ public static class VoucherTypes
 
     public const string WorkshopPartsReturn = "WPR";
 
+    // Workshop : the Material Issue Slip (MIS-<branch>-<FY>-<MM>-
+    // 00001). A number only : one slip carries the parts issues
+    // (WPI) of one or more job cards.
+    public const string MaterialIssueSlip = "MIS";
+
     // Workshop : the service invoice of a job card (its journal
     // and its VAT register rows) and the settlement of a free
     // service claim by the brand.
@@ -192,6 +197,7 @@ public static class VoucherTypes
         SalesReturnAccessories,
         WorkshopPartsIssue,
         WorkshopPartsReturn,
+        MaterialIssueSlip,
         ServiceInvoice,
         FreeServiceClaim,
         ServiceEstimate,

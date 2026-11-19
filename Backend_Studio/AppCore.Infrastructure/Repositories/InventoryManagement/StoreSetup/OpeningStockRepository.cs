@@ -266,6 +266,15 @@ public class OpeningStockRepository
                 "Choose the product type (Motor Bikes, Spare Parts & Lubricants or Accessories).");
     }
 
+    // Posting Setup card name of the type's opening ledger
+    private static string OpeningPurposeName(string type) =>
+        type switch
+        {
+            "MB" => "Opening Stock - Motor Bikes",
+            "SP" => "Opening Stock - Spare Parts & Lubricants",
+            _ => "Opening Stock - Accessories"
+        };
+
     private static string PrefixOf(string type) =>
         type switch
         {
@@ -791,7 +800,7 @@ public class OpeningStockRepository
             {
                 PageType = type,
                 Today = DateText(BusinessToday()),
-                DefaultLedgerCode = PostingLedgerCodes.TryGet(_context, PostingPurposes.OpeningStock) ?? string.Empty,
+                DefaultLedgerCode = PostingLedgerCodes.TryGet(_context, PostingPurposes.OpeningStockFor(type)) ?? string.Empty,
                 LedgerLocked = await LedgerLockedAsync(),
                 VatIncluded = await VatIncludedAsync(type),
                 ProfitOnSale = await IsSwitchOnAsync(SwitchProfitOnSale, false),
@@ -1621,16 +1630,17 @@ public class OpeningStockRepository
         string ledgerCode =
             Limit(dto.LedgerCode, 40);
 
-        // Locked : always the Posting Setup ledger
+        // Locked : always the Posting Setup ledger of the type
+        // (OPENING-STOCK / -SP / -AC, 2026-11-18)
         if (await LedgerLockedAsync())
         {
             ledgerCode =
-                PostingLedgerCodes.TryGet(_context, PostingPurposes.OpeningStock) ?? string.Empty;
+                PostingLedgerCodes.TryGet(_context, PostingPurposes.OpeningStockFor(type)) ?? string.Empty;
 
             if (ledgerCode.Length == 0)
             {
                 throw new InvalidOperationException(
-                    "Set the Opening Stock ledger on Settings › Account Settings › Posting Setup (the ledger is locked to it by System Configuration : Lock Opening Stock Ledger).");
+                    $"Set the {OpeningPurposeName(type)} ledger on Settings › Account Settings › Posting Setup (the ledger is locked to it by System Configuration : Lock Opening Stock Ledger).");
             }
         }
 

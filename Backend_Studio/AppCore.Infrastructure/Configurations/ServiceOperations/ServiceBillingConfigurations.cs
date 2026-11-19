@@ -46,6 +46,7 @@ public class ServiceBillingConfigurations
         builder.Property(x => x.OutsideTotal).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.VatTotal).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.Discount).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.LineDiscount).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.GrandTotal).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.PaidAmount).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.PartsCost).IsRequired().HasPrecision(18, 2);
@@ -70,6 +71,8 @@ public class ServiceBillingConfigurations
         builder.Property(x => x.Quantity).IsRequired().HasPrecision(10, 2);
         builder.Property(x => x.Rate).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.Amount).IsRequired().HasPrecision(18, 2);
+        builder.Property(x => x.DiscountText).IsRequired().HasMaxLength(20);
+        builder.Property(x => x.Discount).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.IsFree).IsRequired();
         builder.Property(x => x.ClaimAmount).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.ClaimLedgerCode).IsRequired().HasMaxLength(40);

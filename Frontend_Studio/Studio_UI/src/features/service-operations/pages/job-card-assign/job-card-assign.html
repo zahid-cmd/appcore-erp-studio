@@ -1,4 +1,4 @@
-<div class="page-container se-page">
+<div class="app-list-page app-form-page">
 
     <app-toast></app-toast>
 
@@ -12,7 +12,7 @@
 
     <app-page-header
         [title]="again ? 'Re-assign Job Card' : 'Assign Job Card'"
-        subtitle="The services and the time of the job, and the people who do it"
+        subtitle="The manpower of the job and the time it is allowed"
         icon="fas fa-user-check">
 
         <div
@@ -64,18 +64,41 @@
 
     </app-page-header>
 
+    <!-- the toolbar : as on the New Job page (the canvas under it is
+         then as tall as there) -->
+
+    <app-page-toolbar
+        leftFlex="0 0 auto"
+        rightFlex="1 1 auto">
+
+        <app-step-tabs
+            pageToolbarLeft
+            [steps]="steps"
+            [current]="tab"
+            (currentChange)="tab = $event">
+        </app-step-tabs>
+
+        <div
+            pageToolbarRight
+            class="ja-tool-note">
+            <span>Pick the job, then its time and manpower</span>
+            <b>{{ jobItems.length }} waiting</b>
+        </div>
+
+    </app-page-toolbar>
+
     <app-page-canvas
         [config]="config">
 
         <div
             canvasBody
-            class="ws-body appcore-scrollbar">
+            class="ws-body ja-body appcore-scrollbar">
 
             <!-- ================= LEFT ================= -->
 
             <div class="ws-steps">
 
-                <div class="ws-step">
+                <div class="ws-step" [class.ws-step-off]="tab !== 'assign'">
 
                     @if (card && !card.CanAssign)
                     {
@@ -87,13 +110,34 @@
 
                     <div class="ja-grid">
 
-                        <!-- the job : read only -->
+                        <!-- the job : picked here, the rest read only -->
 
                         <div class="se-card">
 
                             <div class="se-card-header">
                                 <i class="fas fa-clipboard-list"></i>
                                 <span>Job</span>
+                            </div>
+
+                            <div class="se-fields ja-one">
+
+                                @if (jobsLoading)
+                                {
+                                    <div class="ja-loading"><i class="fas fa-spinner fa-spin"></i> Loading the jobs...</div>
+                                }
+
+                                <app-search-dropdown
+                                    label="Job Card"
+                                    placeholder="Select the job : serial token, job card no or customer"
+                                    [required]="true"
+                                    [items]="jobItems"
+                                    figureField="token"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="jobPick"
+                                    (valueChange)="onJob($event)">
+                                </app-search-dropdown>
+
                             </div>
 
                             <div class="ja-facts">
@@ -103,19 +147,6 @@
                                 <div><span>Mobile</span><b>{{ card?.Mobile || '-' }}</b></div>
                                 <div><span>Bike</span><b>{{ bikeText || '-' }}</b></div>
                                 <div><span>Reg / Chassis No</span><b>{{ bikeNoText || '-' }}</b></div>
-                                <div class="ja-wide">
-                                    <span>Observations</span>
-                                    <b>
-                                        @for (item of observations; track $index)
-                                        {
-                                            <em>{{ item }}</em>
-                                        }
-                                        @empty
-                                        {
-                                            -
-                                        }
-                                    </b>
-                                </div>
                             </div>
 
                         </div>
@@ -139,51 +170,20 @@
 
                             <div class="se-card-header">
                                 <i class="fas fa-stopwatch"></i>
-                                <span>Services &amp; Time</span>
-                                <small>{{ sumNote }}</small>
+                                <span>Service &amp; Time</span>
                             </div>
 
-                            <div class="se-fields ja-one">
+                            <div class="se-fields ja-times">
 
-                                <app-search-dropdown
-                                    label="Add Service"
-                                    placeholder="Select a service : its standard time is added"
-                                    [items]="serviceItems"
-                                    labelField="label"
-                                    valueField="value"
-                                    [value]="servicePick"
-                                    [disabled]="!canAssign"
-                                    (valueChange)="onService($event)">
-                                </app-search-dropdown>
+                                <!-- the service : chosen when the job card was
+                                     made, read only here -->
 
-                            </div>
-
-                            <div class="ja-services appcore-scrollbar">
-
-                                @for (service of services; track service.key)
-                                {
-                                    <div class="ja-service">
-                                        <b>{{ service.name }}</b>
-                                        <span>{{ minutesText(service.minutes) }}</span>
-                                        @if (canAssign)
-                                        {
-                                            <button
-                                                type="button"
-                                                title="Take it off"
-                                                (click)="removeService(service.key)">
-                                                <i class="fas fa-xmark"></i>
-                                            </button>
-                                        }
-                                    </div>
-                                }
-                                @empty
-                                {
-                                    <div class="ja-none">No service picked yet : the standard time can also be typed below.</div>
-                                }
-
-                            </div>
-
-                            <div class="se-fields se-fields-2">
+                                <app-textbox
+                                    label="Service"
+                                    placeholder="From the job card"
+                                    [value]="card?.JobType || ''"
+                                    [readonly]="true">
+                                </app-textbox>
 
                                 <div class="ja-time">
                                     <app-textbox
@@ -194,7 +194,7 @@
                                         [disabled]="!canAssign"
                                         (valueChange)="onStandard($event)">
                                     </app-textbox>
-                                    <small [class.is-bad]="!!standardText.trim() && standardMinutes == null">{{ timeNote(standardText, standardMinutes) }}</small>
+                                    @if (!!standardText.trim() && standardMinutes == null) { <small class="is-bad">{{ timeNote(standardText, standardMinutes) }}</small> }
                                 </div>
 
                                 <div class="ja-time">
@@ -207,7 +207,7 @@
                                         [disabled]="!canAssign"
                                         (valueChange)="onAllowed($event)">
                                     </app-textbox>
-                                    <small [class.is-bad]="!!allowedText.trim() && allowedMinutes == null">{{ timeNote(allowedText, allowedMinutes) }}</small>
+                                    @if (!!allowedText.trim() && allowedMinutes == null) { <small class="is-bad">{{ timeNote(allowedText, allowedMinutes) }}</small> }
                                 </div>
 
                                 <app-datepicker
@@ -229,16 +229,16 @@
 
                         </div>
 
-                        <!-- the people -->
+                        <!-- the manpower -->
 
                         <div class="se-card">
 
                             <div class="se-card-header">
                                 <i class="fas fa-users-gear"></i>
-                                <span>People</span>
+                                <span>Manpower Assignment</span>
                             </div>
 
-                            <div class="se-fields ja-one">
+                            <div class="se-fields ja-people">
 
                                 <app-search-dropdown
                                     label="Service Engineer"
@@ -303,6 +303,42 @@
 
                 </div>
 
+                <!-- ---------- tab 2 : the observations of the job card,
+                     read only (they are given when the job is opened) ---------- -->
+
+                <div class="ws-step" [class.ws-step-off]="tab !== 'observations'">
+
+                    <div class="se-card ja-obs">
+
+                        <div class="se-card-header">
+                            <i class="fas fa-eye"></i>
+                            <span>Observations</span>
+                            <small>{{ observationRows.length }} {{ observationRows.length === 1 ? 'observation' : 'observations' }}</small>
+                        </div>
+
+                        <div class="ja-obs-rows appcore-scrollbar">
+
+                            @for (row of observationRows; track $index; let i = $index)
+                            {
+                                <div class="ja-obs-row">
+                                    <span>{{ i + 1 }}</span>
+                                    <b>{{ row.Observation }}</b>
+                                    <em>{{ row.Note || '-' }}</em>
+                                </div>
+                            }
+                            @empty
+                            {
+                                <div class="ja-obs-empty">
+                                    {{ card ? (cardWhole ? 'This job card has no observation.' : 'Loading the observations...') : 'Pick the job on the Job Assignment tab to see its observations.' }}
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
 
             <!-- ================= RIGHT : the panel ================= -->
@@ -331,7 +367,7 @@
                     </div>
 
                     <ul class="ws-uses">
-                        <li><i class="fas fa-stopwatch"></i><span>The standard time is the sum of the picked services; it can still be changed</span></li>
+                        <li><i class="fas fa-stopwatch"></i><span>The service comes from the job card; here the manpower and the time are given</span></li>
                         <li><i class="fas fa-clock"></i><span>Time : type minutes (90) or hours and minutes (1:30, 1h 30m)</span></li>
                         <li><i class="fas fa-truck-fast"></i><span>Expected delivery : the delivery date, the time now + the allowed time</span></li>
                         <li><i class="fas fa-user-check"></i><span>After saving, the job moves to Assigned</span></li>

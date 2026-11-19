@@ -1,0 +1,837 @@
+@if (mode === 'list')
+{
+    <div class="app-list-page">
+
+        <!-- =====================================================
+             JOB CARD REQUIREMENTS : the assigned jobs and the ones
+             whose parts and service charges are allocated
+        ====================================================== -->
+
+        <app-page-header
+            title="Job Card Requirements"
+            subtitle="The parts and the service charges of an assigned job"
+            icon="fas fa-list-check">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search job card, serial token, customer, bike..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="listActions"
+                    (view)="view($event)"
+                    (edit)="edit($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Job Card History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+
+        <app-toast></app-toast>
+
+        <app-confirm-dialog></app-confirm-dialog>
+
+        <app-progress-dialog></app-progress-dialog>
+
+    </div>
+}
+@else
+{
+    <div class="app-list-page app-form-page">
+
+        <!-- =====================================================
+             THE REQUIREMENT OF ONE JOB
+             Header  : Service Center | Job Card No | status
+             Toolbar : Parts | Service Charges | Summary, the job
+             Left    : the tab     Right : the projection
+        ====================================================== -->
+
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="The parts and the service charges the job needs"
+            icon="fas fa-list-check">
+
+            <div
+                pageHeaderCenter
+                class="se-center">
+
+                <div class="se-ribbon">
+
+                    <div class="se-chip">
+                        <span class="se-chip-icon se-chip-icon-branch"><i class="fas fa-building"></i></span>
+                        <span class="se-chip-text">
+                            <span class="se-chip-label">Service Center</span>
+                            <strong>{{ branchName || 'Not set' }}</strong>
+                        </span>
+                    </div>
+
+                    <span class="se-ribbon-sep"></span>
+
+                    <div class="se-chip">
+                        <span class="se-chip-icon se-chip-icon-no"><i class="fas fa-hashtag"></i></span>
+                        <span class="se-chip-text">
+                            <span class="se-chip-label">Job Card No</span>
+                            <strong>{{ card?.JobCardNo || '-' }}</strong>
+                        </span>
+                    </div>
+
+                    <span class="se-ribbon-sep"></span>
+
+                    <div class="se-state">
+                        <span
+                            class="se-status jc-state"
+                            [style.background]="statusColor">{{ card?.Status || '...' }}</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <app-command-center
+                pageHeaderRight
+                [command1Text]="mode === 'edit' ? 'Update Requirement' : 'Save Requirement'"
+                command1Icon="fas fa-floppy-disk"
+                (command1Click)="save()"
+                [command1Visible]="canEdit"
+                command2Text="Clear"
+                command2Icon="fas fa-broom"
+                (command2Click)="clear()"
+                [command2Visible]="mode === 'add'"
+                command3Text="Location Chart"
+                command3Icon="fas fa-map-location-dot"
+                command3Title="Print where the parts of the job sit : rack, shelf and bin"
+                (command3Click)="printChart()"
+                [command3Visible]="!!card"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the list"
+                (rightCommandClick)="goToList()">
+            </app-command-center>
+
+        </app-page-header>
+
+        <app-page-toolbar
+            leftFlex="0 0 auto"
+            rightFlex="1 1 auto">
+
+            <app-step-tabs
+                pageToolbarLeft
+                [steps]="steps"
+                [current]="tab"
+                (currentChange)="tab = $event">
+            </app-step-tabs>
+
+            <div
+                pageToolbarRight
+                class="jr-tool">
+
+                <span>{{ mode === 'add' ? 'Pick the job, then its parts and service charges' : mode === 'edit' ? 'Add to the allocation of the job or take off' : 'Read only' }}</span>
+
+                @if (mode === 'add')
+                {
+                    <b>{{ waiting }} waiting</b>
+                }
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="ws-body jr-body appcore-scrollbar">
+
+                <!-- ================= LEFT ================= -->
+
+                <div class="jr-left">
+
+                <!-- the job : picked here (Add), the rest read only -->
+
+                <div class="se-card jr-jobcard">
+
+                    <div class="jr-jobrow">
+
+                        <span class="jr-joblabel"><i class="fas fa-clipboard-list"></i> Job</span>
+
+                        @if (mode === 'add')
+                        {
+                            <app-search-dropdown
+                                [placeholder]="jobsLoading ? 'Loading the jobs...' : 'Select the job : serial token, job card no or customer'"
+                                [items]="jobItems"
+                                figureField="token"
+                                labelField="label"
+                                valueField="value"
+                                [value]="jobPick"
+                                [disabled]="!!jobPick"
+                                (valueChange)="onJob($event)">
+                            </app-search-dropdown>
+                        }
+                        @else
+                        {
+                            <div class="jr-fact"><span>Job Card</span><b>{{ card?.JobCardNo || '-' }}</b></div>
+                        }
+
+                        <div class="jr-fact"><span>Serial Token</span><b>{{ tokenText || '-' }}</b></div>
+                        <div class="jr-fact"><span>Customer</span><b>{{ card?.CustomerName || '-' }}</b></div>
+                        <div class="jr-fact"><span>Bike</span><b>{{ bikeText || '-' }}</b></div>
+                        <div class="jr-fact"><span>Service Type</span><b>{{ card?.JobType || '-' }}</b></div>
+
+                    </div>
+
+                </div>
+
+                <div class="ws-steps">
+
+                    <!-- ---------- tab 1 : the parts ---------- -->
+
+                    <div class="ws-step" [class.ws-step-off]="tab !== 'parts'">
+
+                        <div class="se-card jr-card">
+
+                            <div class="se-card-header">
+                                <i class="fas fa-gears"></i>
+                                <span>Parts</span>
+
+                                @if (canEdit)
+                                {
+                                    <button
+                                        type="button"
+                                        class="jr-shelf"
+                                        title="Product Shelf : pick several at once"
+                                        (click)="openShelf('parts')">
+                                        <i class="fas fa-store"></i>
+                                        Shelf
+                                    </button>
+                                }
+
+                                <small>{{ partLines.length }} {{ partLines.length === 1 ? 'line' : 'lines' }}  -  {{ money(partsTotal) }}</small>
+                            </div>
+
+                            @if (!card)
+                            {
+                                <div class="jr-empty">{{ loading ? 'Loading the job...' : 'Select the job first : the Job box above.' }}</div>
+                            }
+                            @else
+                            {
+                                @if (fromEstimate)
+                                {
+                                    <div class="jr-note"><i class="fas fa-file-pen"></i> These lines come from the estimate {{ estimate?.Name }}. Add to them or take off, then save.</div>
+                                }
+
+                                @if (canEdit)
+                                {
+                                    <div
+                                        #partRow
+                                        class="jr-pick jr-pick-parts"
+                                        (keydown.enter)="onEntryEnter($event, partRow)">
+
+                                        <app-search-dropdown
+                                            label="Part"
+                                            placeholder="Select a spare part, a lubricant or an accessory"
+                                            [items]="partItems"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="partPick"
+                                            [disabled]="partEditKey !== null"
+                                            (valueChange)="onPartPick($event); focusEntry(partRow, 'qty')">
+                                        </app-search-dropdown>
+
+                                        <app-textbox
+                                            label="Price"
+                                            placeholder="-"
+                                            [value]="partPriceText"
+                                            [readonly]="true">
+                                        </app-textbox>
+
+                                        <app-textbox
+                                            label="Stock"
+                                            placeholder="-"
+                                            [value]="partStockText"
+                                            [readonly]="true">
+                                        </app-textbox>
+
+                                        <app-textbox
+                                            class="jr-e-qty"
+                                            label="Qty"
+                                            [value]="partQty"
+                                            [maxLength]="8"
+                                            (valueChange)="onEntry('partQty', $event)">
+                                        </app-textbox>
+
+                                        <app-textbox
+                                            class="jr-e-note"
+                                            label="Short Note"
+                                            placeholder="Optional"
+                                            [value]="partNote"
+                                            [maxLength]="200"
+                                            (valueChange)="onEntry('partNote', $event)">
+                                        </app-textbox>
+
+                                        <button
+                                            type="button"
+                                            class="jr-add"
+                                            [class.is-update]="partEditKey !== null"
+                                            [disabled]="!partPick"
+                                            (click)="addPart(); focusEntry(partRow, 'item')">
+                                            <i class="fas" [class.fa-plus]="partEditKey === null" [class.fa-check]="partEditKey !== null"></i>
+                                            {{ partEditKey !== null ? 'Update' : 'Add' }}
+                                        </button>
+
+                                        @if (partEditKey !== null)
+                                        {
+                                            <button
+                                                type="button"
+                                                class="jr-add jr-add-off"
+                                                title="Leave the line as it is"
+                                                (click)="cancelPartEdit()">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+                                        }
+
+                                    </div>
+                                }
+
+                                <div class="jr-row jr-row-parts jr-head">
+                                    <span>#</span>
+                                    <span>Part</span>
+                                    <span>Note</span>
+                                    <span class="jr-right">Stock</span>
+                                    <span class="jr-right">Qty</span>
+                                    <span class="jr-right">Rate</span>
+                                    <span class="jr-right">Amount</span>
+                                    <span></span>
+                                </div>
+
+                                <div class="jr-rows appcore-scrollbar">
+
+                                    @for (line of partLines; track line.key; let i = $index)
+                                    {
+                                        <div
+                                            class="jr-row jr-row-parts jr-line"
+                                            [class.is-editing]="partEditKey === line.key"
+                                            [title]="partTitle(line)"
+                                            (dblclick)="editPart(line, $event)">
+
+                                            <span class="jr-no">{{ i + 1 }}</span>
+
+                                            <span class="jr-name">
+                                                <b>{{ line.ItemName }}</b>
+                                                <small>
+                                                    {{ line.ItemCode }}
+                                                    @if (placeOf(line))
+                                                    {
+                                                        <em class="jr-place" title="Rack - shelf - bin in the default warehouse"><i class="fas fa-location-dot"></i> {{ placeOf(line) }}</em>
+                                                    }
+                                                </small>
+                                            </span>
+
+                                            <input
+                                                class="jr-input"
+                                                maxlength="200"
+                                                placeholder="Note"
+                                                [value]="line.Note"
+                                                [disabled]="!canEdit"
+                                                (input)="onPartLine(line, 'Note', $event)">
+
+                                            <span
+                                                class="jr-amount jr-stock"
+                                                [class.is-short]="isShort(line)"
+                                                [title]="isShort(line) ? 'The store holds less than the job needs' : 'In the store now'">{{ stockOf(line) }}</span>
+
+                                            <input
+                                                class="jr-input jr-right"
+                                                inputmode="decimal"
+                                                maxlength="8"
+                                                [value]="line.Quantity"
+                                                [disabled]="!canEdit"
+                                                (input)="onPartLine(line, 'Quantity', $event)">
+
+                                            <span class="jr-amount">{{ money(line.Rate) }}</span>
+
+                                            <span class="jr-amount"><b>{{ money(partAmount(line)) }}</b></span>
+
+                                            @if (canEdit && issuedOf(line) > 0)
+                                            {
+                                                <span
+                                                    class="jr-x jr-x-locked"
+                                                    title="Issued to the job already : it cannot be taken off">
+                                                    <i class="fas fa-lock"></i>
+                                                </span>
+                                            }
+                                            @else if (canEdit)
+                                            {
+                                                <button
+                                                    type="button"
+                                                    class="jr-x"
+                                                    title="Remove"
+                                                    (click)="removePart(line)">
+                                                    <i class="fas fa-xmark"></i>
+                                                </button>
+                                            }
+                                            @else
+                                            {
+                                                <span></span>
+                                            }
+
+                                        </div>
+                                    }
+                                    @empty
+                                    {
+                                        <div class="jr-empty">No part is on the requirement.</div>
+                                    }
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <!-- ---------- tab 2 : the service charges ---------- -->
+
+                    <div class="ws-step" [class.ws-step-off]="tab !== 'services'">
+
+                        <div class="se-card jr-card">
+
+                            <div class="se-card-header">
+                                <i class="fas fa-screwdriver-wrench"></i>
+                                <span>Service Charges</span>
+
+                                @if (canEdit)
+                                {
+                                    <button
+                                        type="button"
+                                        class="jr-shelf"
+                                        title="Product Shelf : pick several at once"
+                                        (click)="openShelf('services')">
+                                        <i class="fas fa-store"></i>
+                                        Shelf
+                                    </button>
+                                }
+
+                                <small>{{ serviceLines.length }} {{ serviceLines.length === 1 ? 'line' : 'lines' }}  -  {{ money(servicesTotal) }}</small>
+                            </div>
+
+                            @if (!card)
+                            {
+                                <div class="jr-empty">{{ loading ? 'Loading the job...' : 'Select the job first : the Job box above.' }}</div>
+                            }
+                            @else
+                            {
+                                @if (canEdit)
+                                {
+                                    <div
+                                        #serviceRow
+                                        class="jr-pick"
+                                        (keydown.enter)="onEntryEnter($event, serviceRow)">
+
+                                        <app-search-dropdown
+                                            label="Service"
+                                            placeholder="Select a service : its charge can be changed on the line"
+                                            [items]="serviceItems"
+                                            labelField="label"
+                                            valueField="value"
+                                            [value]="servicePick"
+                                            [disabled]="serviceEditKey !== null"
+                                            (valueChange)="onServicePick($event); focusEntry(serviceRow, 'qty')">
+                                        </app-search-dropdown>
+
+                                        <app-textbox
+                                            label="Charge"
+                                            placeholder="-"
+                                            [value]="servicePriceText"
+                                            [readonly]="true">
+                                        </app-textbox>
+
+                                        <app-textbox
+                                            class="jr-e-qty"
+                                            label="Qty"
+                                            [value]="serviceQty"
+                                            [maxLength]="8"
+                                            (valueChange)="onEntry('serviceQty', $event)">
+                                        </app-textbox>
+
+                                        <app-textbox
+                                            class="jr-e-note"
+                                            label="Short Note"
+                                            placeholder="Optional"
+                                            [value]="serviceNote"
+                                            [maxLength]="200"
+                                            (valueChange)="onEntry('serviceNote', $event)">
+                                        </app-textbox>
+
+                                        <button
+                                            type="button"
+                                            class="jr-add"
+                                            [class.is-update]="serviceEditKey !== null"
+                                            [disabled]="!servicePick"
+                                            (click)="addService(); focusEntry(serviceRow, 'item')">
+                                            <i class="fas" [class.fa-plus]="serviceEditKey === null" [class.fa-check]="serviceEditKey !== null"></i>
+                                            {{ serviceEditKey !== null ? 'Update' : 'Add' }}
+                                        </button>
+
+                                        @if (serviceEditKey !== null)
+                                        {
+                                            <button
+                                                type="button"
+                                                class="jr-add jr-add-off"
+                                                title="Leave the line as it is"
+                                                (click)="cancelServiceEdit()">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+                                        }
+
+                                    </div>
+                                }
+
+                                <div class="jr-row jr-head">
+                                    <span>#</span>
+                                    <span>Service</span>
+                                    <span>Note</span>
+                                    <span class="jr-right">Qty</span>
+                                    <span class="jr-right">Charge</span>
+                                    <span class="jr-right">Amount</span>
+                                    <span></span>
+                                </div>
+
+                                <div class="jr-rows appcore-scrollbar">
+
+                                    @for (line of serviceLines; track line.key; let i = $index)
+                                    {
+                                        <div
+                                            class="jr-row jr-line"
+                                            [class.is-editing]="serviceEditKey === line.key"
+                                            [title]="canEdit ? 'Double click : load the line above to update it' : ''"
+                                            (dblclick)="editService(line, $event)">
+
+                                            <span class="jr-no">{{ i + 1 }}</span>
+
+                                            <span class="jr-name">
+                                                <b>{{ line.ItemName }}</b>
+                                                <small>{{ line.ItemCode }}{{ line.IsFree ? '   free service' : '' }}</small>
+                                            </span>
+
+                                            <input
+                                                class="jr-input"
+                                                maxlength="200"
+                                                placeholder="Note"
+                                                [value]="line.Note"
+                                                [disabled]="!canEdit"
+                                                (input)="onServiceLine(line, 'Note', $event)">
+
+                                            <input
+                                                class="jr-input jr-right"
+                                                inputmode="decimal"
+                                                maxlength="8"
+                                                [value]="line.Quantity"
+                                                [disabled]="!canEdit"
+                                                (input)="onServiceLine(line, 'Quantity', $event)">
+
+                                            <input
+                                                class="jr-input jr-right"
+                                                inputmode="decimal"
+                                                maxlength="12"
+                                                [value]="line.Rate"
+                                                [disabled]="!canEdit"
+                                                (input)="onServiceLine(line, 'Rate', $event)">
+
+                                            <span class="jr-amount"><b>{{ money(serviceAmount(line)) }}</b></span>
+
+                                            @if (canEdit)
+                                            {
+                                                <button
+                                                    type="button"
+                                                    class="jr-x"
+                                                    title="Remove"
+                                                    (click)="removeService(line)">
+                                                    <i class="fas fa-xmark"></i>
+                                                </button>
+                                            }
+                                            @else
+                                            {
+                                                <span></span>
+                                            }
+
+                                        </div>
+                                    }
+                                    @empty
+                                    {
+                                        <div class="jr-empty">No service charge is on the requirement.</div>
+                                    }
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <!-- ---------- tab 3 : the location of the parts ---------- -->
+
+                    <div class="ws-step" [class.ws-step-off]="tab !== 'location'">
+
+                        <div class="se-card jr-card">
+
+                            <!-- the location chart : where each part sits -->
+                            <div class="se-card-header">
+                                <i class="fas fa-map-location-dot"></i>
+                                <span>Parts Location</span>
+                                <small>rack - shelf - bin in the default warehouse</small>
+                            </div>
+
+                            <div class="jr-row jr-row-chart jr-head">
+                                <span>#</span>
+                                <span>Part</span>
+                                <span>Zone</span>
+                                <span>Rack</span>
+                                <span>Shelf</span>
+                                <span>Bin</span>
+                                <span>Location Code</span>
+                                <span class="jr-right">Stock</span>
+                                <span class="jr-right">Qty</span>
+                            </div>
+
+                            <div class="jr-rows appcore-scrollbar">
+
+                                @for (row of locationRows; track row.key)
+                                {
+                                    <div class="jr-row jr-row-chart jr-line" [class.jr-line-more]="!row.line">
+
+                                        <span class="jr-no">{{ row.no ?? '' }}</span>
+
+                                        <span class="jr-name">
+                                            @if (row.line)
+                                            {
+                                                <b>{{ row.line.ItemName }}</b>
+                                                <small>{{ row.line.ItemCode }}</small>
+                                            }
+                                        </span>
+
+                                        @if (row.bin)
+                                        {
+                                            <span>{{ row.bin.Zone || '-' }}</span>
+                                            <span><b>{{ row.bin.Rack || '-' }}</b></span>
+                                            <span><b>{{ row.bin.Shelf || '-' }}</b></span>
+                                            <span><b>{{ row.bin.Bin || '-' }}</b></span>
+                                            <span class="jr-place-big"><i class="fas fa-location-dot"></i> {{ row.bin.Code }}</span>
+                                        }
+                                        @else
+                                        {
+                                            <span class="jr-place-none jr-place-span">No location set</span>
+                                        }
+
+                                        <span class="jr-right">{{ row.line ? stockOf(row.line) : '' }}</span>
+
+                                        <span class="jr-right">{{ row.line ? row.line.Quantity : '' }}</span>
+
+                                    </div>
+                                }
+                                @empty
+                                {
+                                    <div class="jr-empty">No part is on the requirement.</div>
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ---------- tab 4 : the summary ---------- -->
+
+                    <div class="ws-step" [class.ws-step-off]="tab !== 'summary'">
+
+                        <div class="se-card jr-card">
+
+                            <div class="se-card-header">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Job</span>
+                            </div>
+
+                            <div class="jr-facts">
+                                <div><span>Serial Token</span><b>{{ tokenText || '-' }}</b></div>
+                                <div><span>Date</span><b>{{ dateText || '-' }}</b></div>
+                                <div><span>Service Type</span><b>{{ card?.JobType || '-' }}</b></div>
+                                <div><span>Customer</span><b>{{ card?.CustomerName || '-' }}</b></div>
+                                <div><span>Mobile</span><b>{{ card?.Mobile || '-' }}</b></div>
+                                <div><span>Bike</span><b>{{ bikeText || '-' }}</b></div>
+                                <div><span>Reg / Chassis No</span><b>{{ bikeNoText || '-' }}</b></div>
+                                <div><span>Service Engineer</span><b>{{ card?.ServiceEngineerName || '-' }}</b></div>
+                                <div><span>Technician</span><b>{{ card?.TechnicianName || '-' }}</b></div>
+                                <div><span>Estimate</span><b>{{ estimate?.Name || card?.EstimateNo || 'None' }}</b></div>
+                                <div><span>Estimate Charge</span><b>{{ !estimate ? '-' : estimate.ChargeTotal <= 0 ? 'No charge' : estimate.ChargeCollected ? 'Collected' : 'Not collected' }}</b></div>
+                                <div><span>Parts with the job</span><b>{{ issuedQuantity || 0 }}</b></div>
+                            </div>
+
+                            <div class="jr-totals">
+                                <div><span>Parts</span><b>{{ money(partsTotal) }}</b></div>
+                                <div><span>Service Charges</span><b>{{ money(servicesTotal) }}</b></div>
+                                <div class="jr-grand"><span>Total Projection</span><b>{{ money(total) }}</b></div>
+                            </div>
+
+                            @if (canCancel)
+                            {
+                                <div class="jr-cancel">
+
+                                    <app-textbox
+                                        label="Cancel the job : the reason"
+                                        placeholder="Why the job is cancelled"
+                                        [value]="cancelReason"
+                                        [disabled]="!!cancelLock"
+                                        [maxLength]="300"
+                                        (valueChange)="onCancelReason($event)">
+                                    </app-textbox>
+
+                                    <button
+                                        type="button"
+                                        class="jr-cancel-btn"
+                                        [disabled]="!!cancelLock"
+                                        (click)="cancelJob()">
+                                        <i class="fas fa-ban"></i>
+                                        Cancel Job
+                                    </button>
+
+                                </div>
+
+                                @if (cancelLock)
+                                {
+                                    <div class="jr-cancel-lock">
+                                        <i class="fas fa-lock"></i>
+                                        {{ cancelLock }}
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                </div>
+
+                <!-- ================= RIGHT : the projection ================= -->
+
+                <aside class="ws-panel">
+
+                    <div class="ws-hero">
+
+                        <app-workspace-art theme="bike"></app-workspace-art>
+
+                        <div class="ws-identity">
+
+                            <b>{{ card?.CustomerName || 'Job card' }}</b>
+
+                            <div class="ws-chips">
+                                <span class="ws-chip" data-tone="info">{{ card?.JobCardNo }}</span>
+                                <span class="ws-chip">{{ card?.Status }}</span>
+                            </div>
+
+                        </div>
+
+                        <div class="jr-panel-facts">
+                            <div><span>Parts</span><b>{{ money(partsTotal) }}</b></div>
+                            <div><span>Service Charges</span><b>{{ money(servicesTotal) }}</b></div>
+                            <div class="jr-wide"><span>Total Projection</span><b>{{ money(total) }}</b></div>
+                        </div>
+
+                        <ul class="ws-uses">
+                            <li><i class="fas fa-file-pen"></i><span>A job with an estimate gets its parts and services from it (switch Estimate Driven Job Card)</span></li>
+                            <li><i class="fas fa-list-check"></i><span>After saving, the job is Allocated : ready for parts and service issue</span></li>
+                            <li><i class="fas fa-plus"></i><span>Add : a job with nothing allocated yet. The edit icon of the list changes the allocation of a job</span></li>
+                            <li><i class="fas fa-ban"></i><span>Cancel : only when no part or service charge is allocated (remove all and save first), no part is issued and the charge of its estimate is collected</span></li>
+                        </ul>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </app-page-canvas>
+
+        <!-- the Product Shelf : several parts or services at once -->
+
+        <app-product-shelf
+            [open]="shelfOpen"
+            [title]="shelfTitle"
+            [subtitle]="shelfSubtitle"
+            [products]="shelfProducts"
+            [options]="shelfOptions"
+            [lineCount]="shelfKind === 'parts' ? partLines.length : serviceLines.length"
+            (add)="onShelfAdd($event)"
+            (closed)="closeShelf()">
+        </app-product-shelf>
+
+        <app-toast></app-toast>
+
+        <app-confirm-dialog></app-confirm-dialog>
+
+        <app-progress-dialog></app-progress-dialog>
+
+    </div>
+}
+

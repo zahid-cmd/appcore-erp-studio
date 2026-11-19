@@ -127,6 +127,22 @@ export class SearchDropdownComponent
     swatchField =
         '';
 
+    // Optional big figure at the right of an option row (the
+    // serial token of a job, 2026-11-18) : the option's field. Its
+    // last three characters are the big ones (1118 004)
+    @Input()
+    figureField =
+        '';
+
+    figure(option: any): { lead: string; tail: string }
+    {
+        const text = String(option?.[this.figureField] ?? '');
+
+        return text.length > 3
+            ? { lead:text.substring(0, text.length - 3), tail:text.substring(text.length - 3) }
+            : { lead:'', tail:text };
+    }
+
     // Two-line rows (2026-11-16) : the option's code field. Empty =
     // read it from labels written as "CODE - Name" (SUB-002-002-001 -
     // Cash In Hand); the name is shown on top, the code under it
@@ -155,6 +171,9 @@ export class SearchDropdownComponent
     isOpen = false;
 
     searchText = '';
+
+    // The row the up / down arrows stand on (-1 : none)
+    activeIndex = -1;
 
     /* =====================================================
        FILTERED ITEMS
@@ -388,6 +407,85 @@ export class SearchDropdownComponent
     {
         this.searchText =
             value;
+
+        // typing : the first match is the one Enter takes
+        this.activeIndex =
+            value.trim() && this.filteredItems.length > 0
+                ? 0
+                : -1;
+    }
+
+    /* =====================================================
+       KEYS (2026-11-18) : up / down move over the rows,
+       Enter takes the row, Escape closes the list
+    ====================================================== */
+
+    onPanelKey
+    (
+        event:KeyboardEvent
+    ):
+        void
+    {
+        const rows =
+            this.filteredItems;
+
+        if
+        (
+            event.key === 'ArrowDown'
+            ||
+            event.key === 'ArrowUp'
+        )
+        {
+            event.preventDefault();
+
+            if (rows.length === 0)
+            {
+                return;
+            }
+
+            const step =
+                event.key === 'ArrowDown' ? 1 : -1;
+
+            this.activeIndex =
+                this.activeIndex < 0
+                    ? (step > 0 ? 0 : rows.length - 1)
+                    : (this.activeIndex + step + rows.length) % rows.length;
+
+            const panel =
+                event.currentTarget as HTMLElement;
+
+            // the row is brought into view
+            setTimeout(
+                () =>
+                    panel
+                        .querySelector('.dropdown-option.active')
+                        ?.scrollIntoView({ block: 'nearest' })
+            );
+
+            return;
+        }
+
+        if (event.key === 'Enter')
+        {
+            const option =
+                rows[this.activeIndex];
+
+            if (option)
+            {
+                event.preventDefault();
+
+                this.selectOption(option, event);
+            }
+
+            return;
+        }
+
+        if (event.key === 'Escape')
+        {
+            event.preventDefault();
+
+            this.onOverlayClosed();
+        }
     }
 
     /* =====================================================
@@ -410,6 +508,8 @@ export class SearchDropdownComponent
         this.isOpen =
             !this.isOpen;
 
+        this.activeIndex = -1;
+
         if (this.isOpen)
         {
             setTimeout(
@@ -428,7 +528,7 @@ export class SearchDropdownComponent
     selectOption
     (
         option:any,
-        event:MouseEvent
+        event:Event
     ):
         void
     {
@@ -453,6 +553,8 @@ export class SearchDropdownComponent
         this.searchText =
             '';
 
+        this.activeIndex = -1;
+
         this.valueChange.emit(
             this.value
         );
@@ -467,6 +569,8 @@ export class SearchDropdownComponent
     {
         this.isOpen =
             false;
+
+        this.activeIndex = -1;
 
         this.searchText =
             '';

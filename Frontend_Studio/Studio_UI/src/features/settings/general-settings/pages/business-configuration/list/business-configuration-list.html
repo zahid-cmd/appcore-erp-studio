@@ -660,38 +660,26 @@
 
             <div class="bc-modal-row">
 
-                <label class="bc-date">
+                <app-datepicker
+                    class="bc-dp"
+                    label="Valid From"
+                    [required]="true"
+                    [value]="$any(validFromDate)"
+                    (valueChange)="onValidFromChange($event)">
+                </app-datepicker>
 
-                    <span class="bc-date-label">Valid From</span>
-
-                    <input
-                        type="date"
-                        class="bc-date-input"
-                        [(ngModel)]="draft.ValidFrom">
-
-                </label>
-
-                <label class="bc-date" [class.bc-date-off]="!isTemporary">
-
-                    <span class="bc-date-label">
-
-                        Valid Until
-
-                        @if (isTemporary)
-                        {
-                            <span class="bc-required">*</span>
-                        }
-
-                    </span>
-
-                    <input
-                        type="date"
-                        class="bc-date-input"
-                        [disabled]="!isTemporary"
-                        [min]="draft.ValidFrom"
-                        [(ngModel)]="draft.ValidUntil">
-
-                </label>
+                <app-datepicker
+                    class="bc-dp"
+                    [class.bc-date-off]="!isTemporary"
+                    label="Valid Until"
+                    [required]="isTemporary"
+                    [allowEmpty]="true"
+                    [disabled]="!isTemporary"
+                    [placeholder]="isTemporary ? 'Select Date' : 'No end date'"
+                    [minDate]="validFromDate"
+                    [value]="$any(validUntilDate)"
+                    (valueChange)="onValidUntilChange($event)">
+                </app-datepicker>
 
             </div>
 

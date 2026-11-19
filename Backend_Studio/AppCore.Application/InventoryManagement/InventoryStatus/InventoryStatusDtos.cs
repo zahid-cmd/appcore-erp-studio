@@ -109,6 +109,19 @@ public class InventoryStockRowDto
     // Sold in the period (net of cancels, returns)
     public decimal SalesQty { get; set; }
 
+    // Everything that came on hand / went out of hand in the period,
+    // whatever the document : purchase, transfer received, return ...
+    // / sale, workshop issue, damage, transfer sent ... (owner
+    // 2026-11-18). By the quantities of the stock ledger, never by
+    // the name of the movement
+    public decimal InQty { get; set; }
+
+    public decimal OutQty { get; set; }
+
+    // On hand at the start of the period :
+    // OpeningOnHand + InQty - OutQty = OnHand
+    public decimal OpeningOnHand { get; set; }
+
     public decimal InTransit { get; set; }
 
     public decimal OnHand { get; set; }

@@ -16,12 +16,15 @@
             </div>
 
             <div pageHeaderRight>
+                <!-- the Assignment desk (owner 2026-11-19) : its first
+                     command opens the assignment form -->
                 <app-command-center
-                    command1Text="New Job"
-                    command1Icon="fas fa-plus"
-                    command1Permission="add"
-                    [command1Visible]="desk !== 'assignment'"
-                    (command1Click)="add()"
+                    [command1Text]="desk === 'assignment' ? 'Job Assignment' : 'New Job'"
+                    [command1Icon]="desk === 'assignment' ? 'fas fa-user-check' : 'fas fa-plus'"
+                    [command1Title]="desk === 'assignment' ? 'Assign a job : pick it, then its time and people' : ''"
+                    [command1Permission]="desk === 'assignment' ? '' : 'add'"
+                    [command1Visible]="desk !== 'assignment' || access.CanAssign"
+                    (command1Click)="desk === 'assignment' ? goToStage('assignment') : add()"
                     command2Text="Refresh"
                     command2Icon="fas fa-rotate-right"
                     (command2Click)="loadList()"
@@ -46,6 +49,36 @@
                 [selectedTab]="selectedTab"
                 (selectedTabChange)="onTab($event)">
             </app-control-tabs>
+
+            <!-- the stages after the opening : each on its own page -->
+
+            @if (!desk)
+            {
+                <div
+                    pageToolbarRight
+                    class="jc-stage-btns">
+
+                    <button
+                        type="button"
+                        class="jc-stage-btn"
+                        [disabled]="!access.CanAssign"
+                        [title]="access.CanAssign ? 'Assign a job : pick it, then its services, time and people' : 'You do not have the Assign Job Card permission'"
+                        (click)="goToStage('assignment')">
+                        <i class="fas fa-user-check"></i>
+                        Job Assignment
+                    </button>
+
+                    <button
+                        type="button"
+                        class="jc-stage-btn"
+                        title="The jobs whose work is done : pricing and the bill"
+                        (click)="goToStage('closing')">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        Job Closing
+                    </button>
+
+                </div>
+            }
 
         </app-page-toolbar>
 
@@ -787,9 +820,11 @@
                                     (valueChange)="onPurchaseDate($event)">
                                 </app-datepicker>
 
+                                <!-- optional : but the purchase date or the last
+                                     service date is needed (one of the two) -->
+
                                 <app-datepicker
                                     label="Last Service Date"
-                                    [required]="!serviceVehicleId"
                                     [disabled]="!canEdit || !!serviceVehicleId"
                                     [value]="$any(asDate(lastServiceDate))"
                                     (valueChange)="onLastServiceDate($event)">
@@ -1149,6 +1184,7 @@
                         <ul class="ws-uses">
                             <li><i class="fas fa-ticket"></i><span>The serial token is the date and a number from 001 : 1118002 is the second job of 18 November</span></li>
                             <li><i class="fas fa-hourglass-half"></i><span>After saving, the job waits in the list under Open as Pending</span></li>
+                            <li><i class="fas fa-calendar-check"></i><span>Purchase date or last service date : one of the two is needed. The last service date comes from the previous job of the bike</span></li>
                             <li><i class="fas fa-user-check"></i><span>Next : the job is assigned to its engineer, bay and technicians</span></li>
                         </ul>
 

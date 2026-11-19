@@ -129,6 +129,12 @@ from '../../../../../../shared/components/controls/textarea/textarea';
 
 import
 {
+    DatepickerComponent
+}
+from '../../../../../../shared/components/controls/datepicker/datepicker';
+
+import
+{
     FormModalComponent
 }
 from '../../../../../../shared/components/utilities/form-modal/form-modal';
@@ -257,6 +263,7 @@ interface GrantDraft
         DropdownComponent,
 
         TextareaComponent,
+        DatepickerComponent,
 
         FormModalComponent,
 
@@ -2202,6 +2209,130 @@ implements OnInit
                     year:'numeric'
                 }
             );
+    }
+
+
+    //===========================================================
+    // Grant dates : the shared date picker (2026-11-18)
+    // The draft keeps yyyy-mm-dd text; the picker works in Date.
+    // A Date is cached per text so the picker's input stays the
+    // same object between checks.
+    //===========================================================
+
+    private fromCache:
+        { text: string; date: Date | null } =
+        { text: '\u0000', date: null };
+
+    private untilCache:
+        { text: string; date: Date | null } =
+        { text: '\u0000', date: null };
+
+    get validFromDate():
+        Date | null
+    {
+        if
+        (
+            this.fromCache.text !== this.draft.ValidFrom
+        )
+        {
+            this.fromCache =
+                { text: this.draft.ValidFrom, date: this.textToDate(this.draft.ValidFrom) };
+        }
+
+        return this.fromCache.date;
+    }
+
+    get validUntilDate():
+        Date | null
+    {
+        if
+        (
+            this.untilCache.text !== this.draft.ValidUntil
+        )
+        {
+            this.untilCache =
+                { text: this.draft.ValidUntil, date: this.textToDate(this.draft.ValidUntil) };
+        }
+
+        return this.untilCache.date;
+    }
+
+    onValidFromChange
+    (
+        date:
+            Date | null
+    ):
+        void
+    {
+        this.draft.ValidFrom =
+            this.dateToText(date);
+
+        if
+        (
+            this.draft.ValidUntil
+            &&
+            this.draft.ValidFrom
+            &&
+            this.draft.ValidUntil < this.draft.ValidFrom
+        )
+        {
+            this.draft.ValidUntil =
+                '';
+        }
+
+        this.cdr.detectChanges();
+    }
+
+    onValidUntilChange
+    (
+        date:
+            Date | null
+    ):
+        void
+    {
+        this.draft.ValidUntil =
+            this.dateToText(date);
+
+        this.cdr.detectChanges();
+    }
+
+    private textToDate
+    (
+        text:
+            string | null | undefined
+    ):
+        Date | null
+    {
+        const match =
+            /^(\d{4})-(\d{2})-(\d{2})/.exec(text ?? '');
+
+        return match
+            ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+            : null;
+    }
+
+    private dateToText
+    (
+        date:
+            Date | null | undefined
+    ):
+        string
+    {
+        if
+        (
+            !date
+            ||
+            isNaN(date.getTime())
+        )
+        {
+            return '';
+        }
+
+        const pad =
+            (n: number): string =>
+                String(n).padStart(2, '0');
+
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
     }
 
 

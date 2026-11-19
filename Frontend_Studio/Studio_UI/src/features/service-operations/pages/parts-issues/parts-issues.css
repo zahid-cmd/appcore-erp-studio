@@ -1,0 +1,231 @@
+/* ==============================================================
+   Parts Issues : the Material Issue Slip (owner 2026-11-18).
+   The page is built as Job Card Requirements : its styles are
+   used as they are (jr-*), with the few of the slip (mi-*).
+============================================================== */
+
+@import '../job-card-requirements/job-card-requirements.css';
+
+/* the toolbar : how the slip works */
+.mi-tool
+{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    color: var(--app-text-muted, #64748b);
+    font-size: 13px;
+}
+
+.mi-switch
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.mi-switch.is-on
+{
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* the slip : job | warehouse | date | issued to */
+.mi-headrow
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) 170px minmax(0, 1.1fr) minmax(0, 1.6fr);
+    gap: 12px;
+    align-items: end;
+    padding: 10px 16px 12px;
+}
+
+.mi-factrow
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 1.3fr) 120px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 10px;
+    align-items: center;
+    padding: 8px 16px;
+}
+
+/* the card of the parts fills what is left */
+.jr-left > .mi-card
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* # | part | allocated | issued | waiting | stock | issue qty */
+.mi-row
+{
+    display: grid;
+    grid-template-columns: 30px minmax(0, 2fr) 90px 90px 90px 90px 120px 30px;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 16px;
+}
+
+/* # | part | issued | returned | cost */
+.mi-row-view
+{
+    grid-template-columns: 30px minmax(0, 2fr) 100px 100px 130px;
+}
+
+.mi-row.jr-line
+{
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* the bar of a job card of the slip */
+.mi-job
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 34px;
+    padding: 4px 16px;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 13px;
+}
+
+.mi-job > i
+{
+    color: #1e3a8a;
+}
+
+.mi-job > b
+{
+    color: #0f2a44;
+}
+
+.mi-job > span
+{
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mi-job > em
+{
+    margin-left: auto;
+    font-style: normal;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.mi-foot
+{
+    flex: 0 0 auto;
+    padding: 8px 16px 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 1100px)
+{
+    .mi-headrow,
+    .mi-factrow
+    {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .mi-row
+    {
+        grid-template-columns: 26px minmax(0, 1.6fr) 64px 64px 64px 64px 90px 26px;
+    }
+}
+
+/* part by part : warehouse | date | issued to (the job card is in
+   the entry row) */
+.mi-headrow.mi-headrow-3
+{
+    grid-template-columns: 170px minmax(0, 1fr) minmax(0, 2fr);
+}
+
+/* the entry row : job card | part | waiting | stock | qty | Add */
+.jr-pick.mi-pick
+{
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.7fr) 90px 90px 100px auto;
+}
+
+.mi-tool
+{
+    gap: 8px;
+}
+
+/* the warehouse of the slip : a name, not a number */
+.jr-panel-facts > .mi-store b
+{
+    font-size: 13px;
+    color: #0f2a44;
+}
+
+
+/* the location chart of a job of the slip (owner 2026-11-18) */
+.mi-chart
+{
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.mi-chart:hover
+{
+    background: #dbeafe;
+}
+
+
+/* the header (owner 2026-11-19) : the ribbon never runs under the
+   buttons - a long name of the service center is cut with dots */
+.se-ribbon .se-chip-text strong
+{
+    display: block;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Parts Return : date | remarks */
+.mi-headrow.pr-headrow
+{
+    grid-template-columns: 170px minmax(0, 1fr);
+}
+
+
+/* Parts Return : the rate and the value too */
+.mi-row.pr-row
+{
+    grid-template-columns: 30px minmax(0, 2fr) 78px 70px 78px 70px 95px 100px 105px 30px;
+}
+
+.jr-pick.mi-pick.pr-pick
+{
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.7fr) 80px 80px 100px 90px auto;
+}

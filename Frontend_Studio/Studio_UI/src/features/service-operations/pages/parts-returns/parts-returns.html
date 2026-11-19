@@ -1,0 +1,352 @@
+<div class="app-list-page app-form-page">
+
+    <!-- =====================================================
+         ADD PARTS RETURN (owner 2026-11-19) : as the Parts Issue
+         page - the job card, its part, the quantity, Add.
+         Header  : Service Center | Return No | state
+         Left    : date and remarks, the parts of the job cards
+         Right   : the totals
+    ====================================================== -->
+
+    <app-page-header
+        title="Add Parts Return"
+        subtitle="Unused parts come back to the store"
+        icon="fas fa-rotate-left">
+
+        <div
+            pageHeaderCenter
+            class="se-center">
+
+            <div class="se-ribbon">
+
+                <div class="se-chip">
+                    <span class="se-chip-icon se-chip-icon-branch"><i class="fas fa-building"></i></span>
+                    <span class="se-chip-text">
+                        <span class="se-chip-label">Service Center</span>
+                        <strong>{{ branchName || 'Not set' }}</strong>
+                    </span>
+                </div>
+
+                <span class="se-ribbon-sep"></span>
+
+                <div class="se-chip">
+                    <span class="se-chip-icon se-chip-icon-no"><i class="fas fa-hashtag"></i></span>
+                    <span class="se-chip-text">
+                        <span class="se-chip-label">Return No</span>
+                        <strong>Given when it is posted</strong>
+                    </span>
+                </div>
+
+                <span class="se-ribbon-sep"></span>
+
+                <div class="se-state">
+                    <span
+                        class="se-status jc-state"
+                        style="background:#2563eb">New</span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Return Parts"
+            command1Icon="fas fa-rotate-left"
+            (command1Click)="post()"
+            command2Text="Clear"
+            command2Icon="fas fa-broom"
+            (command2Click)="clear()"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the list"
+            (rightCommandClick)="goToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-toolbar
+        leftFlex="1 1 auto"
+        rightFlex="0 0 auto">
+
+        <div
+            pageToolbarLeft
+            class="mi-tool">
+
+            <span class="mi-switch is-on">
+                <i class="fas fa-hand-pointer"></i>
+                Part by part
+            </span>
+
+            <span>Only the parts that sit on a job (issued, not returned yet) can come back</span>
+
+        </div>
+
+        <div
+            pageToolbarRight
+            class="jr-tool">
+
+            <b>{{ jobCount }} {{ jobCount === 1 ? 'job' : 'jobs' }} with parts</b>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas
+        [config]="formConfig">
+
+        <div
+            canvasBody
+            class="ws-body jr-body appcore-scrollbar">
+
+            <!-- ================= LEFT ================= -->
+
+            <div class="jr-left">
+
+                <!-- the return : date, remarks -->
+
+                <div class="se-card jr-jobcard">
+
+                    <div class="mi-headrow pr-headrow">
+
+                        <app-datepicker
+                            label="Date"
+                            [required]="true"
+                            [value]="$any(asDate(returnDate))"
+                            (valueChange)="onDate($event)">
+                        </app-datepicker>
+
+                        <app-textbox
+                            label="Remarks"
+                            placeholder="Optional"
+                            [value]="remarks"
+                            [maxLength]="500"
+                            (valueChange)="onRemarks($event)">
+                        </app-textbox>
+
+                    </div>
+
+                </div>
+
+                <!-- the parts of the job cards -->
+
+                <div class="se-card jr-card mi-card">
+
+                    <div class="se-card-header">
+                        <i class="fas fa-gears"></i>
+                        <span>Parts</span>
+                        <small>{{ slip.length }} {{ slip.length === 1 ? 'job card' : 'job cards' }}  -  {{ lineCount }} {{ lineCount === 1 ? 'part' : 'parts' }}  -  quantity {{ quantityOf(totalQuantity) }}</small>
+                    </div>
+
+                    <!-- job card, part, quantity, Add -->
+
+                    <div
+                        #entryRow
+                        class="jr-pick mi-pick pr-pick"
+                        (keydown.enter)="onEntryEnter($event, entryRow)">
+
+                        <app-search-dropdown
+                            label="Job Card"
+                            [placeholder]="loading ? 'Loading the jobs...' : 'Select the job card'"
+                            [items]="jobItems"
+                            figureField="token"
+                            labelField="label"
+                            valueField="value"
+                            [value]="entryJobId"
+                            (valueChange)="onEntryJob($event); focusEntry(entryRow, 'part')">
+                        </app-search-dropdown>
+
+                        <app-search-dropdown
+                            class="mi-e-part"
+                            label="Part"
+                            [placeholder]="entryJobId ? 'Select a part that sits on the job' : 'The job card first'"
+                            [items]="partItems"
+                            labelField="label"
+                            valueField="value"
+                            [value]="entryPartKey"
+                            [disabled]="!entryJobId"
+                            (valueChange)="onEntryPart($event); focusEntry(entryRow, 'qty')">
+                        </app-search-dropdown>
+
+                        <app-textbox
+                            label="Issued"
+                            placeholder="-"
+                            [value]="entryIssuedText"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="On Job"
+                            placeholder="-"
+                            [value]="entryOnJobText"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            label="Rate"
+                            placeholder="-"
+                            [value]="entryRateText"
+                            [readonly]="true">
+                        </app-textbox>
+
+                        <app-textbox
+                            class="jr-e-qty"
+                            label="Qty"
+                            [value]="entryQty"
+                            [maxLength]="8"
+                            (valueChange)="onEntryQty($event)">
+                        </app-textbox>
+
+                        <button
+                            type="button"
+                            class="jr-add"
+                            [disabled]="!entryPartKey"
+                            (click)="addEntry() && focusEntry(entryRow, 'part')">
+                            <i class="fas fa-plus"></i>
+                            Add
+                        </button>
+
+                    </div>
+
+                    <div class="mi-row pr-row jr-head">
+                        <span>#</span>
+                        <span>Part</span>
+                        <span class="jr-right">Allocated</span>
+                        <span class="jr-right">Issued</span>
+                        <span class="jr-right">Returned</span>
+                        <span class="jr-right">On Job</span>
+                        <span class="jr-right">Rate</span>
+                        <span class="jr-right">Return Qty</span>
+                        <span class="jr-right">Value</span>
+                        <span></span>
+                    </div>
+
+                    <div class="jr-rows appcore-scrollbar">
+
+                        @for (entry of slip; track entry.job.PublicId)
+                        {
+                            <div class="mi-job">
+
+                                <i class="fas fa-clipboard-list"></i>
+
+                                <b>{{ entry.job.JobCardNo }}</b>
+
+                                <span>{{ entry.job.CustomerName }}</span>
+
+                                <span>{{ entry.job.SerialToken }}</span>
+
+                                <em [style.color]="statusColor(entry.job.Status)">{{ entry.job.Status }}</em>
+
+                                <button
+                                    type="button"
+                                    class="jr-x"
+                                    title="Take the job card off the return"
+                                    (click)="removeJob(entry)">
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+
+                            </div>
+
+                            @for (line of entry.lines; track line.ItemKind + ':' + line.ItemId; let i = $index)
+                            {
+                                <div
+                                    class="mi-row pr-row jr-line"
+                                    [title]="placeTitle(line.Location)">
+
+                                    <span class="jr-no">{{ i + 1 }}</span>
+
+                                    <span class="jr-name">
+                                        <b>{{ line.ItemName }}</b>
+                                        <small>{{ line.ItemCode }}</small>
+                                    </span>
+
+                                    <span class="jr-amount">{{ quantityOf(line.Allocated) }}</span>
+
+                                    <span class="jr-amount">{{ quantityOf(line.Issued) }}</span>
+
+                                    <span class="jr-amount">{{ quantityOf(line.Returned) }}</span>
+
+                                    <span class="jr-amount"><b>{{ quantityOf(line.OnJob) }}</b></span>
+
+                                    <span class="jr-amount">{{ moneyOf(line.Rate) }}</span>
+
+                                    <input
+                                        class="jr-input jr-right"
+                                        inputmode="decimal"
+                                        maxlength="8"
+                                        title="0 : the part does not come back now"
+                                        [value]="line.Quantity"
+                                        (input)="onQuantity(line, $event)">
+
+                                    <span class="jr-amount">{{ valueOf(line) }}</span>
+
+                                    <button
+                                        type="button"
+                                        class="jr-x"
+                                        title="Take the part off the return"
+                                        (click)="removeLine(entry, line)">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+
+                                </div>
+                            }
+                        }
+                        @empty
+                        {
+                            <div class="jr-empty">{{ loading ? 'Loading the jobs...' : jobCount === 0 ? 'No part sits on an open job : nothing can come back.' : 'Nothing is on the return : select the job card and the part, give the quantity and press Add.' }}</div>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="bike"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b>Parts Return</b>
+
+                        <div class="ws-chips">
+                            <span class="ws-chip" data-tone="info">{{ day(returnDate) }}</span>
+                            <span class="ws-chip">New</span>
+                        </div>
+
+                    </div>
+
+                    <div class="jr-panel-facts">
+                        <div><span>Job Cards</span><b>{{ slip.length }}</b></div>
+                        <div><span>Parts</span><b>{{ lineCount }}</b></div>
+                        <div><span>Quantity</span><b>{{ quantityOf(totalQuantity) }}</b></div>
+                        <div><span>Value</span><b>{{ moneyOf(totalValue) }}</b></div>
+                    </div>
+
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-list-check"></i><span>Only what sits on the job can come back : issued, less what came back already</span></li>
+                        <li><i class="fas fa-warehouse"></i><span>The parts go back to the warehouse they went out of, at the cost they went out</span></li>
+                        <li><i class="fas fa-hashtag"></i><span>A return gets its own number for every parts issue it touches, the newest issue first</span></li>
+                        <li><i class="fas fa-lock"></i><span>Posted at once. After the job is invoiced a Service Return is used instead</span></li>
+                    </ul>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </app-page-canvas>
+
+    <app-toast></app-toast>
+
+    <app-confirm-dialog></app-confirm-dialog>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

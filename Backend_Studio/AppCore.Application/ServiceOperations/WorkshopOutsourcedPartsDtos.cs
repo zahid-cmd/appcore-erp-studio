@@ -129,8 +129,54 @@ public class CancelOutsourcedPartDto
 }
 
 
+// The page Job Outsourcing (owner 2026-11-19) : a job in work and
+// what is outsourced for it so far (the posted entries)
+public class OutsourcingJobDto
+{
+    public Guid PublicId { get; set; }
+
+    public long BranchId { get; set; }
+
+    public string BranchName { get; set; } = string.Empty;
+
+    public string JobCardNo { get; set; } = string.Empty;
+
+    public string JobDate { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public string JobType { get; set; } = string.Empty;
+
+    public string CustomerName { get; set; } = string.Empty;
+
+    public string Mobile { get; set; } = string.Empty;
+
+    public string ModelName { get; set; } = string.Empty;
+
+    public string BikeNo { get; set; } = string.Empty;
+
+    public string SerialToken { get; set; } = string.Empty;
+
+    public int Entries { get; set; }
+
+    public decimal CostTotal { get; set; }
+
+    public decimal SellTotal { get; set; }
+}
+
+public class OutsourcingJobsDto
+{
+    public string Today { get; set; } = string.Empty;
+
+    public List<OutsourcingJobDto> Jobs { get; set; } = new();
+}
+
 public interface IWorkshopOutsourcedPartsRepository
 {
+    // The page Job Outsourcing : the jobs that take outsourcing (the
+    // assigned ones, not closed)
+    Task<OutsourcingJobsDto> GetJobsAsync();
+
     Task<OutsourcedPartsDto> GetAsync(Guid jobCardPublicId, bool canAboveMrp);
 
     // Saved and posted at once (Dr Workshop WIP, Cr the vendor)

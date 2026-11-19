@@ -38,7 +38,9 @@ import
 from 'rxjs';
 
 import { PageHeaderComponent } from '../../../../shared/components/layout/page-header/page-header';
+import { PageToolbarComponent } from '../../../../shared/components/layout/page-toolbar/page-toolbar';
 import { PageCanvasComponent, PageCanvasConfig } from '../../../../shared/components/layout/page-canvas/page-canvas';
+import { StepTabsComponent, StepTabsStep } from '../../../../shared/components/layout/step-tabs/step-tabs';
 import { WorkspaceArtComponent } from '../../../../shared/components/layout/workspace-art/workspace-art';
 import { SearchDropdownComponent } from '../../../../shared/components/controls/search-dropdown/search-dropdown';
 import { TextboxComponent } from '../../../../shared/components/controls/textbox/textbox';
@@ -70,6 +72,8 @@ interface Option
 {
     label: string;
     value: any;
+    // the serial token of the job : the big figure of its row
+    token?: string;
 }
 
 // A service picked for the job : its standard time (minutes)
@@ -106,7 +110,9 @@ interface PickedService
     [
         CommonModule,
         PageHeaderComponent,
+        PageToolbarComponent,
         PageCanvasComponent,
+        StepTabsComponent,
         WorkspaceArtComponent,
         SearchDropdownComponent,
         TextboxComponent,
@@ -145,6 +151,26 @@ implements OnInit
         bodyScrollable:true,
         fixedHeight:true
     };
+
+    // the toolbar : the one step of the page
+    readonly steps:
+        StepTabsStep[] =
+    [
+        { id:'assign', label:'Job Assignment' },
+        { id:'observations', label:'Observations' }
+    ];
+
+    tab =
+        'assign';
+
+    // the whole card has come (the list knows no observations)
+    cardWhole =
+        false;
+
+    get observationRows(): { Observation: string; Note: string }[]
+    {
+        return (this.card?.Observations ?? []).map(x => ({ Observation:x.Observation ?? '', Note:x.Note ?? '' }));
+    }
 
     loading =
         true;
@@ -223,37 +249,166 @@ implements OnInit
     // Load
     //-----------------------------------------------------------
 
+    // The page opens with a job (from a list) or without one (the
+    // Job Assignment button) : the job is then picked here, from the
+    // ones waiting (Pending) and the ones assigned already
+    private routeId =
+        '';
+
+    jobItems:
+        Option[] = [];
+
+    jobPick:
+        string | null = null;
+
     ngOnInit():
         void
     {
-        const id = this.route.snapshot.paramMap.get('id') ?? '';
+        this.routeId = this.route.snapshot.paramMap.get('id') ?? '';
 
-        forkJoin([this.ws.getJobCardLookups(), this.ws.getJobCard(id)])
+        this.deliveryDate = hrToText(new Date());
+
+        // The jobs : they come quickly, the page does not wait for
+        // the lists (employees, bays ...) to show them
+        this.ws.getJobCards()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(
             {
-                next:([lookups, card]) =>
+                next:cards =>
                 {
-                    this.lookups = lookups;
-                    this.card = card;
-                    this.fill();
-                    this.loading = false;
+                    this.heads =
+                        // Only the jobs still waiting. An assigned job is
+                        // not picked here : it is changed by the Edit
+                        // button of the list (owner 2026-11-18)
+                        (cards ?? []).filter(x => x.Status === 'Open' || (x.Status === 'Assigned' && x.PublicId === this.routeId));
+
+                    this.jobItems =
+                        this.heads.map(x => ({
+                            label:[x.JobCardNo, x.CustomerName, jobToken(x), x.Status === 'Open' ? 'Pending' : x.Status].filter(v => !!v).join('   -   '),
+                            value:x.PublicId,
+                            token:jobToken(x)
+                        }));
+
+                    this.jobsLoading = false;
+
+                    if (this.routeId)
+                    {
+                        this.onJob(this.routeId);
+                    }
+
                     this.cdr.detectChanges();
                 },
                 error:error =>
                 {
-                    this.loading = false;
-                    this.toast.error('Assignment', error?.error?.message ?? 'The job card could not be loaded. (Was ServiceOperations_JobCard_Assignment.sql run and the API restarted ?)');
-                    this.cdr.detectChanges();
+                    this.jobsLoading = false;
+                    this.loadFailed(error);
                 }
+            });
+
+        this.ws.getJobCardLookups()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(
+            {
+                next:lookups =>
+                {
+                    this.lookups = lookups;
+                    this.loading = false;
+
+                    // a job picked before the lists came
+                    if (this.card)
+                    {
+                        this.fill();
+                    }
+                    else
+                    {
+                        this.deliveryDate = (lookups.Today ?? '').substring(0, 10) || this.deliveryDate;
+                    }
+
+                    this.cdr.detectChanges();
+                },
+                error:error => this.loadFailed(error)
+            });
+    }
+
+    // The jobs of the list (their heads : enough to show the job at
+    // once, before its whole card comes)
+    private heads:
+        JobCard[] = [];
+
+    jobsLoading =
+        true;
+
+    private loadFailed(error: any):
+        void
+    {
+        this.loading = false;
+        this.toast.error('Assignment', error?.error?.message ?? 'The job cards could not be loaded. (Was ServiceOperations_JobCard_Assignment.sql run and the API restarted ?)');
+        this.cdr.detectChanges();
+    }
+
+    // A job is picked : it comes onto the page
+    onJob(value: any):
+        void
+    {
+        const id = String(value ?? '');
+
+        if (!id)
+        {
+            return;
+        }
+
+        this.jobPick = id;
+
+        // at once : what the list knows of the job
+        const head = this.heads.find(x => x.PublicId === id);
+
+        this.cardWhole = false;
+
+        if (head)
+        {
+            this.card = head;
+            this.note = '';
+            this.fill();
+            this.cdr.detectChanges();
+        }
+
+        // then the whole card (its observations)
+        this.ws.getJobCard(id)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(
+            {
+                next:card =>
+                {
+                    if (this.jobPick !== id)
+                    {
+                        return;
+                    }
+
+                    this.card = card;
+                    this.cardWhole = true;
+
+                    if (!head)
+                    {
+                        this.note = '';
+                        this.fill();
+                    }
+
+                    this.cdr.detectChanges();
+                },
+                error:error => this.loadFailed(error)
             });
     }
 
     private fill():
         void
     {
-        const card = this.card!;
-        const lookups = this.lookups!;
+        if (!this.card || !this.lookups)
+        {
+            return;
+        }
+
+        const card = this.card;
+        const lookups = this.lookups;
 
         // who is busy : not counting this job itself
         const busyBay = (id: number) =>
@@ -274,7 +429,7 @@ implements OnInit
             (lookups.Employees ?? []).map(x => ({ label:x.Name, value:x.Id }));
 
         this.technicianItems =
-            (lookups.Employees ?? []).map(x => ({ label:busyTechnician(x.Id) ? `${x.Name}  -  busy : ${busyTechnician(x.Id)}` : x.Name, value:x.Id }));
+            (lookups.Employees ?? []).map(x => ({ label:busyTechnician(x.Id) ? `${x.Name}  -  has ${busyTechnician(x.Id)} : will wait` : x.Name, value:x.Id }));
 
         this.bayItems =
             (lookups.Bays ?? [])
@@ -373,7 +528,11 @@ implements OnInit
 
     get branchName(): string
     {
-        return (this.lookups?.Branches ?? []).find(x => x.Id === this.card?.BranchId)?.Name ?? this.card?.BranchName ?? '';
+        const centers = this.lookups?.Branches ?? [];
+
+        return this.card
+            ? centers.find(x => x.Id === this.card?.BranchId)?.Name ?? this.card.BranchName ?? ''
+            : centers.length === 1 ? centers[0].Name : '';
     }
 
     get dateText(): string
@@ -616,7 +775,8 @@ implements OnInit
         this.cdr.detectChanges();
     }
 
-    // Busy is a warning only : a technician can have several jobs
+    // Busy never blocks (owner 2026-11-19) : a technician takes
+    // several jobs - the later ones wait for the one in hand
     private warnBusy(id: number | null, busy: { [id: number]: string } | undefined, who: string):
         void
     {
@@ -624,7 +784,7 @@ implements OnInit
 
         if (no && no !== this.card?.JobCardNo)
         {
-            this.toast.error('Busy', `${who} has ${no} now. It can still be picked.`);
+            this.toast.info('Waiting', `${who} has ${no} now : this job will wait after it.`);
         }
     }
 
@@ -693,14 +853,15 @@ implements OnInit
                 this.card.PublicId,
                 {
                     Simple:true,
-                    ServiceEngineerEmployeeId:this.engineerId,
+                    ServiceEngineerEmployeeId:this.engineerId ?? 0,
                     SupervisorEmployeeId:this.supervisorId,
-                    TechnicianEmployeeId:this.technicianId,
+                    TechnicianEmployeeId:this.technicianId ?? 0,
                     WorkshopBayId:this.bayId,
                     StandardMinutes:standard,
                     AllowedMinutes:allowed,
                     ExpectedAt:expected.toISOString(),
-                    Services:this.services.map(x => ({ ItemKind:x.kind, ItemId:x.id })),
+                    // the services of the card stay as they are
+                    Services:null,
                     Note:this.note.trim()
                 })
             .subscribe(
@@ -725,8 +886,17 @@ implements OnInit
     back():
         void
     {
-        void this.router.navigate(['../../list'], { relativeTo:this.route });
+        void this.router.navigate([this.routeId ? '../../list' : '../list'], { relativeTo:this.route });
     }
+}
+
+// 1118001 : the month and the day of the job, then its serial
+function jobToken(card: JobCard): string
+{
+    const serial = (card.WelcomeTokenNo ?? '').replace(/^W-/, '');
+    const date = (card.JobDate ?? '').substring(0, 10);
+
+    return serial && date.length === 10 ? date.substring(5, 7) + date.substring(8, 10) + serial : serial;
 }
 
 

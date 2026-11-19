@@ -191,6 +191,65 @@ public class WorkshopOutsourcedPartsRepository
     public async Task<OutsourcedPartsDto> GetAsync(Guid jobCardPublicId, bool canAboveMrp) =>
         await ReadAsync(await CardAsync(jobCardPublicId), canAboveMrp);
 
+    // The page Job Outsourcing : the jobs in work
+    public async Task<OutsourcingJobsDto> GetJobsAsync()
+    {
+        List<JobCards> cards =
+            await _context.Set<JobCards>().AsNoTracking()
+                .Where(x => !x.IsDeleted && Ws.Workable.Contains(x.Status))
+                .OrderBy(x => x.JobCardId)
+                .ToListAsync();
+
+        List<long> cardIds = cards.Select(x => x.JobCardId).ToList();
+
+        var sums =
+            (await Rows.AsNoTracking()
+                .Where(x => cardIds.Contains(x.JobCardId) && x.Status == Wo.Posted)
+                .Select(x => new { x.JobCardId, x.CostAmount, x.SellAmount })
+                .ToListAsync())
+            .GroupBy(x => x.JobCardId)
+            .ToDictionary(g => g.Key, g => new { Count = g.Count(), Cost = g.Sum(x => x.CostAmount), Sell = g.Sum(x => x.SellAmount) });
+
+        Dictionary<long, string> branches = await Ws.BranchNamesAsync(_context);
+
+        return new OutsourcingJobsDto
+        {
+            Today = HrCalendar.Day(HrCalendar.Today()),
+            Jobs =
+                cards.Select(x =>
+                {
+                    string serial = (x.WelcomeTokenNo ?? string.Empty).Trim();
+
+                    if (serial.StartsWith("W-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        serial = serial.Substring(2);
+                    }
+
+                    sums.TryGetValue(x.JobCardId, out var sum);
+
+                    return new OutsourcingJobDto
+                    {
+                        PublicId = x.PublicId,
+                        BranchId = x.BranchId,
+                        BranchName = branches.TryGetValue(x.BranchId, out string? name) ? name : string.Empty,
+                        JobCardNo = x.JobCardNo,
+                        JobDate = HrCalendar.Day(x.JobDate),
+                        Status = x.Status,
+                        JobType = x.JobType,
+                        CustomerName = x.CustomerName,
+                        Mobile = x.Mobile,
+                        ModelName = x.ModelName,
+                        BikeNo = x.RegistrationNo.Length > 0 ? x.RegistrationNo : x.ChassisNo,
+                        SerialToken = serial.Length == 0 ? string.Empty : x.JobDate.ToString("MMdd") + serial,
+                        Entries = sum?.Count ?? 0,
+                        CostTotal = sum?.Cost ?? 0m,
+                        SellTotal = sum?.Sell ?? 0m
+                    };
+                })
+                .ToList()
+        };
+    }
+
 
     //===========================================================
     // A part is bought outside

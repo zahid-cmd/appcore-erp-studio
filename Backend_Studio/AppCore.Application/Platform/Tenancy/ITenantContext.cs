@@ -41,7 +41,13 @@ public sealed record TenantInfo(
     string Status,
     string HostName,
     string DatabaseName,
-    string ConnectionString)
+    string ConnectionString,
+
+    // Limits set in the Console (Tenants.MaxCompanies / MaxBranches) :
+    // the client makes his own company and branches up to these
+    // numbers. MaxBranches null = no limit.
+    int MaxCompanies = 1,
+    int? MaxBranches = null)
 {
     // Console status ReadOnly : the company can look, not change
     public bool IsReadOnly =>

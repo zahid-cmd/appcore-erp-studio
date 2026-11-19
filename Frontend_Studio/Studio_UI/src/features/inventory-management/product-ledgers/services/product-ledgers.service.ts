@@ -157,7 +157,8 @@ export class ProductLedgersService
                                 SubCategoryId:num(pick(p, 'SubCategoryId')),
                                 IsActive:!!pick(p, 'IsActive')
                             })
-                        )
+                        ),
+                        AccessoryBranchIds:list(pick(x, 'AccessoryBranchIds')).map(id => num(id))
                     })
                 )
             );

@@ -72,6 +72,10 @@ internal static class Sb
     // A job card can be invoiced from here
     public static readonly string[] Billable = { Ws.WorkDone, Ws.Ready };
 
+    // Job Closing (owner 2026-11-19) : a job in work is closed and
+    // billed in one step
+    public static readonly string[] Closable = { Ws.InProgress, Ws.WaitingParts, Ws.WorkDone, Ws.Ready };
+
     public const string MembershipJob = "Membership Service";
 
     public static void Add(Dictionary<string, decimal> sums, string ledger, decimal amount)
@@ -262,7 +266,10 @@ public class ServiceInvoicesRepository
         // The estimate whose collected charge comes off this invoice
         public long? EstimateId { get; set; }
 
+        // (the totals of the lines are after their discounts)
         public decimal Gross => Lines.Sum(x => x.Dto.Total);
+
+        public decimal LineDiscount => Lines.Sum(x => x.Dto.Discount);
 
         public decimal Grand => Gross - Discount;
     }
@@ -332,7 +339,14 @@ public class ServiceInvoicesRepository
             priced.Errors.Add($"The invoice cannot be dated before the job card ({HrCalendar.Day(card.JobDate)}).");
         }
 
-        if (!Sb.Billable.Contains(card.Status))
+        if (dto.Closing)
+        {
+            if (!Sb.Closable.Contains(card.Status))
+            {
+                priced.Errors.Add($"{card.JobCardNo} is {card.Status} : a job is closed when it is in work (In Progress).");
+            }
+        }
+        else if (!Sb.Billable.Contains(card.Status))
         {
             priced.Errors.Add($"{card.JobCardNo} is {card.Status} : a job card is invoiced when its work is done (Work Done or Ready).");
         }
@@ -721,6 +735,7 @@ public class ServiceInvoicesRepository
                                 Rate = bought.SellRate,
                                 Amount = billed ? bought.SellAmount : 0m,
                                 Cost = bought.CostAmount,
+                                IsOutsourced = true,
                                 Note = Wp.Limit($"Outsourced {bought.PurchaseNo} : {bought.VendorName}", 200)
                             },
                         IncomeLedger = sales,
@@ -758,7 +773,7 @@ public class ServiceInvoicesRepository
                 groups.Where(x => x.ItemKind == part.ItemKind && x.ItemId == part.ItemId).Sum(x => x.Quantity)
                 + outsourced.Where(x => x.ItemKind == part.ItemKind && x.ItemId == part.ItemId).Sum(x => x.Quantity);
 
-            if (got < part.Quantity)
+            if (got < part.Quantity && !dto.Closing)
             {
                 priced.Warnings.Add($"{part.ItemName} : the job card needs {Wp.Qty(part.Quantity)}, {Wp.Qty(got)} was issued or outsourced. Only issued and outsourced parts are billed.");
             }
@@ -866,6 +881,85 @@ public class ServiceInvoicesRepository
         }
 
         //-------------------------------------------------------
+        // The item discount (owner 2026-11-19) : a percent that
+        // every charged line takes, then an amount the charged
+        // lines absorb by their value (the last one takes what the
+        // rounding leaves). VAT is counted after the discount.
+        //-------------------------------------------------------
+
+        for (int i = 0; i < priced.Lines.Count; i++)
+        {
+            priced.Lines[i].Dto.LineNo = i + 1;
+        }
+
+        decimal itemPercent = billed ? dto.ItemDiscountPercent : 0m;
+
+        decimal itemAmount = billed ? Ws.Round(dto.ItemDiscountAmount) : 0m;
+
+        if (itemPercent < 0m || itemPercent > 100m)
+        {
+            priced.Errors.Add("The item discount percent is between 0 and 100.");
+            itemPercent = 0m;
+        }
+
+        List<ServiceInvoiceLineDto> charged = priced.Lines.Select(l => l.Dto).Where(l => l.Amount > 0m).ToList();
+
+        if (itemPercent > 0m)
+        {
+            foreach (ServiceInvoiceLineDto x in charged)
+            {
+                x.Discount = Ws.Round(x.Amount * itemPercent / 100m);
+                x.DiscountText = itemPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "%";
+            }
+        }
+
+        decimal open = charged.Sum(x => x.Amount - x.Discount);
+
+        if (itemAmount < 0m || itemAmount > open)
+        {
+            priced.Errors.Add($"The item discount amount cannot be less than 0 or more than the lines ({open:N2}).");
+            itemAmount = 0m;
+        }
+
+        if (itemAmount > 0m && open > 0m)
+        {
+            decimal left = itemAmount;
+
+            ServiceInvoiceLineDto last = charged.Last(x => x.Amount - x.Discount > 0m);
+
+            foreach (ServiceInvoiceLineDto x in charged.Where(x => x.Amount - x.Discount > 0m))
+            {
+                decimal room = x.Amount - x.Discount;
+
+                decimal share = x == last ? left : Math.Min(left, Ws.Round(itemAmount * room / open));
+
+                share = Math.Min(share, room);
+
+                x.Discount += share;
+
+                left -= share;
+            }
+        }
+
+        foreach (ServiceInvoiceLineDto x in charged.Where(x => x.Discount > 0m))
+        {
+            // VAT inside the price : the total of the line is its amount
+            bool inside = x.VatAmount > 0m && x.Total == x.Amount;
+
+            decimal net = x.Amount - x.Discount;
+
+            if (x.VatAmount > 0m && x.VatRate > 0m)
+            {
+                x.VatAmount = inside ? Ws.Round(net * x.VatRate / (100m + x.VatRate)) : Ws.Round(net * x.VatRate / 100m);
+                x.Total = inside ? net : net + x.VatAmount;
+            }
+            else
+            {
+                x.Total = net;
+            }
+        }
+
+        //-------------------------------------------------------
         // The Estimate Charge the customer paid on the estimate of
         // this job card comes off : the customer took the service
         //-------------------------------------------------------
@@ -904,7 +998,8 @@ public class ServiceInvoicesRepository
                                 VatRate = paidEstimate.ChargeVatRate,
                                 VatAmount = -paidEstimate.ChargeVatAmount,
                                 Total = -paidEstimate.ChargeTotal,
-                                Note = paidEstimate.ChargeReceiptVoucherNo
+                                Note = paidEstimate.ChargeReceiptVoucherNo,
+                                LineNo = priced.Lines.Count + 1
                             },
                         IncomeLedger = paidEstimate.ChargeIncomeLedgerCode,
                         VatLedger = paidEstimate.ChargeVatLedgerCode
@@ -924,7 +1019,7 @@ public class ServiceInvoicesRepository
             priced.Discount = 0m;
         }
 
-        if (priced.Discount > 0m)
+        if (priced.Discount > 0m || priced.LineDiscount > 0m)
         {
             priced.DiscountLedger = PostingLedgerCodes.TryGet(_context, Sb.PurposeDiscount);
 
@@ -993,6 +1088,7 @@ public class ServiceInvoicesRepository
         dto.OutsideTotal = dto.Lines.Where(x => x.LineType == Sb.Outside).Sum(x => x.Amount);
         dto.VatTotal = dto.Lines.Sum(x => x.VatAmount);
         dto.PartsCost = dto.Lines.Where(x => x.LineType == Sb.Part).Sum(x => x.Cost);
+        dto.LineDiscount = dto.Lines.Sum(x => x.Discount);
         dto.GrandTotal = dto.Lines.Sum(x => x.Total) - dto.Discount;
     }
 
@@ -1015,8 +1111,306 @@ public class ServiceInvoicesRepository
     }
 
     // The figures of a job card as an invoice, nothing saved
-    public async Task<ServiceInvoiceDto> PriceAsync(SaveServiceInvoiceDto dto, bool canCredit) =>
-        await DraftAsync(await PriceAsync(dto), dto);
+    public async Task<ServiceInvoiceDto> PriceAsync(SaveServiceInvoiceDto dto, bool canCredit)
+    {
+        if (dto.Closing)
+        {
+            // no money at the closing
+            dto.Payments = new();
+            dto.Deliver = false;
+        }
+
+        Priced priced = await PriceAsync(dto);
+
+        // (a closing : the parts not issued show on its Parts tab)
+        return await DraftAsync(priced, dto);
+    }
+
+    // Job Closing : the parts of a job (allocated, issued, returned,
+    // on the job, remaining), its issues and returns, its complaints
+    // and observations with what became of them
+    public async Task<ClosingDetailDto> GetClosingDetailAsync(Guid jobCardPublicId)
+    {
+        JobCards card =
+            await Cards.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == jobCardPublicId && !x.IsDeleted)
+            ?? throw new KeyNotFoundException("The job card was not found.");
+
+        var result = new ClosingDetailDto();
+
+        List<JobCardParts> needed =
+            await _context.Set<JobCardParts>().AsNoTracking().Where(x => x.JobCardId == card.JobCardId).OrderBy(x => x.LineNo).ToListAsync();
+
+        var issued =
+            await (from line in _context.Set<PartsIssueLines>().AsNoTracking()
+                   join issue in _context.Set<PartsIssues>().AsNoTracking() on line.PartsIssueId equals issue.PartsIssueId
+                   where issue.JobCardId == card.JobCardId
+                   orderby issue.PartsIssueId, line.LineNo
+                   select new { issue.PartsIssueId, issue.IssueNo, issue.MisNo, issue.IssueDate, line.ItemKind, line.ItemId, line.ItemCode, line.ItemName, line.Quantity, line.ReturnedQuantity, line.Cost })
+                .ToListAsync();
+
+        var returned =
+            await (from line in _context.Set<PartsReturnLines>().AsNoTracking()
+                   join back in _context.Set<PartsReturns>().AsNoTracking() on line.PartsReturnId equals back.PartsReturnId
+                   where back.JobCardId == card.JobCardId
+                   orderby back.PartsReturnId, line.LineNo
+                   select new { back.ReturnNo, back.ReturnDate, back.PartsIssueId, line.ItemCode, line.ItemName, line.Quantity, line.Cost })
+                .ToListAsync();
+
+        Dictionary<long, string> issueNos = issued.GroupBy(x => x.PartsIssueId).ToDictionary(g => g.Key, g => g.First().IssueNo);
+
+        // the parts of the store, by item : the job card first, then
+        // what was issued without being on it
+        var keys = new List<(string Kind, long Id)>();
+
+        foreach (JobCardParts part in needed.Where(x => x.ItemId != null && (x.ItemKind == Wp.SparePart || x.ItemKind == Wp.Accessory)))
+        {
+            if (!keys.Contains((part.ItemKind, part.ItemId!.Value)))
+            {
+                keys.Add((part.ItemKind, part.ItemId!.Value));
+            }
+        }
+
+        foreach (var line in issued)
+        {
+            if (!keys.Contains((line.ItemKind, line.ItemId)))
+            {
+                keys.Add((line.ItemKind, line.ItemId));
+            }
+        }
+
+        foreach ((string kind, long id) in keys)
+        {
+            List<JobCardParts> own = needed.Where(x => x.ItemKind == kind && x.ItemId == id).ToList();
+
+            var moved = issued.Where(x => x.ItemKind == kind && x.ItemId == id).ToList();
+
+            decimal allocated = own.Sum(x => x.Quantity);
+            decimal given = moved.Sum(x => x.Quantity);
+            decimal back = moved.Sum(x => x.ReturnedQuantity);
+
+            result.Parts.Add(
+                new ClosingPartDto
+                {
+                    ItemKind = kind,
+                    ItemCode = own.FirstOrDefault()?.ItemCode ?? moved.First().ItemCode,
+                    ItemName = own.FirstOrDefault()?.ItemName ?? moved.First().ItemName,
+                    Allocated = allocated,
+                    Issued = given,
+                    Returned = back,
+                    OnJob = given - back,
+                    Remaining = Math.Max(0m, allocated - (given - back)),
+                    Rate = own.FirstOrDefault()?.Rate ?? 0m
+                });
+        }
+
+        // parts typed on the job card : never from the store, billed
+        // as they are
+        foreach (JobCardParts part in needed.Where(x => x.ItemId == null || (x.ItemKind != Wp.SparePart && x.ItemKind != Wp.Accessory)))
+        {
+            result.Parts.Add(
+                new ClosingPartDto
+                {
+                    ItemKind = "Other",
+                    ItemCode = part.ItemCode,
+                    ItemName = part.ItemName,
+                    Allocated = part.Quantity,
+                    OnJob = part.Quantity,
+                    Rate = part.Rate
+                });
+        }
+
+        result.Issues =
+            issued.Select(x => new ClosingMoveDto
+            {
+                DocNo = x.IssueNo,
+                RefNo = x.MisNo,
+                Date = HrCalendar.Day(x.IssueDate),
+                ItemCode = x.ItemCode,
+                ItemName = x.ItemName,
+                Quantity = x.Quantity,
+                Returned = x.ReturnedQuantity,
+                Cost = x.Cost
+            }).ToList();
+
+        result.Returns =
+            returned.Select(x => new ClosingMoveDto
+            {
+                DocNo = x.ReturnNo,
+                RefNo = issueNos.TryGetValue(x.PartsIssueId, out string? no) ? no : string.Empty,
+                Date = HrCalendar.Day(x.ReturnDate),
+                ItemCode = x.ItemCode,
+                ItemName = x.ItemName,
+                Quantity = x.Quantity,
+                Cost = x.Cost
+            }).ToList();
+
+        result.Findings.AddRange(
+            (await _context.Set<JobCardComplaints>().AsNoTracking().Where(x => x.JobCardId == card.JobCardId).OrderBy(x => x.LineNo).ToListAsync())
+            .Select(x => new ClosingFindingDto { Kind = FindingComplaint, Id = x.JobCardComplaintId, Text = x.Complaint, Result = x.Result, ResultNote = x.ResultNote }));
+
+        result.Findings.AddRange(
+            (await _context.Set<JobCardObservations>().AsNoTracking().Where(x => x.JobCardId == card.JobCardId).OrderBy(x => x.LineNo).ToListAsync())
+            .Select(x => new ClosingFindingDto { Kind = FindingObservation, Id = x.JobCardObservationId, Text = x.Observation, Note = x.Note, Result = x.Result, ResultNote = x.ResultNote }));
+
+        // the outside works and the parts bought outside for the job
+        result.Outsourced =
+            (await Wo.PostedAsync(_context, card.JobCardId))
+            .Select(x => new ClosingOutsourcedDto
+            {
+                Kind = x.ItemKind == Wo.OutsideWork ? "Work" : "Part",
+                DocNo = x.PurchaseNo,
+                Date = HrCalendar.Day(x.PurchaseDate),
+                ItemCode = x.ItemCode,
+                ItemName = x.ItemName,
+                VendorName = x.VendorName,
+                BillNo = x.BillNo,
+                Quantity = x.Quantity,
+                Cost = x.CostAmount,
+                Amount = x.SellAmount
+            }).ToList();
+
+        return result;
+    }
+
+    private const string FindingComplaint = "Complaint";
+
+    private const string FindingObservation = "Observation";
+
+    private static readonly string[] FindingResults = { "Solved", "Needs Further Work", "Not Done" };
+
+    // Job Closing : what became of each complaint and observation is
+    // written on the job card. Every one must be marked (owner
+    // 2026-11-19) : a job with one left unmarked is not closed
+    private async Task SaveFindingsAsync(long jobCardId, List<ClosingFindingDto>? findings)
+    {
+        findings ??= new List<ClosingFindingDto>();
+
+        List<JobCardComplaints> complaints = await _context.Set<JobCardComplaints>().Where(x => x.JobCardId == jobCardId).ToListAsync();
+
+        List<JobCardObservations> observations = await _context.Set<JobCardObservations>().Where(x => x.JobCardId == jobCardId).ToListAsync();
+
+        foreach (ClosingFindingDto f in findings)
+        {
+            string result = FindingResults.FirstOrDefault(x => string.Equals(x, (f.Result ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
+
+            string note = Ws.Clean(f.ResultNote, 300, "Note");
+
+            if (f.Kind == FindingComplaint)
+            {
+                JobCardComplaints? row = complaints.FirstOrDefault(x => x.JobCardComplaintId == f.Id);
+
+                if (row != null)
+                {
+                    row.Result = result;
+                    row.ResultNote = note;
+                }
+            }
+            else
+            {
+                JobCardObservations? row = observations.FirstOrDefault(x => x.JobCardObservationId == f.Id);
+
+                if (row != null)
+                {
+                    row.Result = result;
+                    row.ResultNote = note;
+                }
+            }
+        }
+
+        int unmarked =
+            complaints.Count(x => string.IsNullOrWhiteSpace(x.Result))
+            + observations.Count(x => string.IsNullOrWhiteSpace(x.Result));
+
+        if (unmarked > 0)
+        {
+            throw new InvalidOperationException($"{unmarked} observation(s) of the job are not marked : mark each one Solved, Needs Further Work or Not Done (tab Observations).");
+        }
+    }
+
+    //-----------------------------------------------------------
+    // Job Closing (owner 2026-11-19)
+    //-----------------------------------------------------------
+
+    // The parts allocated to the jobs and not issued : job card ->
+    // (parts, quantity)
+    private async Task<Dictionary<long, (int Parts, decimal Quantity)>> UnissuedAsync(List<long> cardIds)
+    {
+        var allocated =
+            await _context.Set<JobCardParts>().AsNoTracking()
+                .Where(x => cardIds.Contains(x.JobCardId) && x.ItemId != null && (x.ItemKind == Wp.SparePart || x.ItemKind == Wp.Accessory))
+                .GroupBy(x => new { x.JobCardId, x.ItemKind, x.ItemId })
+                .Select(g => new { g.Key.JobCardId, g.Key.ItemKind, g.Key.ItemId, Quantity = g.Sum(x => x.Quantity) })
+                .ToListAsync();
+
+        var issued =
+            (await (from line in _context.Set<PartsIssueLines>().AsNoTracking()
+                    join issue in _context.Set<PartsIssues>().AsNoTracking() on line.PartsIssueId equals issue.PartsIssueId
+                    where cardIds.Contains(issue.JobCardId)
+                    group line by new { issue.JobCardId, line.ItemKind, line.ItemId } into g
+                    select new { g.Key.JobCardId, g.Key.ItemKind, g.Key.ItemId, Quantity = g.Sum(x => x.Quantity - x.ReturnedQuantity) })
+                .ToListAsync())
+            .ToDictionary(x => $"{x.JobCardId}:{x.ItemKind}:{x.ItemId}", x => x.Quantity);
+
+        return allocated
+            .Select(x => new { x.JobCardId, Waiting = x.Quantity - issued.GetValueOrDefault($"{x.JobCardId}:{x.ItemKind}:{x.ItemId}", 0m) })
+            .Where(x => x.Waiting > 0m)
+            .GroupBy(x => x.JobCardId)
+            .ToDictionary(g => g.Key, g => (g.Count(), g.Sum(x => x.Waiting)));
+    }
+
+    // The jobs in work that have no bill yet
+    public async Task<ClosingLookupsDto> GetClosingLookupsAsync()
+    {
+        List<long> invoiced =
+            await Invoices.AsNoTracking().Where(x => x.Status == Sb.Posted).Select(x => x.JobCardId).ToListAsync();
+
+        List<JobCards> cards =
+            await Cards.AsNoTracking()
+                .Where(x => !x.IsDeleted && Sb.Closable.Contains(x.Status) && !invoiced.Contains(x.JobCardId))
+                .OrderBy(x => x.JobCardId)
+                .ToListAsync();
+
+        Dictionary<long, string> branches = await Ws.BranchNamesAsync(_context);
+
+        var unissued = await UnissuedAsync(cards.Select(x => x.JobCardId).ToList());
+
+        return new ClosingLookupsDto
+        {
+            Today = HrCalendar.Day(HrCalendar.Today()),
+            Jobs =
+                cards.Select(x =>
+                {
+                    string serial = (x.WelcomeTokenNo ?? string.Empty).Trim();
+
+                    if (serial.StartsWith("W-", StringComparison.OrdinalIgnoreCase))
+                    {
+                        serial = serial.Substring(2);
+                    }
+
+                    var (parts, quantity) = unissued.GetValueOrDefault(x.JobCardId);
+
+                    return new ClosingJobDto
+                    {
+                        PublicId = x.PublicId,
+                        BranchId = x.BranchId,
+                        BranchName = branches.TryGetValue(x.BranchId, out string? name) ? name : string.Empty,
+                        JobCardNo = x.JobCardNo,
+                        JobDate = HrCalendar.Day(x.JobDate),
+                        Status = x.Status,
+                        JobType = x.JobType,
+                        CustomerName = x.CustomerName,
+                        Mobile = x.Mobile,
+                        ModelName = x.ModelName,
+                        BikeNo = x.RegistrationNo.Length > 0 ? x.RegistrationNo : x.ChassisNo,
+                        // 1118004 : the month and the day of the job, the serial of its token
+                        SerialToken = serial.Length == 0 ? string.Empty : x.JobDate.ToString("MMdd") + serial,
+                        UnissuedParts = parts,
+                        UnissuedQuantity = quantity
+                    };
+                })
+                .ToList()
+        };
+    }
 
 
     //===========================================================
@@ -1048,6 +1442,7 @@ public class ServiceInvoicesRepository
         dto.OutsideTotal = x.OutsideTotal;
         dto.VatTotal = x.VatTotal;
         dto.Discount = x.Discount;
+        dto.LineDiscount = x.LineDiscount;
         dto.GrandTotal = x.GrandTotal;
         dto.PaidAmount = x.PaidAmount;
         dto.DueAmount = x.GrandTotal - x.PaidAmount;
@@ -1089,6 +1484,9 @@ public class ServiceInvoicesRepository
             .Select(x => new ServiceInvoiceLineDto
             {
                 LineId = x.ServiceInvoiceLineId,
+                LineNo = x.LineNo,
+                DiscountText = x.DiscountText,
+                Discount = x.Discount,
                 LineType = x.LineType,
                 ItemKind = x.ItemKind,
                 ItemId = x.ItemId,
@@ -1131,6 +1529,13 @@ public class ServiceInvoicesRepository
 
     public async Task<ServiceInvoiceDto> PostAsync(SaveServiceInvoiceDto dto, bool canCredit, long userId)
     {
+        if (dto.Closing)
+        {
+            // Job Closing : the bill only - the Billing stage collects
+            dto.Payments = new();
+            dto.Deliver = false;
+        }
+
         Priced priced = await PriceAsync(dto);
 
         if (priced.Errors.Count > 0)
@@ -1182,7 +1587,9 @@ public class ServiceInvoicesRepository
             throw new InvalidOperationException($"The collection ({paid:N2}) is more than the invoice ({grand:N2}).");
         }
 
-        if (paid < grand)
+        // (a closing leaves the whole bill on the receivable : that
+        // is the stage, not a credit sale)
+        if (paid < grand && !dto.Closing)
         {
             WorkshopSwitchesDto switches = await Ws.SwitchesAsync(_context);
 
@@ -1229,6 +1636,7 @@ public class ServiceInvoicesRepository
                 OutsideTotal = priced.Lines.Where(x => x.Dto.LineType == Sb.Outside).Sum(x => x.Dto.Amount),
                 VatTotal = priced.Lines.Sum(x => x.Dto.VatAmount),
                 Discount = priced.Discount,
+                LineDiscount = priced.LineDiscount,
                 GrandTotal = grand,
                 PaidAmount = paid,
                 PartsCost = priced.Lines.Where(x => x.Dto.LineType == Sb.Part).Sum(x => x.Dto.Cost),
@@ -1270,6 +1678,8 @@ public class ServiceInvoicesRepository
                     Quantity = x.Quantity,
                     Rate = x.Rate,
                     Amount = x.Amount,
+                    DiscountText = Wp.Limit(x.DiscountText, 20),
+                    Discount = x.Discount,
                     IsFree = x.IsFree,
                     ClaimAmount = x.ClaimAmount,
                     ClaimLedgerCode = Wp.Limit(line.ClaimLedger, 40),
@@ -1287,9 +1697,11 @@ public class ServiceInvoicesRepository
             saved.Add((line, row));
 
             // the sale : income before VAT, and the VAT
-            if (x.Total > 0m)
+            // (a line discount : the income is credited in full, the
+            // discount goes to the Service Discount ledger below)
+            if (x.Total > 0m || x.Discount > 0m)
             {
-                Sb.Add(credit, line.IncomeLedger, x.Total - x.VatAmount);
+                Sb.Add(credit, line.IncomeLedger, x.Total - x.VatAmount + x.Discount);
 
                 if (x.VatAmount > 0m)
                 {
@@ -1355,9 +1767,10 @@ public class ServiceInvoicesRepository
             }
         }
 
-        if (priced.Discount > 0m)
+        // the discounts : of the lines, and of the bill (round off)
+        if (priced.Discount + priced.LineDiscount > 0m)
         {
-            Sb.Add(debit, priced.DiscountLedger, priced.Discount);
+            Sb.Add(debit, priced.DiscountLedger, priced.Discount + priced.LineDiscount);
         }
 
         await _context.SaveChangesAsync();
@@ -1502,6 +1915,11 @@ public class ServiceInvoicesRepository
         //-------------------------------------------------------
 
         Sb.SetStatus(_context, card, Ws.Invoiced, $"Service invoice {invoice.InvoiceNo}", userId);
+
+        if (dto.Closing)
+        {
+            await SaveFindingsAsync(card.JobCardId, dto.Findings);
+        }
 
         // The Estimate Charge came off this invoice
         if (priced.EstimateId != null)

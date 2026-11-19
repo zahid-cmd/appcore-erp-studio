@@ -75,17 +75,109 @@ public class ServiceInvoicesController
     public Task<IActionResult> Get(Guid publicId) =>
         Run(async () => Ok(await _repository.GetAsync(publicId)), "The service invoice could not be loaded.");
 
+    // (Closing is the Job Closing page only : never from here)
+    private static SaveServiceInvoiceDto Invoice(SaveServiceInvoiceDto? dto)
+    {
+        dto ??= new SaveServiceInvoiceDto();
+
+        dto.Closing = false;
+
+        return dto;
+    }
+
     [HttpPost("price")]
     public Task<IActionResult> Price([FromBody] SaveServiceInvoiceDto? dto) =>
-        Run(async () => Ok(await _repository.PriceAsync(dto ?? new SaveServiceInvoiceDto(), await CanCreditAsync())), "The job card could not be priced.");
+        Run(async () => Ok(await _repository.PriceAsync(Invoice(dto), await CanCreditAsync())), "The job card could not be priced.");
 
     [HttpPost]
     public Task<IActionResult> Create([FromBody] SaveServiceInvoiceDto? dto) =>
-        Save("Add", async userId => await _repository.PostAsync(dto ?? new SaveServiceInvoiceDto(), await CanCreditAsync(), userId), "The service invoice could not be posted.");
+        Save("Add", async userId => await _repository.PostAsync(Invoice(dto), await CanCreditAsync(), userId), "The service invoice could not be posted.");
 
     [HttpPut("{publicId:guid}/deliver")]
     public Task<IActionResult> Deliver(Guid publicId) =>
         Save("Update", userId => _repository.DeliverAsync(publicId, userId), "The delivery could not be saved.");
+}
+
+
+//===============================================================
+// Job Closing (owner 2026-11-19) : stage 4 of a job card - the job
+// in work is priced and billed to the receivable of the customer;
+// no money (the Billing stage collects it). The bill is a service
+// invoice.
+//
+//   api/service-operations/workshop-management/job-closing
+//       GET ''   lookups   history   {publicId}
+//       POST price   POST ''
+//===============================================================
+
+[ApiController]
+[Route("api/service-operations/workshop-management/job-closing")]
+public class JobClosingController
+    : WsControllerBase
+{
+    private readonly IServiceInvoicesRepository _repository;
+
+    private readonly IJobCardsRepository _cards;
+
+    public JobClosingController(IServiceInvoicesRepository repository, IJobCardsRepository cards, IActivityHistoryRepository history, IEffectiveAccessRepository effectiveAccess, ILogger<JobClosingController> logger)
+        : base(history, effectiveAccess, logger)
+    {
+        _repository = repository;
+        _cards = cards;
+    }
+
+    protected override string PageRoute => "/service-operations/%/job-closing";
+
+    protected override string PageName => "Job Card Closing";
+
+    private static SaveServiceInvoiceDto Closing(SaveServiceInvoiceDto? dto)
+    {
+        dto ??= new SaveServiceInvoiceDto();
+
+        dto.Closing = true;
+        dto.Deliver = false;
+        dto.Payments = new();
+
+        return dto;
+    }
+
+    // the bills (service invoices)
+    [HttpGet]
+    public Task<IActionResult> GetAll() =>
+        Run(async () => Ok(await _repository.GetAllAsync()), "The closed jobs could not be loaded.");
+
+    [HttpGet("lookups")]
+    public Task<IActionResult> GetLookups() =>
+        Run(async () => Ok(await _repository.GetClosingLookupsAsync()), "The jobs could not be loaded.");
+
+    [HttpGet("history")]
+    public Task<IActionResult> GetHistory() => History("ServiceInvoices");
+
+    [HttpGet("{publicId:guid}")]
+    public Task<IActionResult> Get(Guid publicId) =>
+        Run(async () => Ok(await _repository.GetAsync(publicId)), "The bill could not be loaded.");
+
+    // The whole job before it is closed : the job card, its parts
+    // (allocated, issued, returned, remaining), the issues, the
+    // returns, the complaints and observations
+    [HttpGet("job/{publicId:guid}")]
+    public Task<IActionResult> GetJob(Guid publicId) =>
+        Run(async () =>
+        {
+            ClosingDetailDto detail = await _repository.GetClosingDetailAsync(publicId);
+
+            detail.Card = await _cards.GetAsync(publicId);
+
+            return Ok(detail);
+        }, "The job could not be loaded.");
+
+    [HttpPost("price")]
+    public Task<IActionResult> Price([FromBody] SaveServiceInvoiceDto? dto) =>
+        Run(async () => Ok(await _repository.PriceAsync(Closing(dto), false)), "The job could not be priced.");
+
+    [HttpPost]
+    public Task<IActionResult> Create([FromBody] SaveServiceInvoiceDto? dto) =>
+        Save("Add", async userId => await _repository.PostAsync(Closing(dto), false, userId), "The job could not be closed.");
 }
 
 

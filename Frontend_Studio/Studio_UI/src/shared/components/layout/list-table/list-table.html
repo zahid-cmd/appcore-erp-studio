@@ -702,7 +702,15 @@
                                 <i [class]="column.dotIcon"></i>
                             </span>
 
-                            <ng-container *ngIf="!column.dotIcon">
+                            <!-- The value with a small second line under it (subField) -->
+                            <span
+                                *ngIf="!column.dotIcon && (getSubValue(row, column) || getSubFigure(row, column))"
+                                class="list-table-stack">
+                                <span class="list-table-stack-main">{{ getCellValue(row, column) }}</span>
+                                <small class="list-table-stack-sub">{{ getSubValue(row, column) }}<ng-container *ngIf="getSubFigure(row, column)"><span *ngIf="getSubValue(row, column)" class="list-table-stack-bar">||</span><span class="list-table-stack-figure"><small>{{ getSubFigureLead(row, column) }}</small><b>{{ getSubFigureTail(row, column) }}</b></span></ng-container></small>
+                            </span>
+
+                            <ng-container *ngIf="!column.dotIcon && !getSubValue(row, column) && !getSubFigure(row, column)">
                             <span
                                 *ngIf="isCodeColumn(column) && getCellValue(row, column); else plainText"
                                 class="lt-code-chip">{{ getCellValue(row, column) }}</span>

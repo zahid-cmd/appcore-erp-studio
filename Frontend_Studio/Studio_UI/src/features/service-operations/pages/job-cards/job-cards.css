@@ -1302,3 +1302,42 @@
     font-size: 12px;
     cursor: pointer;
 }
+
+/* The list : Job Assignment and Job Closing, right of the tabs */
+.jc-stage-btns
+{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.jc-stage-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid #1e3a8a;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #1e3a8a;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.jc-stage-btn:hover:not(:disabled)
+{
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.jc-stage-btn:disabled
+{
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+}

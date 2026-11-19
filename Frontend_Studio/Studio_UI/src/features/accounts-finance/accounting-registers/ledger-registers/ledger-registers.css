@@ -1,5 +1,10 @@
 @import '../../../../shared/styles/app-list-page.css';
 
+/* Statement presentation (2026-11-19) : filter bar on top, letterhead,
+   report table : same look as the financial statements (scoped to
+   .lr-page.tb-page, so only pages that add tb-page change) */
+@import '../../financial-statements/shared/statement-presentation.css';
+
 /* =====================================================
    LEDGER STATEMENTS / REGISTERS
 ===================================================== */
@@ -1150,4 +1155,64 @@
     background: #1e3a8a;
     color: #ffffff;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+
+/* Registers : the letterhead eyebrow names the book, not a statement */
+.lr-page.tb-page.lr-reg .lr-head-info::before
+{
+    content: 'Accounting register';
+}
+
+
+/* Filter bar packing (2026-11-19) : the fields share the row
+   evenly (no gaps left at the end), Submit stays on the same row */
+.lr-page.tb-page.lr-reg .lr-filter
+{
+    flex-wrap: nowrap;
+    align-items: flex-end;
+}
+
+.lr-page.tb-page.lr-reg .lr-filter-body
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    align-items: end;
+}
+
+.lr-page.tb-page.lr-reg .lr-filter .lr-field
+{
+    min-width: 0;
+}
+
+.lr-page.tb-page.lr-reg .lr-filter .lr-date,
+.lr-page.tb-page.lr-reg .lr-filter .lr-dd
+{
+    width: 100%;
+    --dropdown-width: 100%;
+}
+
+.lr-page.tb-page.lr-reg .lr-filter .lr-note,
+.lr-page.tb-page.lr-reg .lr-filter .lr-error
+{
+    grid-column: 1 / -1;
+}
+
+.lr-page.tb-page.lr-reg .lr-filter-foot
+{
+    margin-left: 0;
+    padding-bottom: 1px;
+}
+
+@media (max-width: 1100px)
+{
+    .lr-page.tb-page.lr-reg .lr-filter
+    {
+        flex-wrap: wrap;
+    }
+
+    .lr-page.tb-page.lr-reg .lr-filter-foot
+    {
+        margin-left: auto;
+    }
 }

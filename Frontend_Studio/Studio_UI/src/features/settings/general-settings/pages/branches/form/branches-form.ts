@@ -589,6 +589,50 @@ implements OnInit, OnDestroy
         this.loadWings();
 
         this.initializeMode();
+
+        this.checkAddLimit();
+    }
+
+
+
+    //===========================================================
+    // Limit (set in the Console) : the Add form opened by its
+    // address while no more may be added
+    //===========================================================
+
+    private checkAddLimit():
+        void
+    {
+        if
+        (
+            this.mode !== 'add'
+        )
+        {
+            return;
+        }
+
+        this.branchesService
+            .getLimit()
+            .subscribe(
+            {
+                next:
+                    limit =>
+                    {
+                        if (limit?.Reached)
+                        {
+                            this.toast.warning(
+                                'Branch Limit Reached',
+
+                                limit.Message
+                            );
+
+                            this.onBackToList();
+                        }
+                    },
+
+                error:
+                    () => undefined
+            });
     }
 
 

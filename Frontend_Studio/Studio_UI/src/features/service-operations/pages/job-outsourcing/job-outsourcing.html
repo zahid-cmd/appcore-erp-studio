@@ -1,0 +1,631 @@
+@if (mode === 'list')
+{
+    <div class="app-list-page">
+
+        <!-- =====================================================
+             JOB OUTSOURCING : the jobs in work and what is
+             outsourced for each
+        ====================================================== -->
+
+        <app-page-header
+            title="Job Outsourcing"
+            subtitle="Outside works and parts bought outside for the jobs in work"
+            icon="fas fa-truck-ramp-box">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search job card, customer, bike, token..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Add Outsourcing"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadJobs()"
+                    [command3Visible]="false">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+            <div
+                pageToolbarRight
+                class="jr-tool">
+                <b>{{ jobs.length }} in work  |  {{ withCount }} with outsourcing</b>
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="listActions"
+                    [rowActions]="rowActions"
+                    emptyTitle="Nothing here"
+                    [emptySubtitle]="selectedTab === 'all' ? 'No job is in work.' : 'No job in work has outsourcing yet.'"
+                    (rowAction)="onRowAction($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-toast></app-toast>
+
+    </div>
+}
+@else
+{
+<div class="app-list-page app-form-page">
+
+    <!-- =====================================================
+         JOB OUTSOURCING : the outside works and the parts bought
+         outside for a job in work
+         Left  : the job card; its entries in two sections
+         Right : the job and what it carries
+    ====================================================== -->
+
+    <app-page-header
+        title="Job Outsourcing"
+        subtitle="Outside works and parts bought outside for a job in work"
+        icon="fas fa-truck-ramp-box">
+
+        <div
+            pageHeaderCenter
+            class="se-center">
+
+            <div class="se-ribbon">
+
+                <div class="se-chip">
+                    <span class="se-chip-icon se-chip-icon-branch"><i class="fas fa-building"></i></span>
+                    <span class="se-chip-text">
+                        <span class="se-chip-label">Service Center</span>
+                        <strong>{{ branchName || 'Not set' }}</strong>
+                    </span>
+                </div>
+
+                <span class="se-ribbon-sep"></span>
+
+                <div class="se-chip">
+                    <span class="se-chip-icon se-chip-icon-no"><i class="fas fa-hashtag"></i></span>
+                    <span class="se-chip-text">
+                        <span class="se-chip-label">Job Card</span>
+                        <strong>{{ job?.JobCardNo || 'Not selected' }}</strong>
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <app-command-center
+            pageHeaderRight
+            command1Text="Refresh"
+            command1Icon="fas fa-rotate-right"
+            (command1Click)="refresh()"
+            [command2Visible]="false"
+            [command3Visible]="false"
+            rightCommandIcon="fas fa-arrow-left"
+            rightCommandTitle="Back to the list"
+            (rightCommandClick)="goToList()">
+        </app-command-center>
+
+    </app-page-header>
+
+    <app-page-toolbar
+        leftFlex="1 1 auto"
+        rightFlex="0 0 auto">
+
+        <div
+            pageToolbarLeft
+            class="jo-tip">
+            <i class="fas fa-circle-info"></i>
+            An entry is posted at once; the job is billed for it when it is closed
+        </div>
+
+        <div
+            pageToolbarRight
+            class="jr-tool">
+
+            <b>{{ jobs.length }} {{ jobs.length === 1 ? 'job' : 'jobs' }} in work</b>
+
+        </div>
+
+    </app-page-toolbar>
+
+    <app-page-canvas
+        [config]="formConfig">
+
+        <div
+            canvasBody
+            class="ws-body jr-body appcore-scrollbar">
+
+            <!-- ================= LEFT ================= -->
+
+            <div class="jr-left">
+
+                <div class="se-card jr-jobcard">
+
+                    <div class="mi-headrow jo-headrow">
+
+                        <app-search-dropdown
+                            label="Job Card"
+                            [placeholder]="loading ? 'Loading the jobs...' : 'Select the job card'"
+                            [items]="jobItems"
+                            figureField="token"
+                            labelField="label"
+                            valueField="value"
+                            [value]="jobId"
+                            (valueChange)="onJob($event)">
+                        </app-search-dropdown>
+
+                    </div>
+
+                </div>
+
+                <ng-template #outRowsTpl let-rows="rows">
+
+                    @for (row of rows; track $index; let i = $index)
+                    {
+                        <div
+                            class="jc-row jc-row-out jr-line"
+                            [class.jo-off]="row.Status !== 'Posted'">
+                            <span class="jr-no">{{ i + 1 }}</span>
+                            <span class="jr-name">
+                                <b>{{ row.PurchaseNo }}</b>
+                                <small>{{ row.BillNo ? 'Bill ' + row.BillNo : '' }}{{ row.Status !== 'Posted' ? '  ' + row.Status + (row.CancelReason ? ' : ' + row.CancelReason : '') : '' }}</small>
+                            </span>
+                            <span>{{ day(row.PurchaseDate) }}</span>
+                            <span class="jr-name">
+                                <b>{{ row.ItemName }}</b>
+                                <small>{{ row.ItemCode }}</small>
+                            </span>
+                            <span>{{ row.VendorName || '-' }}</span>
+                            <span class="jr-amount">{{ quantityOf(row.Quantity) }}</span>
+                            <span class="jr-amount">{{ money(row.CostAmount) }}</span>
+                            <span class="jr-amount"><b>{{ money(row.SellAmount) }}</b></span>
+                            @if (row.Status === 'Posted' && row.PublicId && canOutsource)
+                            {
+                                <button
+                                    type="button"
+                                    class="jr-x"
+                                    title="Cancel : the journal is reversed"
+                                    (click)="startCancelOut(row)">
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            }
+                            @else
+                            {
+                                <span></span>
+                            }
+                        </div>
+
+                        @if (outCancel && outCancel === row.PublicId)
+                        {
+                            <div class="jo-cancel">
+
+                                <app-textbox
+                                    placeholder="Why is it cancelled?"
+                                    [value]="outReason"
+                                    [maxLength]="300"
+                                    (valueChange)="onOutText('outReason', $event)">
+                                </app-textbox>
+
+                                <button
+                                    type="button"
+                                    class="jo-btn jo-btn-stop"
+                                    [disabled]="outSaving"
+                                    (click)="cancelOut(row)">
+                                    <i class="fas fa-ban"></i>
+                                    Cancel {{ row.PurchaseNo }}
+                                </button>
+
+                            </div>
+                        }
+                    }
+
+                </ng-template>
+
+                <div class="se-card jr-card mi-card">
+
+                    <div class="se-card-header">
+                        <i class="fas fa-truck-ramp-box"></i>
+                        <span>Outsourcing</span>
+                        <small>{{ outsideWorks.length }} {{ outsideWorks.length === 1 ? 'work' : 'works' }}  |  {{ outsourcedParts.length }} {{ outsourcedParts.length === 1 ? 'part' : 'parts' }}</small>
+                    </div>
+
+                    <div class="jc-row jc-row-out jr-head">
+                        <span>#</span>
+                        <span>Entry</span>
+                        <span>Date</span>
+                        <span>Work / Part</span>
+                        <span>Vendor</span>
+                        <span class="jr-right">Qty</span>
+                        <span class="jr-right">Cost</span>
+                        <span class="jr-right">Billed</span>
+                        <span></span>
+                    </div>
+
+                    <div class="jr-rows appcore-scrollbar">
+
+                        @if (noneText)
+                        {
+                            <div class="jr-empty">{{ noneText }}</div>
+                        }
+                        @else
+                        {
+                            <div class="mi-job jc-group">
+                                <i class="fas fa-screwdriver-wrench"></i>
+                                <b>Outside Works</b>
+                                <span>{{ outsideWorks.length }} {{ outsideWorks.length === 1 ? 'line' : 'lines' }}</span>
+                                @if (canOutsource)
+                                {
+                                    <button
+                                        type="button"
+                                        class="jo-btn jo-add"
+                                        (click)="openOut(true)">
+                                        <i class="fas fa-plus"></i>
+                                        Add
+                                    </button>
+                                }
+                            </div>
+
+                            <ng-container *ngTemplateOutlet="outRowsTpl; context:{ rows:outsideWorks }"></ng-container>
+
+                            @if (outsideWorks.length === 0)
+                            {
+                                <div class="jc-none">No outside work is on the job.</div>
+                            }
+
+                            <div class="mi-job jc-group">
+                                <i class="fas fa-box-open"></i>
+                                <b>Outsourced Parts</b>
+                                <span>{{ outsourcedParts.length }} {{ outsourcedParts.length === 1 ? 'line' : 'lines' }}</span>
+                                @if (canOutsource)
+                                {
+                                    <button
+                                        type="button"
+                                        class="jo-btn jo-add"
+                                        (click)="openOut(false)">
+                                        <i class="fas fa-plus"></i>
+                                        Add
+                                    </button>
+                                }
+                            </div>
+
+                            <ng-container *ngTemplateOutlet="outRowsTpl; context:{ rows:outsourcedParts }"></ng-container>
+
+                            @if (outsourcedParts.length === 0)
+                            {
+                                <div class="jc-none">No part was bought outside for the job.</div>
+                            }
+
+                            @if (out && !out.CanAdd)
+                            {
+                                <div class="jc-none">{{ out.JobCardNo }} takes no outsourcing now.</div>
+                            }
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ================= RIGHT ================= -->
+
+            <aside class="ws-panel">
+
+                <div class="ws-hero">
+
+                    <app-workspace-art theme="bike"></app-workspace-art>
+
+                    <div class="ws-identity">
+
+                        <b>{{ job?.CustomerName || 'Job Outsourcing' }}</b>
+
+                        <div class="ws-chips">
+                            @if (job)
+                            {
+                                <span class="ws-chip" data-tone="info">{{ job.JobCardNo }}</span>
+                                <span class="ws-chip">{{ job.Status }}</span>
+                            }
+                            @else
+                            {
+                                <span class="ws-chip" data-tone="info">{{ day(today) }}</span>
+                                <span class="ws-chip">No job</span>
+                            }
+                        </div>
+
+                    </div>
+
+                    @if (job)
+                    {
+                        <div class="jr-panel-facts">
+                            <div><span>Serial Token</span><b>{{ job.SerialToken || '-' }}</b></div>
+                            <div><span>Service Type</span><b>{{ job.JobType || '-' }}</b></div>
+                            <div class="jr-wide"><span>Bike</span><b>{{ job.ModelName }}{{ job.BikeNo ? '  -  ' + job.BikeNo : '' }}</b></div>
+                        </div>
+                    }
+
+                    <div class="jc-totals">
+                        <div><span>Outside Works</span><b>{{ money(worksBilled) }}</b></div>
+                        <div><span>Outsourced Parts</span><b>{{ money(partsBilled) }}</b></div>
+                        <div><span>Vendor Cost</span><b>{{ money(costTotal) }}</b></div>
+                        <div [class.jc-less]="billedTotal < costTotal"><span>{{ billedTotal < costTotal ? 'Loss' : 'Margin' }}</span><b>{{ money(billedTotal < costTotal ? costTotal - billedTotal : billedTotal - costTotal) }}</b></div>
+                        <div class="jc-grand"><span>To Bill</span><b>{{ money(billedTotal) }}</b></div>
+                    </div>
+
+                    <div class="jc-hint"><i class="fas fa-circle-info"></i> Billed when the job is closed</div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </app-page-canvas>
+
+        @if (outOpen)
+        {
+            <div class="jo-back">
+
+                <div class="jo-pop">
+
+                    <div class="jo-head">
+
+                        <span class="jo-ico"><i [class]="outWork ? 'fas fa-screwdriver-wrench' : 'fas fa-box-open'"></i></span>
+
+                        <span class="jo-head-text">
+                            <b>{{ outWork ? 'Add Outside Work' : 'Add Outsourced Part' }}</b>
+                            <small>{{ job?.JobCardNo }}{{ job?.CustomerName ? '  -  ' + job?.CustomerName : '' }}</small>
+                        </span>
+
+                        <button
+                            type="button"
+                            class="jo-close"
+                            title="Close"
+                            (click)="closeOut()">
+                            <i class="fas fa-xmark"></i>
+                        </button>
+
+                    </div>
+
+                    <div class="jo-body">
+
+                        <div class="jo-grid">
+
+                            @if (outWork)
+                            {
+                                <app-search-dropdown
+                                    class="jo-two"
+                                    label="Outside Work"
+                                    placeholder="Pick the outside work"
+                                    [items]="workItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="outWorkId"
+                                    [required]="true"
+                                    (valueChange)="onOutWork($event)">
+                                </app-search-dropdown>
+                            }
+                            @else if (!outTyped)
+                            {
+                                <app-search-dropdown
+                                    class="jo-two"
+                                    label="Part"
+                                    placeholder="Pick the part of the product lists"
+                                    [items]="partItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="outPick"
+                                    [required]="true"
+                                    (valueChange)="onOutPick($event)">
+                                </app-search-dropdown>
+                            }
+                            @else
+                            {
+                                <app-textbox
+                                    label="Part No"
+                                    placeholder="Optional"
+                                    textCase="upper"
+                                    [value]="outCode"
+                                    [maxLength]="40"
+                                    (valueChange)="onOutText('outCode', $event)">
+                                </app-textbox>
+
+                                <app-textbox
+                                    label="Part (typed)"
+                                    placeholder="The part bought"
+                                    [value]="outName"
+                                    [maxLength]="200"
+                                    [required]="true"
+                                    (valueChange)="onOutText('outName', $event)">
+                                </app-textbox>
+                            }
+
+                            <app-textbox
+                                class="jo-two"
+                                label="Vendor"
+                                [placeholder]="outWork ? 'The shop that does the work' : 'The shop the part was bought from'"
+                                [value]="outVendor"
+                                [maxLength]="150"
+                                [required]="true"
+                                (valueChange)="onOutText('outVendor', $event)">
+                            </app-textbox>
+
+                            <app-datepicker
+                                label="Date"
+                                [required]="true"
+                                [value]="$any(asDate(outDate))"
+                                (valueChange)="onOutDate($event)">
+                            </app-datepicker>
+
+                            <app-textbox
+                                label="Bill / Memo No"
+                                placeholder="Optional"
+                                [value]="outBill"
+                                [maxLength]="60"
+                                (valueChange)="onOutText('outBill', $event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                class="jo-two"
+                                label="Note"
+                                placeholder="Optional"
+                                [value]="outNote"
+                                [maxLength]="200"
+                                (valueChange)="onOutText('outNote', $event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Quantity"
+                                inputMode="decimal"
+                                [value]="outQty"
+                                [maxLength]="6"
+                                [required]="true"
+                                (valueChange)="onOutText('outQty', $event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                [label]="outWork ? 'Vendor Charge' : 'Purchase Rate'"
+                                placeholder="What the vendor charges"
+                                inputMode="decimal"
+                                [value]="outCost"
+                                [maxLength]="12"
+                                [required]="true"
+                                (valueChange)="onOutText('outCost', $event)">
+                            </app-textbox>
+
+                            <app-textbox
+                                [label]="outWork ? 'Customer Charge' : 'Selling Rate'"
+                                placeholder="What the customer pays"
+                                inputMode="decimal"
+                                [value]="outSell"
+                                [maxLength]="12"
+                                [required]="true"
+                                (valueChange)="onOutText('outSell', $event)">
+                            </app-textbox>
+
+                            @if (!outWork)
+                            {
+                                <div class="jo-link">
+                                    @if (!outTyped)
+                                    {
+                                        <a (click)="onOutTyped(true)">Not in the list : type the part</a>
+                                    }
+                                    @else
+                                    {
+                                        <a (click)="onOutTyped(false)">Pick the part from the list</a>
+                                    }
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="jo-stats">
+
+                            <div>
+                                <span>Cost</span>
+                                <b>{{ money(outCostTotal) }}</b>
+                            </div>
+
+                            <div>
+                                <span>Billed</span>
+                                <b>{{ money(outSellTotal) }}</b>
+                            </div>
+
+                            <div [class.jo-loss]="outMargin < 0" [class.jo-gain]="outMargin > 0">
+                                <span>{{ outMargin < 0 ? 'Loss' : 'Margin' }}</span>
+                                <b>{{ money(outMargin < 0 ? -outMargin : outMargin) }}</b>
+                            </div>
+
+                            @if (outMrp !== null)
+                            {
+                                <div [class.jo-loss]="outAboveMrp">
+                                    <span>{{ outAboveMrp ? 'Above the price' : 'Price' }}</span>
+                                    <b>{{ money(outMrp) }}</b>
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <div class="jo-foot">
+
+                        @if (outAdded)
+                        {
+                            <span class="jo-done"><i class="fas fa-circle-check"></i> {{ outAdded }}{{ outCount > 1 ? '  (' + outCount + ' added)' : '' }}</span>
+                        }
+                        @else
+                        {
+                            <span>Posted at once : the vendor is credited on the payable ledger of Posting Setup.</span>
+                        }
+
+                        <button
+                            type="button"
+                            class="jo-btn jo-btn-plain"
+                            (click)="closeOut()">
+                            {{ outCount > 0 ? 'Done' : 'Close' }}
+                        </button>
+
+                        <button
+                            type="button"
+                            class="jo-btn jo-btn-save"
+                            [disabled]="outSaving"
+                            (click)="saveOut()">
+                            <i [class]="outSaving ? 'fas fa-spinner fa-spin' : 'fas fa-plus'"></i>
+                            {{ outSaving ? 'Adding...' : 'Add To Job' }}
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    <app-toast></app-toast>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>
+}

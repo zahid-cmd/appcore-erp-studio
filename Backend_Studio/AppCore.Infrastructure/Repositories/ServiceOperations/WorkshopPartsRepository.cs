@@ -107,6 +107,25 @@ internal static class Wp
             .Where(x => issueIds.Contains(x.PartsIssueId))
             .SumAsync(x => x.Quantity - x.ReturnedQuantity);
     }
+
+    // The same, part by part : "Kind:Id" -> issued less returned
+    public static async Task<Dictionary<string, decimal>> IssuedByItemAsync(AppDbContext context, long jobCardId)
+    {
+        List<long> issueIds =
+            await context.Set<PartsIssues>().AsNoTracking().Where(x => x.JobCardId == jobCardId).Select(x => x.PartsIssueId).ToListAsync();
+
+        if (issueIds.Count == 0)
+        {
+            return new Dictionary<string, decimal>();
+        }
+
+        return (await context.Set<PartsIssueLines>().AsNoTracking()
+                .Where(x => issueIds.Contains(x.PartsIssueId))
+                .GroupBy(x => new { x.ItemKind, x.ItemId })
+                .Select(g => new { g.Key.ItemKind, g.Key.ItemId, Quantity = g.Sum(x => x.Quantity - x.ReturnedQuantity) })
+                .ToListAsync())
+            .ToDictionary(x => $"{x.ItemKind}:{x.ItemId}", x => x.Quantity);
+    }
 }
 
 
@@ -848,6 +867,7 @@ public class WorkshopPartsRepository
                 Id = x.PartsIssueId,
                 PublicId = x.PublicId,
                 DocumentNo = x.IssueNo,
+                MisNo = x.MisNo,
                 DocumentDate = HrCalendar.Day(x.IssueDate),
                 BranchId = x.BranchId,
                 BranchName = Names.Of(names.Branches, x.BranchId),
@@ -982,6 +1002,20 @@ public class WorkshopPartsRepository
 
     public async Task<PartsDocumentDto> PostIssueAsync(PostPartsIssueDto dto, long userId)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        PartsIssues issue = await IssueAsync(dto, userId, string.Empty);
+
+        await transaction.CommitAsync();
+
+        return await FullAsync(issue);
+    }
+
+    // One issue : the parts of one job card go out (inside the
+    // transaction of the caller). misNo : the slip it is on (the
+    // parts were allocated : no requisition is asked for)
+    private async Task<PartsIssues> IssueAsync(PostPartsIssueDto dto, long userId, string misNo)
+    {
         DateOnly date =
             HrCalendar.ParseDay(dto.IssueDate)
             ?? throw new InvalidOperationException("Give the date of the issue.");
@@ -995,12 +1029,8 @@ public class WorkshopPartsRepository
 
         WorkshopSwitchesDto switches = await Ws.SwitchesAsync(_context);
 
-        if (switches.RequireEstimate
-            && !Est.NoEstimateJobTypes.Contains(card.JobType)
-            && !await Est.ApprovedAsync(_context, card.JobCardId))
-        {
-            throw new InvalidOperationException($"{card.JobCardNo} was not made from an estimate : parts cannot be issued to it.");
-        }
+        // (owner 2026-11-18 : the switch Estimate Driven Job Card
+        // blocks nothing any more)
 
         Warehouses warehouse =
             await _context.Set<Warehouses>().AsNoTracking().FirstOrDefaultAsync(x => x.WarehouseId == dto.WarehouseId && !x.IsDeleted && x.IsActive)
@@ -1028,8 +1058,6 @@ public class WorkshopPartsRepository
 
         string wipOfSetup = PostingLedgerCodes.TryGet(_context, Wp.PurposeWip);
 
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-
         //-------------------------------------------------------
         // The requisition
         //-------------------------------------------------------
@@ -1056,7 +1084,7 @@ public class WorkshopPartsRepository
 
             requisitionLines = await RequisitionLines.Where(x => x.PartsRequisitionId == requisition.PartsRequisitionId).ToListAsync();
         }
-        else if (!switches.IssueWithoutRequisition)
+        else if (misNo.Length == 0 && !switches.IssueWithoutRequisition)
         {
             throw new InvalidOperationException("Parts are issued against a requisition only (Workshop Configuration, switch Issue without Requisition). Pick the requisition.");
         }
@@ -1120,6 +1148,7 @@ public class WorkshopPartsRepository
             new PartsIssues
             {
                 IssueNo = issueNo,
+                MisNo = misNo,
                 IssueDate = date,
                 BranchId = card.BranchId,
                 WarehouseId = warehouse.WarehouseId,
@@ -1303,7 +1332,7 @@ public class WorkshopPartsRepository
             SetRequisitionStatus(requisition, requisitionLines, userId);
         }
 
-        Ws.AddHistory(_context, IssueEntity, issue.PartsIssueId, "Create", "Parts Issued", $"{issue.IssueNo} : {lines.Count} part(s), quantity {Wp.Qty(lines.Sum(x => x.Quantity))}, cost {issue.TotalCost:0.00}, to {card.JobCardNo} from {warehouse.WarehouseName}.", userId);
+        Ws.AddHistory(_context, IssueEntity, issue.PartsIssueId, "Create", "Parts Issued", $"{(misNo.Length > 0 ? misNo + " / " : string.Empty)}{issue.IssueNo} : {lines.Count} part(s), quantity {Wp.Qty(lines.Sum(x => x.Quantity))}, cost {issue.TotalCost:0.00}, to {card.JobCardNo} from {warehouse.WarehouseName}.", userId);
 
         await _context.SaveChangesAsync();
 
@@ -1333,9 +1362,552 @@ public class WorkshopPartsRepository
                 userId);
         }
 
+        return issue;
+    }
+
+
+    //===========================================================
+    // Material Issue Slips (MIS) : the parts allocated to a job
+    // card (Job Card Requirements) are issued, to one job card or
+    // to several on one slip (switch Parts Issue To Multiple Job
+    // Cards). Every job card keeps its own issue (WPI : stock,
+    // cost, journal, returns); the slip is their common number.
+    //===========================================================
+
+    private static string BikeNo(JobCards x) =>
+        x.RegistrationNo.Length > 0 ? x.RegistrationNo : x.ChassisNo;
+
+    // 1118004 : the month and the day of the job, then the serial
+    // of its welcome token (W-004)
+    private static string SerialToken(JobCards card)
+    {
+        string serial = (card.WelcomeTokenNo ?? string.Empty).Trim();
+
+        if (serial.StartsWith("W-", StringComparison.OrdinalIgnoreCase))
+        {
+            serial = serial.Substring(2);
+        }
+
+        return serial.Length == 0 ? string.Empty : card.JobDate.ToString("MMdd") + serial;
+    }
+
+    //===========================================================
+    // Location Chart (owner 2026-11-18) : the rack, the shelf and
+    // the bin (Rack Management) of the parts allocated to a job,
+    // in the default warehouse of its service center. Read only.
+    //===========================================================
+
+    public async Task<LocationChartDto> GetLocationChartAsync(Guid jobCardPublicId)
+    {
+        JobCards card =
+            await Cards.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == jobCardPublicId && !x.IsDeleted)
+            ?? throw new KeyNotFoundException("The job card was not found.");
+
+        long branchId = card.BranchId;
+
+        // the default warehouse of the service center
+        Warehouses? store =
+            await _context.Set<Warehouses>().AsNoTracking()
+                .Where(x => x.BranchId == branchId && !x.IsDeleted && x.IsActive)
+                .OrderByDescending(x => x.IsDefault).ThenBy(x => x.WarehouseId)
+                .FirstOrDefaultAsync();
+
+        long warehouseId = store?.WarehouseId ?? 0;
+
+        // the bins of the warehouse : spare parts (and lubricants),
+        // accessories
+        var spareBins =
+            await _context.Set<SparePartLocations>().AsNoTracking()
+                .Where(x => x.WarehouseId == warehouseId)
+                .Select(x => new { ItemId = x.SparePartId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
+                .ToListAsync();
+
+        var accessoryBins =
+            await _context.Set<AccessoryLocations>().AsNoTracking()
+                .Where(x => x.WarehouseId == warehouseId)
+                .Select(x => new { ItemId = x.AccessoryId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
+                .ToListAsync();
+
+        var bins =
+            spareBins.Select(x => new { Kind = Wp.SparePart, x.ItemId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
+                .Concat(accessoryBins.Select(x => new { Kind = Wp.Accessory, x.ItemId, x.RackManagementId, x.ShelfNumber, x.BinNumber }))
+                .ToList();
+
+        List<long> rackIds = bins.Select(x => x.RackManagementId).Distinct().ToList();
+
+        var racks =
+            await _context.Set<RackManagement>().AsNoTracking()
+                .Where(x => rackIds.Contains(x.RackManagementId))
+                .Select(x => new { x.RackManagementId, x.RackCode, x.RackName, x.RackZoneId })
+                .ToDictionaryAsync(x => x.RackManagementId);
+
+        Dictionary<long, string> zones =
+            await _context.Set<RackZones>().AsNoTracking()
+                .Where(x => x.WarehouseId == warehouseId)
+                .ToDictionaryAsync(x => x.RackZoneId, x => x.ZoneName ?? string.Empty);
+
+        List<PartPlaceDto> places =
+            bins
+                .Where(x => racks.ContainsKey(x.RackManagementId))
+                .OrderBy(x => racks[x.RackManagementId].RackName).ThenBy(x => x.ShelfNumber).ThenBy(x => x.BinNumber)
+                .GroupBy(x => new { x.Kind, x.ItemId })
+                .Select(g =>
+                {
+                    var first = racks[g.First().RackManagementId];
+
+                    return new PartPlaceDto
+                    {
+                        ItemKind = g.Key.Kind,
+                        ItemId = g.Key.ItemId,
+                        Zone = first.RackZoneId.HasValue ? zones.GetValueOrDefault(first.RackZoneId.Value, string.Empty) : string.Empty,
+                        Rack = string.Join(", ", g.Select(x => racks[x.RackManagementId].RackName).Distinct()),
+                        Bins =
+                            g.Select(x =>
+                            {
+                                var rack = racks[x.RackManagementId];
+
+                                return new PartBinDto
+                                {
+                                    Zone = rack.RackZoneId.HasValue ? zones.GetValueOrDefault(rack.RackZoneId.Value, string.Empty) : string.Empty,
+                                    Rack = rack.RackName ?? string.Empty,
+                                    Shelf = x.ShelfNumber > 0 ? AppCore.Infrastructure.Repositories.Settings.ProductSettings.RackLabels.Shelf(rack.RackName, x.ShelfNumber) : string.Empty,
+                                    Bin = x.ShelfNumber > 0 ? x.BinNumber.ToString("00") : string.Empty,
+                                    Code = x.ShelfNumber > 0
+                                        ? AppCore.Infrastructure.Repositories.Settings.ProductSettings.RackLabels.BinCode(rack.RackName, x.ShelfNumber, x.BinNumber)
+                                        : rack.RackCode ?? string.Empty
+                                };
+                            })
+                            .ToList(),
+                        Location =
+                            string.Join(
+                                ", ",
+                                g.Select(x =>
+                                    x.ShelfNumber > 0
+                                        ? AppCore.Infrastructure.Repositories.Settings.ProductSettings.RackLabels.BinCode(racks[x.RackManagementId].RackName, x.ShelfNumber, x.BinNumber)
+                                        : racks[x.RackManagementId].RackCode ?? string.Empty)
+                                 .Where(x => x.Length > 0)
+                                 .Distinct())
+                    };
+                })
+                .ToList();
+
+        Dictionary<string, PartPlaceDto> placeOf = places.ToDictionary(x => $"{x.ItemKind}:{x.ItemId}");
+
+        // the parts allocated to the job
+        List<JobCardParts> allocated =
+            await _context.Set<JobCardParts>().AsNoTracking()
+                .Where(x => x.JobCardId == card.JobCardId && x.ItemId != null && (x.ItemKind == Wp.SparePart || x.ItemKind == Wp.Accessory))
+                .OrderBy(x => x.LineNo)
+                .ToListAsync();
+
+        Dictionary<string, decimal> issued = await Wp.IssuedByItemAsync(_context, card.JobCardId);
+
+        Dictionary<string, decimal> stock =
+            warehouseId > 0
+                ? (await GetStockAsync(warehouseId)).ToDictionary(x => $"{x.ItemKind}:{x.ItemId}", x => x.OnHand)
+                : new Dictionary<string, decimal>();
+
+        List<LocationChartLineDto> lines =
+            allocated
+                .GroupBy(x => new { x.ItemKind, ItemId = x.ItemId!.Value })
+                .Select(g =>
+                {
+                    string key = $"{g.Key.ItemKind}:{g.Key.ItemId}";
+                    decimal quantity = g.Sum(x => x.Quantity);
+                    decimal done = issued.GetValueOrDefault(key, 0m);
+                    PartPlaceDto? place = placeOf.GetValueOrDefault(key);
+
+                    return new LocationChartLineDto
+                    {
+                        ItemKind = g.Key.ItemKind,
+                        ItemId = g.Key.ItemId,
+                        ItemCode = g.First().ItemCode,
+                        ItemName = g.First().ItemName,
+                        Zone = place?.Zone ?? string.Empty,
+                        Rack = place?.Rack ?? string.Empty,
+                        Location = place?.Location ?? string.Empty,
+                        Bins = place?.Bins ?? new List<PartBinDto>(),
+                        Allocated = quantity,
+                        Issued = done,
+                        Waiting = Math.Max(0m, quantity - done),
+                        Stock = stock.GetValueOrDefault(key, 0m)
+                    };
+                })
+                // the walk through the store; no place : last
+                .OrderBy(x => x.Location.Length == 0 ? 1 : 0)
+                .ThenBy(x => x.Zone).ThenBy(x => x.Location).ThenBy(x => x.ItemName)
+                .ToList();
+
+        string technician =
+            card.TechnicianEmployeeId.HasValue
+                ? await _context.Set<HrEmployees>().AsNoTracking()
+                      .Where(x => x.EmployeeId == card.TechnicianEmployeeId.Value)
+                      .Select(x => x.FullName)
+                      .FirstOrDefaultAsync() ?? string.Empty
+                : string.Empty;
+
+        return new LocationChartDto
+        {
+            PublicId = card.PublicId,
+            JobCardNo = card.JobCardNo,
+            SerialToken = SerialToken(card),
+            JobDate = HrCalendar.Day(card.JobDate),
+            Status = card.Status,
+            BranchId = card.BranchId,
+            BranchName = Names.Of(await Ws.BranchNamesAsync(_context), card.BranchId),
+            WarehouseName = store?.WarehouseName ?? string.Empty,
+            CustomerName = card.CustomerName,
+            Mobile = card.Mobile,
+            ModelName = card.ModelName,
+            BikeNo = BikeNo(card),
+            TechnicianName = technician,
+            Lines = lines,
+            Places = places
+        };
+    }
+
+    public async Task<MisLookupsDto> GetMisLookupsAsync()
+    {
+        List<JobCards> cards =
+            await Cards.AsNoTracking()
+                .Where(x => !x.IsDeleted && Ws.Workable.Contains(x.Status))
+                .OrderBy(x => x.JobCardId)
+                .ToListAsync();
+
+        List<long> cardIds = cards.Select(x => x.JobCardId).ToList();
+
+        List<JobCardParts> allocated =
+            await _context.Set<JobCardParts>().AsNoTracking()
+                .Where(x => cardIds.Contains(x.JobCardId) && x.ItemId != null && (x.ItemKind == Wp.SparePart || x.ItemKind == Wp.Accessory))
+                .OrderBy(x => x.LineNo)
+                .ToListAsync();
+
+        // issued less returned : job card, part
+        var issued =
+            (await (from line in IssueLines.AsNoTracking()
+                    join issue in Issues.AsNoTracking() on line.PartsIssueId equals issue.PartsIssueId
+                    where cardIds.Contains(issue.JobCardId)
+                    group line by new { issue.JobCardId, line.ItemKind, line.ItemId } into g
+                    select new { g.Key.JobCardId, g.Key.ItemKind, g.Key.ItemId, Quantity = g.Sum(x => x.Quantity - x.ReturnedQuantity) })
+                .ToListAsync())
+            .ToDictionary(x => $"{x.JobCardId}:{x.ItemKind}:{x.ItemId}", x => x.Quantity);
+
+        Dictionary<long, string> branchNames = await Ws.BranchNamesAsync(_context);
+
+        // where the parts sit (shown on the row, owner 2026-11-19)
+        Dictionary<string, string> placeOf = await PlacesAsync(cards.Select(x => x.BranchId));
+
+        var jobs = new List<MisJobDto>();
+
+        foreach (JobCards card in cards)
+        {
+            List<MisPartDto> parts =
+                allocated
+                    .Where(x => x.JobCardId == card.JobCardId)
+                    .GroupBy(x => new { x.ItemKind, ItemId = x.ItemId!.Value })
+                    .Select(g =>
+                    {
+                        decimal quantity = g.Sum(x => x.Quantity);
+
+                        decimal done = issued.TryGetValue($"{card.JobCardId}:{g.Key.ItemKind}:{g.Key.ItemId}", out decimal value) ? value : 0m;
+
+                        return new MisPartDto
+                        {
+                            ItemKind = g.Key.ItemKind,
+                            ItemId = g.Key.ItemId,
+                            ItemCode = g.First().ItemCode,
+                            ItemName = g.First().ItemName,
+                            Allocated = quantity,
+                            Issued = done,
+                            Remaining = Math.Max(0m, quantity - done),
+                            Note = g.First().Note,
+                            Location = placeOf.GetValueOrDefault($"{card.BranchId}:{g.Key.ItemKind}:{g.Key.ItemId}", string.Empty)
+                        };
+                    })
+                    .Where(x => x.Remaining > 0m)
+                    .ToList();
+
+            if (parts.Count == 0)
+            {
+                continue;
+            }
+
+            jobs.Add(
+                new MisJobDto
+                {
+                    PublicId = card.PublicId,
+                    BranchId = card.BranchId,
+                    BranchName = Names.Of(branchNames, card.BranchId),
+                    JobCardNo = card.JobCardNo,
+                    Status = card.Status,
+                    CustomerName = card.CustomerName,
+                    Mobile = card.Mobile,
+                    ModelName = card.ModelName,
+                    BikeNo = BikeNo(card),
+                    SerialToken = SerialToken(card),
+                    Parts = parts
+                });
+        }
+
+        // The parts go out of the default warehouse of the service
+        // center (owner 2026-11-18) : one a service center
+        List<WsLookupDto> warehouses =
+            (await _context.Set<Warehouses>().AsNoTracking()
+                .Where(x => !x.IsDeleted && x.IsActive)
+                .OrderByDescending(x => x.IsDefault).ThenBy(x => x.WarehouseId)
+                .Select(x => new WsLookupDto { Id = x.WarehouseId, Code = x.WarehouseCode, Name = x.WarehouseName, BranchId = x.BranchId })
+                .ToListAsync())
+            .GroupBy(x => x.BranchId)
+            .Select(g => g.First())
+            .ToList();
+
+        Dictionary<long, string> employees =
+            (await _context.Set<HrEmployees>().AsNoTracking().Select(x => new { x.EmployeeId, x.FullName }).ToListAsync())
+            .ToDictionary(x => x.EmployeeId, x => x.FullName);
+
+        DateOnly today = HrCalendar.Today();
+
+        WorkshopSwitchesDto switches = await Ws.SwitchesAsync(_context);
+
+        var nextNos = new List<WsLookupDto>();
+
+        // the service centers (one : the page shows it at once)
+        foreach (long branchId in (await Ws.BranchesAsync(_context)).Select(x => x.Id))
+        {
+            string no;
+
+            try
+            {
+                no = (await _numberService.PeekAsync(VoucherTypes.MaterialIssueSlip, branchId, today)).VoucherNo;
+            }
+            catch (InvalidOperationException)
+            {
+                no = "Given when it is posted";
+            }
+
+            nextNos.Add(new WsLookupDto { Id = branchId, Code = Names.Of(branchNames, branchId), Name = no, BranchId = branchId });
+        }
+
+        return new MisLookupsDto
+        {
+            Today = HrCalendar.Day(today),
+            NextNos = nextNos,
+            Jobs = jobs,
+            Warehouses = warehouses,
+            Technicians =
+                (await _context.Set<WorkshopTechnicians>().AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.IsActive)
+                    .OrderBy(x => x.Code)
+                    .ToListAsync())
+                .Select(x => new WsLookupDto
+                {
+                    Id = x.WorkshopTechnicianId,
+                    Code = x.Code,
+                    Name = employees.TryGetValue(x.EmployeeId, out string? name) ? name : x.Code,
+                    BranchId = x.BranchId
+                })
+                .ToList(),
+            MultipleJobs = switches.IssueToMultipleJobs,
+            BulkPerJob = switches.IssueBulkPerJob
+        };
+    }
+
+    // The slip of the issues (all of one MIS No, or one issue of
+    // before the slips)
+    private static MisDto Slip(List<PartsDocumentDto> issues)
+    {
+        PartsDocumentDto first = issues[0];
+
+        return new MisDto
+        {
+            PublicId = first.PublicId,
+            MisNo = first.MisNo.Length > 0 ? first.MisNo : first.DocumentNo,
+            DocumentDate = first.DocumentDate,
+            BranchId = first.BranchId,
+            BranchName = first.BranchName,
+            WarehouseName = first.WarehouseName,
+            PersonName = first.PersonName,
+            Remarks = first.Remarks,
+            JobCount = issues.Count,
+            JobText = string.Join(", ", issues.Select(x => x.JobCardNo).Distinct()),
+            CustomerText = string.Join(", ", issues.Select(x => x.CustomerName).Where(x => x.Length > 0).Distinct()),
+            TotalQuantity = issues.Sum(x => x.TotalQuantity),
+            TotalCost = issues.Sum(x => x.TotalCost),
+            Status = first.Status,
+            Jobs = issues
+        };
+    }
+
+    public async Task<List<MisDto>> GetMisListAsync()
+    {
+        List<PartsDocumentDto> issues = await GetIssuesAsync();
+
+        // newest first (GetIssuesAsync) : a slip stands where its
+        // newest issue stands
+        return issues
+            .GroupBy(x => x.MisNo.Length > 0 ? x.MisNo : x.DocumentNo)
+            .Select(g => Slip(g.OrderBy(x => x.Id).ToList()))
+            .ToList();
+    }
+
+    public async Task<MisDto> GetMisAsync(Guid issuePublicId)
+    {
+        PartsIssues issue =
+            await Issues.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == issuePublicId)
+            ?? throw new KeyNotFoundException("The issue slip was not found.");
+
+        List<PartsIssues> all =
+            issue.MisNo.Length == 0
+                ? new List<PartsIssues> { issue }
+                : await Issues.AsNoTracking().Where(x => x.MisNo == issue.MisNo).OrderBy(x => x.PartsIssueId).ToListAsync();
+
+        var full = new List<PartsDocumentDto>();
+
+        foreach (PartsIssues one in all)
+        {
+            full.Add(await FullAsync(one));
+        }
+
+        return Slip(full);
+    }
+
+    public async Task<MisDto> PostMisAsync(PostMisDto dto, long userId)
+    {
+        // a job card with nothing to issue is not on the slip
+        List<PostMisJobDto> jobs =
+            (dto.Jobs ?? new())
+                .Select(x => new PostMisJobDto { JobCardPublicId = x.JobCardPublicId, Lines = (x.Lines ?? new()).Where(l => l.Quantity > 0m).ToList() })
+                .Where(x => x.Lines.Count > 0)
+                .ToList();
+
+        if (jobs.Count == 0)
+        {
+            throw new InvalidOperationException("Pick a job card and give the quantity to issue of a part at least.");
+        }
+
+        if (jobs.Select(x => x.JobCardPublicId).Distinct().Count() != jobs.Count)
+        {
+            throw new InvalidOperationException("A job card is on the slip twice.");
+        }
+
+        if (jobs.Count > 1 && !(await Ws.SwitchesAsync(_context)).IssueToMultipleJobs)
+        {
+            throw new InvalidOperationException("One job card a slip (Workshop Configuration, switch Parts Issue To Multiple Job Cards).");
+        }
+
+        DateOnly date =
+            HrCalendar.ParseDay(dto.IssueDate)
+            ?? throw new InvalidOperationException("Give the date of the issue.");
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        string misNo = string.Empty;
+
+        long? branchId = null;
+
+        PartsIssues? first = null;
+
+        foreach (PostMisJobDto job in jobs)
+        {
+            JobCards card = await OpenCardAsync(job.JobCardPublicId, "parts cannot be issued to it");
+
+            if (branchId != null && card.BranchId != branchId)
+            {
+                throw new InvalidOperationException("The job cards of a slip are of one service center.");
+            }
+
+            branchId = card.BranchId;
+
+            //---------------------------------------------------
+            // Only what is allocated to the job card and not
+            // issued yet (Job Card Requirements)
+            //---------------------------------------------------
+
+            List<JobCardParts> allocated =
+                await _context.Set<JobCardParts>().AsNoTracking()
+                    .Where(x => x.JobCardId == card.JobCardId && x.ItemId != null)
+                    .ToListAsync();
+
+            Dictionary<string, decimal> issued = await Wp.IssuedByItemAsync(_context, card.JobCardId);
+
+            foreach (PartsLineDto line in job.Lines)
+            {
+                string kind = (line.ItemKind ?? string.Empty).Trim();
+
+                List<JobCardParts> asked = allocated.Where(x => x.ItemKind == kind && x.ItemId == line.ItemId).ToList();
+
+                string name = asked.FirstOrDefault()?.ItemName ?? Ws.Clean(line.ItemName, 200, "Part");
+
+                if (asked.Count == 0)
+                {
+                    throw new InvalidOperationException($"{name} is not allocated to {card.JobCardNo} : add it on Job Card Requirements first.");
+                }
+
+                decimal left = asked.Sum(x => x.Quantity) - (issued.TryGetValue(Key(kind, line.ItemId), out decimal done) ? done : 0m);
+
+                if (line.Quantity > left)
+                {
+                    throw new InvalidOperationException($"{name} : {card.JobCardNo} still waits for {Wp.Qty(Math.Max(0m, left))} only.");
+                }
+            }
+
+            if (misNo.Length == 0)
+            {
+                misNo = (await _numberService.NextAsync(VoucherTypes.MaterialIssueSlip, card.BranchId, date)).VoucherNo;
+
+                // The parts go out of the default warehouse of the
+                // service center (the one set with the branch)
+                long cardBranchId = card.BranchId;
+
+                Warehouses store =
+                    await _context.Set<Warehouses>().AsNoTracking()
+                        .Where(x => x.BranchId == cardBranchId && !x.IsDeleted && x.IsActive)
+                        .OrderByDescending(x => x.IsDefault).ThenBy(x => x.WarehouseId)
+                        .FirstOrDefaultAsync()
+                    ?? throw new InvalidOperationException("The service center has no active warehouse (Settings > General Settings > Warehouses).");
+
+                dto.WarehouseId = store.WarehouseId;
+            }
+
+            PartsIssues issue =
+                await IssueAsync(
+                    new PostPartsIssueDto
+                    {
+                        JobCardPublicId = card.PublicId,
+                        RequisitionPublicId = null,
+                        WarehouseId = dto.WarehouseId,
+                        IssueDate = dto.IssueDate,
+                        WorkshopTechnicianId = dto.WorkshopTechnicianId,
+                        Remarks = dto.Remarks,
+                        Lines = job.Lines
+                    },
+                    userId,
+                    misNo);
+
+            first ??= issue;
+
+            // The first parts : the job is in work
+            if (card.Status == Ws.Allocated)
+            {
+                DateTime now = DateTime.UtcNow;
+
+                card.Status = Ws.InProgress;
+                card.StatusDate = now;
+                card.ModifiedBy = userId;
+                card.ModifiedDate = now;
+
+                _context.Set<JobCardStatusHistory>().Add(
+                    new JobCardStatusHistory { JobCardId = card.JobCardId, Status = Ws.InProgress, Note = Wp.Limit($"Parts issued : {misNo}", 300), ChangedBy = userId, ChangedAt = now });
+
+                Ws.AddHistory(_context, "JobCards", card.JobCardId, "Status", $"Job Card {Ws.InProgress}", $"{card.JobCardNo} is {Ws.InProgress} : parts issued on {misNo}.", userId);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         await transaction.CommitAsync();
 
-        return await FullAsync(issue);
+        return await GetMisAsync(first!.PublicId);
     }
 
 
@@ -1442,6 +2014,297 @@ public class WorkshopPartsRepository
 
     public async Task<PartsDocumentDto> PostReturnAsync(PostPartsReturnDto dto, long userId)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        PartsDocumentDto result = await PostReturnCoreAsync(dto, userId);
+
+        await transaction.CommitAsync();
+
+        return result;
+    }
+
+    //-----------------------------------------------------------
+    // Parts Return by job (owner 2026-11-19)
+    //-----------------------------------------------------------
+
+    // The jobs not invoiced yet that have parts on them
+    public async Task<ReturnLookupsDto> GetReturnLookupsAsync()
+    {
+        List<JobCards> cards =
+            await Cards.AsNoTracking()
+                .Where(x => !x.IsDeleted && x.Status != Ws.Invoiced && x.Status != Ws.Delivered)
+                .OrderBy(x => x.JobCardId)
+                .ToListAsync();
+
+        List<long> cardIds = cards.Select(x => x.JobCardId).ToList();
+
+        var onJobs =
+            await (from line in IssueLines.AsNoTracking()
+                   join issue in Issues.AsNoTracking() on line.PartsIssueId equals issue.PartsIssueId
+                   where cardIds.Contains(issue.JobCardId)
+                   group line by new { issue.JobCardId, line.ItemKind, line.ItemId } into g
+                   select new
+                   {
+                       g.Key.JobCardId, g.Key.ItemKind, g.Key.ItemId,
+                       ItemCode = g.Max(x => x.ItemCode),
+                       ItemName = g.Max(x => x.ItemName),
+                       Issued = g.Sum(x => x.Quantity),
+                       Returned = g.Sum(x => x.ReturnedQuantity),
+                       Cost = g.Sum(x => x.Cost),
+                       ReturnedCost = g.Sum(x => x.ReturnedCost)
+                   })
+                .ToListAsync();
+
+        var allocated =
+            (await _context.Set<JobCardParts>().AsNoTracking()
+                .Where(x => cardIds.Contains(x.JobCardId) && x.ItemId != null && (x.ItemKind == Wp.SparePart || x.ItemKind == Wp.Accessory))
+                .GroupBy(x => new { x.JobCardId, x.ItemKind, x.ItemId })
+                .Select(g => new { g.Key.JobCardId, g.Key.ItemKind, g.Key.ItemId, Quantity = g.Sum(x => x.Quantity) })
+                .ToListAsync())
+            .ToDictionary(x => $"{x.JobCardId}:{x.ItemKind}:{x.ItemId}", x => x.Quantity);
+
+        Dictionary<long, string> branchNames = await Ws.BranchNamesAsync(_context);
+
+        // where the parts sit (shown on the row)
+        Dictionary<string, string> placeOf = await PlacesAsync(cards.Select(x => x.BranchId));
+
+        var jobs = new List<ReturnJobDto>();
+
+        foreach (JobCards card in cards)
+        {
+            List<ReturnPartDto> parts =
+                onJobs
+                    .Where(x => x.JobCardId == card.JobCardId && x.Issued - x.Returned > 0m)
+                    .OrderBy(x => x.ItemName)
+                    .Select(x => new ReturnPartDto
+                    {
+                        ItemKind = x.ItemKind,
+                        ItemId = x.ItemId,
+                        ItemCode = x.ItemCode,
+                        ItemName = x.ItemName,
+                        Allocated = allocated.GetValueOrDefault($"{card.JobCardId}:{x.ItemKind}:{x.ItemId}", 0m),
+                        Issued = x.Issued,
+                        Returned = x.Returned,
+                        OnJob = x.Issued - x.Returned,
+                        Rate = Math.Round((x.Cost - x.ReturnedCost) / (x.Issued - x.Returned), 2),
+                        Location = placeOf.GetValueOrDefault($"{card.BranchId}:{x.ItemKind}:{x.ItemId}", string.Empty)
+                    })
+                    .ToList();
+
+            if (parts.Count == 0)
+            {
+                continue;
+            }
+
+            jobs.Add(
+                new ReturnJobDto
+                {
+                    PublicId = card.PublicId,
+                    BranchId = card.BranchId,
+                    BranchName = Names.Of(branchNames, card.BranchId),
+                    JobCardNo = card.JobCardNo,
+                    Status = card.Status,
+                    CustomerName = card.CustomerName,
+                    ModelName = card.ModelName,
+                    BikeNo = BikeNo(card),
+                    SerialToken = SerialToken(card),
+                    Parts = parts
+                });
+        }
+
+        return new ReturnLookupsDto
+        {
+            Today = HrCalendar.Day(HrCalendar.Today()),
+            Jobs = jobs
+        };
+    }
+
+    // Where the parts sit (owner 2026-11-19) : rack - shelf - bin
+    // (Rack Management) in the default warehouse of the service
+    // centers, as the Location Chart has it.
+    // Key : "branchId:itemKind:itemId".
+    private async Task<Dictionary<string, string>> PlacesAsync(IEnumerable<long> branches)
+    {
+        List<long> branchIds = branches.Distinct().ToList();
+
+        var result = new Dictionary<string, string>();
+
+        if (branchIds.Count == 0)
+        {
+            return result;
+        }
+
+        // the default warehouse of a service center
+        Dictionary<long, long> branchOf =
+            (await _context.Set<Warehouses>().AsNoTracking()
+                .Where(x => branchIds.Contains(x.BranchId) && !x.IsDeleted && x.IsActive)
+                .OrderByDescending(x => x.IsDefault).ThenBy(x => x.WarehouseId)
+                .Select(x => new { x.BranchId, x.WarehouseId })
+                .ToListAsync())
+            .GroupBy(x => x.BranchId)
+            .ToDictionary(g => g.First().WarehouseId, g => g.Key);
+
+        List<long> warehouseIds = branchOf.Keys.ToList();
+
+        var spareBins =
+            await _context.Set<SparePartLocations>().AsNoTracking()
+                .Where(x => warehouseIds.Contains(x.WarehouseId))
+                .Select(x => new { x.WarehouseId, ItemId = x.SparePartId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
+                .ToListAsync();
+
+        var accessoryBins =
+            await _context.Set<AccessoryLocations>().AsNoTracking()
+                .Where(x => warehouseIds.Contains(x.WarehouseId))
+                .Select(x => new { x.WarehouseId, ItemId = x.AccessoryId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
+                .ToListAsync();
+
+        var bins =
+            spareBins.Select(x => new { Kind = Wp.SparePart, x.WarehouseId, x.ItemId, x.RackManagementId, x.ShelfNumber, x.BinNumber })
+                .Concat(accessoryBins.Select(x => new { Kind = Wp.Accessory, x.WarehouseId, x.ItemId, x.RackManagementId, x.ShelfNumber, x.BinNumber }))
+                .ToList();
+
+        List<long> rackIds = bins.Select(x => x.RackManagementId).Distinct().ToList();
+
+        var racks =
+            await _context.Set<RackManagement>().AsNoTracking()
+                .Where(x => rackIds.Contains(x.RackManagementId))
+                .Select(x => new { x.RackManagementId, x.RackCode, x.RackName, x.RackZoneId })
+                .ToDictionaryAsync(x => x.RackManagementId);
+
+        Dictionary<long, string> zones =
+            await _context.Set<RackZones>().AsNoTracking()
+                .Where(x => warehouseIds.Contains(x.WarehouseId))
+                .ToDictionaryAsync(x => x.RackZoneId, x => x.ZoneName ?? string.Empty);
+
+        foreach (var g in bins
+            .Where(x => racks.ContainsKey(x.RackManagementId))
+            .OrderBy(x => racks[x.RackManagementId].RackName).ThenBy(x => x.ShelfNumber).ThenBy(x => x.BinNumber)
+            .GroupBy(x => new { x.WarehouseId, x.Kind, x.ItemId }))
+        {
+            // in full (owner 2026-11-19) : zone, rack, shelf and bin -
+            // a bin a line
+            string location =
+                string.Join(
+                    "\n",
+                    g.Select(x =>
+                    {
+                        var rack = racks[x.RackManagementId];
+
+                        string zone = rack.RackZoneId.HasValue ? zones.GetValueOrDefault(rack.RackZoneId.Value, string.Empty) : string.Empty;
+
+                        var parts = new List<string>();
+
+                        if (zone.Length > 0)
+                        {
+                            parts.Add($"Zone : {zone}");
+                        }
+
+                        parts.Add($"Rack : {rack.RackName ?? rack.RackCode ?? string.Empty}");
+
+                        if (x.ShelfNumber > 0)
+                        {
+                            parts.Add($"Shelf : {AppCore.Infrastructure.Repositories.Settings.ProductSettings.RackLabels.Shelf(rack.RackName, x.ShelfNumber)}");
+                            parts.Add($"Bin : {x.BinNumber:00}");
+                        }
+
+                        return string.Join("   |   ", parts);
+                    })
+                    .Distinct());
+
+            result[$"{branchOf[g.Key.WarehouseId]}:{g.Key.Kind}:{g.Key.ItemId}"] = location;
+        }
+
+        return result;
+    }
+
+    // The parts of the jobs come back : of the issues of the job,
+    // the newest first. A return (its own number) a parts issue it
+    // touches; all of them in one transaction.
+    public async Task<List<PartsDocumentDto>> PostJobReturnsAsync(PostJobReturnsDto dto, long userId)
+    {
+        List<PostJobReturnDto> jobs =
+            (dto.Jobs ?? new()).Where(x => (x.Lines ?? new()).Any(l => l.Quantity > 0)).ToList();
+
+        if (jobs.Count == 0)
+        {
+            throw new InvalidOperationException("Give the quantity that comes back of one part at least.");
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        var result = new List<PartsDocumentDto>();
+
+        foreach (PostJobReturnDto job in jobs)
+        {
+            JobCards card =
+                await Cards.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == job.JobCardPublicId && !x.IsDeleted)
+                ?? throw new InvalidOperationException("A job card of the return was not found.");
+
+            var rows =
+                await (from line in IssueLines.AsNoTracking()
+                       join issue in Issues.AsNoTracking() on line.PartsIssueId equals issue.PartsIssueId
+                       where issue.JobCardId == card.JobCardId
+                       orderby issue.PartsIssueId descending, line.LineNo
+                       select new { IssuePublicId = issue.PublicId, line.PartsIssueLineId, line.ItemKind, line.ItemId, line.ItemName, Room = line.Quantity - line.ReturnedQuantity })
+                    .ToListAsync();
+
+            // the returns of the job : one a parts issue
+            var byIssue = new List<PostPartsReturnDto>();
+
+            foreach (var asked in job.Lines.Where(x => x.Quantity > 0).GroupBy(x => new { x.ItemKind, x.ItemId }))
+            {
+                decimal need = Ws.Round(asked.Sum(x => x.Quantity));
+
+                var lines = rows.Where(x => x.ItemKind == asked.Key.ItemKind && x.ItemId == asked.Key.ItemId && x.Room > 0m).ToList();
+
+                decimal room = lines.Sum(x => x.Room);
+
+                if (need > room)
+                {
+                    string name = rows.FirstOrDefault(x => x.ItemKind == asked.Key.ItemKind && x.ItemId == asked.Key.ItemId)?.ItemName ?? "A part";
+
+                    throw new InvalidOperationException($"{name} : only {Wp.Qty(Math.Max(0m, room))} of {card.JobCardNo} can still come back.");
+                }
+
+                foreach (var line in lines)
+                {
+                    if (need <= 0m)
+                    {
+                        break;
+                    }
+
+                    decimal take = Math.Min(line.Room, need);
+
+                    PostPartsReturnDto? target = byIssue.FirstOrDefault(x => x.IssuePublicId == line.IssuePublicId);
+
+                    if (target == null)
+                    {
+                        target = new PostPartsReturnDto { IssuePublicId = line.IssuePublicId, ReturnDate = dto.ReturnDate, Remarks = dto.Remarks };
+
+                        byIssue.Add(target);
+                    }
+
+                    target.Lines.Add(new PartsLineDto { SourceLineId = line.PartsIssueLineId, ItemKind = line.ItemKind, ItemId = line.ItemId, Quantity = take });
+
+                    need -= take;
+                }
+            }
+
+            foreach (PostPartsReturnDto one in byIssue)
+            {
+                result.Add(await PostReturnCoreAsync(one, userId));
+            }
+        }
+
+        await transaction.CommitAsync();
+
+        return result;
+    }
+
+    // The return of the parts of ONE issue (inside the transaction
+    // of the caller)
+    private async Task<PartsDocumentDto> PostReturnCoreAsync(PostPartsReturnDto dto, long userId)
+    {
         DateOnly date =
             HrCalendar.ParseDay(dto.ReturnDate)
             ?? throw new InvalidOperationException("Give the date of the return.");
@@ -1450,8 +2313,6 @@ public class WorkshopPartsRepository
         {
             throw new InvalidOperationException("The date of a return cannot be in the future.");
         }
-
-        await using var transaction = await _context.Database.BeginTransactionAsync();
 
         PartsIssues issue =
             await Issues.FirstOrDefaultAsync(x => x.PublicId == dto.IssuePublicId)
@@ -1754,8 +2615,6 @@ public class WorkshopPartsRepository
                 },
                 userId);
         }
-
-        await transaction.CommitAsync();
 
         return await FullAsync(entity);
     }

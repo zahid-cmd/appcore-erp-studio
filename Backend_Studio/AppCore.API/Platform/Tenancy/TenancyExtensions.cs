@@ -46,6 +46,9 @@ public static class TenancyExtensions
         services.AddSingleton<TenantResolver>();
         services.AddScoped<TenantContext>();
         services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
+
+        // company / branch limits set in the Console (both modes)
+        services.AddScoped<ITenantLimits, TenantLimitsService>();
         services.AddSingleton<TenantScopes>();
 
         return services;

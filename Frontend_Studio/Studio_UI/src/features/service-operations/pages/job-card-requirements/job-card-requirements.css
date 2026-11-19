@@ -1,0 +1,697 @@
+@import '../../../human-resource-manangement/payroll-management/pages/festival-bonus/festival-bonus.css';
+@import '../../shared/workshop-form.css';
+@import '../../../../shared/styles/app-workspace-form.css';
+
+/* ==============================================================
+   JOB CARD REQUIREMENTS (owner 2026-11-18)
+
+   The form is as tall as the New Job and the Assignment pages : a
+   toolbar (the tabs, the job), then the canvas, which the card of
+   the tab fills to the bottom. Only the lines scroll.
+============================================================== */
+
+.jr-body
+{
+    align-content: stretch;
+}
+
+.jr-body .ws-step
+{
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.jr-card
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.jr-card .se-card-header
+{
+    flex: 0 0 auto;
+}
+
+.jr-card .se-card-header > small,
+.jr-tool > b
+{
+    margin-left: auto;
+    padding: 1px 10px;
+    border-radius: 999px;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: pre;
+}
+
+/* the toolbar : the job is picked here */
+.jr-tool
+{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    color: var(--app-text-muted, #64748b);
+    font-size: 13px;
+    white-space: pre;
+}
+
+.jr-tool > b
+{
+    margin-left: 0;
+}
+
+.jr-job
+{
+    flex: 0 1 520px;
+    min-width: 260px;
+}
+
+/* the box that adds a line */
+/* the item | its price | qty | short note | Add */
+.jr-pick
+{
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) 130px 90px minmax(0, 1.4fr) auto;
+    gap: 12px;
+    align-items: end;
+    padding: 12px 16px 12px;
+    border-bottom: 1px solid #e6ecf5;
+}
+
+.jr-add
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 8px;
+    background: #1e3a8a;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.jr-add:disabled
+{
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.jr-note
+{
+    flex: 0 0 auto;
+    margin: 10px 16px 0;
+    padding: 6px 10px;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 12.5px;
+}
+
+/* the lines */
+.jr-row
+{
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1.6fr) minmax(0, 1.2fr) 80px 110px 120px 30px;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 16px;
+}
+
+.jr-head
+{
+    flex: 0 0 auto;
+    border-bottom: 1px solid #e6ecf5;
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.jr-rows
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.jr-rows > .jr-line
+{
+    flex: 0 0 auto;
+}
+
+/* nothing to show : in the middle of the card */
+.jr-rows > .jr-empty,
+.jr-card > .jr-empty
+{
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jr-line
+{
+    border-bottom: 1px solid #edf1f6;
+    font-size: 13.5px;
+}
+
+.jr-right
+{
+    text-align: right;
+}
+
+.jr-no
+{
+    color: #94a3b8;
+    text-align: center;
+}
+
+.jr-name
+{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.jr-name > b
+{
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jr-name > small
+{
+    color: #64748b;
+    font-size: 11.5px;
+    white-space: pre;
+}
+
+.jr-input
+{
+    height: 32px;
+    min-width: 0;
+    width: 100%;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    font: inherit;
+}
+
+.jr-input:disabled
+{
+    background: #f8fafc;
+    color: #475569;
+}
+
+.jr-amount
+{
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.jr-x
+{
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.jr-x:hover
+{
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.jr-empty
+{
+    padding: 26px 16px;
+    color: #64748b;
+    font-size: 13.5px;
+    text-align: center;
+}
+
+/* the summary : the job, the totals, cancel */
+.jr-facts
+{
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.jr-facts > div,
+.jr-totals > div,
+.jr-panel-facts > div
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.jr-facts > div,
+.jr-totals > div
+{
+    padding: 6px 10px;
+    border: 1px solid var(--app-border, #e2e8f0);
+    border-radius: 9px;
+    background: #f8fafc;
+}
+
+.jr-facts span,
+.jr-totals span,
+.jr-panel-facts span
+{
+    font-size: 11px;
+    color: var(--app-text-muted, #64748b);
+}
+
+.jr-facts b,
+.jr-panel-facts b
+{
+    font-size: 13px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.jr-totals
+{
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 16px 12px;
+}
+
+.jr-totals b
+{
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.jr-totals > div.jr-grand
+{
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.jr-grand b
+{
+    color: #15803d;
+}
+
+.jr-cancel
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    margin-top: auto;
+    padding: 12px 16px 14px;
+    border-top: 1px solid #e6ecf5;
+}
+
+.jr-cancel-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.jr-cancel-btn:hover
+{
+    background: #fee2e2;
+}
+
+/* the panel */
+.jr-panel-facts
+{
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 8px 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--app-border, #e2e8f0);
+    border-radius: 10px;
+}
+
+.jr-wide
+{
+    grid-column: 1 / -1;
+}
+
+.jr-panel-facts > .jr-wide b
+{
+    font-size: 17px;
+    color: #15803d;
+}
+
+@media (max-width: 1100px)
+{
+    .jr-body
+    {
+        align-content: start;
+    }
+
+    .jr-facts
+    {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .jr-row
+    {
+        grid-template-columns: 26px minmax(0, 1.4fr) minmax(0, 1fr) 64px 90px 100px 26px;
+        gap: 6px;
+    }
+}
+
+/* --------------------------------------------------------------
+   The job : the first card of the page (owner 2026-11-18), with
+   the Job Card box, as on the Assignment page. The tab under it
+   takes the room that is left.
+-------------------------------------------------------------- */
+
+.jr-left
+{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.jr-left > .se-card
+{
+    flex: 0 0 auto;
+}
+
+.jr-left > .ws-steps
+{
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+}
+
+/* one line : Job | the box | the facts */
+.jr-jobrow
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 2fr) 110px repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-items: center;
+    padding: 8px 16px;
+}
+
+.jr-joblabel
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 6px;
+    color: #0f2a44;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.jr-joblabel > i
+{
+    color: #1e3a8a;
+}
+
+.jr-fact
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    min-height: 36px;
+    justify-content: center;
+    padding: 2px 10px;
+    border: 1px solid var(--app-border, #e2e8f0);
+    border-radius: 9px;
+    background: #f8fafc;
+}
+
+.jr-fact > span
+{
+    font-size: 11px;
+    color: var(--app-text-muted, #64748b);
+}
+
+.jr-fact > b
+{
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 1100px)
+{
+    .jr-jobrow
+    {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+}
+
+/* the status of the header : white on its colour */
+.jc-state
+{
+    color: #ffffff;
+}
+
+/* --------------------------------------------------------------
+   The stock of a part (owner 2026-11-18) : read only, in the
+   entry row and on every line of the parts
+-------------------------------------------------------------- */
+
+.jr-pick-parts
+{
+    grid-template-columns: minmax(0, 2fr) 120px 90px 90px minmax(0, 1.3fr) auto;
+}
+
+.jr-row-parts
+{
+    grid-template-columns: 30px minmax(0, 1.6fr) minmax(0, 1.1fr) 80px 80px 110px 120px 30px;
+}
+
+.jr-stock
+{
+    color: #475569;
+}
+
+.jr-stock.is-short
+{
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+@media (max-width: 1100px)
+{
+    .jr-row-parts
+    {
+        grid-template-columns: 26px minmax(0, 1.4fr) minmax(0, 1fr) 56px 64px 90px 100px 26px;
+    }
+}
+
+/* the Shelf button of a card header (as on the purchase form) */
+.jr-shelf
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 30px;
+    margin-left: auto;
+    padding: 0 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #1d4ed8;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.jr-shelf:hover
+{
+    background: #eff6ff;
+}
+
+.jr-card .se-card-header > .jr-shelf + small
+{
+    margin-left: 10px;
+}
+
+/* a line loaded in the entry row (double click) : Add becomes Update */
+.jr-line.is-editing
+{
+    background: #eff6ff;
+    box-shadow: inset 3px 0 0 #1d4ed8;
+}
+
+.jr-add.is-update
+{
+    background: #047857;
+    border-color: #047857;
+}
+
+.jr-add.jr-add-off
+{
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+}
+
+/* the entry row may hold one button more (the x of an update) */
+.jr-pick
+{
+    grid-auto-flow: column;
+    grid-auto-columns: auto;
+}
+
+/* the cancel is locked while anything is allocated to the job */
+.jr-cancel-btn:disabled
+{
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.jr-cancel-lock
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 0 16px 10px;
+    color: #b45309;
+    font-size: 12.5px;
+}
+
+/* a part that is issued to the job : it stays on the requirement */
+.jr-x.jr-x-locked
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+
+/* where the part sits : rack - shelf - bin (owner 2026-11-18) */
+.jr-place
+{
+    margin-left: 10px;
+    font-style: normal;
+    font-weight: 700;
+    color: #1d4ed8;
+    white-space: nowrap;
+}
+
+.jr-place i
+{
+    font-size: 10px;
+    margin-right: 2px;
+}
+
+
+/* the summary : the parts and where they sit (owner 2026-11-18) */
+.jr-chart-title
+{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px 6px;
+    color: #0f2a44;
+    font-size: 13.5px;
+    font-weight: 700;
+}
+
+.jr-chart-title > i
+{
+    color: #1e3a8a;
+}
+
+.jr-chart-title > small
+{
+    margin-left: 6px;
+    color: #64748b;
+    font-size: 11.5px;
+    font-weight: 500;
+}
+
+/* # | part | location | stock | qty */
+.jr-row.jr-row-chart
+{
+    grid-template-columns: 30px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.9fr) 60px minmax(0, 1fr) 80px 70px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.jr-place-big
+{
+    font-weight: 700;
+    color: #1d4ed8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jr-place-big i
+{
+    font-size: 11px;
+    margin-right: 3px;
+}
+
+.jr-place-none
+{
+    color: #b45309;
+    font-size: 12.5px;
+}
+
+
+/* a part with no place : the words take the five place columns */
+.jr-place-span
+{
+    grid-column: span 5;
+}
+
+/* the second bin of a part : no line above it */
+.jr-line-more
+{
+    margin-top: -1px;
+}

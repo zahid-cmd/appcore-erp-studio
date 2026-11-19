@@ -7,8 +7,15 @@
 //     "LocalHostTenant": "MOTOZONE",    // company for http://localhost
 //                                       // (Deploy Agent health checks)
 //     "CacheSeconds": 60,
+//     "MapFile": "",                    // optional : last known map
+//                                       // (default %ProgramData%\AppCore\tenant-map.json)
 //     "Credentials": {
+//         "TW-DEMO": {                  // a company's own login :
+//             "Username": "appcore_t_tw_demo",   // Tenants.CredentialKey
+//             "Password": "..."
+//         },
 //         "PG-01": {                    // = DatabaseServers.CredentialKey
+//                                       // (companies without their own key)
 //             "Username": "postgres",
 //             "Password": "...",
 //             "Host": "localhost",      // optional : how THIS server
@@ -41,6 +48,11 @@ public sealed class TenancyOptions
     public string? LocalHostTenant { get; set; }
 
     public int CacheSeconds { get; set; } = 60;
+
+    // Last known map of addresses -> companies (no passwords), used
+    // when AppCore_Control cannot be reached. Empty =
+    // %ProgramData%\AppCore\tenant-map.json
+    public string? MapFile { get; set; }
 
     public Dictionary<string, TenancyCredential> Credentials { get; set; } =
         new(StringComparer.OrdinalIgnoreCase);

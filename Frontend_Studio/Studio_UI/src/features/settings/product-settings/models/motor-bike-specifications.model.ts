@@ -78,6 +78,8 @@ export interface MotorBikeSpecifications
 
     TopSpeedKmh: number;
 
+    TopSpeed?: string;
+
     WheelBaseMm: number;
 
     LengthMm: number;
@@ -154,6 +156,8 @@ export interface CreateMotorBikeSpecifications
     Mileage: string;
 
     TopSpeedKmh: number;
+
+    TopSpeed?: string;
 
     WheelBaseMm: number;
 

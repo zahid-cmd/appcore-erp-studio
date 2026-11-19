@@ -73,12 +73,16 @@ public class MotorBikeSpecifications
     // Form-17 item 32 (0 = not given)
     public int Rpm { get; set; }
 
-    // Website : mileage (petrol, e.g. "45 km per litre") or range
-    // (electric, e.g. "80 km per charge"); empty = not given
+    // Mileage as typed, e.g. "45 km per litre" or "60-85 km per
+    // charge"; empty = not given
     public string Mileage { get; set; } = string.Empty;
 
-    // Website : top speed in km/h (0 = not given)
+    // Old top speed in km/h (0 = not given); kept for older rows,
+    // TopSpeed (text) is used from 2026-11-19
     public int TopSpeedKmh { get; set; }
+
+    // Top speed as typed, e.g. "25-35 km/h" (empty = not given)
+    public string TopSpeed { get; set; } = string.Empty;
 
     //-----------------------------------------------------------
     // Size and tyres (Form-17 items 34, 37 - 39, 41), mm

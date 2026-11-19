@@ -1,0 +1,910 @@
+/* =====================================================================
+   PRODUCT LEDGERS : statement presentation (2026-11-19)
+   The financial statements' look (shared/statement-presentation.css)
+   for the pl- classes : filter bar on top, letterhead, report table.
+   Scoped to .pl-page.tb-page.
+   ===================================================================== */
+
+/* =====================================================================
+   STATEMENT PRESENTATION (2026-11-16, owner approved the mockup)
+   One corporate look for every financial statement page :
+     - the filter is a bar over the statement (not a left panel), so
+       the statement gets the full width
+     - the head card is a letterhead : serif title, navy rule, the key
+       figures as tiles
+     - the statement table reads like a printed report : navy header,
+       copper section labels, totals with a double rule
+   Scoped to .pl-page.tb-page (statement pages only; the accounting
+   registers that share ledger-registers.css are not touched).
+   Imported LAST by each statement page's stylesheet.
+   ===================================================================== */
+
+
+/* ---------------------------------------------------------------
+   Page frame : filter bar on top, the statement under it
+   --------------------------------------------------------------- */
+
+.pl-page.tb-page .pl-body
+{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pl-page.tb-page .pl-canvas
+{
+    flex: 1 1 0;
+    min-height: 0;
+    border-radius: 16px;
+}
+
+
+/* ---------------------------------------------------------------
+   Filter bar
+   --------------------------------------------------------------- */
+
+.pl-page.tb-page .pl-filter
+{
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 16px;
+    padding: 10px 16px;
+    border-radius: 16px;
+    overflow: visible;
+}
+
+/* the panel title and the long explanations do not fit a bar */
+.pl-page.tb-page .pl-filter-head,
+.pl-page.tb-page .pl-filter .pl-hint,
+.pl-page.tb-page .pl-filter .tb-rules,
+.pl-page.tb-page .pl-filter .pl-sep,
+.pl-page.tb-page .tb-opts > b
+{
+    display: none;
+}
+
+.pl-page.tb-page .pl-filter-body
+{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 16px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0;
+    overflow: visible;
+}
+
+.pl-page.tb-page .pl-filter .pl-field
+{
+    flex: 0 1 auto;
+    min-width: 170px;
+    gap: 6px;
+}
+
+.pl-page.tb-page .pl-filter .pl-field > label
+{
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+/* dates compact, dropdowns a steady width */
+.pl-page.tb-page .pl-filter .pl-date
+{
+    width: 160px;
+}
+
+.pl-page.tb-page .pl-filter .pl-dd
+{
+    /* the dropdown's own flex-basis is its width : inside the column
+       of a field it would become its height, so it is reset here */
+    flex: 0 0 auto;
+    width: 230px;
+    --dropdown-width: 230px;
+}
+
+/* compare / basis choices : one segmented row */
+.pl-page.tb-page .pl-filter .fa-choices
+{
+    flex-direction: row;
+    gap: 2px;
+    padding: 3px;
+    border-color: #e3e9f2;
+    border-radius: 11px;
+    background: #f1f5fb;
+}
+
+.pl-page.tb-page .pl-filter .fa-choice
+{
+    flex: 0 0 auto;
+    width: auto;
+    justify-content: center;
+    height: 32px;
+    padding: 0 12px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.pl-page.tb-page .pl-filter .fa-choice i
+{
+    display: none;
+}
+
+.pl-page.tb-page .pl-filter .fa-choice.on
+{
+    border-color: transparent;
+    background: #ffffff;
+    color: #16307a;
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .12);
+}
+
+/* display switches : inline, after the fields */
+.pl-page.tb-page .tb-opts
+{
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin: 0;
+    padding: 0 0 8px;
+    border: 0;
+    background: transparent;
+}
+
+.pl-page.tb-page .tb-opts .pl-switch
+{
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.pl-page.tb-page .tb-opts .pl-switch em
+{
+    display: none;
+}
+
+/* foot : the "how the figures work" note shrinks to its icon (full
+   text on hover) and Submit sits at the end of the bar */
+.pl-page.tb-page .pl-filter-foot
+{
+    flex: 0 0 auto;
+    margin-left: auto;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.pl-page.tb-page .pl-filter-foot .fa-foot-note
+{
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: #f8fafd;
+    cursor: help;
+}
+
+.pl-page.tb-page .pl-filter-foot .fa-foot-note i
+{
+    margin: 0;
+    font-size: 14px;
+}
+
+.pl-page.tb-page .pl-filter-foot .fa-foot-note span
+{
+    display: none;
+}
+
+.pl-page.tb-page .pl-filter-foot .pl-btn-primary
+{
+    height: 38px;
+    padding: 0 24px;
+    border-color: #b8692f;
+    border-radius: 10px;
+    background: #b8692f;
+    font-weight: 700;
+}
+
+.pl-page.tb-page .pl-filter-foot .pl-btn-primary:hover:not(:disabled)
+{
+    background: #9c5824;
+}
+
+/* filter messages (error / note) take their own row */
+.pl-page.tb-page .pl-filter .pl-note
+{
+    flex: 1 1 100%;
+    margin: 0;
+}
+
+
+/* ---------------------------------------------------------------
+   Switch bar (view level etc.)
+   --------------------------------------------------------------- */
+
+.pl-page.tb-page .pl-switchbar
+{
+    min-height: 48px;
+    background: #ffffff;
+}
+
+.pl-page.tb-page .pl-seg button.on
+{
+    background: #16307a;
+}
+
+
+/* ---------------------------------------------------------------
+   Letterhead (the head card)
+   --------------------------------------------------------------- */
+
+.pl-page.tb-page .pl-view
+{
+    gap: 14px;
+    padding: 16px;
+    background: #f1f4fa;
+}
+
+.pl-page.tb-page .pl-head
+{
+    gap: 18px;
+    padding: 16px 22px;
+    border: 1px solid #e3e9f3;
+    border-bottom: 3px solid #16307a;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #f7f9fe 0%, #ffffff 100%);
+    box-shadow: 0 16px 34px -28px rgba(22, 48, 122, .55);
+}
+
+.pl-page.tb-page .pl-head-title b
+{
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-size: 23px;
+    font-weight: 700;
+    color: #0b1d52;
+    letter-spacing: -.01em;
+}
+
+.pl-page.tb-page .pl-head-info::before
+{
+    content: 'Stock ledger';
+    color: #b8692f;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.pl-page.tb-page .pl-head-sub
+{
+    color: #475569;
+    font-size: 13px;
+}
+
+.pl-page.tb-page .pl-pill
+{
+    background: #e8eefc;
+    color: #16307a;
+}
+
+/* key figures : tiles */
+.pl-page.tb-page .pl-figs
+{
+    gap: 10px;
+}
+
+.pl-page.tb-page .pl-figs > div
+{
+    min-width: 150px;
+    gap: 4px;
+    padding: 9px 14px;
+    border-color: #e3e9f3;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+}
+
+.pl-page.tb-page .pl-figs span
+{
+    color: #475569;
+    font-size: 11px;
+    letter-spacing: .06em;
+}
+
+.pl-page.tb-page .pl-figs b
+{
+    color: #0b1d52;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.pl-page.tb-page .pl-figs .pl-fig-main
+{
+    border-color: #16307a;
+    background: #16307a;
+}
+
+.pl-page.tb-page .pl-figs .pl-fig-main span
+{
+    color: #c7d2f0;
+}
+
+.pl-page.tb-page .pl-figs .pl-fig-main b
+{
+    color: #ffffff;
+}
+
+.pl-page.tb-page .pl-head-period b
+{
+    color: #0b1d52;
+    font-size: 15px;
+}
+
+@media (max-width: 1500px)
+{
+    .pl-page.tb-page .pl-head
+    {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .pl-page.tb-page .pl-figs
+    {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        flex-wrap: wrap;
+    }
+
+    .pl-page.tb-page .pl-figs > div
+    {
+        flex: 1 1 150px;
+    }
+}
+
+
+/* ---------------------------------------------------------------
+   The statement : a printed report
+   --------------------------------------------------------------- */
+
+.pl-page.tb-page .tb-tcard,
+.pl-page.tb-page .fa-tcard,
+.pl-page.tb-page .pl-tcard
+{
+    border-radius: 14px;
+    box-shadow: 0 18px 40px -30px rgba(22, 48, 122, .5);
+}
+
+.pl-page.tb-page .tb-table thead th,
+.pl-page.tb-page .pl-table thead th
+{
+    background: #f4f7fc;
+    color: #334155;
+    border-bottom: 2px solid #16307a;
+    letter-spacing: .07em;
+}
+
+.pl-page.tb-page .tb-table thead th.tb-grp
+{
+    color: #16307a;
+    box-shadow: inset 0 -2px 0 #b8692f;
+}
+
+/* section rows (ASSETS / EQUITY AND LIABILITIES ...) */
+.pl-page.tb-page .pl-table tbody tr.fa-section td
+{
+    height: 44px;
+    border-top: 0;
+    background: #ffffff;
+    color: #b8692f;
+    font-weight: 800;
+}
+
+.pl-page.tb-page .pl-table tbody tr.fa-section .pl-clip
+{
+    font-size: 12.5px;
+    letter-spacing: .16em;
+}
+
+/* first level under a section : the group heading */
+.pl-page.tb-page .pl-table tbody tr.tb-l1 td
+{
+    border-top: 1px solid #e8eef8;
+    background: #fbfcff;
+    color: #0b1d52;
+    font-weight: 700;
+}
+
+.pl-page.tb-page .pl-table tbody tr.tb-row td
+{
+    border-bottom-color: #f1f4f9;
+}
+
+/* results (Gross Profit, Net Profit, Total ...) : double rule */
+.pl-page.tb-page .pl-table tbody tr.fa-result td
+{
+    height: 48px;
+    border-top: 1px solid #94a3b8;
+    border-bottom: 3px double #0b1d52;
+    background: #eef2fb;
+    color: #0b1d52;
+    letter-spacing: .02em;
+}
+
+/* the totals bar under the table */
+.pl-page.tb-page .tb-foot
+{
+    background: #eef2fb;
+    box-shadow: inset 0 2px 0 #16307a, 0 -8px 16px -12px rgba(15, 42, 90, .3);
+}
+
+.pl-page.tb-page .tb-foot .pl-table tr.pl-close td
+{
+    color: #0b1d52;
+    font-weight: 800;
+}
+
+.pl-page.tb-page .tb-foot .pl-table tr.pl-close td:first-child
+{
+    color: #b8692f;
+}
+
+.pl-page.tb-page .tb-foot .pl-table tr.pl-close td.r
+{
+    text-decoration: underline double #0b1d52;
+    text-underline-offset: 5px;
+}
+
+/* side panels (business lines, insights) : the same card look */
+.pl-page.tb-page .fa-lines,
+.pl-page.tb-page .fs-insights
+{
+    border-radius: 14px;
+}
+
+.pl-page.tb-page .fa-lines-head
+{
+    background: #ffffff;
+    box-shadow: inset 0 -2px 0 #16307a;
+}
+
+.pl-page.tb-page .fa-lines-foot
+{
+    background: #0b1d52;
+    box-shadow: none;
+}
+
+.pl-page.tb-page .fa-lines-foot span
+{
+    color: #f3c79b;
+}
+
+.pl-page.tb-page .fa-lines-foot b
+{
+    color: #ffffff;
+}
+
+.pl-page.tb-page .fa-lines-foot em
+{
+    color: #c7d2f0;
+}
+
+
+/* ---------------------------------------------------------------
+   Insights panel (Balance Sheet) : composition and key ratios
+   --------------------------------------------------------------- */
+
+.fs-insights
+{
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 340px;
+    gap: 14px;
+    min-height: 0;
+    padding: 16px 18px;
+    border: 1px solid #e3e9f3;
+    background: #ffffff;
+    overflow: auto;
+    box-shadow: 0 18px 40px -30px rgba(22, 48, 122, .5);
+}
+
+.fs-ins-title
+{
+    margin: 0;
+    color: #0b1d52;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.fs-mix
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fs-mix > span
+{
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.fs-bar
+{
+    display: flex;
+    height: 14px;
+    border-radius: 999px;
+    background: #eef2f8;
+    overflow: hidden;
+}
+
+.fs-bar > i
+{
+    display: block;
+    height: 100%;
+}
+
+.fs-leg
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: #334155;
+    font-size: 13px;
+}
+
+.fs-leg > i
+{
+    flex: 0 0 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.fs-leg > span
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fs-leg > b
+{
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.fs-ratios
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.fs-ratio
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 11px 12px;
+    border: 1px solid #e8eef8;
+    border-radius: 12px;
+    background: #f7f9fe;
+}
+
+.fs-ratio > span
+{
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.fs-ratio > b
+{
+    color: #0b1d52;
+    font-size: 19px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.fs-ratio > em
+{
+    color: #64748b;
+    font-size: 11.5px;
+    font-style: normal;
+}
+
+.fs-result
+{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #0b1d52;
+    color: #ffffff;
+}
+
+.fs-result > span
+{
+    color: #f3c79b;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.fs-result > b
+{
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.fs-result.is-loss > b
+{
+    color: #fca5a5;
+}
+
+.fs-result > em
+{
+    color: #c7d2f0;
+    font-size: 12.5px;
+    font-style: normal;
+}
+
+@media (max-width: 1280px)
+{
+    .fa-main.has-insights
+    {
+        flex-direction: column;
+        flex: 0 0 auto;
+    }
+
+    .fa-main.has-insights > .fa-tcard
+    {
+        flex: 0 0 auto;
+        max-height: 70vh;
+    }
+
+    .fs-insights
+    {
+        flex: 0 0 auto;
+    }
+}
+
+/* ---------------------------------------------------------------
+   Owner 2026-11-16 (2) : the level buttons (Class / Group / Sub
+   Group / Ledger) sit at the right of the switch bar; the figure
+   tiles have an icon on the left and their label and amount
+   centred (owner : the figure centre aligned)
+   --------------------------------------------------------------- */
+
+.pl-page.tb-page .pl-switchbar .tb-levels
+{
+    margin-left: auto;
+}
+
+.pl-page.tb-page .pl-figs > div
+{
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 2px;
+    min-width: 190px;
+    padding: 10px 16px 10px 12px;
+    text-align: center;
+}
+
+.pl-page.tb-page .pl-figs > div > span,
+.pl-page.tb-page .pl-figs > div > b
+{
+    grid-column: 2;
+    justify-self: center;
+}
+
+.pl-page.tb-page .pl-figs > div::before
+{
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: #e8eefc;
+    color: #16307a;
+    font-family: 'Font Awesome 6 Free';
+    font-size: 16px;
+    font-weight: 900;
+    /* default : a figure */
+    content: '\e473';
+}
+
+/* first tile (Dr / Assets / Receipts ...) and second (Cr / Liabilities
+   & Equity / Payments ...) */
+.pl-page.tb-page .pl-figs > div:nth-child(1)::before
+{
+    content: '\f0ab';
+}
+
+.pl-page.tb-page .pl-figs > div:nth-child(2)::before
+{
+    content: '\f0aa';
+    background: #fdeee3;
+    color: #9a4a12;
+}
+
+/* the balance check */
+.pl-page.tb-page .pl-figs > div.tb-check::before
+{
+    content: '\f24e';
+}
+
+.pl-page.tb-page .pl-figs > div.tb-check.is-ok::before
+{
+    background: #e7f6ee;
+    color: #146c3c;
+}
+
+.pl-page.tb-page .pl-figs > div.tb-check.is-bad::before
+{
+    background: #fdecec;
+    color: #b42318;
+}
+
+.pl-page.tb-page .pl-figs .pl-fig-main::before
+{
+    background: rgba(255, 255, 255, .14);
+    color: #ffffff;
+}
+
+/* ---------------------------------------------------------------
+   Insights panel : compact, fits the height without a scroll
+   (owner 2026-11-16) : legends in two columns, thinner bars,
+   one-line ratio hints, smaller result card
+   --------------------------------------------------------------- */
+
+.pl-page.tb-page .fs-insights
+{
+    flex: 0 0 360px;
+    gap: 10px;
+    padding: 12px 14px;
+}
+
+.pl-page.tb-page .fs-ins-title
+{
+    font-size: 14px;
+}
+
+.pl-page.tb-page .fs-mix
+{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 14px;
+}
+
+.pl-page.tb-page .fs-mix > span,
+.pl-page.tb-page .fs-mix > .fs-bar
+{
+    grid-column: 1 / -1;
+}
+
+.pl-page.tb-page .fs-mix > .fs-bar
+{
+    height: 10px;
+    margin: 2px 0 2px;
+}
+
+.pl-page.tb-page .fs-leg
+{
+    gap: 6px;
+    font-size: 12px;
+}
+
+.pl-page.tb-page .fs-leg > i
+{
+    flex: 0 0 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+.pl-page.tb-page .fs-ratios
+{
+    gap: 8px;
+}
+
+.pl-page.tb-page .fs-ratio
+{
+    gap: 1px;
+    padding: 8px 10px;
+    border-radius: 10px;
+}
+
+.pl-page.tb-page .fs-ratio > span
+{
+    font-size: 11.5px;
+}
+
+.pl-page.tb-page .fs-ratio > b
+{
+    font-size: 17px;
+}
+
+.pl-page.tb-page .fs-ratio > em
+{
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pl-page.tb-page .fs-result
+{
+    gap: 2px;
+    margin-top: auto;
+    padding: 10px 14px;
+    border-radius: 12px;
+}
+
+.pl-page.tb-page .fs-result > span
+{
+    font-size: 10.5px;
+}
+
+.pl-page.tb-page .fs-result > b
+{
+    font-size: 18px;
+}
+
+.pl-page.tb-page .fs-result > em
+{
+    font-size: 11.5px;
+}
+
+/* statement and side panel : the same height (a card keeps a bottom
+   margin unless it is the last child, which made the statement card
+   14px shorter than the panel beside it) */
+.pl-page.tb-page .fa-main > .pl-card
+{
+    margin: 0;
+}
+
+.pl-page.tb-page .fa-main
+{
+    align-items: stretch;
+}
+
+/* Balance Sheet Net assets view : "Presented by" caption (no figure) */
+.pl-page.tb-page .pl-table tbody tr.fa-caption td
+{
+    height: 40px;
+    padding-top: 14px;
+    border-top: 0;
+    background: #ffffff;
+    color: #0b1d52;
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.pl-page.tb-page .pl-table tbody tr.fa-caption:hover td
+{
+    background: #ffffff;
+}

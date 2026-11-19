@@ -215,11 +215,34 @@ export class ProductLedger
     private readonly destroyRef =
         inject(DestroyRef);
 
-    readonly page:
+    // The page of the route (its title, its Stock Type list)
+    readonly home:
         ProductLedgerConfig =
         productLedgerConfig(
             String(this.route.snapshot.data['ledgerType'] ?? 'SP')
         );
+
+    // The ledger shown : the page's own, or (Spare Parts page,
+    // Stock Type Accessories) the Accessories ledger
+    page:
+        ProductLedgerConfig =
+        this.home;
+
+    // Spare Parts page : the branches that also run Accessories
+    // (Business Configuration) - for them the Stock Type list
+    // offers Accessories
+    private accessoryBranchIds:
+        number[] = [];
+
+    get accessoriesAllowed():
+        boolean
+    {
+        // The branch filter then works as for the parts : All
+        // Branches = the total stock, a branch = its own
+        return this.home.type === 'SP'
+            &&
+            this.accessoryBranchIds.length > 0;
+    }
 
     //===========================================================
     // Filter
@@ -380,6 +403,14 @@ export class ProductLedger
 
                                 if
                                 (
+                                    this.page.type === this.home.type
+                                )
+                                {
+                                    this.accessoryBranchIds = filters.AccessoryBranchIds ?? [];
+                                }
+
+                                if
+                                (
                                     !filters.CanViewCost
                                 )
                                 {
@@ -469,7 +500,7 @@ export class ProductLedger
     get isSpareParts():
         boolean
     {
-        return this.page.type === 'SP';
+        return this.home.type === 'SP';
     }
 
     get canViewCost():
@@ -483,6 +514,14 @@ export class ProductLedger
     {
         const filters =
             this.filters;
+
+        this.kindItems =
+        [
+            { label:'Spare Parts & Lubricants', value:'' },
+            { label:'Spare Parts', value:'Spare Parts' },
+            { label:'Lubricants', value:'Lubricants' },
+            ...(this.accessoriesAllowed ? [{ label:'Accessories', value:KIND_ACCESSORIES }] : [])
+        ];
 
         this.branchItems =
         [
@@ -633,6 +672,14 @@ export class ProductLedger
             this.warehouseId = 0;
         }
 
+        if
+        (
+            this.leaveAccessories()
+        )
+        {
+            return;
+        }
+
         this.rebuildItems();
     }
 
@@ -656,7 +703,33 @@ export class ProductLedger
             this.branchId = warehouse.BranchId;
         }
 
+        if
+        (
+            this.leaveAccessories()
+        )
+        {
+            return;
+        }
+
         this.rebuildItems();
+    }
+
+    // The branch chosen does not run Accessories : back to the
+    // parts (true = the Stock Type was changed)
+    private leaveAccessories():
+        boolean
+    {
+        if
+        (
+            this.kind !== KIND_ACCESSORIES || this.accessoriesAllowed
+        )
+        {
+            return false;
+        }
+
+        this.onKindChange('');
+
+        return true;
     }
 
     onKindChange
@@ -667,6 +740,48 @@ export class ProductLedger
         void
     {
         this.kind = String(value ?? '');
+
+        // Accessories : the Accessories ledger, inside this page
+        const target =
+            productLedgerConfig(
+                this.kind === KIND_ACCESSORIES && this.home.type === 'SP' ? 'AC' : this.home.type
+            );
+
+        if
+        (
+            target.type !== this.page.type
+        )
+        {
+            this.page = target;
+
+            this.loadRequest?.unsubscribe();
+
+            this.categoryId = 0;
+
+            this.subCategoryId = 0;
+
+            this.productId = 0;
+
+            this.filters = null;
+
+            this.view = 'none';
+
+            this.statement = null;
+
+            this.summary = null;
+
+            this.loading = false;
+
+            this.loadError = '';
+
+            this.applySearch();
+
+            this.rebuildItems();
+
+            this.loadFilters();
+
+            return;
+        }
 
         this.fitChildren();
 
@@ -940,7 +1055,7 @@ export class ProductLedger
                 .getSummary(
                     {
                         path:this.page.path,
-                        kind:this.isSpareParts ? this.kind : '',
+                        kind:this.page.type === 'SP' ? this.kind : '',
                         categoryId:this.categoryId,
                         subCategoryId:this.subCategoryId,
                         from:toIsoDate(this.fromDate),
@@ -1013,6 +1128,8 @@ export class ProductLedger
         this.warehouseId = 0;
 
         this.kind = '';
+
+        this.page = this.home;
 
         this.categoryId = 0;
 
@@ -1219,7 +1336,7 @@ export class ProductLedger
                     ledgerType:this.page.type,
                     view:this.view === 'statement' ? 'statement' : 'summary',
                     productId:this.statement?.ProductId ?? 0,
-                    kind:this.summary?.Kind ?? (this.isSpareParts ? this.kind : ''),
+                    kind:this.summary?.Kind ?? (this.page.type === 'SP' ? this.kind : ''),
                     categoryId:this.summary?.CategoryId ?? this.categoryId,
                     subCategoryId:this.summary?.SubCategoryId ?? this.subCategoryId,
                     from:shown.From,
@@ -1273,6 +1390,10 @@ export class ProductLedger
 //===============================================================
 // Helpers
 //===============================================================
+
+// Stock Type "Accessories" of the Spare Parts page
+const KIND_ACCESSORIES =
+    'Accessories';
 
 // An answer slower than this ends the wait with a message
 const REQUEST_TIMEOUT =

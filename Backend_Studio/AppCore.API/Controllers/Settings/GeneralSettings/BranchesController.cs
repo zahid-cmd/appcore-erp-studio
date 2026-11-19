@@ -362,9 +362,22 @@ public class BranchesController : ControllerBase
     {
            long userId = this.CurrentUserId();
 
-        bool restored =
-            await _repository.RestoreAsync(
-                userId);
+        bool restored;
+
+        try
+        {
+            restored =
+                await _repository.RestoreAsync(
+                    userId);
+        }
+        catch
+        (
+            InvalidOperationException ex
+        )
+        {
+            // above the limit set in the Console
+            return Conflict(ex.Message);
+        }
 
         if (!restored)
         {
@@ -373,6 +386,26 @@ public class BranchesController : ControllerBase
         }
 
         return NoContent();
+    }
+
+
+    //===============================================================
+    // Limit (set in the Console) : asked before the Add form opens
+    //===============================================================
+
+    [HttpGet("limit")]
+
+    public async Task<IActionResult> GetLimit()
+    {
+        string? message =
+            await _repository.GetLimitMessageAsync();
+
+        return Ok(
+            new
+            {
+                Reached = message is not null,
+                Message = message ?? string.Empty
+            });
     }
 
 

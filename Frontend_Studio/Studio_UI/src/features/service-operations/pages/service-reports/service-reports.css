@@ -1,6 +1,10 @@
 /* Service Reports and the Workshop Dashboard : the filter strip of
    the toolbar, the totals line, the dashboard tiles */
 
+/* The layout of every list page : header, toolbar, then the canvas
+   at its full height (was missing : the list ended with its rows) */
+@import '../../../../shared/styles/app-list-page.css';
+
 .sr-filters
 {
     display: flex;
@@ -46,6 +50,9 @@
 
 .wd-body
 {
+    /* fills what the header and the toolbar leave, scrolls inside */
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -163,7 +170,7 @@
 .wd-row
 {
     display: grid;
-    grid-template-columns: 105px minmax(150px, 1.2fr) minmax(130px, 1fr) 130px 120px 150px 150px minmax(140px, 1fr);
+    grid-template-columns: 215px minmax(150px, 1.2fr) minmax(150px, 1.2fr) 130px 130px 165px 215px minmax(130px, 1fr);
     align-items: center;
     gap: 10px;
     padding: 7px 14px;
@@ -233,4 +240,443 @@
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 10px;
     padding: 12px 14px;
+}
+
+
+/* Workshop Dashboard : the jobs of the technicians (owner 2026-11-19) */
+.wd-queue
+{
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.3fr) 80px minmax(0, 3fr);
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    font-size: 12.5px;
+}
+
+.wd-queue.wd-head
+{
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.wd-queue small
+{
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.wd-queue-job
+{
+    cursor: pointer;
+}
+
+.wd-queue-job i
+{
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 5px;
+    border-radius: 50%;
+}
+
+.wd-queue-list
+{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.wd-queue-chip
+{
+    padding: 2px 9px;
+    border: 1px solid #fcd34d;
+    border-radius: 999px;
+    background: #fffbeb;
+    color: #92400e;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.wd-queue-chip:hover
+{
+    background: #fef3c7;
+}
+
+
+/* Workshop Dashboard (owner 2026-11-19) : the body scrolls - its
+   parts keep their own height */
+.wd-body > *
+{
+    flex: 0 0 auto;
+}
+
+.wd-today
+{
+    color: #0f2a44;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+/* the service ramps */
+.wd-ramps
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 14px;
+}
+
+.wd-ramp
+{
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #bfdbfe;
+    border-top: 4px solid #2563eb;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 16px -12px rgba(30, 58, 138, 0.45);
+    overflow: hidden;
+}
+
+.wd-ramp.wd-ramp-queue
+{
+    border-color: #fde68a;
+    border-top-color: #d97706;
+}
+
+.wd-ramp.wd-ramp-free
+{
+    border-color: #bbf7d0;
+    border-top-color: #16a34a;
+}
+
+.wd-ramp > header
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eef2f7;
+    background: #f8fafc;
+}
+
+.wd-ramp-icon
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 14px;
+}
+
+.wd-ramp-free .wd-ramp-icon
+{
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.wd-ramp-queue .wd-ramp-icon
+{
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.wd-ramp-name
+{
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.wd-ramp-name b
+{
+    color: #0f172a;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wd-ramp-name small
+{
+    color: #64748b;
+    font-size: 11px;
+}
+
+.wd-ramp > header em
+{
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+}
+
+.wd-ramp-queue > header em
+{
+    background: #d97706;
+}
+
+.wd-ramp-free > header em
+{
+    background: #16a34a;
+}
+
+.wd-ramp-job
+{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 10px 12px;
+    color: #0f172a;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.wd-ramp-job:hover
+{
+    background: #f7faff;
+}
+
+.wd-ramp-job > b
+{
+    font-size: 14px;
+    color: #1e3a8a;
+}
+
+.wd-ramp-job > div
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.wd-ramp-job > div > i
+{
+    flex: 0 0 16px;
+    color: #94a3b8;
+    font-size: 11px;
+    text-align: center;
+}
+
+.wd-ramp-job > div > span
+{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wd-ramp-job small
+{
+    color: #64748b;
+    font-size: 11px;
+}
+
+.wd-ramp-job > .wd-ramp-foot
+{
+    justify-content: space-between;
+    margin-top: 3px;
+    padding-top: 7px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 11.5px;
+    color: #475569;
+}
+
+.wd-ramp-next
+{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    padding: 8px 12px;
+    border-top: 1px solid #eef2f7;
+    background: #fcfdff;
+    font-size: 11.5px;
+}
+
+.wd-ramp-next small
+{
+    color: #64748b;
+    font-size: 11px;
+}
+
+.wd-ramp-empty
+{
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 150px;
+    color: #15803d;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.wd-ramp-empty i
+{
+    font-size: 30px;
+    opacity: 0.55;
+}
+
+
+/* Workshop Dashboard : the tabs fill the page (owner 2026-11-19) */
+.wd-card.wd-fill
+{
+    flex: 1 0 auto;
+}
+
+.wd-pill-late
+{
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 10.5px;
+    font-style: normal;
+    font-weight: 800;
+}
+
+/* the technicians : the jobs that wait, one a line */
+.wd-ramp-next.wd-ramp-list
+{
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 4px;
+}
+
+.wd-wait
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 8px;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    background: #fffbeb;
+    color: #0f172a;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.wd-wait:hover
+{
+    background: #fef3c7;
+}
+
+.wd-wait > b
+{
+    flex: 0 0 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #d97706;
+    color: #ffffff;
+    font-size: 11px;
+}
+
+.wd-wait small
+{
+    display: block;
+    color: #92400e;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* the figures */
+.wd-figures
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
+    padding: 14px;
+}
+
+.wd-tile.wd-figure
+{
+    padding: 16px 18px;
+}
+
+.wd-tile.wd-figure b
+{
+    font-size: 30px;
+}
+
+.wd-bars
+{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 18px;
+}
+
+.wd-bar
+{
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) 50px;
+    align-items: center;
+    gap: 12px;
+    color: #0f172a;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.wd-bar > div
+{
+    height: 14px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    overflow: hidden;
+}
+
+.wd-bar > div > i
+{
+    display: block;
+    height: 100%;
+    min-width: 4px;
+    border-radius: 999px;
+}
+
+.wd-bar > b
+{
+    text-align: right;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+}
+
+.wd-bar:hover > span
+{
+    color: #1d4ed8;
+}
+
+
+/* Workshop Dashboard : the status chips over the list table */
+.wd-strip.wd-list-strip
+{
+    flex: 0 0 auto;
+    padding: 10px 14px 0;
 }

@@ -29,7 +29,9 @@ public record TenantSave(
     string? Status,
     DateOnly? TrialEndsOn,
     string? Remarks,
-    List<string>? HostNames);
+    List<string>? HostNames,
+    int? MaxCompanies = null,
+    int? MaxBranches = null);
 
 public record TenantStatusChange(string Status, string? Reason);
 
@@ -92,6 +94,8 @@ public partial class TenantsController : ControllerBase
                     x.t.Status,
                     x.t.TrialEndsOn,
                     x.t.DatabaseName,
+                    x.t.MaxCompanies,
+                    x.t.MaxBranches,
                     x.t.AppVersion,
                     CustomerPublicId = x.c.PublicId,
                     CustomerName = x.c.DisplayName,
@@ -146,6 +150,8 @@ public partial class TenantsController : ControllerBase
             t.TrialEndsOn,
             t.DatabaseServerId,
             t.DatabaseName,
+            t.MaxCompanies,
+            t.MaxBranches,
             t.TimeZone,
             t.Currency,
             t.AppVersion,
@@ -185,6 +191,8 @@ public partial class TenantsController : ControllerBase
             DatabaseName = Clean(request.DatabaseName),
             Status = status,
             TrialEndsOn = request.TrialEndsOn,
+            MaxCompanies = request.MaxCompanies ?? 1,
+            MaxBranches = request.MaxBranches,
             Remarks = Clean(request.Remarks),
             CreatedBy = User.StaffId()
         };
@@ -245,6 +253,8 @@ public partial class TenantsController : ControllerBase
         tenant.DatabaseServerId = request.DatabaseServerId;
         tenant.DatabaseName = Clean(request.DatabaseName);
         tenant.TrialEndsOn = request.TrialEndsOn;
+        tenant.MaxCompanies = request.MaxCompanies ?? 1;
+        tenant.MaxBranches = request.MaxBranches;
         tenant.Remarks = Clean(request.Remarks);
         tenant.ModifiedDate = DateTime.UtcNow;
         tenant.ModifiedBy = User.StaffId();
@@ -369,6 +379,16 @@ public partial class TenantsController : ControllerBase
         if (r.Status is not null && !Statuses.Contains(r.Status))
         {
             return ("Unknown status.", null, null, hosts);
+        }
+
+        if (r.MaxCompanies is < 1 or > 100)
+        {
+            return ("Companies allowed : 1 to 100.", null, null, hosts);
+        }
+
+        if (r.MaxBranches is < 1 or > 10000)
+        {
+            return ("Branches allowed : 1 or more, or leave it empty for no limit.", null, null, hosts);
         }
 
         if (await _db.Tenants.AnyAsync(x => x.TenantCode == code && x.TenantId != tenantId))

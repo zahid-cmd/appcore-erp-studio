@@ -16,7 +16,15 @@
 
         <div class="sc-title">
 
-            <span class="sc-eyebrow">Stock Card</span>
+            <span class="sc-eyebrow">
+                Stock Card
+                @if (scopeText)
+                {
+                    <em
+                        class="sc-scope"
+                        title="The card shows the stock of this branch and warehouse only"><i class="fas fa-building"></i> {{ scopeText }}</em>
+                }
+            </span>
 
             <strong>
                 {{ card?.Product?.ProductName || 'Loading…' }}

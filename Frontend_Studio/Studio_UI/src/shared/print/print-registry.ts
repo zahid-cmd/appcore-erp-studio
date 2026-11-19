@@ -412,6 +412,27 @@ export const PRINT_SOURCES:
             import('../../features/service-operations/print/job-card.print')
                 .then(module => module.JOB_CARD_PRINT),
 
+    // Service Operations : the location chart of a job (the rack,
+    // shelf and bin of its parts), read by the public id of the job
+    'job-location-chart':
+        () =>
+            import('../../features/service-operations/print/location-chart.print')
+                .then(module => module.LOCATION_CHART_PRINT),
+
+    // Service Operations : the combined location chart of several
+    // jobs; the id is their public ids, comma separated
+    'jobs-location-chart':
+        () =>
+            import('../../features/service-operations/print/location-chart.print')
+                .then(module => module.LOCATION_CHART_ALL_PRINT),
+
+    // Service Operations : Work In Progress, the parts on the open
+    // jobs; the id is "<branch id>~<search text>"
+    'workshop-wip':
+        () =>
+            import('../../features/service-operations/print/work-in-progress.print')
+                .then(module => module.WORK_IN_PROGRESS_PRINT),
+
     // Service Operations : a service estimate, read by its public id
     'service-estimate':
         () =>

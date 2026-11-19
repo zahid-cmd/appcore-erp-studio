@@ -151,6 +151,13 @@ implements OnChanges
         number =
         0;
 
+    // Whose stock the card shows (owner 2026-11-19) : the branch
+    // and the warehouse, by name - "All Branches" when none
+    @Input()
+    scopeText:
+        string =
+        '';
+
     @Output()
     closed =
         new EventEmitter<void>();

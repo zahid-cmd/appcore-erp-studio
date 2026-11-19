@@ -40,6 +40,21 @@ import { SelectBox, SelectOption } from '../../ui/select-box';
                         <div class="ac-field">
                             <label>Display name <b>*</b></label>
                             <input class="ac-input" name="display" [(ngModel)]="form.DisplayName" placeholder="Moto Zone" required>
+                            <span class="ac-hint">Only for the Console; the client sets his company name in the ERP.</span>
+                        </div>
+                    </div>
+
+                    <span class="ac-section-label">Limits in the ERP</span>
+                    <div class="ac-grid-2">
+                        <div class="ac-field">
+                            <label>Companies allowed <b>*</b></label>
+                            <input class="ac-input" type="number" min="1" max="100" name="maxCompanies" [(ngModel)]="form.MaxCompanies" required>
+                            <span class="ac-hint">The client creates and edits his own company in the ERP.</span>
+                        </div>
+                        <div class="ac-field">
+                            <label>Branches allowed</label>
+                            <input class="ac-input" type="number" min="1" name="maxBranches" [(ngModel)]="form.MaxBranches" placeholder="No limit">
+                            <span class="ac-hint">Empty = no limit. Takes effect in the ERP within a minute.</span>
                         </div>
                     </div>
 
@@ -133,7 +148,9 @@ export class TenantFormComponent implements OnInit
         Status: 'Active',
         TrialEndsOn: null,
         Remarks: null,
-        HostNames: []
+        HostNames: [],
+        MaxCompanies: 1,
+        MaxBranches: null
     };
 
     hostsText = '';
@@ -157,7 +174,9 @@ export class TenantFormComponent implements OnInit
                 Status: null,
                 TrialEndsOn: t.TrialEndsOn,
                 Remarks: t.Remarks,
-                HostNames: []
+                HostNames: [],
+                MaxCompanies: t.MaxCompanies ?? 1,
+                MaxBranches: t.MaxBranches ?? null
             };
 
             this.hostsText = t.Domains.map(x => x.HostName).join('\n');
@@ -216,6 +235,10 @@ export class TenantFormComponent implements OnInit
         // an empty date box sends '' : the API wants null
         this.form.TrialEndsOn = this.form.TrialEndsOn || null;
         this.form.DatabaseName = this.form.DatabaseName?.trim() || null;
+
+        // an empty number box sends '' or null : 1 company, no branch limit
+        this.form.MaxCompanies = Number(this.form.MaxCompanies) || 1;
+        this.form.MaxBranches = Number(this.form.MaxBranches) || null;
 
         try
         {

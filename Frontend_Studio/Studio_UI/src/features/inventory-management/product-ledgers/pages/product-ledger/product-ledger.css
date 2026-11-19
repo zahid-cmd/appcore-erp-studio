@@ -1,5 +1,9 @@
 @import '../../../../../shared/styles/app-list-page.css';
 
+/* Statement presentation (2026-11-19) : same look as the financial
+   statements and the ledger statements */
+@import './product-ledger-presentation.css';
+
 /* =====================================================
    PRODUCT LEDGERS (MB / SP / AC)
 ===================================================== */
@@ -1032,4 +1036,57 @@
 .pl-canvas > .pl-empty
 {
     min-height:0;
+}
+
+
+/* Filter bar packing (2026-11-19) : the fields share the row
+   evenly (no gaps left at the end), Submit stays on the same row */
+.pl-page.tb-page .pl-filter
+{
+    flex-wrap: nowrap;
+    align-items: flex-end;
+}
+
+.pl-page.tb-page .pl-filter-body
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    align-items: end;
+}
+
+.pl-page.tb-page .pl-filter .pl-field
+{
+    min-width: 0;
+}
+
+.pl-page.tb-page .pl-filter .pl-date,
+.pl-page.tb-page .pl-filter .pl-dd
+{
+    width: 100%;
+    --dropdown-width: 100%;
+}
+
+.pl-page.tb-page .pl-filter .pl-note,
+.pl-page.tb-page .pl-filter .pl-error
+{
+    grid-column: 1 / -1;
+}
+
+.pl-page.tb-page .pl-filter-foot
+{
+    margin-left: 0;
+    padding-bottom: 1px;
+}
+
+@media (max-width: 1100px)
+{
+    .pl-page.tb-page .pl-filter
+    {
+        flex-wrap: wrap;
+    }
+
+    .pl-page.tb-page .pl-filter-foot
+    {
+        margin-left: auto;
+    }
 }

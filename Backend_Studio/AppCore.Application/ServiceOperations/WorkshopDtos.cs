@@ -132,6 +132,14 @@ public class WorkshopSwitchesDto
     // Parts can be issued to a job card without a requisition
     public bool IssueWithoutRequisition { get; set; } = true;
 
+    // Parts Issue To Multiple Job Cards : one MIS slip, several
+    // job cards
+    public bool IssueToMultipleJobs { get; set; }
+
+    // Bulk Parts Issue Per Job : a picked job card brings all its
+    // waiting parts (off : part by part)
+    public bool IssueBulkPerJob { get; set; }
+
     // A service invoice can be posted with a due (by a user with
     // the page action Credit Sale)
     public bool AllowCreditInvoice { get; set; }
@@ -363,6 +371,11 @@ public class JobCardDto
     // Technicians working on it now (the list)
     public string WorkingNow { get; set; } = string.Empty;
 
+    // The job waits (owner 2026-11-19) : its technician has an
+    // earlier job that is not done - the no of that job ("" : it
+    // does not wait). A mark only : the status stays as it is.
+    public string WaitingBehind { get; set; } = string.Empty;
+
     // The lines may still be changed (Open / In Progress / Waiting
     // Parts)
     public bool CanEdit { get; set; }
@@ -406,6 +419,10 @@ public class JobCardDto
 
     // It can be assigned / assigned again (Open ... Waiting Parts)
     public bool CanAssign { get; set; }
+
+    // Job Card Requirements : its parts and service charges can be
+    // allocated (Assigned, Allocated)
+    public bool CanAllocate { get; set; }
 
     // Work, parts and outsourcing can go on (assigned, not done)
     public bool CanWorkOn { get; set; }
@@ -533,6 +550,64 @@ public class JobCardTechnicianDto
 
 // Job Card Assignment : the service engineer, the bay and the
 // technicians (the first : the lead)
+// Job Card Requirements : the parts and the service charges of a
+// job (its projection)
+public class SaveJobRequirementDto
+{
+    // The estimate the lines came from (it then carries the card)
+    public Guid? EstimatePublicId { get; set; }
+
+    public List<JobCardServiceDto> Services { get; set; } = new();
+
+    public List<JobCardPartDto> Parts { get; set; } = new();
+
+    public string Note { get; set; } = string.Empty;
+}
+
+public class JobRequirementEstimateDto
+{
+    public Guid PublicId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    // The card was made from it / carries it already
+    public bool Linked { get; set; }
+
+    public decimal ChargeTotal { get; set; }
+
+    public bool ChargeCollected { get; set; }
+
+    public List<JobCardServiceDto> Services { get; set; } = new();
+
+    public List<JobCardPartDto> Parts { get; set; } = new();
+}
+
+public class JobRequirementDto
+{
+    public JobCardDto Card { get; set; } = new();
+
+    // The estimate of the job (switch Estimate Driven Job Card on);
+    // null : none
+    public JobRequirementEstimateDto? Estimate { get; set; }
+
+    // Parts that are with the job now (issued less returned)
+    public decimal IssuedQuantity { get; set; }
+
+    // The same, part by part : such a part stays on the requirement
+    public List<JobIssuedItemDto> IssuedItems { get; set; } = new();
+}
+
+public class JobIssuedItemDto
+{
+    public string ItemKind { get; set; } = string.Empty;
+
+    public long ItemId { get; set; }
+
+    public decimal Quantity { get; set; }
+}
+
 public class AssignJobCardDto
 {
     public long? ServiceEngineerEmployeeId { get; set; }
@@ -599,7 +674,14 @@ public static class JobCardStageRules
 
     public const string Assigned = "Assigned";
 
+    public const string Allocated = "Allocated";
+
     public const string Cancelled = "Cancelled";
+
+    // Job Card Requirements : Add / Update there
+    public const string RequirementActivity = "Job Card Requirement";
+
+    public const string RequirementRoute = "/service-operations/%/parts-requisitions";
 
     public const string AssignActivity = "Assign Job Card";
 
@@ -621,6 +703,8 @@ public static class JobCardStageRules
     public static string[] ToChangeStatus(string current, string target) =>
         current == Assigned && target == Open ? new[] { AssignActivity }
         : current == Open || current == Cancelled ? new[] { "Update" }
+        // the manager cancels an assigned job on Job Card Requirements
+        : (current == Assigned || current == Allocated) && target == Cancelled ? new[] { WorkActivity, RequirementActivity }
         : new[] { WorkActivity };
 }
 

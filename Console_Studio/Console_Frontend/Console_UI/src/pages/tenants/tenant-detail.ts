@@ -6,7 +6,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ConsoleApi } from '../../core/console-api.service';
 import { apiMessage } from '../../core/auth.interceptor';
-import { TENANT_STATUSES, TenantDetail } from '../../core/models';
+import { TENANT_STATUSES, TenantDatabasePlan, TenantDatabaseResult, TenantDetail } from '../../core/models';
 import { TenantFormComponent } from './tenant-form';
 import { PageHeader } from '../../ui/page-header';
 import { SelectBox, SelectOption } from '../../ui/select-box';
@@ -38,6 +38,21 @@ import { ToastService } from '../../ui/toast';
         .td-history li::before { position: absolute; top: 10px; left: -20px; width: 10px; height: 10px; border: 2px solid var(--ac-card); border-radius: 50%; background: var(--ac-accent); box-shadow: 0 0 0 2px var(--ac-accent-ring); content: ''; }
         .td-history b { color: var(--ac-text); }
         .td-loading { display: flex; flex: 1; align-items: center; justify-content: center; gap: 10px; color: var(--ac-muted); }
+        .td-db { display: flex; flex-direction: column; gap: 12px; padding: 14px 18px 16px; }
+        .td-db-rows { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; font-size: 13px; }
+        .td-db-rows span { color: var(--ac-muted); }
+        .td-db-rows b { color: var(--ac-text); font-family: var(--ac-mono-font); font-weight: 600; overflow-wrap: anywhere; }
+        .td-db-problems { margin: 0; padding-left: 18px; color: var(--ac-danger, #b42318); font-size: 12.5px; }
+        .td-db-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+        .td-once { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(10, 10, 12, 0.55); }
+        .td-once-box { display: flex; flex-direction: column; gap: 14px; width: min(640px, 100%); padding: 20px 22px; border: 1px solid var(--ac-border); border-radius: 14px; background: var(--ac-card); box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.5); }
+        .td-once-box h3 { margin: 0; font-size: 16px; }
+        .td-once-warn { padding: 10px 12px; border-radius: 10px; background: var(--ac-accent-soft, rgba(180, 85, 31, 0.1)); color: var(--ac-text); font-size: 12.5px; }
+        .td-secret { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; }
+        .td-secret span { color: var(--ac-muted); }
+        .td-secret code { padding: 7px 10px; border: 1px solid var(--ac-border-2); border-radius: 8px; background: var(--ac-card-2); font-family: var(--ac-mono-font); font-size: 12.5px; overflow-wrap: anywhere; }
+        .td-confirm { width: min(480px, 100%); }
+        .td-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
         @media (max-width: 1100px) { .td-grid { grid-template-columns: minmax(0, 1fr); } }
     `],
     template: `
@@ -65,6 +80,8 @@ import { ToastService } from '../../ui/toast';
                                 <div class="td-fact"><span>Product</span><b>{{ t.ProductName }}</b></div>
                                 <div class="td-fact"><span>Database</span><b class="ac-mono">{{ t.DatabaseName || 'Not set' }}</b></div>
                                 <div class="td-fact"><span>Trial ends</span><b>{{ t.TrialEndsOn || '-' }}</b></div>
+                                <div class="td-fact"><span>Companies allowed</span><b>{{ t.MaxCompanies }}</b></div>
+                                <div class="td-fact"><span>Branches allowed</span><b>{{ t.MaxBranches || 'No limit' }}</b></div>
                                 <div class="td-fact"><span>App version</span><b>{{ t.AppVersion || '-' }}</b></div>
                                 <div class="td-fact"><span>Schema version</span><b>{{ t.SchemaVersion || '-' }}</b></div>
                                 <div class="td-fact"><span>Time zone / currency</span><b>{{ t.TimeZone }} / {{ t.Currency }}</b></div>
@@ -91,6 +108,43 @@ import { ToastService } from '../../ui/toast';
                                 }
                             </div>
                         </div>
+
+                        <!-- Create database (onboarding) : only while the
+                             tenant has none -->
+                        @if (!t.DatabaseName && plan(); as plan)
+                        {
+                            <div class="ac-card">
+                                <div class="ac-card-title"><i class="fas fa-database"></i> Create database</div>
+                                <div class="td-db">
+                                    <div class="td-db-rows">
+                                        <span>Database</span><b>{{ plan.DatabaseName || '-' }}</b>
+                                        <span>Own login</span><b>{{ plan.LoginName || '-' }}</b>
+                                        <span>Server</span><b>{{ plan.Server || '-' }}</b>
+                                        <span>From template</span><b>{{ plan.Template || '-' }}{{ plan.TemplateVersion ? ' (' + plan.TemplateVersion + ')' : '' }}</b>
+                                    </div>
+
+                                    @if (plan.Problems.length)
+                                    {
+                                        <ul class="td-db-problems">
+                                            @for (p of plan.Problems; track $index) { <li>{{ p }}</li> }
+                                        </ul>
+                                    }
+                                    @else if (canManage)
+                                    {
+                                        <div class="td-db-actions">
+                                            <ac-select-box [options]="fyOptions" [value]="fyStart()" (valueChange)="fyStart.set(+$any($event))" />
+                                            <button class="ac-btn ac-btn-primary" type="button" [disabled]="creating()" (click)="askCreate()">
+                                                <i [class]="creating() ? 'fas fa-spinner fa-spin' : 'fas fa-database'"></i>
+                                                {{ creating() ? 'Creating...' : 'Create database' }}
+                                            </button>
+                                        </div>
+                                        <span class="ac-sub">Company details come from the customer {{ t.CustomerName }}. The tenant becomes Trial. Takes about a minute.</span>
+                                    }
+
+                                    @if (dbError()) { <div class="ac-error">{{ dbError() }}</div> }
+                                </div>
+                            </div>
+                        }
                     </div>
 
                     <div class="ac-card">
@@ -122,6 +176,64 @@ import { ToastService } from '../../ui/toast';
                     </div>
                 </div>
             </div>
+
+            <!-- Confirm before creating (our dialog, not the browser's) -->
+            @if (confirmOpen() && plan(); as plan)
+            {
+                <div class="td-once" (click)="confirmOpen.set(false)">
+                    <div class="td-once-box td-confirm" (click)="$event.stopPropagation()">
+                        <h3><i class="fas fa-database"></i> Create the database?</h3>
+                        <div class="ac-sub">For <b>{{ t.DisplayName }}</b>. This makes a new client database from the template.</div>
+
+                        <div class="td-db-rows">
+                            <span>Database</span><b>{{ plan.DatabaseName }}</b>
+                            <span>Own login</span><b>{{ plan.LoginName }}</b>
+                            <span>From template</span><b>{{ plan.Template }}</b>
+                            <span>Financial year</span><b>{{ fyStart() === 1 ? 'From January' : 'From July' }}</b>
+                        </div>
+
+                        <div class="td-once-warn">Takes about a minute. Two passwords are shown once at the end : keep that window open until you copy them.</div>
+
+                        <div class="td-confirm-actions">
+                            <button class="ac-btn" type="button" (click)="confirmOpen.set(false)">Cancel</button>
+                            <button class="ac-btn ac-btn-primary" type="button" (click)="createDatabase(t)">
+                                <i class="fas fa-database"></i> Create database
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- The passwords : shown once, never stored -->
+            @if (created(); as r)
+            {
+                <div class="td-once">
+                    <div class="td-once-box">
+                        <h3><i class="fas fa-circle-check"></i> {{ r.DatabaseName }} is ready</h3>
+                        <div class="td-once-warn">
+                            <b>Shown only now.</b> Copy both passwords before closing : the Console does not keep them.
+                        </div>
+
+                        <div class="td-secret"><span>ERP login</span><code>{{ r.AdminUser }}</code><span></span></div>
+                        <div class="td-secret">
+                            <span>Admin password</span><code>{{ r.AdminPassword }}</code>
+                            <button class="ac-btn" type="button" (click)="copy(r.AdminPassword)"><i class="fas fa-copy"></i></button>
+                        </div>
+                        <div class="ac-sub">Give these to the client's administrator. Financial year : {{ r.FinancialYear }}.</div>
+
+                        <div class="td-secret">
+                            <span>ERP server setting</span><code>{{ r.SettingsSnippet }}</code>
+                            <button class="ac-btn" type="button" (click)="copy(r.SettingsSnippet)"><i class="fas fa-copy"></i></button>
+                        </div>
+                        <div class="ac-sub">
+                            Paste this line inside <b>"Tenancy" : "Credentials"</b> of the ERP server's appsettings.json
+                            (database login {{ r.LoginName }}, key {{ r.CredentialKey }}), then restart the ERP.
+                        </div>
+
+                        <button class="ac-btn ac-btn-primary" type="button" (click)="closeCreated()">I have copied both</button>
+                    </div>
+                </div>
+            }
 
             @if (editOpen())
             {
@@ -160,6 +272,19 @@ export class TenantDetailPage implements OnInit
     readonly newStatus = signal('');
     readonly reason = signal('');
 
+    // Create database
+    readonly plan = signal<TenantDatabasePlan | null>(null);
+    readonly creating = signal(false);
+    readonly dbError = signal('');
+    readonly created = signal<TenantDatabaseResult | null>(null);
+    readonly fyStart = signal(7);
+    readonly confirmOpen = signal(false);
+    readonly fyOptions: SelectOption[] =
+    [
+        { value: 7, label: 'Financial year from July' },
+        { value: 1, label: 'Financial year from January' }
+    ];
+
     ngOnInit(): void
     {
         void this.load();
@@ -174,6 +299,8 @@ export class TenantDetailPage implements OnInit
             this.t.set(t);
             this.newStatus.set(t.Status);
             this.reason.set('');
+
+            this.plan.set(t.DatabaseName ? null : await this.api.tenantDatabasePlan(t.PublicId).catch(() => null));
         }
         catch (e)
         {
@@ -202,6 +329,45 @@ export class TenantDetailPage implements OnInit
         {
             this.busy.set(false);
         }
+    }
+
+    askCreate(): void
+    {
+        this.dbError.set('');
+        this.confirmOpen.set(true);
+    }
+
+    async createDatabase(t: TenantDetail): Promise<void>
+    {
+        this.confirmOpen.set(false);
+
+        this.creating.set(true);
+        this.dbError.set('');
+
+        try
+        {
+            this.created.set(await this.api.createTenantDatabase(t.PublicId, this.fyStart()));
+        }
+        catch (e)
+        {
+            this.dbError.set(apiMessage(e));
+        }
+        finally
+        {
+            this.creating.set(false);
+        }
+    }
+
+    copy(text: string): void
+    {
+        void navigator.clipboard?.writeText(text).then(() => this.toast.success('Copied'));
+    }
+
+    closeCreated(): void
+    {
+        this.created.set(null);
+
+        void this.load();
     }
 
     editClosed(saved: boolean): void

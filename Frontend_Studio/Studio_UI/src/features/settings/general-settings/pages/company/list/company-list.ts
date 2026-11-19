@@ -1277,6 +1277,39 @@ implements OnInit, OnDestroy
     add():
         void
     {
+        // the company limit set in the Console : warn here, not
+        // after the form is filled in
+        this.companyservice
+            .getLimit()
+            .subscribe(
+            {
+                next:
+                    limit =>
+                    {
+                        if (limit?.Reached)
+                        {
+                            this.toast.warning(
+                                'Company Limit Reached',
+
+                                limit.Message
+                            );
+
+                            return;
+                        }
+
+                        this.openAddForm();
+                    },
+
+                // the save checks again
+                error:
+                    () => this.openAddForm()
+            });
+    }
+
+
+    private openAddForm():
+        void
+    {
         void this.router.navigate
         (
             [
@@ -1652,7 +1685,16 @@ implements OnInit, OnDestroy
                             (
                                 'Restore Failed',
 
-                                'Failed to restore company.'
+                                // 409 : above the company limit set in the Console
+                                error instanceof HttpErrorResponse
+                                &&
+                                error.status === 409
+                                &&
+                                typeof error.error === 'string'
+                                &&
+                                error.error.trim()
+                                    ? error.error
+                                    : 'Failed to restore company.'
                             );
                         }
                     );

@@ -9,6 +9,7 @@ using AppCore.Infrastructure.Persistence.Paging;
 
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.Company.DTOs;
+using AppCore.Application.Platform.Tenancy;
 
 using CompanyEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Company;
@@ -42,16 +43,150 @@ public class CompanyRepository : ICompanyRepository
 
     private readonly AppDbContext _context;
 
+    // Tenancy : the company limit of this client (set in the Console)
+    private readonly ITenantLimits _limits;
+
 
     //===========================================================
     // Constructor
     //===========================================================
 
     public CompanyRepository(
-        AppDbContext context)
+        AppDbContext context,
+        ITenantLimits limits)
     {
         _context =
             context;
+
+        _limits =
+            limits;
+    }
+
+
+    //===========================================================
+    // Company Limit (Console : Tenants.MaxCompanies)
+    //
+    // The client makes and edits his own company here; the
+    // Console only says how many he may have (1 by default).
+    // No tenant found : no check.
+    //===========================================================
+
+    private async Task EnsureCompanyLimitAsync()
+    {
+        string? message =
+            await GetLimitMessageAsync();
+
+        if (message is not null)
+        {
+            throw new InvalidOperationException(message);
+        }
+    }
+
+
+    // null while one more company may be added, else the message
+    public async Task<string?> GetLimitMessageAsync()
+    {
+        int? limit =
+            (await _limits.GetAsync())?.MaxCompanies;
+
+        if (limit is null)
+        {
+            return null;
+        }
+
+        int count =
+            await _context
+                .Set<CompanyEntity>()
+                .AsNoTracking()
+                .CountAsync(x => !x.IsDeleted);
+
+        return count >= limit.Value
+            ? $"Your subscription allows {limit.Value} company(ies) and {count} already exist. " +
+              "Open the existing company to change its details, or contact AppCore Technologies to add another."
+            : null;
+    }
+
+
+    //===========================================================
+    // Default Wings of a new company
+    //
+    // Every company starts with its three wings, numbered the way
+    // the working-branch rule reads them : WNG-<company>-01 Sales
+    // Center, -02 Service Center, -03 Accessory Shop. The client
+    // then makes his branches under them (each branch brings its
+    // own warehouse).
+    //===========================================================
+
+    private static readonly string[] DefaultWingNames =
+    [
+        "Sales Center",
+        "Service Center",
+        "Accessory Shop"
+    ];
+
+
+    private async Task<List<WingEntity>> AddDefaultWingsAsync
+        (
+            CompanyEntity company,
+
+            long userId
+        )
+    {
+        List<WingEntity> wings =
+            new();
+
+        string sequence =
+            (company.CompanyCode ?? string.Empty)
+                .Trim()
+                .Replace("CMP-", "", StringComparison.OrdinalIgnoreCase);
+
+        // a hand-typed code that is not CMP-<number> : no default wings
+        if (!int.TryParse(sequence, out int companySequenceNo) || companySequenceNo < 1)
+        {
+            return wings;
+        }
+
+        for (int i = 0; i < DefaultWingNames.Length; i++)
+        {
+            string wingCode =
+                CodeGenerator.GenerateWingCode(companySequenceNo, i + 1);
+
+            // wing codes are unique in the table (deleted rows too)
+            bool taken =
+                await _context
+                    .Set<WingEntity>()
+                    .AsNoTracking()
+                    .AnyAsync(x => x.WingCode == wingCode);
+
+            if (taken)
+            {
+                continue;
+            }
+
+            WingEntity wing =
+                new WingEntity
+                {
+                    CompanyId = company.CompanyId,
+                    WingCode = wingCode,
+                    WingName = DefaultWingNames[i],
+                    Remarks = string.Empty,
+                    IsActive = true,
+                    IsDeleted = false,
+                    CreatedBy = userId,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+            _context.Set<WingEntity>().Add(wing);
+
+            wings.Add(wing);
+        }
+
+        if (wings.Count > 0)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return wings;
     }
 
 
@@ -457,6 +592,9 @@ public class CompanyRepository : ICompanyRepository
             long userId
         )
     {
+        await EnsureCompanyLimitAsync();
+
+
         string companyCode =
             dto.CompanyCode?.Trim()
             ??
@@ -588,6 +726,11 @@ public class CompanyRepository : ICompanyRepository
             };
 
 
+        // company and its three wings are saved together or not at all
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+
         _context
             .Set<CompanyEntity>()
             .Add(
@@ -596,6 +739,32 @@ public class CompanyRepository : ICompanyRepository
 
 
         await _context.SaveChangesAsync();
+
+
+        //===========================================================
+        // Default Wings
+        //===========================================================
+
+        List<WingEntity> defaultWings =
+            await AddDefaultWingsAsync(entity, userId);
+
+        foreach (WingEntity wing in defaultWings)
+        {
+            _context.ActivityHistories.Add(
+                new ActivityHistory
+                {
+                    Module = "General Settings",
+                    EntityName = "Wing",
+                    EntityId = wing.WingId,
+                    ActivityType = "Create",
+                    ActivityTitle = "Wing Created",
+                    ActivityDescription = $"Wing '{wing.WingName}' created with company '{entity.CompanyName}'.",
+                    PerformedBy = userId,
+                    PerformedByName = "System",
+                    PerformedDate = DateTime.UtcNow
+                }
+            );
+        }
 
 
         //===========================================================
@@ -637,6 +806,8 @@ public class CompanyRepository : ICompanyRepository
 
 
         await _context.SaveChangesAsync();
+
+        await transaction.CommitAsync();
 
 
         return entity.CompanyId;
@@ -685,10 +856,60 @@ public class CompanyRepository : ICompanyRepository
         }
 
 
-        entity.CompanyCode =
+        //===========================================================
+        // Company Code : fixed once wings exist
+        //
+        // Wing and branch codes are built from the company
+        // (WNG-<company>-<wing>, BRN-<company>-<wing>-<n>).
+        //===========================================================
+
+        string newCompanyCode =
             dto.CompanyCode?.Trim()
             ??
             string.Empty;
+
+        if
+        (
+            !string.Equals(newCompanyCode, entity.CompanyCode, StringComparison.OrdinalIgnoreCase)
+            &&
+            await _context
+                .Set<WingEntity>()
+                .AsNoTracking()
+                .AnyAsync(x => x.CompanyId == entity.CompanyId && !x.IsDeleted)
+        )
+        {
+            throw new InvalidOperationException(
+                "The Company Code cannot be changed after wings are created under this company."
+            );
+        }
+
+
+        //===========================================================
+        // The only active company cannot be made inactive
+        // (login page, top bar and every print take their name
+        // and logo from it)
+        //===========================================================
+
+        if
+        (
+            entity.IsActive
+            &&
+            !dto.IsActive
+            &&
+            !await _context
+                .Set<CompanyEntity>()
+                .AsNoTracking()
+                .AnyAsync(x => x.CompanyId != entity.CompanyId && !x.IsDeleted && x.IsActive)
+        )
+        {
+            throw new InvalidOperationException(
+                "This is the only active company; it cannot be made inactive."
+            );
+        }
+
+
+        entity.CompanyCode =
+            newCompanyCode;
 
 
         entity.CompanyName =
@@ -942,6 +1163,28 @@ public class CompanyRepository : ICompanyRepository
 
 
         //===========================================================
+        // The last company cannot be deleted
+        //===========================================================
+
+        bool hasAnother =
+            await _context
+                .Set<CompanyEntity>()
+                .AsNoTracking()
+                .AnyAsync(x => x.CompanyId != id && !x.IsDeleted);
+
+        if
+        (
+            !hasAnother
+        )
+        {
+            throw new InvalidOperationException(
+                $"Company '{entity.CompanyName}' is the only company; it cannot be deleted. " +
+                "Open it to change its details instead."
+            );
+        }
+
+
+        //===========================================================
         // Soft Delete Company
         //===========================================================
 
@@ -1040,6 +1283,9 @@ public class CompanyRepository : ICompanyRepository
         {
             return false;
         }
+
+
+        await EnsureCompanyLimitAsync();
 
 
         entity.IsDeleted =

@@ -65,6 +65,7 @@ public class WorkshopPartsConfigurations
 
         builder.Property(x => x.PartsIssueId).ValueGeneratedOnAdd();
         builder.Property(x => x.IssueNo).IsRequired().HasMaxLength(30);
+        builder.Property(x => x.MisNo).IsRequired().HasMaxLength(30);
         builder.Property(x => x.Status).IsRequired().HasMaxLength(15);
         builder.Property(x => x.TotalCost).IsRequired().HasPrecision(18, 2);
         builder.Property(x => x.Remarks).IsRequired().HasMaxLength(500);

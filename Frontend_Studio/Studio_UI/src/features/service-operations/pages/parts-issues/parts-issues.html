@@ -1,0 +1,598 @@
+@if (mode === 'list')
+{
+    <div class="app-list-page">
+
+        <!-- =====================================================
+             PARTS ISSUES : the Material Issue Slips (MIS)
+        ====================================================== -->
+
+        <app-page-header
+            title="Parts Issues"
+            subtitle="The allocated parts of the job cards go out of the store : MIS slips"
+            icon="fas fa-dolly">
+
+            <div pageHeaderCenter>
+
+                <app-search-box
+                    [value]="searchText"
+                    placeholder="Search MIS no, job card, customer, warehouse..."
+                    (valueChange)="onSearch($event)">
+                </app-search-box>
+
+            </div>
+
+            <div pageHeaderRight>
+
+                <app-command-center
+                    command1Text="Add"
+                    command1Icon="fas fa-plus"
+                    command1Permission="add"
+                    (command1Click)="add()"
+                    command2Text="Refresh"
+                    command2Icon="fas fa-rotate-right"
+                    (command2Click)="loadList()"
+                    [command3Visible]="false"
+                    rightCommandIcon="fas fa-clock-rotate-left"
+                    rightCommandTitle="Activity history"
+                    (rightCommandClick)="openHistory()">
+                </app-command-center>
+
+            </div>
+
+        </app-page-header>
+
+        <app-page-toolbar>
+
+            <app-control-tabs
+                pageToolbarLeft
+                [tabs]="tabs"
+                [selectedTab]="selectedTab"
+                (selectedTabChange)="onTab($event)">
+            </app-control-tabs>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="listConfig">
+
+            <div canvasBody>
+
+                <app-list-table
+                    [columns]="columns"
+                    [rows]="rows"
+                    [serialOffset]="(currentPage - 1) * pageSize"
+                    [loading]="loading"
+                    [error]="loadFailed"
+                    [actions]="listActions"
+                    (view)="view($event)">
+                </app-list-table>
+
+            </div>
+
+            <app-pagination
+                canvasFooter
+                [totalRecords]="totalRecords"
+                [currentPage]="currentPage"
+                [pageSize]="pageSize"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)">
+            </app-pagination>
+
+        </app-page-canvas>
+
+        <app-history-drawer
+            [opened]="historyOpened"
+            title="Parts Issue History"
+            [items]="historyItems"
+            (closed)="closeHistory()">
+        </app-history-drawer>
+
+        <app-toast></app-toast>
+
+        <app-confirm-dialog></app-confirm-dialog>
+
+        <app-progress-dialog></app-progress-dialog>
+
+    </div>
+}
+@else
+{
+    <div class="app-list-page app-form-page">
+
+        <!-- =====================================================
+             ONE SLIP
+             Header  : Service Center | MIS No | state
+             Left    : the slip (job, warehouse, date, issued to),
+                       the parts of its job cards
+             Right   : the totals
+        ====================================================== -->
+
+        <app-page-header
+            [title]="pageTitle"
+            subtitle="Allocated parts go out to the job"
+            icon="fas fa-dolly">
+
+            <div
+                pageHeaderCenter
+                class="se-center">
+
+                <div class="se-ribbon">
+
+                    <div class="se-chip">
+                        <span class="se-chip-icon se-chip-icon-branch"><i class="fas fa-building"></i></span>
+                        <span class="se-chip-text">
+                            <span class="se-chip-label">Service Center</span>
+                            <strong>{{ branchName || 'Not set' }}</strong>
+                        </span>
+                    </div>
+
+                    <span class="se-ribbon-sep"></span>
+
+                    <div class="se-chip">
+                        <span class="se-chip-icon se-chip-icon-no"><i class="fas fa-hashtag"></i></span>
+                        <span class="se-chip-text">
+                            <span class="se-chip-label">MIS No</span>
+                            <strong>{{ misNo }}</strong>
+                        </span>
+                    </div>
+
+                    <span class="se-ribbon-sep"></span>
+
+                    <div class="se-state">
+                        <span
+                            class="se-status jc-state"
+                            [style.background]="mode === 'view' ? '#15803d' : '#2563eb'">{{ mode === 'view' ? (posted?.Status || 'Posted') : 'New' }}</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <app-command-center
+                pageHeaderRight
+                command1Text="Issue Parts"
+                command1Icon="fas fa-dolly"
+                (command1Click)="post()"
+                [command1Visible]="mode === 'add'"
+                command2Text="Clear"
+                command2Icon="fas fa-broom"
+                (command2Click)="clear()"
+                [command2Visible]="mode === 'add'"
+                command3Text="Location Chart"
+                command3Icon="fas fa-map-location-dot"
+                command3Title="Print one chart for all the job cards of the slip : where their parts sit"
+                (command3Click)="printAllCharts()"
+                rightCommandIcon="fas fa-arrow-left"
+                rightCommandTitle="Back to the list"
+                (rightCommandClick)="goToList()">
+            </app-command-center>
+
+        </app-page-header>
+
+        <app-page-toolbar
+            leftFlex="1 1 auto"
+            rightFlex="0 0 auto">
+
+            <div
+                pageToolbarLeft
+                class="mi-tool">
+
+                @if (mode === 'add')
+                {
+                    <span
+                        class="mi-switch"
+                        [class.is-on]="multiple"
+                        title="Workshop Configuration : switch Parts Issue To Multiple Job Cards">
+                        <i class="fas" [class.fa-layer-group]="multiple" [class.fa-file]="!multiple"></i>
+                        {{ multiple ? 'Several job cards on one slip' : 'One job card a slip' }}
+                    </span>
+
+                    <span
+                        class="mi-switch"
+                        [class.is-on]="bulk"
+                        title="Workshop Configuration : switch Bulk Issue Per Job">
+                        <i class="fas" [class.fa-boxes-stacked]="bulk" [class.fa-hand-pointer]="!bulk"></i>
+                        {{ bulk ? 'All waiting parts of a job' : 'Part by part' }}
+                    </span>
+
+                    <span>Only the parts allocated to a job (Job Card Requirements) can be issued</span>
+                }
+                @else
+                {
+                    <span>Posted : read only. Unused parts come back with a Parts Return</span>
+                }
+
+            </div>
+
+            <div
+                pageToolbarRight
+                class="jr-tool">
+
+                @if (mode === 'add')
+                {
+                    <b>{{ waiting }} waiting</b>
+                }
+
+            </div>
+
+        </app-page-toolbar>
+
+        <app-page-canvas
+            [config]="formConfig">
+
+            <div
+                canvasBody
+                class="ws-body jr-body appcore-scrollbar">
+
+                <!-- ================= LEFT ================= -->
+
+                <div class="jr-left">
+
+                    <!-- the slip : job, warehouse, date, issued to -->
+
+                    <div class="se-card jr-jobcard">
+
+                        @if (mode === 'add')
+                        {
+                            <div
+                                class="mi-headrow"
+                                [class.mi-headrow-3]="!bulk">
+
+                                @if (bulk)
+                                {
+                                    <app-search-dropdown
+                                        label="Job Card"
+                                        [required]="true"
+                                        [placeholder]="loading ? 'Loading the jobs...' : multiple ? 'Add a job card to the slip' : 'Select the job card'"
+                                        [items]="jobItems"
+                                        figureField="token"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="jobPick"
+                                        [disabled]="jobLocked"
+                                        (valueChange)="onJob($event)">
+                                    </app-search-dropdown>
+                                }
+
+                                <app-datepicker
+                                    label="Date"
+                                    [required]="true"
+                                    [value]="$any(asDate(issueDate))"
+                                    (valueChange)="onDate($event)">
+                                </app-datepicker>
+
+                                <app-search-dropdown
+                                    label="Issued To"
+                                    placeholder="Optional : the technician"
+                                    [items]="technicianItems"
+                                    labelField="label"
+                                    valueField="value"
+                                    [value]="technicianId"
+                                    (valueChange)="onTechnician($event)">
+                                </app-search-dropdown>
+
+                                <app-textbox
+                                    label="Remarks"
+                                    placeholder="Optional"
+                                    [value]="remarks"
+                                    [maxLength]="500"
+                                    (valueChange)="onRemarks($event)">
+                                </app-textbox>
+
+                            </div>
+                        }
+                        @else
+                        {
+                            <div class="mi-factrow">
+                                <span class="jr-joblabel"><i class="fas fa-dolly"></i> Slip</span>
+                                <div class="jr-fact"><span>MIS No</span><b>{{ posted?.MisNo || '-' }}</b></div>
+                                <div class="jr-fact"><span>Date</span><b>{{ day(posted?.DocumentDate || '') || '-' }}</b></div>
+                                <div class="jr-fact"><span>Warehouse</span><b>{{ posted?.WarehouseName || '-' }}</b></div>
+                                <div class="jr-fact"><span>Issued To</span><b>{{ posted?.PersonName || '-' }}</b></div>
+                                <div class="jr-fact"><span>Remarks</span><b [title]="posted?.Remarks || ''">{{ posted?.Remarks || '-' }}</b></div>
+                            </div>
+                        }
+
+                    </div>
+
+                    <!-- the parts of the job cards -->
+
+                    <div class="se-card jr-card mi-card">
+
+                        <div class="se-card-header">
+                            <i class="fas fa-gears"></i>
+                            <span>Parts</span>
+
+                            @if (mode === 'add')
+                            {
+                                <small>{{ slip.length }} {{ slip.length === 1 ? 'job card' : 'job cards' }}  -  {{ lineCount }} {{ lineCount === 1 ? 'part' : 'parts' }}  -  quantity {{ quantityOf(totalQuantity) }}</small>
+                            }
+                            @else
+                            {
+                                <small>{{ posted?.JobCount || 0 }} {{ posted?.JobCount === 1 ? 'job card' : 'job cards' }}  -  quantity {{ quantityOf(posted?.TotalQuantity) }}  -  cost {{ money(posted?.TotalCost || 0) }}</small>
+                            }
+                        </div>
+
+                        @if (mode === 'add')
+                        {
+                            @if (!bulk)
+                            {
+                                <!-- part by part : job card, part, quantity, Add -->
+
+                                <div
+                                    #entryRow
+                                    class="jr-pick mi-pick"
+                                    (keydown.enter)="onEntryEnter($event, entryRow)">
+
+                                    <app-search-dropdown
+                                        label="Job Card"
+                                        [placeholder]="loading ? 'Loading the jobs...' : 'Select the job card'"
+                                        [items]="entryJobItems"
+                                        figureField="token"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="entryJobId"
+                                        [disabled]="entryJobLocked && !!entryJobId"
+                                        (valueChange)="onEntryJob($event); focusEntry(entryRow, 'part')">
+                                    </app-search-dropdown>
+
+                                    <app-search-dropdown
+                                        class="mi-e-part"
+                                        label="Part"
+                                        [placeholder]="entryJobId ? 'Select a part the job waits for' : 'The job card first'"
+                                        [items]="entryPartItems"
+                                        labelField="label"
+                                        valueField="value"
+                                        [value]="entryPartKey"
+                                        [disabled]="!entryJobId"
+                                        (valueChange)="onEntryPart($event); focusEntry(entryRow, 'qty')">
+                                    </app-search-dropdown>
+
+                                    <app-textbox
+                                        label="Waiting"
+                                        placeholder="-"
+                                        [value]="entryWaitingText"
+                                        [readonly]="true">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        label="Stock"
+                                        placeholder="-"
+                                        [value]="entryStockText"
+                                        [readonly]="true">
+                                    </app-textbox>
+
+                                    <app-textbox
+                                        class="jr-e-qty"
+                                        label="Qty"
+                                        [value]="entryQty"
+                                        [maxLength]="8"
+                                        (valueChange)="onEntryQty($event)">
+                                    </app-textbox>
+
+                                    <button
+                                        type="button"
+                                        class="jr-add"
+                                        [disabled]="!entryPartKey"
+                                        (click)="addEntry() && focusEntry(entryRow, 'part')">
+                                        <i class="fas fa-plus"></i>
+                                        Add
+                                    </button>
+
+                                </div>
+                            }
+
+                            <div class="mi-row jr-head">
+                                <span>#</span>
+                                <span>Part</span>
+                                <span class="jr-right">Allocated</span>
+                                <span class="jr-right">Issued</span>
+                                <span class="jr-right">Waiting</span>
+                                <span class="jr-right">Stock</span>
+                                <span class="jr-right">Issue Qty</span>
+                                <span></span>
+                            </div>
+
+                            <div class="jr-rows appcore-scrollbar">
+
+                                @for (entry of slip; track entry.job.PublicId)
+                                {
+                                    <div class="mi-job">
+
+                                        <i class="fas fa-clipboard-list"></i>
+
+                                        <b>{{ entry.job.JobCardNo }}</b>
+
+                                        <span>{{ entry.job.CustomerName }}</span>
+
+                                        <span>{{ entry.job.ModelName }}{{ entry.job.BikeNo ? '  -  ' + entry.job.BikeNo : '' }}</span>
+
+                                        <em [style.color]="statusColor(entry.job.Status)">{{ entry.job.Status }}</em>
+
+                                        <button
+                                            type="button"
+                                            class="mi-chart"
+                                            title="Location Chart : print where the parts of this job sit"
+                                            (click)="printChart(entry.job.PublicId)">
+                                            <i class="fas fa-map-location-dot"></i>
+                                            Location Chart
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            class="jr-x"
+                                            title="Take the job card off the slip"
+                                            (click)="removeJob(entry)">
+                                            <i class="fas fa-xmark"></i>
+                                        </button>
+
+                                    </div>
+
+                                    @for (line of entry.lines; track line.ItemKind + ':' + line.ItemId; let i = $index)
+                                    {
+                                        <div
+                                            class="mi-row jr-line"
+                                            [title]="placeTitle(line.Location)">
+
+                                            <span class="jr-no">{{ i + 1 }}</span>
+
+                                            <span class="jr-name">
+                                                <b>{{ line.ItemName }}</b>
+                                                <small>{{ line.ItemCode }}</small>
+                                            </span>
+
+                                            <span class="jr-amount">{{ quantityOf(line.Allocated) }}</span>
+
+                                            <span class="jr-amount">{{ quantityOf(line.Issued) }}</span>
+
+                                            <span class="jr-amount"><b>{{ quantityOf(line.Remaining) }}</b></span>
+
+                                            <span
+                                                class="jr-amount jr-stock"
+                                                [class.is-short]="isShort(line)"
+                                                [title]="isShort(line) ? 'The warehouse holds less than the slip asks for' : 'In the warehouse now'">{{ stockOf(line) }}</span>
+
+                                            <input
+                                                class="jr-input jr-right"
+                                                inputmode="decimal"
+                                                maxlength="8"
+                                                title="0 : the part is not issued now"
+                                                [value]="line.Quantity"
+                                                (input)="onQuantity(line, $event)">
+
+                                            <button
+                                                type="button"
+                                                class="jr-x"
+                                                title="Take the part off the slip"
+                                                (click)="removeLine(entry, line)">
+                                                <i class="fas fa-xmark"></i>
+                                            </button>
+
+                                        </div>
+                                    }
+                                }
+                                @empty
+                                {
+                                    <div class="jr-empty">{{ loading ? 'Loading the jobs...' : waiting === 0 ? 'No job card waits for parts : allocate parts to a job first (Job Card Requirements).' : bulk ? 'Select the job card first : the Job Card box above.' : 'Nothing is on the slip : select the job card and the part, give the quantity and press Add.' }}</div>
+                                }
+
+                            </div>
+                        }
+                        @else
+                        {
+                            <div class="mi-row mi-row-view jr-head">
+                                <span>#</span>
+                                <span>Part</span>
+                                <span class="jr-right">Issued</span>
+                                <span class="jr-right">Returned</span>
+                                <span class="jr-right">Cost</span>
+                            </div>
+
+                            <div class="jr-rows appcore-scrollbar">
+
+                                @for (job of posted?.Jobs ?? []; track job.PublicId)
+                                {
+                                    <div class="mi-job">
+
+                                        <i class="fas fa-clipboard-list"></i>
+
+                                        <b>{{ job.JobCardNo }}</b>
+
+                                        <span>{{ job.CustomerName }}</span>
+
+                                        <span>{{ job.ModelName }}{{ job.BikeNo ? '  -  ' + job.BikeNo : '' }}</span>
+
+                                        <em title="The number of the issue in the books">{{ job.DocumentNo }}</em>
+
+                                        <button
+                                            type="button"
+                                            class="mi-chart"
+                                            title="Location Chart : print where the parts of this job sit"
+                                            (click)="printChart(job.JobCardPublicId)">
+                                            <i class="fas fa-map-location-dot"></i>
+                                            Location Chart
+                                        </button>
+
+                                    </div>
+
+                                    @for (line of job.Lines; track line.LineId; let i = $index)
+                                    {
+                                        <div class="mi-row mi-row-view jr-line">
+
+                                            <span class="jr-no">{{ i + 1 }}</span>
+
+                                            <span class="jr-name">
+                                                <b>{{ line.ItemName }}</b>
+                                                <small>{{ line.ItemCode }}</small>
+                                            </span>
+
+                                            <span class="jr-amount"><b>{{ quantityOf(line.Quantity) }}</b></span>
+
+                                            <span class="jr-amount">{{ quantityOf(line.ReturnedQuantity) }}</span>
+
+                                            <span class="jr-amount">{{ money(line.Cost) }}</span>
+
+                                        </div>
+                                    }
+                                }
+                                @empty
+                                {
+                                    <div class="jr-empty">{{ loading ? 'Loading the slip...' : 'The slip was not found.' }}</div>
+                                }
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+                <!-- ================= RIGHT ================= -->
+
+                <aside class="ws-panel">
+
+                    <div class="ws-hero">
+
+                        <app-workspace-art theme="bike"></app-workspace-art>
+
+                        <div class="ws-identity">
+
+                            <b>{{ misNo }}</b>
+
+                            <div class="ws-chips">
+                                <span class="ws-chip" data-tone="info">{{ day(mode === 'view' ? (posted?.DocumentDate || '') : issueDate) }}</span>
+                                <span class="ws-chip">{{ mode === 'view' ? 'Posted' : 'New' }}</span>
+                            </div>
+
+                        </div>
+
+                        <div class="jr-panel-facts">
+                            <div><span>Job Cards</span><b>{{ mode === 'view' ? (posted?.JobCount || 0) : slip.length }}</b></div>
+                            <div><span>Parts</span><b>{{ mode === 'view' ? viewLineCount : lineCount }}</b></div>
+                            <div class="jr-wide"><span>Quantity</span><b>{{ quantityOf(mode === 'view' ? posted?.TotalQuantity : totalQuantity) }}</b></div>
+                            <div class="jr-wide mi-store"><span>Warehouse (the default of the service center)</span><b>{{ warehouseName || '-' }}</b></div>
+                        </div>
+
+                        <ul class="ws-uses">
+                            <li><i class="fas fa-list-check"></i><span>Only allocated parts can be issued, up to what the job still waits for</span></li>
+                            <li><i class="fas fa-play"></i><span>The first issue makes an Allocated job In Progress</span></li>
+                            <li><i class="fas fa-sliders"></i><span>Several job cards on a slip, and all parts of a job at once : switches of Workshop Configuration</span></li>
+                            <li><i class="fas fa-lock"></i><span>Posted at once : unused parts come back with a Parts Return</span></li>
+                        </ul>
+
+                    </div>
+
+                </aside>
+
+            </div>
+
+        </app-page-canvas>
+
+        <app-toast></app-toast>
+
+        <app-confirm-dialog></app-confirm-dialog>
+
+        <app-progress-dialog></app-progress-dialog>
+
+    </div>
+}

@@ -379,6 +379,32 @@ public class ProductLedgersRepository
                 )
                 .ToListAsync();
 
+        // Spare Parts page : the service centers that also run
+        // Accessories today (Business Configuration : core lines of
+        // the wing and the grants in force; a Gifts Only grant does
+        // not count)
+        if (page == PageSpareParts)
+        {
+            Dictionary<long, HashSet<string>> lines =
+                await AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess.ActiveLinesByBranchAsync(
+                    _context,
+                    AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess.Today());
+
+            result.AccessoryBranchIds =
+                result.Branches
+                    .Select(x => x.Id)
+                    .Where
+                    (
+                        id =>
+                            lines.TryGetValue(id, out HashSet<string>? own)
+                            &&
+                            own.Contains(AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess.Accessories)
+                            &&
+                            own.Contains(AppCore.Infrastructure.Repositories.Settings.GeneralSettings.BusinessLineAccess.Services)
+                    )
+                    .ToList();
+        }
+
         List<ProductInfo> products =
             await ProductsAsync(page, null);
 

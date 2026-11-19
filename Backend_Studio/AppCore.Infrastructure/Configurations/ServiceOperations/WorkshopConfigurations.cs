@@ -82,6 +82,8 @@ public class WorkshopConfigurations
         builder.Property(x => x.RequireChecklist).IsRequired();
         builder.Property(x => x.RequireEstimate).IsRequired();
         builder.Property(x => x.IssueWithoutRequisition).IsRequired();
+        builder.Property(x => x.IssueToMultipleJobs).IsRequired();
+        builder.Property(x => x.IssueBulkPerJob).IsRequired();
         builder.Property(x => x.AllowCreditInvoice).IsRequired();
         builder.Property(x => x.DiagnosisSuggests).IsRequired();
     }
@@ -120,6 +122,8 @@ public class WorkshopConfigurations
         builder.HasKey(x => x.JobCardComplaintId);
         builder.Property(x => x.JobCardComplaintId).ValueGeneratedOnAdd();
         builder.Property(x => x.Complaint).IsRequired().HasMaxLength(300);
+        builder.Property(x => x.Result).IsRequired().HasMaxLength(30);
+        builder.Property(x => x.ResultNote).IsRequired().HasMaxLength(300);
     }
 
     public void Configure(EntityTypeBuilder<JobCardServices> builder)
@@ -173,6 +177,8 @@ public class WorkshopConfigurations
         builder.Property(x => x.JobCardObservationId).ValueGeneratedOnAdd();
         builder.Property(x => x.Observation).IsRequired().HasMaxLength(200);
         builder.Property(x => x.Note).IsRequired().HasMaxLength(300);
+        builder.Property(x => x.Result).IsRequired().HasMaxLength(30);
+        builder.Property(x => x.ResultNote).IsRequired().HasMaxLength(300);
     }
 
     public void Configure(EntityTypeBuilder<WorkshopServiceBikes> builder)

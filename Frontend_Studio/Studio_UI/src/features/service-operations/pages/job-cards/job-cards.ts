@@ -755,6 +755,7 @@ implements OnInit
         { id:'all', label:'All' },
         { id:'Open', label:'Open' },
         { id:'Assigned', label:'Assigned' },
+        { id:'Allocated', label:'Allocated' },
         { id:'In Progress', label:'In Progress' },
         { id:'Waiting Parts', label:'Waiting Parts' },
         { id:'Work Done', label:'Work Done' },
@@ -769,30 +770,24 @@ implements OnInit
         ListTableColumn[] =
     [
         { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-        { header:'Job Card', field:'JobCardNo', width:'205px', align:'center' },
-        { header:'Serial Token', field:'TokenText', width:'105px', align:'center' },
-        { header:'Date', field:'DateText', width:'120px', align:'center' },
-        { header:'Customer', field:'CustomerName', width:'165px', align:'left' },
-        { header:'Mobile', field:'Mobile', width:'115px', align:'left' },
-        { header:'Model', field:'ModelName', width:'130px', align:'left' },
-        { header:'Bike', field:'BikeText', width:'140px', align:'left' },
-        { header:'Job Type', field:'JobType', width:'110px', align:'left' },
-        { header:'Working Now', field:'WorkingNow', width:'105px', align:'left' },
-        { header:'Status', field:'StatusText', width:'105px', align:'left', dotField:'StatusColor' },
-        { header:'Actions', field:'actions', type:'actions', width:'215px', align:'center' }
+        // balanced (owner 2026-11-19) : fewer, wider columns - the
+        // date || the serial token under the job card no, the mobile
+        // under the customer, the bike no under the model
+        { header:'Job Card', field:'JobCardNo', width:'250px', align:'left', subField:'DateText', subFigureField:'TokenText' },
+        { header:'Customer', field:'CustomerName', width:'230px', align:'left', subField:'Mobile' },
+        { header:'Model', field:'ModelName', width:'240px', align:'left', subField:'BikeText' },
+        { header:'Job Type', field:'JobType', width:'160px', align:'left' },
+        { header:'Working Now', field:'WorkingNow', width:'150px', align:'left' },
+        { header:'Status', field:'StatusText', width:'175px', align:'left', dotField:'StatusColor' },
+        { header:'Actions', field:'actions', type:'actions', width:'180px', align:'center' }
     ];
 
     rowActions:
         ListTableRowAction[] =
     [
-        // stage 2 : an Open (Pending) or an Assigned job
-        {
-            key:'assign',
-            icon:'fas fa-user-check',
-            title:'Assign the job card',
-            tone:'primary',
-            visible:(row: any) => (row?.Status === 'Open' || row?.Status === 'Assigned') && this.access.CanAssign
-        },
+        // (no stage button on a row, owner 2026-11-18 : a job is
+        // assigned on the Job Card Assignment page, closed on its own
+        // page)
         { key:'tokens', icon:'fas fa-ticket', title:'Print the tokens', tone:'primary' },
         { key:'print', icon:'fas fa-print', title:'Print the job card', tone:'primary' }
     ];
@@ -1248,9 +1243,11 @@ implements OnInit
                             ...x,
                             DateText:wsDay(x.JobDate),
                             TokenText:jobToken(x.WelcomeTokenNo, x.JobDate),
-                            StatusText:x.Status === 'Open' ? 'Pending' : x.Status,
+                            // a later job of a busy technician : it waits
+                            StatusText:x.WaitingBehind ? `${x.Status} - Waiting` : x.Status === 'Open' ? 'Pending' : x.Status,
                             BikeText:x.RegistrationNo || x.ChassisNo || x.EngineNo,
-                            StatusColor:wsStatusColor(x.Status)
+                            StatusColor:x.WaitingBehind ? '#d97706' : wsStatusColor(x.Status),
+                            WorkingNow:x.WorkingNow || (x.WaitingBehind ? `After ${x.WaitingBehind.slice(-5)}` : '')
                         }));
 
                     this.loading = false;
@@ -1352,13 +1349,48 @@ implements OnInit
     edit(row: any):
         void
     {
+        // An assigned job : its assignment is what is changed (the
+        // Job Cards list; the assignment desk has it on edit/:id)
+        if (this.desk === '' && row?.Status === 'Assigned')
+        {
+            void this.router.navigate(['../assign', row.PublicId], { relativeTo:this.route });
+            return;
+        }
+
         void this.router.navigate(['../edit', row.PublicId], { relativeTo:this.route });
     }
 
     goToList():
         void
     {
+        // opened from the Workshop Dashboard (owner 2026-11-19) : Back
+        // returns to it, on the tab it was opened from
+        if (this.mode !== 'add' && this.route.snapshot.queryParamMap.get('from') === 'dashboard')
+        {
+            const tab = this.route.snapshot.queryParamMap.get('tab');
+
+            void this.router.navigate(['../../../workshop-dashboard'], { relativeTo:this.route, queryParams:tab ? { tab } : {} });
+            return;
+        }
+
         void this.router.navigate([this.mode === 'add' ? '../list' : '../../list'], { relativeTo:this.route });
+    }
+
+    // The toolbar of the list : Job Assignment opens the page of
+    // the jobs waiting to be assigned; Job Closing its own page
+    // (built after the work stage)
+    goToStage(stage: 'assignment' | 'closing'):
+        void
+    {
+        if (stage === 'assignment')
+        {
+            // the form at once : the job is picked on it
+            void this.router.navigate(['../assign'], { relativeTo:this.route });
+            return;
+        }
+
+        // its own page : the jobs in work, priced and billed
+        void this.router.navigate(['../../job-closing'], { relativeTo:this.route });
     }
 
     onRowAction(event: ListTableRowActionEvent):
@@ -1367,11 +1399,6 @@ implements OnInit
         if (event.key === 'print')
         {
             this.print(event.row?.PublicId);
-        }
-
-        if (event.key === 'assign' && event.row?.PublicId)
-        {
-            void this.router.navigate(['../assign', event.row.PublicId], { relativeTo:this.route });
         }
 
         if (event.key === 'tokens')
@@ -3393,7 +3420,7 @@ implements OnInit
             if (!this.serviceVehicleId && this.jobType !== 'Internal' && !this.lastServiceDate && !this.purchaseDate)
             {
                 this.openTab = 'open';
-                this.toast.error('Validation', 'Give the last service date of the bike. A new bike, never serviced : give its purchase date.');
+                this.toast.error('Validation', 'Give the purchase date or the last service date of the bike : one of the two is needed.');
                 return null;
             }
 
@@ -3459,6 +3486,34 @@ implements OnInit
             return;
         }
 
+        // A new job with the default observation alone : the user is
+        // asked before the save. Yes - back to the observations; No -
+        // the job is saved as it is (owner 2026-11-18)
+        if (this.simple && this.mode === 'add' && this.defaultObservationId != null
+            && this.openObs.length > 0 && this.openObs.every(x => x.WorkshopObservationId === this.defaultObservationId))
+        {
+            this.confirmDialog.open(
+                'Only The Default Observation',
+                'Only the default observation is added to this job. Do you want to add other observations before saving?',
+                () =>
+                {
+                    this.openTab = 'observations';
+                    this.cdr.detectChanges();
+                },
+                'Yes, Add',
+                'No, Save',
+                'primary',
+                () => this.saveBody(body));
+
+            return;
+        }
+
+        this.saveBody(body);
+    }
+
+    private saveBody(body: NonNullable<ReturnType<JobCardsPage['body']>>):
+        void
+    {
         this.isSaving = true;
 
         this.progress.show(this.mode === 'edit' ? 'Updating' : 'Saving', 'Saving the job card...');

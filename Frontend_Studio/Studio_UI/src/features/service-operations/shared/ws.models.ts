@@ -66,6 +66,10 @@ export interface WorkshopSwitches
     // A job card is made from an estimate only
     RequireEstimate: boolean;
     IssueWithoutRequisition: boolean;
+    // Parts Issue To Multiple Job Cards : one MIS slip, several jobs
+    IssueToMultipleJobs?: boolean;
+    // Bulk Parts Issue Per Job : a picked job brings all its parts
+    IssueBulkPerJob?: boolean;
     AllowCreditInvoice: boolean;
 
     // The customized service that is the Estimate Charge (null :
@@ -294,6 +298,8 @@ export interface JobCard
     PartsTotal: number;
     Remarks: string;
     WorkingNow: string;
+    // the job waits : the earlier job of its technician ('' : no)
+    WaitingBehind?: string;
     CanEdit: boolean;
     NextStatuses: string[];
 
@@ -327,6 +333,10 @@ export interface JobCard
     // go on (assigned, not done)
     CanAssign?: boolean;
     CanWorkOn?: boolean;
+
+    // Job Card Requirements : its parts and service charges can be
+    // allocated (Assigned, Allocated)
+    CanAllocate?: boolean;
 
     // The estimate the card was made from ('' : none). LinesLocked is
     // not used any more (always false)
@@ -452,7 +462,8 @@ export interface AssignJobCardSimple
     AllowedMinutes: number;
     // the delivery date, the time of the assignment + the allowed time
     ExpectedAt: string;
-    Services: { ItemKind: string; ItemId: number }[];
+    // null : the services of the card stay as they are
+    Services: { ItemKind: string; ItemId: number }[] | null;
     Note: string;
 }
 
@@ -993,6 +1004,9 @@ export function wsStatusColor(status: string): string
         case 'Assigned':
             return '#2563eb';
 
+        case 'Allocated':
+            return '#0891b2';
+
         case 'Waiting Parts':
             return '#9333ea';
 
@@ -1073,6 +1087,8 @@ export function wsMinutes(value: number | null | undefined): string
 
 export const WS_BILLING_PAGES =
 {
+    // Job Closing : the bill of a job (a service invoice, no money)
+    closing:'workshop-management/job-closing',
     invoices:'service-billing/service-invoices',
     returns:'service-billing/service-returns',
     claims:'service-billing/free-service-claims'
@@ -1081,6 +1097,9 @@ export const WS_BILLING_PAGES =
 export interface ServiceInvoiceLine
 {
     LineId: number;
+
+    // the place of the line on the bill (1, 2, ...)
+    LineNo?: number;
 
     // Service / Part / Outside
     LineType: string;
@@ -1091,6 +1110,11 @@ export interface ServiceInvoiceLine
     Quantity: number;
     Rate: number;
     Amount: number;
+
+    // the discount of the line : as typed ("10%" or "50.00") and
+    // its amount; VAT is counted on Amount - Discount
+    DiscountText?: string;
+    Discount?: number;
     IsFree: boolean;
     ClaimAmount: number;
     VatRate: number;
@@ -1098,6 +1122,9 @@ export interface ServiceInvoiceLine
     Total: number;
     Cost: number;
     Note: string;
+
+    // a part bought outside for the job (set when the job is priced)
+    IsOutsourced?: boolean;
 }
 
 export interface ServiceInvoicePayment
@@ -1135,7 +1162,10 @@ export interface ServiceInvoice
     PartsTotal: number;
     OutsideTotal: number;
     VatTotal: number;
+    // the discount of the bill as a whole (the round off)
     Discount: number;
+    // the discounts of the lines, together
+    LineDiscount?: number;
     GrandTotal: number;
     PaidAmount: number;
     DueAmount: number;
@@ -1165,6 +1195,14 @@ export interface SaveServiceInvoice
     // charge), Amount (billed)
     OutsideLines: { ItemName: string; Note: string; Cost: number; Amount: number }[];
     Payments: ServiceInvoicePayment[];
+
+    // the item discount : a percent every charged line takes, and
+    // an amount the charged lines absorb by their value
+    ItemDiscountPercent?: number;
+    ItemDiscountAmount?: number;
+
+    // Job Closing : what became of each complaint and observation
+    Findings?: ClosingFinding[];
 }
 
 export interface ServiceInvoiceLookups
@@ -1275,6 +1313,11 @@ export interface WsReportColumn
     Header: string;
     Align: 'left' | 'right' | 'center';
     Width: string;
+    // On the page : the small second line under the column of this
+    // index, no column of its own (-1 / missing : its own column)
+    Under?: number;
+    // under another column, as the big figure of a serial token
+    Figure?: boolean;
 }
 
 // A report : its columns, its rows as ready text, its closing row
@@ -1287,6 +1330,11 @@ export interface WsReport
     Rows: string[][];
     Totals: string[];
     Cut: boolean;
+    // A grouped report (Work In Progress : job by job) : the first
+    // GroupColumns columns tell the group; GroupTotals : the closing
+    // row of every group, in the order the groups come
+    GroupColumns?: number;
+    GroupTotals?: string[][];
 }
 
 export interface WsTile
@@ -1323,4 +1371,432 @@ export interface WorkshopDashboard
     Statuses: WsTile[];
     Jobs: WorkshopDashboardJob[];
     Bays: WsTile[];
+    // the jobs of the technicians : in hand, waiting
+    Queues?: WorkshopQueue[];
+    // the service ramps (bays) with their jobs
+    Ramps?: WorkshopRamp[];
+}
+
+export interface WorkshopRampJob
+{
+    PublicId: string;
+    JobCardNo: string;
+    CustomerName: string;
+    BikeNo: string;
+    ModelName: string;
+    Status: string;
+    TechnicianName: string;
+    Working: boolean;
+    PromisedAt: string | null;
+    IsLate: boolean;
+}
+
+// the first job is on the ramp, the later ones wait for it
+export interface WorkshopRamp
+{
+    Name: string;
+    BranchName: string;
+    Jobs: WorkshopRampJob[];
+}
+
+export interface WorkshopQueueJob
+{
+    PublicId: string;
+    JobCardNo: string;
+    CustomerName: string;
+    Status: string;
+}
+
+export interface WorkshopQueue
+{
+    TechnicianName: string;
+    InHand: WorkshopQueueJob;
+    Waiting: WorkshopQueueJob[];
+}
+
+
+//===============================================================
+// Job Card Requirements : the parts and the service charges of a
+// job (its projection)
+//===============================================================
+
+export interface JobRequirementEstimate
+{
+    PublicId: string;
+    Name: string;
+    Status: string;
+    // the card carries it already
+    Linked: boolean;
+    ChargeTotal: number;
+    ChargeCollected: boolean;
+    Services: JobCardService[];
+    Parts: JobCardPart[];
+}
+
+export interface JobRequirement
+{
+    Card: JobCard;
+    // the estimate of the job (switch Estimate Driven Job Card on)
+    Estimate: JobRequirementEstimate | null;
+    // parts that are with the job now (issued less returned)
+    IssuedQuantity: number;
+    // the same, part by part : such a part stays on the requirement
+    IssuedItems?: JobIssuedItem[];
+}
+
+export interface JobIssuedItem
+{
+    ItemKind: string;
+    ItemId: number;
+    Quantity: number;
+}
+
+//===============================================================
+// The Material Issue Slip (MIS) : the page Parts Issues
+//===============================================================
+
+// A part a job card still waits for
+export interface MisPart
+{
+    ItemKind: string;
+    ItemId: number;
+    ItemCode: string;
+    ItemName: string;
+    Allocated: number;
+    Issued: number;
+    Remaining: number;
+    Note: string;
+    // rack - shelf - bin in the default warehouse ('' : not set)
+    Location?: string;
+}
+
+// A job card with parts still to issue
+export interface MisJob
+{
+    PublicId: string;
+    BranchId: number;
+    BranchName: string;
+    JobCardNo: string;
+    Status: string;
+    CustomerName: string;
+    Mobile: string;
+    ModelName: string;
+    BikeNo: string;
+    // 1118004 : the month and the day of the job, then its serial
+    SerialToken?: string;
+    Parts: MisPart[];
+}
+
+export interface MisLookups
+{
+    Today: string;
+    // Id : the service center, Code : its name, Name : its next MIS No
+    NextNos: WsLookup[];
+    Jobs: MisJob[];
+    Warehouses: WsLookup[];
+    Technicians: WsLookup[];
+    // switch Parts Issue To Multiple Job Cards
+    MultipleJobs: boolean;
+    // switch Bulk Parts Issue Per Job
+    BulkPerJob: boolean;
+}
+
+export interface PostMis
+{
+    IssueDate: string;
+    WarehouseId: number;
+    WorkshopTechnicianId: number | null;
+    Remarks: string;
+    Jobs: { JobCardPublicId: string; Lines: PartsLine[] }[];
+}
+
+// A slip : its head and the issue of every job card on it
+export interface Mis
+{
+    PublicId: string;
+    MisNo: string;
+    DocumentDate: string;
+    BranchId: number;
+    BranchName: string;
+    WarehouseName: string;
+    PersonName: string;
+    Remarks: string;
+    JobCount: number;
+    JobText: string;
+    CustomerText: string;
+    TotalQuantity: number;
+    TotalCost: number;
+    Status: string;
+    Jobs: PartsDocument[];
+}
+
+// One bin of an item
+export interface PartBin
+{
+    Zone: string;
+    // "Rack A"
+    Rack: string;
+    // "SLF-A-03"
+    Shelf: string;
+    // "05"
+    Bin: string;
+    // "A-03-05"
+    Code: string;
+}
+
+// Location Chart of a job : where its parts sit (Rack Management)
+export interface PartPlace
+{
+    Bins?: PartBin[];
+    ItemKind: string;
+    ItemId: number;
+    Zone: string;
+    Rack: string;
+    // "A-03-05"; more bins : "A-03-05, B-01-02"
+    Location: string;
+}
+
+export interface LocationChartLine
+{
+    ItemKind: string;
+    ItemId: number;
+    ItemCode: string;
+    ItemName: string;
+    Zone: string;
+    Rack: string;
+    Location: string;
+    Bins?: PartBin[];
+    Allocated: number;
+    Issued: number;
+    Waiting: number;
+    Stock: number;
+}
+
+export interface LocationChart
+{
+    PublicId: string;
+    JobCardNo: string;
+    SerialToken: string;
+    JobDate: string;
+    Status: string;
+    BranchId: number;
+    BranchName: string;
+    WarehouseName: string;
+    CustomerName: string;
+    Mobile: string;
+    ModelName: string;
+    BikeNo: string;
+    TechnicianName: string;
+    Lines: LocationChartLine[];
+    // every placed item of the warehouse
+    Places: PartPlace[];
+    // the chart of a posted slip : its MIS No (the lines are then
+    // what the slip issued, in Waiting). Set by the print only
+    MisNo?: string;
+}
+
+export interface SaveJobRequirement
+{
+    EstimatePublicId: string | null;
+    Services: JobCardService[];
+    Parts: JobCardPart[];
+    Note: string;
+}
+
+
+//===============================================================
+// Parts Return by job (owner 2026-11-19)
+//===============================================================
+
+// A part that sits on a job
+export interface ReturnPart
+{
+    ItemKind: string;
+    ItemId: number;
+    ItemCode: string;
+    ItemName: string;
+    Allocated: number;
+    Issued: number;
+    Returned: number;
+    // issued less returned : what can still come back
+    OnJob: number;
+    // the unit cost of what sits on the job
+    Rate: number;
+    // rack - shelf - bin in the default warehouse ('' : not set)
+    Location?: string;
+}
+
+// A job card with parts on it
+export interface ReturnJob
+{
+    PublicId: string;
+    BranchId: number;
+    BranchName: string;
+    JobCardNo: string;
+    Status: string;
+    CustomerName: string;
+    ModelName: string;
+    BikeNo: string;
+    SerialToken: string;
+    Parts: ReturnPart[];
+}
+
+export interface ReturnLookups
+{
+    Today: string;
+    Jobs: ReturnJob[];
+}
+
+export interface PostJobReturns
+{
+    ReturnDate: string;
+    Remarks: string;
+    Jobs: { JobCardPublicId: string; Lines: { ItemKind: string; ItemId: number; Quantity: number }[] }[];
+}
+
+// The hover text of a part row : where it sits in the store
+export function wsPlaceTitle(location: string | null | undefined): string
+{
+    const place = String(location ?? '').trim();
+
+    // in full : zone, rack, shelf, bin - a bin a line
+    return place ? `Location\n${place}` : 'Location : not set in Rack Management';
+}
+
+// A bin in full : "Zone : A   |   Rack : Rack A   |   Shelf : SLF-A-03   |   Bin : 05"
+export function wsBinText(bin: PartBin): string
+{
+    return [
+        bin.Zone ? `Zone : ${bin.Zone}` : '',
+        bin.Rack ? `Rack : ${bin.Rack}` : '',
+        bin.Shelf ? `Shelf : ${bin.Shelf}` : '',
+        bin.Bin ? `Bin : ${bin.Bin}` : ''
+    ].filter(x => !!x).join('   |   ');
+}
+
+
+//===============================================================
+// Job Closing (owner 2026-11-19) : stage 4 of a job card
+//===============================================================
+
+// A job in work that can be closed
+export interface ClosingJob
+{
+    PublicId: string;
+    BranchId: number;
+    BranchName: string;
+    JobCardNo: string;
+    JobDate: string;
+    Status: string;
+    JobType: string;
+    CustomerName: string;
+    Mobile: string;
+    ModelName: string;
+    BikeNo: string;
+    SerialToken: string;
+    // allocated and not issued : left out of the bill
+    UnissuedParts: number;
+    UnissuedQuantity: number;
+}
+
+export interface ClosingLookups
+{
+    Today: string;
+    Jobs: ClosingJob[];
+}
+
+// A complaint of the customer or an observation of the opening desk,
+// with what became of it
+export interface ClosingFinding
+{
+    // Complaint / Observation
+    Kind: string;
+    Id: number;
+    Text: string;
+    Note: string;
+    // '' / Solved / Needs Further Work / Not Done
+    Result: string;
+    ResultNote: string;
+}
+
+export interface ClosingPart
+{
+    ItemKind: string;
+    ItemCode: string;
+    ItemName: string;
+    Allocated: number;
+    Issued: number;
+    Returned: number;
+    // issued less returned : what is billed
+    OnJob: number;
+    // allocated and not on the job : left out of the bill
+    Remaining: number;
+    Rate: number;
+}
+
+// A line of a parts issue or of a parts return of the job
+export interface ClosingMove
+{
+    DocNo: string;
+    // an issue : its slip. A return : the issue it came from
+    RefNo: string;
+    Date: string;
+    ItemCode: string;
+    ItemName: string;
+    Quantity: number;
+    Returned: number;
+    Cost: number;
+}
+
+// An outside work (Kind Work) or a part bought outside (Kind Part)
+export interface ClosingOutsourced
+{
+    Kind: string;
+    DocNo: string;
+    Date: string;
+    ItemCode: string;
+    ItemName: string;
+    VendorName: string;
+    BillNo: string;
+    Quantity: number;
+    Cost: number;
+    Amount: number;
+}
+
+// The page Job Outsourcing : a job in work and what is outsourced
+// for it so far (the posted entries)
+export interface OutsourcingJob
+{
+    PublicId: string;
+    BranchId: number;
+    BranchName: string;
+    JobCardNo: string;
+    JobDate: string;
+    Status: string;
+    JobType: string;
+    CustomerName: string;
+    Mobile: string;
+    ModelName: string;
+    BikeNo: string;
+    SerialToken: string;
+    Entries: number;
+    CostTotal: number;
+    SellTotal: number;
+}
+
+export interface OutsourcingJobs
+{
+    Today: string;
+    Jobs: OutsourcingJob[];
+}
+
+// The whole job before it is closed
+export interface ClosingDetail
+{
+    Card: JobCard | null;
+    Parts: ClosingPart[];
+    Issues: ClosingMove[];
+    Returns: ClosingMove[];
+    Findings: ClosingFinding[];
+    Outsourced?: ClosingOutsourced[];
 }

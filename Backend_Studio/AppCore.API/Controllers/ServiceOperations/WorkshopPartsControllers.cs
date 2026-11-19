@@ -148,6 +148,31 @@ public class PartsIssuesController
     [HttpPost]
     public Task<IActionResult> Create([FromBody] PostPartsIssueDto? dto) =>
         Save("Add", userId => _repository.PostIssueAsync(dto ?? new PostPartsIssueDto(), userId), "The parts could not be issued.");
+
+    //-----------------------------------------------------------
+    // Material Issue Slips (MIS) : the page Parts Issues
+    //-----------------------------------------------------------
+
+    [HttpGet("mis")]
+    public Task<IActionResult> GetMisList() =>
+        Run(async () => Ok(await _repository.GetMisListAsync()), "The issue slips could not be loaded.");
+
+    [HttpGet("mis/lookups")]
+    public Task<IActionResult> GetMisLookups() =>
+        Run(async () => Ok(await _repository.GetMisLookupsAsync()), "The issue lists could not be loaded.");
+
+    // Location Chart : where the allocated parts of a job sit
+    [HttpGet("location-chart/{jobCardPublicId:guid}")]
+    public Task<IActionResult> GetLocationChart(Guid jobCardPublicId) =>
+        Run(async () => Ok(await _repository.GetLocationChartAsync(jobCardPublicId)), "The location chart could not be loaded.");
+
+    [HttpGet("mis/{publicId:guid}")]
+    public Task<IActionResult> GetMis(Guid publicId) =>
+        Run(async () => Ok(await _repository.GetMisAsync(publicId)), "The issue slip could not be loaded.");
+
+    [HttpPost("mis")]
+    public Task<IActionResult> PostMis([FromBody] PostMisDto? dto) =>
+        Save("Add", userId => _repository.PostMisAsync(dto ?? new PostMisDto(), userId), "The parts could not be issued.");
 }
 
 
@@ -191,6 +216,16 @@ public class PartsReturnsController
     [HttpPost]
     public Task<IActionResult> Create([FromBody] PostPartsReturnDto? dto) =>
         Save("Add", userId => _repository.PostReturnAsync(dto ?? new PostPartsReturnDto(), userId), "The parts could not be returned.");
+
+    // Parts Return by job (owner 2026-11-19) : the jobs with parts
+    // on them, and the return of their parts
+    [HttpGet("jobs")]
+    public Task<IActionResult> GetJobs() =>
+        Run(async () => Ok(await _repository.GetReturnLookupsAsync()), "The jobs could not be loaded.");
+
+    [HttpPost("by-job")]
+    public Task<IActionResult> CreateByJob([FromBody] PostJobReturnsDto? dto) =>
+        Save("Add", userId => _repository.PostJobReturnsAsync(dto ?? new PostJobReturnsDto(), userId), "The parts could not be returned.");
 }
 
 

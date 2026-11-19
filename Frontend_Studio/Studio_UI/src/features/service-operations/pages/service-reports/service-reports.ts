@@ -44,10 +44,12 @@ import { ToastService } from '../../../../shared/components/utilities/toast/toas
 import { hrToDate, hrToText } from '../../../human-resource-manangement/services/hr-date';
 
 import { WsService } from '../../shared/ws.service';
+import { openWorkInProgressPrint } from '../../print/work-in-progress.print';
 
 import
 {
-    WsReport
+    WsReport,
+    wsDay
 }
 from '../../shared/ws.models';
 
@@ -69,6 +71,10 @@ interface Words
     icon: string;
     search: string;
     empty: string;
+    // as of now : the report takes no period
+    asOf?: boolean;
+    // it has a paper (Print Engine)
+    print?: boolean;
 }
 
 // What differs between the five reports (the address says which)
@@ -78,7 +84,7 @@ const REPORTS:
     'service-history':
     {
         title:'Service History',
-        subtitle:'What was done to a bike or for a customer : find it by chassis, registration, mobile or name',
+        subtitle:'What was done to a bike or for a customer',
         icon:'fas fa-clock-rotate-left',
         search:'Chassis, registration, mobile, customer, job card...',
         empty:'No job card in the period matches.'
@@ -86,7 +92,7 @@ const REPORTS:
     'job-card-register':
     {
         title:'Job Card Register',
-        subtitle:'Every job card of the period with its status, its labour, its parts and its invoice',
+        subtitle:'Every job card of the period with its status and its invoice',
         icon:'fas fa-book',
         search:'Job card, customer, mobile, bike, model...',
         empty:'No job card in the period.'
@@ -94,7 +100,7 @@ const REPORTS:
     'technician-performance':
     {
         title:'Technician Performance',
-        subtitle:'The time stamps of the technicians : jobs, work entries and time worked in the period',
+        subtitle:'Jobs, work entries and time worked in the period',
         icon:'fas fa-user-clock',
         search:'Technician code or name...',
         empty:'No technician worked in the period.'
@@ -102,7 +108,7 @@ const REPORTS:
     'parts-consumption':
     {
         title:'Parts Consumption',
-        subtitle:'The parts issued to job cards in the period, less what came back, at their cost',
+        subtitle:'Parts issued to job cards in the period, less returns, at cost',
         icon:'fas fa-gears',
         search:'Part number or name...',
         empty:'No parts were issued in the period.'
@@ -110,10 +116,20 @@ const REPORTS:
     'service-due-list':
     {
         title:'Service Due List',
-        subtitle:'The bikes whose next scheduled service falls due in the period : call them in',
+        subtitle:'Bikes whose next service falls due in the period',
         icon:'fas fa-calendar-check',
         search:'Customer, mobile, chassis, registration, model...',
         empty:'No service falls due in the period.'
+    },
+    'work-in-progress':
+    {
+        title:'Work In Progress',
+        subtitle:'As of today : the parts on the jobs not invoiced yet, at their cost',
+        icon:'fas fa-hourglass-half',
+        search:'Job card, token, customer, part...',
+        empty:'No part sits on an open job.',
+        asOf:true,
+        print:true
     }
 };
 
@@ -185,7 +201,8 @@ implements OnInit
         bodyScrollable:true,
         fixedHeight:true,
         visibleRows:10,
-        rowHeight:32,
+        // room for the small second line of a cell
+        rowHeight:38,
         headerHeight:36,
         footerHeight:56
     };
@@ -311,7 +328,28 @@ implements OnInit
         this.columns =
             [
                 { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
-                ...columns.map((x, i) => ({ header:x.Header, field:'c' + i, width:x.Width, align:x.Align } as ListTableColumn))
+                // a column "under" another one is its small second
+                // line (more of them : side by side, || between)
+                ...columns
+                    .map((x, i) =>
+                    {
+                        const sub = columns.some(y => (y.Under ?? -1) === i && !y.Figure);
+
+                        // a serial token under it : the big figure
+                        const figure = columns.findIndex(y => (y.Under ?? -1) === i && !!y.Figure);
+
+                        return {
+                            header:x.Header,
+                            field:'c' + i,
+                            width:x.Width,
+                            align:x.Align,
+                            ...(sub ? { subField:'s' + i } : {}),
+                            ...(figure >= 0 ? { subFigureField:'c' + figure } : {}),
+                            own:(x.Under ?? -1) < 0
+                        };
+                    })
+                    .filter(x => x.own)
+                    .map(({ own, ...x }) => x as ListTableColumn)
             ];
 
         this.all =
@@ -319,7 +357,19 @@ implements OnInit
             {
                 const row: Record<string, string> = {};
 
-                cells.forEach((value, i) => row['c' + i] = value);
+                // a date reads 18-Nov-2026
+                cells.forEach((value, i) => row['c' + i] = /^\d{4}-\d{2}-\d{2}$/.test(value ?? '') ? wsDay(value) : value);
+
+                // the second line of a column : the texts under it
+                columns.forEach((x, i) =>
+                {
+                    const under = x.Under ?? -1;
+
+                    if (under >= 0 && !x.Figure && row['c' + i])
+                    {
+                        row['s' + under] = row['s' + under] ? `${row['s' + under]}  ||  ${row['c' + i]}` : row['c' + i];
+                    }
+                });
 
                 return row;
             });
@@ -378,6 +428,19 @@ implements OnInit
     {
         this.branchId = value ? Number(value) : null;
         this.load();
+    }
+
+    // Work In Progress : the paper, job by job, for the service
+    // center and the search of the page
+    print():
+        void
+    {
+        const problem = openWorkInProgressPrint(this.router, this.branchId, this.searchText.trim());
+
+        if (problem)
+        {
+            this.toast.error('Print', problem);
+        }
     }
 
     onPageChange(page: number):
