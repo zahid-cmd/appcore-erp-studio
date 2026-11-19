@@ -2958,6 +2958,27 @@ implements OnInit
                 );
         }
         //=======================================================
+        // Infrastructure Control Reservation (2026-11-20)
+        //
+        // "All Modules" + Add must never bring Infrastructure
+        // Control pages into another role's cart (Update would
+        // then refuse the whole assignment).
+        //=======================================================
+        if
+        (
+            this.selectedRoleProfileId !==
+            this.reservedInfrastructureControlRoleProfileId
+        )
+        {
+            selectedSubMenus =
+                selectedSubMenus.filter(
+                    subMenu =>
+                        !this.isInfrastructureControlModule(
+                            subMenu.navigationModuleId
+                        )
+                );
+        }
+        //=======================================================
         // Build Cart Rows
         //=======================================================
         const rows:ItemCartRow[] =
@@ -3322,4 +3343,4 @@ implements OnInit
             }
         ];
     }
-}
+}
