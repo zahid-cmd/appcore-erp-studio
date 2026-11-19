@@ -541,8 +541,23 @@ getApiBaseUrl():
     getLimit():
         Observable<{ Reached: boolean; Message: string }>
     {
-        return this.http.get<{ Reached: boolean; Message: string }>(
+        // The API answers in camelCase ({ reached, message }) :
+        // both spellings are read (2026-11-20 : with only
+        // "Reached" the limit was never seen as reached)
+        return this.http.get<any>(
             `${this.apiUrl}/limit`
+        )
+        .pipe(
+            map(
+                raw =>
+                ({
+                    Reached:
+                        !!(raw?.Reached ?? raw?.reached),
+
+                    Message:
+                        String(raw?.Message ?? raw?.message ?? '')
+                })
+            )
         );
     }
 }
