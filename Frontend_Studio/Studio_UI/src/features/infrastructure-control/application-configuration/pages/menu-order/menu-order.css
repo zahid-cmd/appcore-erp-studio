@@ -1,0 +1,272 @@
+@import '../../../../../shared/styles/app-workspace-page.css';
+
+/* =========================================================
+   Menu Order (2026-11-20)
+   The shared split-view page (app-workspace-page) : the
+   modules pane on the left, the selected module's menus and
+   pages on the right. Each pane scrolls on its own with the
+   AppCore scrollbar; the page keeps the standard gaps.
+========================================================= */
+
+.mo-head
+{
+    justify-content: space-between;
+    font-weight: 700;
+}
+
+.mo-head span
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mo-head i
+{
+    color: #4f46e5;
+}
+
+.mo-head small
+{
+    color: #64748b;
+    font-weight: 500;
+}
+
+.mo-dirty
+{
+    color: #b45309;
+}
+
+.mo-body
+{
+    padding: 10px;
+}
+
+.mo-modules
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* the right pane : menu cards in columns when there is room */
+.mo-menus
+{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    align-content: start;
+    gap: 10px;
+}
+
+.mo-card
+{
+    border: 1px solid #e7edf5;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.mo-pages
+{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px 8px;
+}
+
+.mo-row
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 4px 8px;
+    border-radius: 10px;
+}
+
+.mo-module
+{
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.mo-module:hover
+{
+    background: rgba(79, 70, 229, 0.05);
+}
+
+.mo-module.mo-active
+{
+    border-color: rgba(79, 70, 229, 0.35);
+    background: rgba(79, 70, 229, 0.09);
+}
+
+.mo-menu
+{
+    border-radius: 0;
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+.mo-page
+{
+    font-size: 13.5px;
+}
+
+.mo-page:hover
+{
+    background: rgba(148, 163, 184, 0.10);
+}
+
+.mo-off.mo-card .mo-pages,
+.mo-row.mo-off .mo-icon
+{
+    opacity: 0.45;
+}
+
+.mo-row.mo-off .mo-name,
+.mo-off.mo-card .mo-menu .mo-name
+{
+    opacity: 0.45;
+    text-decoration: line-through;
+}
+
+.mo-num
+{
+    width: 22px;
+    flex: 0 0 22px;
+    color: #94a3b8;
+    font-size: 12px;
+    text-align: right;
+}
+
+.mo-icon
+{
+    width: 18px;
+    flex: 0 0 18px;
+    color: #4f46e5;
+    text-align: center;
+}
+
+.mo-name
+{
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mo-lock
+{
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+.mo-actions
+{
+    display: flex;
+    flex: 0 0 auto;
+    gap: 3px;
+}
+
+.mo-actions button
+{
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 7px;
+    background: transparent;
+    color: #334155;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mo-actions button:hover:not(:disabled)
+{
+    border-color: #4f46e5;
+    color: #4f46e5;
+}
+
+.mo-actions button:disabled
+{
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.mo-none,
+.mo-empty
+{
+    padding: 16px;
+    color: #64748b;
+    text-align: center;
+}
+
+.mo-panes > .mo-empty
+{
+    flex: 1 1 auto;
+}
+
+/* =========================================================
+   Height : the page fills the work area and never grows past
+   it; only the pane bodies scroll (kept here as well as in the
+   shared layout, so the list can never run under the footer)
+========================================================= */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.app-workspace-page
+{
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.mo-panes
+{
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.mo-panes > .ws-pane
+{
+    min-height: 0;
+    max-height: 100%;
+}
+
+.mo-body
+{
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* both panes stay visible on narrower screens : stacked */
+@media (max-width: 1439.98px)
+{
+    .mo-panes
+    {
+        flex-direction: column;
+    }
+
+    .mo-panes > .ws-pane--list
+    {
+        flex: 0 0 auto;
+        max-height: 40%;
+    }
+
+    .mo-menus
+    {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}

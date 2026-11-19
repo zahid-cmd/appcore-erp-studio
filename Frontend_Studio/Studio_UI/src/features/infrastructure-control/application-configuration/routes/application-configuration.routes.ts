@@ -111,6 +111,24 @@ Routes =
 
                 // AUTO-END : SUB-002-005-003
 
+                //===========================================================
+                // Menu Order (hand-written 2026-11-20, outside the AUTO
+                // blocks : never run Submenu Sync for it)
+                //===========================================================
+
+                {
+                    path:'menu-order',
+
+                    loadChildren:() =>
+                        import(
+                            './menu-order.routes'
+                        )
+                        .then(
+                            m =>
+                                m.MenuOrderRoutes
+                        )
+                },
+
         ]
 
     }
