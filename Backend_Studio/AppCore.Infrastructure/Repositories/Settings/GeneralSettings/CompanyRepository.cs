@@ -84,15 +84,19 @@ public class CompanyRepository : ICompanyRepository
 
 
     // null while one more company may be added, else the message
+    // One company per client (owner 2026-11-20 : the ERP is not
+    // ready for several companies). Applies everywhere, also where
+    // no tenant is found (development); a Console limit can only
+    // make it smaller, never larger, until multi-company is ready.
+    private const int MaxCompaniesPerClient = 1;
+
     public async Task<string?> GetLimitMessageAsync()
     {
-        int? limit =
+        int? consoleLimit =
             (await _limits.GetAsync())?.MaxCompanies;
 
-        if (limit is null)
-        {
-            return null;
-        }
+        int? limit =
+            Math.Min(consoleLimit ?? MaxCompaniesPerClient, MaxCompaniesPerClient);
 
         int count =
             await _context
@@ -101,8 +105,8 @@ public class CompanyRepository : ICompanyRepository
                 .CountAsync(x => !x.IsDeleted);
 
         return count >= limit.Value
-            ? $"Your subscription allows {limit.Value} company(ies) and {count} already exist. " +
-              "Open the existing company to change its details, or contact AppCore Technologies to add another."
+            ? "AppCore runs one company per client, and it already exists. " +
+              "Open the existing company to change its details."
             : null;
     }
 

@@ -4,6 +4,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../shared/utils/moved-route';
+
 export const infrastructureControlRoutes:
     Routes =
 [
@@ -114,31 +120,14 @@ export const infrastructureControlRoutes:
 
     // AUTO-END : MNU-002-004
 
-    // AUTO-BEGIN : MNU-002-005
-
     //===========================================================
-    // Application Configuration
+    // Application Configuration : moved to Settings 2026-11-20.
+    // The old addresses open the new ones (rest of the address and
+    // the query kept). Never run Menu Sync here : it would add the
+    // old block back.
     //===========================================================
 
-    {
-        path:'application-configuration',
-
-        data:
-        {
-            breadcrumb:'Application Configuration'
-        },
-
-        loadChildren:() =>
-            import(
-                '../application-configuration/routes/application-configuration.routes'
-            )
-            .then(
-                m =>
-                    m.mnu002005Routes
-            )
-    },
-
-    // AUTO-END : MNU-002-005
+    moved('application-configuration', '/settings/application-configuration'),
 
     // AUTO-BEGIN : MNU-002-006
 

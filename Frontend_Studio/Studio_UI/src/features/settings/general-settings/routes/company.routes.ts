@@ -55,25 +55,16 @@ Routes =
 
 
     //===========================================================
-    // Add
+    // Add : one company per client (made with the client's
+    // database), so the old address only goes back to the list
     //===========================================================
 
     {
         path:'add',
 
-        data:
-        {
-            breadcrumb:'Add Company'
-        },
+        redirectTo:'list',
 
-        loadComponent:() =>
-            import(
-                '../pages/company/form/company-form'
-            )
-            .then(
-                m =>
-                    m.CompanyForm
-            )
+        pathMatch:'full'
     },
 
 

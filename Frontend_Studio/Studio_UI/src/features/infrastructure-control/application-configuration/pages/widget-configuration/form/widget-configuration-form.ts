@@ -3173,7 +3173,7 @@ implements OnInit
 
                             void this.router.navigate(
                             [
-                                '/infrastructure-control/application-configuration/widget-configuration/list'
+                                '/settings/application-configuration/widget-configuration/list'
                             ]);
                         },
 
@@ -3284,7 +3284,7 @@ implements OnInit
 
                             void this.router.navigate(
                             [
-                                '/infrastructure-control/application-configuration/widget-configuration/list'
+                                '/settings/application-configuration/widget-configuration/list'
                             ]);
                         },
 
@@ -3477,7 +3477,7 @@ implements OnInit
         {
             void this.router.navigate(
             [
-                '/infrastructure-control/application-configuration/widget-configuration/list'
+                '/settings/application-configuration/widget-configuration/list'
             ]);
 
 
@@ -3496,7 +3496,7 @@ implements OnInit
             {
                 void this.router.navigate(
                 [
-                    '/infrastructure-control/application-configuration/widget-configuration/list'
+                    '/settings/application-configuration/widget-configuration/list'
                 ]);
             },
 

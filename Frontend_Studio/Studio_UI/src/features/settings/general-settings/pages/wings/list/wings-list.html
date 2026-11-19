@@ -8,7 +8,7 @@
 
         title="Wing"
 
-        subtitle="Groups of branches under the company, e.g. Sales, Service, Accessories"
+        subtitle="Fixed groups of branches : Sales Center, Service Center, Accessory Shop"
 
         icon="fas fa-layer-group"
 
@@ -33,23 +33,11 @@
 
             <app-command-center
 
-                command1Text="Add"
+                command1Text="Refresh"
 
-                command1Icon="fas fa-plus"
+                command1Icon="fas fa-rotate-right"
 
-                (command1Click)="add()"
-
-                command2Text="Refresh"
-
-                command2Icon="fas fa-rotate-right"
-
-                (command2Click)="refresh()"
-
-                command3Text="Restore"
-
-                command3Icon="fas fa-trash-arrow-up"
-
-                (command3Click)="restore()"
+                (command1Click)="refresh()"
 
                 rightCommandIcon="fas fa-clock-rotate-left"
 
@@ -114,7 +102,9 @@
 
                 emptyTitle="No wing yet"
 
-                emptySubtitle="Add a wing first : every branch belongs to one, and reports can be grouped by it."
+                emptySubtitle="Every company gets its three wings when it is made : Sales Center, Service Center, Accessory Shop."
+
+                [actions]="{ view: true, edit: false, delete: false }"
 
                 (view)="view($event)"
 

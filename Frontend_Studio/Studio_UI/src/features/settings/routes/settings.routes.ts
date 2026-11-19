@@ -60,6 +60,33 @@ export const settingsRoutes:
 
     // AUTO-END : MNU-003-001
 
+    //===========================================================
+    // Application Configuration (Login Pages, Dashboards, Widget
+    // Configuration). Moved from Infrastructure Control
+    // 2026-11-20 (client level). Hand-written, outside the AUTO
+    // blocks : never run Menu / Submenu Sync for it. The page
+    // files stay in features\infrastructure-control\
+    // application-configuration.
+    //===========================================================
+
+    {
+        path:'application-configuration',
+
+        data:
+        {
+            breadcrumb:'Application Configuration'
+        },
+
+        loadChildren:() =>
+            import(
+                '../../infrastructure-control/application-configuration/routes/application-configuration.routes'
+            )
+            .then(
+                m =>
+                    m.mnu002005Routes
+            )
+    },
+
     // AUTO-BEGIN : MNU-003-002
 
     //===========================================================

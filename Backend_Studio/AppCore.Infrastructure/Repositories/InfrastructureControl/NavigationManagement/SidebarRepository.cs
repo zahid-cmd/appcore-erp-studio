@@ -9,6 +9,8 @@ using AppCore.Application.InfrastructureControl.NavigationManagement.Sidebar.Int
 
 using AppCore.Infrastructure.Persistence;
 
+using AppCore.Application.Platform.Tenancy;
+
 //===============================================================
 // Namespace
 //===============================================================
@@ -27,13 +29,21 @@ public class SidebarRepository : ISidebarRepository
 
     private readonly AppDbContext _context;
 
+    // On a company's address (Tenancy Mode Host) Infrastructure
+    // Control is not shown : it is AppCore's own (2026-11-20).
+    private readonly ITenantContext _tenant;
+
+    private const string AppCoreOnlyModule = "infrastructure-control";
+
     //===============================================================
     // Constructor
     //===============================================================
 
-    public SidebarRepository(AppDbContext context)
+    public SidebarRepository(AppDbContext context, ITenantContext tenant)
     {
         _context = context;
+
+        _tenant = tenant;
     }
 
     //===============================================================
@@ -42,6 +52,9 @@ public class SidebarRepository : ISidebarRepository
 
     public async Task<List<SidebarModuleDto>> GetSidebarAsync()
     {
+        bool companyAddress =
+            _tenant.Enabled;
+
         return await _context.NavigationModules
 
             .AsNoTracking()
@@ -49,7 +62,9 @@ public class SidebarRepository : ISidebarRepository
             .Where(module =>
                 !module.IsDeleted
                 &&
-                module.IsActive)
+                module.IsActive
+                &&
+                !(companyAddress && module.RouteKey.ToLower() == AppCoreOnlyModule))
 
             .OrderBy(module =>
                 module.DisplayOrder)

@@ -33,23 +33,11 @@
 
             <app-command-center
 
-                command1Text="Add"
+                command1Text="Refresh"
 
-                command1Icon="fas fa-plus"
+                command1Icon="fas fa-rotate-right"
 
-                (command1Click)="add()"
-
-                command2Text="Refresh"
-
-                command2Icon="fas fa-rotate-right"
-
-                (command2Click)="refresh()"
-
-                command3Text="Restore"
-
-                command3Icon="fas fa-trash-arrow-up"
-
-                (command3Click)="restore()"
+                (command1Click)="refresh()"
 
                 rightCommandIcon="fas fa-clock-rotate-left"
 
@@ -111,7 +99,9 @@
                 [error]="loadFailed"
                 emptyArt="company"
                 emptyTitle="No company yet"
-                emptySubtitle="Add the company first : its name, BIN, TIN and logo appear on invoices, vouchers and every print."
+                emptySubtitle="The company is made when the client's database is created : its name, BIN, TIN and logo appear on invoices, vouchers and every print."
+
+                [actions]="{ view: true, edit: true, delete: false }"
 
                 (view)="view($event)"
 

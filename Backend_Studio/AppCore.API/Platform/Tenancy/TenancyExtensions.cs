@@ -18,7 +18,13 @@
 //   3. ReadOnly company : only reading (and signing in) is allowed;
 //   4. the company goes into ITenantContext, and AppDbContext opens
 //      that company's database;
-//   5. a login token made for another company is refused (401).
+//   5. a login token made for another company is refused (401);
+//   6. Infrastructure Control is AppCore's own (2026-11-20) : on a
+//      company's address its developer parts (Code, Development
+//      and Data Management) are refused for everyone, and the rest
+//      is read only (the sidebar, permissions, login page and
+//      dashboards read it). Application Configuration (now under
+//      Settings) keeps working. The sidebar hides the module.
 //
 //===============================================================
 
@@ -202,7 +208,60 @@ public sealed class TenantResolutionMiddleware
 
         tenant.Set(info);
 
+        if (IsAppCoreOnly(context.Request))
+        {
+            _log.LogWarning("Tenancy : {Host} {Method} {Path} refused : Infrastructure Control is AppCore's only", host, context.Request.Method, context.Request.Path);
+
+            await Refuse(context, HttpStatusCode.NotFound, "This page is not available here.");
+            return;
+        }
+
         await _next(context);
+    }
+
+
+    //===========================================================
+    // Infrastructure Control on a company's address (step 6)
+    //===========================================================
+
+    // never on a company's address, not even reading
+    private static readonly string[] AppCoreOnlyMenus =
+    [
+        "code-management",
+        "development-management",
+        "data-management"
+    ];
+
+    private static bool IsAppCoreOnly(HttpRequest r)
+    {
+        PathString api = new("/api/infrastructure-control");
+
+        if (r.Path.StartsWithSegments(api, StringComparison.OrdinalIgnoreCase, out PathString rest))
+        {
+            string menu =
+                (rest.Value ?? string.Empty).Trim('/').Split('/')[0].ToLowerInvariant();
+
+            if (AppCoreOnlyMenus.Contains(menu))
+            {
+                return true;
+            }
+
+            // Application Configuration : the client's own settings
+            if (menu == "application-configuration")
+            {
+                return false;
+            }
+
+            // the rest : read only
+            return !(HttpMethods.IsGet(r.Method) || HttpMethods.IsHead(r.Method) || HttpMethods.IsOptions(r.Method));
+        }
+
+        // the pages themselves, opened by address (the old
+        // Application Configuration address still redirects)
+        PathString page = new("/infrastructure-control");
+
+        return r.Path.StartsWithSegments(page, StringComparison.OrdinalIgnoreCase, out PathString pageRest)
+            && !pageRest.StartsWithSegments("/application-configuration", StringComparison.OrdinalIgnoreCase);
     }
 
     // http://localhost (Deploy Agent health checks, the server

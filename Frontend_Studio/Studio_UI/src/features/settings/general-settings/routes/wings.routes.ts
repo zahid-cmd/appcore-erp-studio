@@ -55,48 +55,30 @@ Routes =
 
 
     //===========================================================
-    // Add
+    // Add : wings are fixed (made with the company), so the old
+    // address only goes back to the list
     //===========================================================
 
     {
         path:'add',
 
-        data:
-        {
-            breadcrumb:'Add Wings'
-        },
+        redirectTo:'list',
 
-        loadComponent:() =>
-            import(
-                '../pages/wings/form/wings-form'
-            )
-            .then(
-                m =>
-                    m.WingsForm
-            )
+        pathMatch:'full'
     },
 
 
     //===========================================================
-    // Edit
+    // Edit : wings are fixed, so the old address only goes back
+    // to the list (View still opens the form, read only)
     //===========================================================
 
     {
         path:'edit/:id',
 
-        data:
-        {
-            breadcrumb:'Edit Wings'
-        },
+        redirectTo:'list',
 
-        loadComponent:() =>
-            import(
-                '../pages/wings/form/wings-form'
-            )
-            .then(
-                m =>
-                    m.WingsForm
-            )
+        pathMatch:'full'
     },
 
 

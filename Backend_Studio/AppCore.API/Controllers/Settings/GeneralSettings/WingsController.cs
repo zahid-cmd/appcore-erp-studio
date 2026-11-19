@@ -29,6 +29,19 @@ namespace AppCore.API.Controllers.Settings.GeneralSettings;
 public class WingsController : ControllerBase
 {
     //===============================================================
+    // Wings are fixed (owner 2026-11-20) : every company gets its
+    // three wings (Sales Center, Service Center, Accessory Shop) when
+    // it is made. They can only be viewed : never added, edited,
+    // deleted or restored from here.
+    //===============================================================
+
+    private static readonly bool WingsAreFixed = true;
+
+    private const string FixedMessage =
+        "Wings are fixed : every company has Sales Center, Service Center and Accessory Shop. They cannot be added, changed or deleted.";
+
+
+    //===============================================================
     // Fields
     //===============================================================
 
@@ -183,6 +196,11 @@ public class WingsController : ControllerBase
     public async Task<ActionResult<Guid>> Create(
         CreateWingDto dto)
     {
+        if (WingsAreFixed)
+        {
+            return BadRequest(FixedMessage);
+        }
+
            long userId = this.CurrentUserId();
 
         try
@@ -225,6 +243,11 @@ public class WingsController : ControllerBase
         Guid publicId,
         UpdateWingDto dto)
     {
+        if (WingsAreFixed)
+        {
+            return BadRequest(FixedMessage);
+        }
+
         long? found =
             await _repository.GetIdByPublicIdAsync(publicId);
 
@@ -281,6 +304,11 @@ public class WingsController : ControllerBase
     public async Task<IActionResult> Delete(
         Guid publicId)
     {
+        if (WingsAreFixed)
+        {
+            return Conflict(FixedMessage);
+        }
+
         long? found =
             await _repository.GetIdByPublicIdAsync(publicId);
 
@@ -360,6 +388,11 @@ public class WingsController : ControllerBase
 
     public async Task<IActionResult> Restore()
     {
+        if (WingsAreFixed)
+        {
+            return BadRequest(FixedMessage);
+        }
+
            long userId = this.CurrentUserId();
 
         bool restored =

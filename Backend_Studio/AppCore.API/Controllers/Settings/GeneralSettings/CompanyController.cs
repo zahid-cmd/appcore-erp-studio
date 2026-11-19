@@ -30,6 +30,8 @@ namespace AppCore.API.Controllers.Settings.GeneralSettings;
 
 public class CompanyController : ControllerBase
 {
+    private static readonly bool OneCompanyPerClient = true;
+
     //===============================================================
     // Fields
     //===============================================================
@@ -441,6 +443,13 @@ public class CompanyController : ControllerBase
     public async Task<IActionResult> Delete(
         Guid publicId)
     {
+        // One company per client (owner 2026-11-20) : it is edited,
+        // never deleted (everything in the ERP belongs to it)
+        if (OneCompanyPerClient)
+        {
+            return Conflict("The company cannot be deleted : AppCore runs one company per client. Open it to change its details.");
+        }
+
         long? found =
             await _repository.GetIdByPublicIdAsync(publicId);
 
