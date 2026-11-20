@@ -47,7 +47,14 @@ public sealed record TenantInfo(
     // the client makes his own company and branches up to these
     // numbers. MaxBranches null = no limit.
     int MaxCompanies = 1,
-    int? MaxBranches = null)
+    int? MaxBranches = null,
+
+    // Console (10_Modules_Packages_Users.sql, 2026-11-20) : users
+    // allowed (null = no limit) and the modules switched OFF
+    // (module route keys, comma separated; '' = everything on)
+    int? MaxUsers = null,
+
+    string DisabledModules = "")
 {
     // Console status ReadOnly : the company can look, not change
     public bool IsReadOnly =>

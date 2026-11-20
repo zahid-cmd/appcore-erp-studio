@@ -12,6 +12,10 @@ using AppCore.Application.SecurityPermission.UserManagement;
 using AppCore.Application.Common.Paging;
 using AppCore.Application.SecurityPermission.UserManagement.UserProfile.DTOs;
 using AppCore.Api.Platform.Tenancy;
+using AppCore.Application.Platform.Tenancy;
+using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Platform.Tenancy;
+using Microsoft.EntityFrameworkCore;
 
 
 //===============================================================
@@ -40,6 +44,11 @@ public class UserProfileController : ControllerBase
 
     private readonly IWebHostEnvironment _environment;
 
+    // user limit of the client (Console MaxUsers, 2026-11-20)
+    private readonly AppDbContext _context;
+
+    private readonly ITenantLimits _limits;
+
 
     //===========================================================
     // Constructor
@@ -48,8 +57,15 @@ public class UserProfileController : ControllerBase
     public UserProfileController(
         IUserProfileRepository repository,
         IActivityHistoryRepository activityHistoryRepository,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        AppDbContext context,
+        ITenantLimits limits)
     {
+        _context =
+            context;
+
+        _limits =
+            limits;
         _repository =
             repository;
 
@@ -564,6 +580,18 @@ public class UserProfileController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateUserProfileDto dto)
     {
+        // user limit (Console MaxUsers, 2026-11-20)
+        if (dto.IsActive)
+        {
+            string? refused =
+                await UserLimit.RefusalAsync(_context, _limits);
+
+            if (refused != null)
+            {
+                return BadRequest(new { message = refused });
+            }
+        }
+
         long userId =
             1;
 
@@ -609,6 +637,33 @@ public class UserProfileController : ControllerBase
         )
         {
             return NotFound();
+        }
+
+
+        //=======================================================
+        // User limit : only when an inactive user is made active
+        // (Console MaxUsers, 2026-11-20)
+        //=======================================================
+
+        if (dto.IsActive)
+        {
+            bool wasActive =
+                await _context.Set<AppCore.Domain.Entities.SecurityPermission.UserManagement.UserProfile>()
+                    .AsNoTracking()
+                    .Where(x => x.UserProfileId == id)
+                    .Select(x => x.IsActive)
+                    .FirstOrDefaultAsync();
+
+            if (!wasActive)
+            {
+                string? refused =
+                    await UserLimit.RefusalAsync(_context, _limits, id);
+
+                if (refused != null)
+                {
+                    return BadRequest(new { message = refused });
+                }
+            }
         }
 
 
@@ -1009,6 +1064,15 @@ public class UserProfileController : ControllerBase
     [HttpPut("restore")]
     public async Task<IActionResult> Restore()
     {
+        // user limit (Console MaxUsers, 2026-11-20)
+        string? refused =
+            await UserLimit.RefusalAsync(_context, _limits);
+
+        if (refused != null)
+        {
+            return BadRequest(new { message = refused });
+        }
+
         long userId =
             1;
 

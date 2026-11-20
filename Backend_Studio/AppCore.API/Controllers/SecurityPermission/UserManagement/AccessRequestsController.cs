@@ -8,11 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using AppCore.Api.Security;
 using AppCore.Application.Platform.DataManagement;
 using AppCore.Application.Platform.EffectiveAccess.Interfaces;
+using AppCore.Application.Platform.Tenancy;
 using AppCore.Domain.Entities.SecurityPermission.RoleManagement;
 using AppCore.Domain.Entities.SecurityPermission.UserManagement;
 using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Domain.Platform.Authentication;
 using AppCore.Infrastructure.Persistence;
+using AppCore.Infrastructure.Platform.Tenancy;
 
 
 //===============================================================
@@ -53,17 +55,20 @@ public class AccessRequestsController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IEffectiveAccessRepository _access;
     private readonly IDataManagementService _data;
+    private readonly ITenantLimits _limits;
 
     public AccessRequestsController
     (
         AppDbContext context,
         IEffectiveAccessRepository access,
-        IDataManagementService data
+        IDataManagementService data,
+        ITenantLimits limits
     )
     {
         _context = context;
         _access = access;
         _data = data;
+        _limits = limits;
     }
 
 
@@ -268,6 +273,14 @@ public class AccessRequestsController : ControllerBase
         if (await _context.Set<UserProfile>().AnyAsync(x => !x.IsDeleted && x.UserName.ToLower() == name))
         {
             return Conflict(new { message = $"The Login ID '{request.UserName}' is already in use. Reject this request and ask for a new one." });
+        }
+
+        // user limit (Console MaxUsers, 2026-11-20)
+        string? overLimit = await UserLimit.RefusalAsync(_context, _limits);
+
+        if (overLimit != null)
+        {
+            return BadRequest(new { message = overLimit });
         }
 
         long adminId = this.CurrentUserId();

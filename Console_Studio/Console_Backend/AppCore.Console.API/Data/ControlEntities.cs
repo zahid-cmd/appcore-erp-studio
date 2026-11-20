@@ -102,6 +102,12 @@ public class Tenant
     // makes his own company and branches, up to these numbers
     public int MaxCompanies { get; set; } = 1;
     public int? MaxBranches { get; set; }
+    // modules, package and users (10_Modules_Packages_Users.sql) :
+    // DisabledModules = the module route keys that are OFF, comma
+    // separated, written on Save; the ERP reads only this
+    public string? PackageCode { get; set; }
+    public int? MaxUsers { get; set; }
+    public string DisabledModules { get; set; } = string.Empty;
 
     public string? AppVersion { get; set; }
     public string? SchemaVersion { get; set; }
@@ -221,4 +227,34 @@ public class SiteSetting
     public string SettingValue { get; set; } = "{}";
     public DateTime ModifiedDate { get; set; }
     public long? ModifiedBy { get; set; }
+}
+
+// Packages of a product (10_Modules_Packages_Users.sql)
+public class ProductPackage
+{
+    public long ProductPackageId { get; set; }
+    public long ProductId { get; set; }
+    public string PackageCode { get; set; } = string.Empty;
+    public string PackageName { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public int DisplayOrder { get; set; }
+}
+
+public class ProductPackageModule
+{
+    public long ProductPackageId { get; set; }
+    public long ProductModuleId { get; set; }
+}
+
+// Brands a tenant carries (brand packs, filled later)
+public class TenantBrand
+{
+    public long TenantBrandId { get; set; }
+    public long TenantId { get; set; }
+    public string BrandCode { get; set; } = string.Empty;
+    public string BrandName { get; set; } = string.Empty;
+    public bool IsEnabled { get; set; } = true;
+    public string? PackVersion { get; set; }
+    public DateTime? InstalledDate { get; set; }
+    public DateTime CreatedDate { get; set; }
 }

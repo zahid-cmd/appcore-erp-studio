@@ -22,7 +22,26 @@ public sealed record TenantLimits(
     int MaxCompanies,
 
     // null = no limit
-    int? MaxBranches);
+    int? MaxBranches,
+
+    // null = no limit (2026-11-20)
+    int? MaxUsers = null,
+
+    // module route keys switched OFF in the Console, comma
+    // separated ('' = everything on) (2026-11-20)
+    string DisabledModules = "")
+{
+    // the switched-off modules' route keys (lower case)
+    public HashSet<string> OffModules =>
+        (DisabledModules ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => x.ToLowerInvariant())
+            .ToHashSet();
+
+    public bool IsModuleOff(string? routeKey) =>
+        !string.IsNullOrWhiteSpace(routeKey)
+        && OffModules.Contains(routeKey.Trim().ToLowerInvariant());
+}
 
 
 public interface ITenantLimits

@@ -33,17 +33,23 @@ public class SidebarRepository : ISidebarRepository
     // Control is not shown : it is AppCore's own (2026-11-20).
     private readonly ITenantContext _tenant;
 
+    // Modules switched off in the Console for this client
+    // (2026-11-20) are not shown either
+    private readonly ITenantLimits _limits;
+
     private const string AppCoreOnlyModule = "infrastructure-control";
 
     //===============================================================
     // Constructor
     //===============================================================
 
-    public SidebarRepository(AppDbContext context, ITenantContext tenant)
+    public SidebarRepository(AppDbContext context, ITenantContext tenant, ITenantLimits limits)
     {
         _context = context;
 
         _tenant = tenant;
+
+        _limits = limits;
     }
 
     //===============================================================
@@ -55,6 +61,10 @@ public class SidebarRepository : ISidebarRepository
         bool companyAddress =
             _tenant.Enabled;
 
+        List<string> off =
+            ((await _limits.GetAsync())?.OffModules ?? new HashSet<string>())
+                .ToList();
+
         return await _context.NavigationModules
 
             .AsNoTracking()
@@ -64,7 +74,9 @@ public class SidebarRepository : ISidebarRepository
                 &&
                 module.IsActive
                 &&
-                !(companyAddress && module.RouteKey.ToLower() == AppCoreOnlyModule))
+                !(companyAddress && module.RouteKey.ToLower() == AppCoreOnlyModule)
+                &&
+                !off.Contains(module.RouteKey.ToLower()))
 
             .OrderBy(module =>
                 module.DisplayOrder)

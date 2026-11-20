@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 using AppCore.Application.Platform.EffectiveAccess.DTOs;
 using AppCore.Application.Platform.EffectiveAccess.Interfaces;
+using AppCore.Application.Platform.Tenancy;
 
 using AppCore.Infrastructure.Persistence;
 
@@ -32,6 +33,11 @@ public class EffectiveAccessRepository
     private readonly AppDbContext
         _context;
 
+    // Modules switched off in the Console (2026-11-20) give no
+    // access : their pages and activities are left out
+    private readonly ITenantLimits
+        _limits;
+
 
     //===========================================================
     // Constructor
@@ -39,11 +45,15 @@ public class EffectiveAccessRepository
 
     public EffectiveAccessRepository
     (
-        AppDbContext context
+        AppDbContext context,
+        ITenantLimits limits
     )
     {
         _context =
             context;
+
+        _limits =
+            limits;
     }
 
 
@@ -312,14 +322,44 @@ public class EffectiveAccessRepository
         // Special Assignment never replaces the Role Assignment.
         //=======================================================
 
-        return await
-            roleBasedAccess
-                .Union
-                (
-                    specialAssignmentAccess
-                )
-                .AsNoTracking()
-                .ToListAsync();
+        List<EffectiveAccessDto>
+            access =
+                await
+                    roleBasedAccess
+                        .Union
+                        (
+                            specialAssignmentAccess
+                        )
+                        .AsNoTracking()
+                        .ToListAsync();
+
+
+        //=======================================================
+        // Modules switched off in the Console (2026-11-20)
+        //=======================================================
+
+        List<string>
+            off =
+                ((await _limits.GetAsync())?.OffModules ?? new HashSet<string>())
+                    .ToList();
+
+        if (off.Count == 0)
+        {
+            return access;
+        }
+
+        List<long>
+            offModuleIds =
+                await _context
+                    .NavigationModules
+                    .AsNoTracking()
+                    .Where(module => off.Contains(module.RouteKey.ToLower()))
+                    .Select(module => module.Id)
+                    .ToListAsync();
+
+        return access
+            .Where(row => !offModuleIds.Contains(row.ModuleId))
+            .ToList();
     }
 
 

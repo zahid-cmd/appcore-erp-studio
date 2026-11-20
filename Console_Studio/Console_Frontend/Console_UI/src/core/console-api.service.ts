@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../environments/environment';
-import { Customer, CustomerRow, CustomerSave, ProductRow, ServerRow, SiteRequest, SiteRequestRow, TenantDatabasePlan, TenantDatabaseResult, TenantDetail, TenantPrefill, TenantRow, TenantSave, WebsiteSettings } from './models';
+import { Customer, CustomerRow, CustomerSave, ProductRow, ServerRow, SiteRequest, SiteRequestRow, TenantDatabasePlan, TenantDatabaseResult, TenantDetail, TenantModules, TenantModulesSave, TenantPrefill, TenantRow, TenantSave, WebsiteSettings } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ConsoleApi
@@ -79,6 +79,16 @@ export class ConsoleApi
     createTenantDatabase(publicId: string, financialYearStartMonth: number): Promise<TenantDatabaseResult>
     {
         return firstValueFrom(this.http.post<TenantDatabaseResult>(`${this.base}/tenants/${publicId}/database`, { FinancialYearStartMonth: financialYearStartMonth }));
+    }
+
+    tenantModules(publicId: string): Promise<TenantModules>
+    {
+        return firstValueFrom(this.http.get<TenantModules>(`${this.base}/tenants/${publicId}/modules`));
+    }
+
+    saveTenantModules(publicId: string, body: TenantModulesSave): Promise<{ Message: string }>
+    {
+        return firstValueFrom(this.http.put<{ Message: string }>(`${this.base}/tenants/${publicId}/modules`, body));
     }
 
     servers(): Promise<ServerRow[]>

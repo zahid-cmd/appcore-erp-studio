@@ -62,18 +62,25 @@ public class MenuOrderController : ControllerBase
     private readonly IDataManagementService _data;
     private readonly ITenantContext _tenant;
 
+    // modules switched off in the Console (2026-11-20) are not listed
+    private readonly ITenantLimits _limits;
+
+    private HashSet<string> _off = new();
+
     public MenuOrderController
     (
         AppDbContext context,
         IEffectiveAccessRepository access,
         IDataManagementService data,
-        ITenantContext tenant
+        ITenantContext tenant,
+        ITenantLimits limits
     )
     {
         _context = context;
         _access = access;
         _data = data;
         _tenant = tenant;
+        _limits = limits;
     }
 
 
@@ -108,8 +115,14 @@ public class MenuOrderController : ControllerBase
     }
 
     private bool Hidden(string? moduleRouteKey)
-        => _tenant.Enabled
-           && string.Equals((moduleRouteKey ?? string.Empty).Trim(), AppCoreOnlyModule, StringComparison.OrdinalIgnoreCase);
+        => (_tenant.Enabled
+            && string.Equals((moduleRouteKey ?? string.Empty).Trim(), AppCoreOnlyModule, StringComparison.OrdinalIgnoreCase))
+           || _off.Contains((moduleRouteKey ?? string.Empty).Trim().ToLowerInvariant());
+
+    private async Task LoadOffAsync()
+    {
+        _off = (await _limits.GetAsync())?.OffModules ?? new HashSet<string>();
+    }
 
 
     //===========================================================
@@ -119,6 +132,8 @@ public class MenuOrderController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get()
     {
+        await LoadOffAsync();
+
         if (!await MayAsync("View"))
         {
             return StatusCode(403, new { message = "You cannot open Menu Order." });
@@ -184,6 +199,8 @@ public class MenuOrderController : ControllerBase
     [HttpPut]
     public async Task<IActionResult> Save([FromBody] MenuOrderSaveDto request)
     {
+        await LoadOffAsync();
+
         if (!await MayAsync("Update"))
         {
             return StatusCode(403, new { message = "Saving the menu order needs Update on Menu Order." });

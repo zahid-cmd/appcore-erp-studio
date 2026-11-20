@@ -298,7 +298,9 @@ public sealed class TenantResolver
                 await using NpgsqlCommand cmd = new(
                     """
                     SELECT (to_jsonb(t) ->> 'MaxCompanies')::int,
-                           (to_jsonb(t) ->> 'MaxBranches')::int
+                           (to_jsonb(t) ->> 'MaxBranches')::int,
+                           (to_jsonb(t) ->> 'MaxUsers')::int,
+                           COALESCE(to_jsonb(t) ->> 'DisabledModules', '')
                     FROM public."Tenants" t
                     WHERE lower(t."DatabaseName") = lower(@database)
                     ORDER BY t."TenantId"
@@ -315,7 +317,9 @@ public sealed class TenantResolver
 
                     limits = new TenantLimits(
                         r.IsDBNull(0) ? 1 : Math.Max(1, r.GetInt32(0)),
-                        r.IsDBNull(1) ? null : r.GetInt32(1));
+                        r.IsDBNull(1) ? null : r.GetInt32(1),
+                        r.IsDBNull(2) ? null : r.GetInt32(2),
+                        r.IsDBNull(3) ? string.Empty : r.GetString(3));
                 }
             }
         }
@@ -345,7 +349,9 @@ public sealed class TenantResolver
                COALESCE(NULLIF(to_jsonb(t) ->> 'CredentialKey', ''), s."CredentialKey") AS "CredentialKey",
                s."Status" AS "ServerStatus",
                (to_jsonb(t) ->> 'MaxCompanies')::int AS "MaxCompanies",
-               (to_jsonb(t) ->> 'MaxBranches')::int AS "MaxBranches"
+               (to_jsonb(t) ->> 'MaxBranches')::int AS "MaxBranches",
+               (to_jsonb(t) ->> 'MaxUsers')::int AS "MaxUsers",
+               COALESCE(to_jsonb(t) ->> 'DisabledModules', '') AS "DisabledModules"
         FROM public."TenantDomains" d
         JOIN public."Tenants" t ON t."TenantId" = d."TenantId"
         LEFT JOIN public."DatabaseServers" s ON s."DatabaseServerId" = t."DatabaseServerId"
@@ -384,7 +390,9 @@ public sealed class TenantResolver
             ServerPort = r.IsDBNull(5) ? 5432 : r.GetInt32(5),
             CredentialKey = r.IsDBNull(6) ? null : r.GetString(6),
             MaxCompanies = r.IsDBNull(8) ? 1 : Math.Max(1, r.GetInt32(8)),
-            MaxBranches = r.IsDBNull(9) ? null : r.GetInt32(9)
+            MaxBranches = r.IsDBNull(9) ? null : r.GetInt32(9),
+            MaxUsers = r.IsDBNull(10) ? null : r.GetInt32(10),
+            DisabledModules = r.IsDBNull(11) ? string.Empty : r.GetString(11)
         };
 
         Remember(row);
@@ -409,6 +417,8 @@ public sealed class TenantResolver
         string? credentialKey = row.CredentialKey;
         int maxCompanies = row.MaxCompanies;
         int? maxBranches = row.MaxBranches;
+        int? maxUsers = row.MaxUsers;
+        string disabledModules = row.DisabledModules ?? string.Empty;
 
         if (!OpenStatuses.Contains(status))
         {
@@ -445,7 +455,7 @@ public sealed class TenantResolver
             b.ConnectionIdleLifetime = 60;
         }
 
-        return new TenantLookup(new TenantInfo(code, name, status, host, database, b.ConnectionString, maxCompanies, maxBranches), null);
+        return new TenantLookup(new TenantInfo(code, name, status, host, database, b.ConnectionString, maxCompanies, maxBranches, maxUsers, disabledModules), null);
     }
 
 
@@ -465,6 +475,8 @@ public sealed class TenantResolver
         public string? CredentialKey { get; set; }
         public int MaxCompanies { get; set; } = 1;
         public int? MaxBranches { get; set; }
+        public int? MaxUsers { get; set; }
+        public string DisabledModules { get; set; } = string.Empty;
     }
 
     private static readonly JsonSerializerOptions MapJson = new() { WriteIndented = true };

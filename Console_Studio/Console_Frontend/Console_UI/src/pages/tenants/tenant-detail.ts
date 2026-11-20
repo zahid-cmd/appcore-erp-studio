@@ -8,13 +8,14 @@ import { ConsoleApi } from '../../core/console-api.service';
 import { apiMessage } from '../../core/auth.interceptor';
 import { TENANT_STATUSES, TenantDatabasePlan, TenantDatabaseResult, TenantDetail } from '../../core/models';
 import { TenantFormComponent } from './tenant-form';
+import { TenantModulesCard } from './tenant-modules';
 import { PageHeader } from '../../ui/page-header';
 import { SelectBox, SelectOption } from '../../ui/select-box';
 import { ToastService } from '../../ui/toast';
 
 @Component({
     selector: 'ac-tenant-detail',
-    imports: [FormsModule, RouterLink, DatePipe, TenantFormComponent, PageHeader, SelectBox],
+    imports: [FormsModule, RouterLink, DatePipe, TenantFormComponent, TenantModulesCard, PageHeader, SelectBox],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'ac-page' },
     styles: [`
@@ -108,6 +109,9 @@ import { ToastService } from '../../ui/toast';
                                 }
                             </div>
                         </div>
+
+                        <!-- Package, modules and users (2026-11-20) -->
+                        <ac-tenant-modules [publicId]="t.PublicId" [canManage]="canManage" />
 
                         <!-- Create database (onboarding) : only while the
                              tenant has none -->

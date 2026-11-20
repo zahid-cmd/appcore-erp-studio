@@ -309,3 +309,19 @@ export interface WebsiteSettings
     AboutTitle: string;
     AboutText: string;
 }
+
+// Modules, package and users of a tenant (api/tenants/{id}/modules, 2026-11-20)
+export interface TenantModules
+{
+    PackageCode: string | null;
+    MaxUsers: number | null;
+    Packages: { PackageCode: string; PackageName: string; Description: string | null; Modules: string[] }[];
+    Modules: { ModuleCode: string; ModuleName: string; IsCore: boolean; Enabled: boolean }[];
+}
+
+export interface TenantModulesSave
+{
+    PackageCode: string | null;
+    EnabledModules: string[];
+    MaxUsers: number | null;
+}

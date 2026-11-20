@@ -30,7 +30,7 @@ public sealed class TenantLimitsService : ITenantLimits
         // Mode Host : the tenant of this request
         if (_tenant.Tenant is TenantInfo info)
         {
-            return new TenantLimits(info.MaxCompanies, info.MaxBranches);
+            return new TenantLimits(info.MaxCompanies, info.MaxBranches, info.MaxUsers, info.DisabledModules);
         }
 
         // Mode Host outside a request (a job with no company) : nothing

@@ -19,6 +19,9 @@ public class ControlDbContext : DbContext
 
     public DbSet<Product> Products => Set<Product>();
     public DbSet<ProductModule> ProductModules => Set<ProductModule>();
+    public DbSet<ProductPackage> ProductPackages => Set<ProductPackage>();
+    public DbSet<ProductPackageModule> ProductPackageModules => Set<ProductPackageModule>();
+    public DbSet<TenantBrand> TenantBrands => Set<TenantBrand>();
     public DbSet<DatabaseServer> DatabaseServers => Set<DatabaseServer>();
     public DbSet<ProductTemplate> ProductTemplates => Set<ProductTemplate>();
     public DbSet<Customer> Customers => Set<Customer>();
@@ -45,6 +48,25 @@ public class ControlDbContext : DbContext
         {
             e.ToTable("ProductModules");
             e.HasKey(x => x.ProductModuleId);
+        });
+
+        b.Entity<ProductPackage>(e =>
+        {
+            e.ToTable("ProductPackages");
+            e.HasKey(x => x.ProductPackageId);
+        });
+
+        b.Entity<ProductPackageModule>(e =>
+        {
+            e.ToTable("ProductPackageModules");
+            e.HasKey(x => new { x.ProductPackageId, x.ProductModuleId });
+        });
+
+        b.Entity<TenantBrand>(e =>
+        {
+            e.ToTable("TenantBrands");
+            e.HasKey(x => x.TenantBrandId);
+            e.Property(x => x.CreatedDate).HasDefaultValueSql("now()");
         });
 
         b.Entity<ProductTemplate>(e =>
