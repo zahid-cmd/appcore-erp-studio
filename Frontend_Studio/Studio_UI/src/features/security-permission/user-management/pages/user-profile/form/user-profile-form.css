@@ -17,3 +17,24 @@
 {
     max-width: 640px;
 }
+
+
+/* Right panel : the user's photo (read-only; it is set in the Photo step) */
+
+.up-hero-photo
+{
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 2px;
+}
+
+.up-hero-photo img
+{
+    width: 148px;
+    height: 148px;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center top;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+}

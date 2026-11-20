@@ -197,7 +197,6 @@
                                 [imageUrl]="userPhotoPreviewUrl"
                                 [name]="''"
                                 [disabled]="isViewMode"
-                                [busy]="isViewMode"
                                 (imageChange)="onUserPhotoChange($event)">
                             </app-logo-studio>
 
@@ -213,7 +212,17 @@
 
                 <div class="ws-hero">
 
-                    <app-workspace-art theme="people"></app-workspace-art>
+                    <!-- the user's photo once there is one, else the picture -->
+                    @if (userPhotoPreviewUrl)
+                    {
+                        <div class="up-hero-photo">
+                            <img [src]="userPhotoPreviewUrl" [alt]="entity.DisplayName || 'User photo'">
+                        </div>
+                    }
+                    @else
+                    {
+                        <app-workspace-art theme="people"></app-workspace-art>
+                    }
 
                     <div class="ws-identity">
 

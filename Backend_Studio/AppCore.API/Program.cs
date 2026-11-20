@@ -456,6 +456,10 @@ if (hasUi)
                 &&
                 !path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
                 &&
+                // Team Chat hub (2026-11-20) : its connection must reach
+                // the hub, never index.html
+                !path.StartsWith("/hubs", StringComparison.OrdinalIgnoreCase)
+                &&
                 !Path.HasExtension(path)
             )
             {
