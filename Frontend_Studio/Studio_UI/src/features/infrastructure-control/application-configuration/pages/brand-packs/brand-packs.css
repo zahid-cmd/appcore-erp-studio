@@ -1,0 +1,147 @@
+@import '../../../../../shared/styles/app-workspace-page.css';
+
+/* =========================================================
+   Brand Packs (2026-11-20)
+   Brands on the left (export), the install report on the
+   right. Same split-view page as Menu Order.
+========================================================= */
+
+.bp-head
+{
+    justify-content: space-between;
+    font-weight: 700;
+}
+
+.bp-head span
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bp-head i
+{
+    color: #4f46e5;
+}
+
+.bp-head small
+{
+    color: #64748b;
+    font-weight: 500;
+}
+
+.bp-body
+{
+    padding: 10px;
+}
+
+.bp-list
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bp-row
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.bp-row:hover
+{
+    background: rgba(79, 70, 229, 0.05);
+}
+
+.bp-row.bp-active
+{
+    border-color: rgba(79, 70, 229, 0.35);
+    background: rgba(79, 70, 229, 0.09);
+}
+
+.bp-icon
+{
+    color: #4f46e5;
+    width: 18px;
+    text-align: center;
+}
+
+.bp-name
+{
+    flex: 1;
+    font-weight: 600;
+}
+
+.bp-row small
+{
+    color: #64748b;
+}
+
+.bp-empty
+{
+    padding: 16px;
+    color: #64748b;
+}
+
+.bp-summary
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    background: rgba(22, 163, 74, 0.08);
+    color: #15803d;
+}
+
+.bp-summary span
+{
+    color: #475569;
+}
+
+.bp-summary.bp-bad
+{
+    background: rgba(220, 38, 38, 0.08);
+    color: #b91c1c;
+}
+
+.bp-lines
+{
+    margin: 0;
+    padding-left: 28px;
+    line-height: 1.7;
+    font-size: 13px;
+}
+
+.bp-lines li.bp-sub
+{
+    list-style: none;
+    margin-left: 18px;
+    color: #64748b;
+}
+
+.bp-bad
+{
+    color: #b91c1c;
+}
+
+.bp-help
+{
+    max-width: 640px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.bp-help code
+{
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: rgba(79, 70, 229, 0.08);
+}

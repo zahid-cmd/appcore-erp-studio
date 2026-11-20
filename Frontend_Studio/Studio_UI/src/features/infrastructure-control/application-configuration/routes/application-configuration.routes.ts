@@ -129,6 +129,24 @@ Routes =
                         )
                 },
 
+                //===========================================================
+                // Brand Packs (hand-written 2026-11-20, AppCore only, no
+                // menu entry : opened by its address)
+                //===========================================================
+
+                {
+                    path:'brand-packs',
+
+                    loadChildren:() =>
+                        import(
+                            './brand-packs.routes'
+                        )
+                        .then(
+                            m =>
+                                m.BrandPacksRoutes
+                        )
+                },
+
         ]
 
     }

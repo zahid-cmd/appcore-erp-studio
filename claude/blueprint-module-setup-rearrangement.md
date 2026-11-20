@@ -1,6 +1,6 @@
 # Blueprint: Settings rearrangement (basic Settings + every module owns its setup and switches)
 
-Status: **Proposal, 2026-11-20. Nothing built. Waiting for the owner's decisions (section 9).**
+Status: **Agreed by the owner 2026-11-20 (decisions in section 9). Nothing built yet. Next: step 0 check, then step 1.**
 
 Owner's proposal (2026-11-20): "Under Settings there will be basic setups only. Then every module will be independent with its own setup and configuration. We will split the System Configuration also to dedicated, module based. Every module will get its own switches under a module config page."
 
@@ -21,7 +21,7 @@ What needs care:
 
 | Risk | What it means | How the blueprint handles it |
 |---|---|---|
-| Shared masters | Products, customers, suppliers, chart of accounts are used by many modules | One owner module per master; a master whose owner can be switched off stays in Settings (rule 3) |
+| Shared masters | Products, customers, suppliers, chart of accounts are used by many modules | One owner module per master; customers and suppliers stay in Settings; the owners of accounts and products can never be switched off (rule 3) |
 | Permissions | Role and special permissions are tied to page codes, which change when a page moves | The move script updates every table that keeps the codes (pattern already used on 2026-11-20) |
 | Switch codes | About 450 places in the code read a switch by its code (`CFG-MOD-007-0012`); the number inside is the old module | **Codes never change.** Only the module / menu columns of the row change |
 | Addresses | Bookmarks, favourites and about 45 links from other modules point to `/settings/...` | Old addresses keep working (redirect); links are corrected module by module |
@@ -68,7 +68,7 @@ What needs care:
 |---|---|
 | General Settings | Company, Wings, Branches, Warehouses, Locations, Business Configuration, Financial Years, Terms & Conditions, Website Configuration, Backup Center, **Configuration** (Settings' own switches only) |
 | Application Configuration | Login Pages, Dashboards, Widget Configuration |
-| Business Partners *(decision 2)* | Customer Profiles, Supplier Profiles |
+| Client Settings (unchanged) | Customer Profiles, Supplier Profiles |
 
 ### Modules
 
@@ -142,7 +142,7 @@ To check per step: sidebar, breadcrumb, Ctrl K search, favourites and recent, ro
 | 3 | Move Service Settings to Service Operations > Service Setup (smallest, one clear owner; agree timing with the Service Operations session) | medium |
 | 4 | Move Account Settings to Accounts & Finance > Accounts Setup | medium |
 | 5 | Move Product Settings to Inventory Management > Product Setup | medium |
-| 6 | Settings clean-up: Client Settings becomes Business Partners (or moves, decision 2); rename System Configurations to Configuration; all-modules view to Infrastructure Control | small |
+| 6 | Settings clean-up: rename System Configurations to Configuration; all-modules view to Infrastructure Control (Client Settings is not touched) | small |
 | 7 | Bring the template database (`AppCoreTpl_TW`) and the demo database to the same state; update the standards document | small |
 
 Steps 1 and 2 give the owner "every module has its own switches" without moving a single existing page. Steps 3 to 5 are independent of each other.
@@ -158,14 +158,16 @@ Steps 1 and 2 give the owner "every module has its own switches" without moving 
 
 ---
 
-## 9. Decisions needed from the owner
+## 9. Decisions (owner, 2026-11-20)
 
-1. **Name of the menu**: "<Module> Setup" with a page "Configuration" (recommended), or another wording.
-2. **Customer Profiles and Supplier Profiles**: stay in Settings as "Business Partners" (recommended: Sales, Service, Registration, EMI and Membership all need customers, and a client may run without Sales), or Customers to Sales Operations and Suppliers to Procurement.
-3. **Core modules**: Accounts & Finance and Inventory Management can never be switched off in the Console (needed if they own the chart of accounts and the products). Yes / no.
-4. **All-modules switch screen**: keep for AppCore staff under Infrastructure Control (recommended), or remove.
-5. **Warehouses and Locations**: stay in Settings (recommended), or move to Inventory.
-6. **Order**: start with step 1 (switch pages, no page moves), then Service, Accounts, Products (recommended).
+1. **Menu name**: "<Module> Setup" with a page "Configuration". Agreed.
+2. **Customer Profiles and Supplier Profiles**: stay where they are, Settings > Client Settings, unchanged. Owner: "accessory operation will share the same customer base so don't move it, keep it as is now."
+3. **Core modules**: Accounts & Finance and Inventory Management can never be switched off in the Console. Agreed. (The Console's module on / off must refuse these two; to be checked when step 4 / 5 are built.)
+4. **All-modules switch screen**: kept for AppCore staff under Infrastructure Control. Agreed.
+5. **Warehouses and Locations**: stay in Settings. Agreed.
+6. **Order**: not answered yet; the blueprint's order (switch pages first, then Service, Accounts, Products) stands until the owner says otherwise.
+
+Step 0 check script: `Backend_Studio\Database\SettingsRearrangement_Step0_Check.sql` (read only).
 
 ---
 

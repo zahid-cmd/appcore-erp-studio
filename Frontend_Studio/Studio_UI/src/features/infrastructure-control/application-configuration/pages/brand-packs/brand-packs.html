@@ -1,0 +1,119 @@
+<div class="app-workspace-page" data-canvas="fit">
+
+    <app-page-header
+        title="Brand Packs"
+        subtitle="AppCore only : export a brand's catalogue from here, install it on a client."
+        icon="fas fa-box-open">
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Export"
+                command1Icon="fas fa-file-export"
+                (command1Click)="exportSelected()"
+                [command1Disabled]="!selected() || busy() || !!refused()"
+                [command1Title]="selected() ? 'Download ' + selected() + ' as a brand pack' : 'Choose a brand first'"
+                command2Text="Install"
+                command2Icon="fas fa-file-import"
+                (command2Click)="picker.click()"
+                command3Text="Refresh"
+                command3Icon="fas fa-rotate-right"
+                (command3Click)="load()">
+            </app-command-center>
+
+            <input #picker type="file" accept=".acbrand" hidden (change)="picked($event)">
+
+        </div>
+
+    </app-page-header>
+
+
+    <div class="ws-panes bp-panes">
+
+        <!-- ================= BRANDS (export) ================= -->
+        <section class="ws-pane ws-pane--list is-active">
+
+            <header class="ws-pane-head bp-head">
+                <span><i class="fas fa-tags"></i> Brands here</span>
+                <small>{{ brands().length }}</small>
+            </header>
+
+            <div class="ws-pane-body appcore-scrollbar bp-body bp-list">
+
+                @if (loading())
+                {
+                    <div class="bp-empty"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                }
+                @else if (refused())
+                {
+                    <div class="bp-empty bp-bad"><i class="fas fa-lock"></i> {{ refused() }}</div>
+                }
+                @else
+                {
+                    @for (b of brands(); track b.name)
+                    {
+                        <div class="bp-row" [class.bp-active]="b.name === selected()" (click)="selected.set(b.name)">
+                            <i class="fas fa-motorcycle bp-icon"></i>
+                            <span class="bp-name">{{ b.name }}</span>
+                            <small>{{ b.models }} models · {{ b.bikes }} bikes</small>
+                        </div>
+                    }
+                    @empty
+                    {
+                        <div class="bp-empty">No brands in this database.</div>
+                    }
+                }
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= INSTALL REPORT ================= -->
+        <section class="ws-pane ws-pane--main is-active">
+
+            <header class="ws-pane-head bp-head">
+                <span><i class="fas fa-clipboard-check"></i> Install</span>
+                <small>{{ fileName() || 'no pack installed yet' }}</small>
+            </header>
+
+            <div class="ws-pane-body appcore-scrollbar bp-body">
+
+                @if (report(); as r)
+                {
+                    <div class="bp-summary" [class.bp-bad]="!r.success">
+                        <i [class]="r.success ? 'fas fa-circle-check' : 'fas fa-triangle-exclamation'"></i>
+                        <b>{{ r.brand }}</b>
+                        <span>{{ r.created }} created · {{ r.updated }} updated · {{ r.kept }} kept</span>
+                    </div>
+
+                    <ol class="bp-lines">
+                        @for (line of r.lines; track $index)
+                        {
+                            <li [class.bp-sub]="line.startsWith('  ')" [class.bp-bad]="line.startsWith('Stopped')">{{ line }}</li>
+                        }
+                    </ol>
+                }
+                @else
+                {
+                    <div class="bp-help">
+                        <p><b>Install</b> reads a <code>.acbrand</code> file into this database :</p>
+                        <ul>
+                            <li>brand, its categories (with account groups), colours, models and colour bikes (with their ledgers);</li>
+                            <li>model texts, pictures and specifications;</li>
+                            <li>warranty parts, policies and coverages; PDI templates.</li>
+                        </ul>
+                        <p>Things already here are matched by name : nothing is duplicated, nothing is deleted. Supplier, prices and stock levels are never touched. If it stops half way, fix the cause and install again.</p>
+                    </div>
+                }
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+<app-toast></app-toast>
+<app-progress-dialog></app-progress-dialog>
