@@ -537,7 +537,7 @@
     height: 36px;
     border: 0;
     border-radius: 999px;
-    background: var(--fb-accent);
+    background: var(--fb-btn, var(--fb-accent));
     color: #ffffff;
     cursor: pointer;
 }
@@ -582,7 +582,7 @@
 .cp-btn-primary
 {
     border-color: var(--fb-accent);
-    background: var(--fb-accent);
+    background: var(--fb-btn, var(--fb-accent));
     color: #ffffff;
 }
 

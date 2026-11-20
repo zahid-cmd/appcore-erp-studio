@@ -10,8 +10,11 @@
     --fb-border: rgba(255, 255, 255, 0.12);
     --fb-text: #e7ebff;
     --fb-muted: #9aa5cf;
-    --fb-accent: #6366f1;
-    --fb-soft: rgba(99, 102, 241, 0.16);
+    /* softer blue for the team chat / feedback pop-up (2026-11-20) */
+    --fb-accent: #7f8af7;
+    --fb-soft: rgba(127, 138, 247, 0.16);
+    /* buttons : the same gradient as the Command Center's main button (owner 2026-11-20) */
+    --fb-btn: linear-gradient(135deg, #0f2a44 0%, #1e3a8a 45%, #2563eb 100%);
 }
 
 :host-context(.appearance-light)
@@ -20,8 +23,9 @@
     --fb-border: #dde3f0;
     --fb-text: #0f172a;
     --fb-muted: #64748b;
-    --fb-accent: #4f46e5;
-    --fb-soft: #eef2ff;
+    --fb-accent: #6f7ef0;
+    --fb-soft: #eef1ff;
+    --fb-btn: linear-gradient(135deg, #0f2a44 0%, #1e3a8a 45%, #2563eb 100%);
 }
 
 .feedback
@@ -291,7 +295,7 @@
 .fb-btn-primary
 {
     border-color: var(--fb-accent);
-    background: var(--fb-accent);
+    background: var(--fb-btn, var(--fb-accent));
     color: #ffffff;
 }
 
@@ -367,7 +371,7 @@
 
 .fb-tab.on
 {
-    background: var(--fb-accent);
+    background: var(--fb-btn, var(--fb-accent));
     color: #ffffff;
 }
 
@@ -608,7 +612,7 @@
 
 .fb-section.on
 {
-    background: var(--fb-accent);
+    background: var(--fb-btn, var(--fb-accent));
     color: #ffffff;
 }
 
