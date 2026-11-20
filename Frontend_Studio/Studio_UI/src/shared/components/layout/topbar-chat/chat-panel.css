@@ -13,14 +13,14 @@
 .cp
 {
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
+    grid-template-columns: 300px minmax(0, 1fr);
     flex: 1 1 auto;
     min-height: 0;
     border: 1px solid var(--fb-border);
     border-radius: 12px;
     overflow: hidden;
     color: var(--fb-text);
-    font-size: 13px;
+    font-size: 15.5px;
 }
 
 /* ---------- left ---------- */
@@ -45,7 +45,7 @@
 .cp-side-title
 {
     flex: 1;
-    font-size: 13.5px;
+    font-size: 16px;
 }
 
 .cp-search
@@ -76,7 +76,7 @@
     outline: none;
     background: transparent;
     color: var(--fb-text);
-    font-size: 12.5px;
+    font-size: 15px;
 }
 
 .cp-icon-btn
@@ -156,7 +156,7 @@
 {
     flex: 1;
     overflow: hidden;
-    font-size: 13px;
+    font-size: 15.5px;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
@@ -164,7 +164,7 @@
 .cp-when
 {
     color: var(--fb-muted);
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .cp-preview
@@ -172,7 +172,7 @@
     flex: 1;
     overflow: hidden;
     color: var(--fb-muted);
-    font-size: 12px;
+    font-size: 14.5px;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
@@ -196,7 +196,7 @@
     border-radius: 999px;
     background: #ef4444;
     color: #ffffff;
-    font-size: 10.5px;
+    font-size: 12.5px;
     font-weight: 700;
     line-height: 18px;
     text-align: center;
@@ -214,7 +214,7 @@
     border-radius: 999px;
     background: linear-gradient(135deg, #6366f1, #3b82f6);
     color: #ffffff;
-    font-size: 13px;
+    font-size: 15.5px;
     font-weight: 700;
 }
 
@@ -260,7 +260,7 @@
     border: 1.5px solid var(--fb-border);
     border-radius: 6px;
     color: transparent;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .cp-check.on
@@ -287,7 +287,7 @@
     outline: none;
     background: transparent;
     color: var(--fb-text);
-    font-size: 13px;
+    font-size: 15.5px;
 }
 
 .cp-input:focus,
@@ -347,7 +347,7 @@
 .cp-head-text span
 {
     color: var(--fb-muted);
-    font-size: 11.5px;
+    font-size: 14px;
 }
 
 .cp-head-text .cp-online-text
@@ -375,7 +375,7 @@
     border-radius: 999px;
     background: transparent;
     color: var(--fb-accent);
-    font-size: 12px;
+    font-size: 14.5px;
     cursor: pointer;
 }
 
@@ -392,7 +392,7 @@
     border-radius: 999px;
     background: var(--fb-soft);
     color: var(--fb-muted);
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .cp-msg
@@ -413,7 +413,7 @@
 {
     margin: 4px 0 2px 10px;
     color: var(--fb-accent);
-    font-size: 11.5px;
+    font-size: 14px;
     font-weight: 600;
 }
 
@@ -462,7 +462,7 @@
     align-items: center;
     justify-content: flex-end;
     gap: 6px;
-    font-size: 10.5px;
+    font-size: 12.5px;
     opacity: 0.7;
 }
 
@@ -472,7 +472,7 @@
     border: 0;
     background: transparent;
     color: inherit;
-    font-size: 10.5px;
+    font-size: 12.5px;
     cursor: pointer;
     opacity: 0;
 }
@@ -486,7 +486,7 @@
 {
     margin-top: 2px;
     color: var(--fb-muted);
-    font-size: 10.5px;
+    font-size: 12.5px;
 }
 
 .cp-compose
@@ -574,7 +574,7 @@
     border-radius: 8px;
     background: transparent;
     color: var(--fb-text);
-    font-size: 12.5px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
 }
@@ -594,13 +594,13 @@
 .cp-error
 {
     color: #ef4444;
-    font-size: 12px;
+    font-size: 14.5px;
 }
 
 .cp-hint
 {
     color: var(--fb-muted);
-    font-size: 12px;
+    font-size: 14.5px;
 }
 
 .cp-center
@@ -665,4 +665,19 @@
     {
         display: inline-flex;
     }
+}
+
+
+/* ---------- readable chat (owner 2026-11-20) ----------
+   Text is about 20% larger; avatars, rows and the message box get
+   a little more room to match. */
+
+.cp-bubble
+{
+    line-height: 1.5;
+}
+
+.cp-msg
+{
+    max-width: 82%;
 }

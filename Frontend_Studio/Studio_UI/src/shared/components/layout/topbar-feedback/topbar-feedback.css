@@ -627,8 +627,9 @@
 
 .fb-panel.fb-wide
 {
-    width: 780px;
-    height: min(600px, calc(100vh - 90px));
+    /* roomier for the larger chat text (2026-11-20) */
+    width: min(960px, calc(100vw - 24px));
+    height: min(700px, calc(100vh - 90px));
 }
 
 .fb-head-text

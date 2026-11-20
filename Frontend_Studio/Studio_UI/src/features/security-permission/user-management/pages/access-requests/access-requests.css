@@ -1,0 +1,455 @@
+@import '../../../../../shared/styles/app-workspace-page.css';
+
+/* =========================================================
+   Access Requests (2026-11-20)
+   One card : status tabs on top, the requests below (scrolls
+   on its own with the AppCore scrollbar). Approve / Reject
+   open our own dialogs.
+========================================================= */
+
+:host
+{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+.app-workspace-page
+{
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.ar-card
+{
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border: 1px solid #e7edf5;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.ar-tabs
+{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.ar-tab
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ar-tab.on
+{
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #4338ca;
+}
+
+.ar-count
+{
+    min-width: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 12px;
+    line-height: 20px;
+    text-align: center;
+}
+
+.ar-count--hot
+{
+    background: #f59e0b;
+    color: #ffffff;
+}
+
+.ar-viewonly
+{
+    margin-left: auto;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.ar-body
+{
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.ar-empty
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+    min-height: 180px;
+    color: #64748b;
+    font-size: 15px;
+}
+
+.ar-empty--bad
+{
+    color: #b91c1c;
+}
+
+.ar-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.ar-table th
+{
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e7edf5;
+}
+
+.ar-table td
+{
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.ar-table tr:hover td
+{
+    background: #fafbff;
+}
+
+.ar-right
+{
+    text-align: right !important;
+    white-space: nowrap;
+}
+
+.ar-person
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ar-avatar
+{
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 40px;
+}
+
+.ar-avatar--text
+{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e0e7ff;
+    color: #4338ca;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.ar-name
+{
+    font-weight: 600;
+}
+
+.ar-sub
+{
+    color: #64748b;
+    font-size: 12.5px;
+    margin-top: 2px;
+}
+
+.ar-sub i,
+.ar-table td i
+{
+    width: 14px;
+    color: #94a3b8;
+}
+
+.ar-login
+{
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 13px;
+}
+
+.ar-status
+{
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.ar-status--pending
+{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.ar-status--approved
+{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ar-status--rejected
+{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.ar-btn
+{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px;
+    margin-left: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ar-btn:disabled
+{
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.ar-btn--ok
+{
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #047857;
+}
+
+.ar-btn--no
+{
+    background: #fff5f5;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.ar-btn--no-solid
+{
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
+/* ---------- dialogs ---------- */
+
+.ar-backdrop
+{
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, .45);
+}
+
+.ar-dialog
+{
+    width: min(560px, 100%);
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 22px;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, .25);
+    color: #1e293b;
+}
+
+.ar-dialog--small
+{
+    width: min(460px, 100%);
+}
+
+.ar-dialog-head
+{
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.ar-dialog-head > i
+{
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 18px;
+}
+
+.ar-dialog-head--no > i
+{
+    background: #fff5f5;
+    color: #b91c1c;
+}
+
+.ar-dialog-head h3
+{
+    margin: 0;
+    font-size: 17px;
+}
+
+.ar-dialog-head p
+{
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 13.5px;
+}
+
+.ar-label
+{
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+}
+
+.ar-label--row
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ar-link
+{
+    border: 0;
+    background: none;
+    color: #4f46e5;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.ar-input
+{
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #dbe3ee;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.ar-text
+{
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+}
+
+.ar-branches
+{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid #e7edf5;
+    border-radius: 10px;
+}
+
+.ar-check
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.ar-check:hover
+{
+    background: #f8fafc;
+}
+
+.ar-check small
+{
+    margin-left: auto;
+    color: #94a3b8;
+}
+
+.ar-dialog-foot
+{
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 12px;
+}
+
+@media (max-width: 900px)
+{
+    .ar-table th:nth-child(3),
+    .ar-table td:nth-child(3)
+    {
+        display: none;
+    }
+}

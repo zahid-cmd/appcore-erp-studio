@@ -1848,6 +1848,16 @@ public class AppDbContext
     set;
     } = null!;
 
+    // Access Requests (Database/AccessRequests_Setup.sql, 2026-11-20) :
+    // "Register Now" stores a request; a user is made on approval.
+    // Mapped in OnModelCreating below
+    public DbSet<AppCore.Domain.Platform.Authentication.AccessRequest>
+    AccessRequests
+    {
+    get;
+    set;
+    } = null!;
+
     // Barcode Management : print history (runs + lines). A new
     // table needs its DbSet : OnModelCreating applies only the
     // configurations of entities with a DbSet
@@ -3156,6 +3166,23 @@ public class AppDbContext
                 entity.ToTable("ChatMessages");
 
                 entity.HasKey(x => x.ChatMessageId);
+            }
+        );
+
+
+        //=======================================================
+        // Access Requests : table "AccessRequests" (2026-11-20)
+        //=======================================================
+
+        modelBuilder.Entity<AppCore.Domain.Platform.Authentication.AccessRequest>
+        (
+            entity =>
+            {
+                entity.ToTable("AccessRequests");
+
+                entity.HasKey(x => x.AccessRequestId);
+
+                entity.HasIndex(x => x.PublicId).IsUnique();
             }
         );
     }

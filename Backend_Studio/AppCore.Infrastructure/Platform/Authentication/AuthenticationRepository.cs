@@ -887,4 +887,134 @@ public class AuthenticationRepository
 
         await _context.SaveChangesAsync();
     }
+
+
+    //===========================================================
+    // Access Requests (2026-11-20)
+    //
+    // "Register Now" stores a request; no user is made until the
+    // administrator approves it (AccessRequestsController).
+    //===========================================================
+
+    // Most requests waiting at the same time, and per address
+    // (IP) in one hour : stops a flood from the sign-in page
+    private const int MaxPendingRequests = 50;
+
+    private const int MaxRequestsPerIpPerHour = 5;
+
+    public async Task<string?>
+        CheckAccessRequestAsync
+        (
+            string userName,
+            string email,
+            string requestIp
+        )
+    {
+        string name =
+            (userName ?? string.Empty).Trim().ToLower();
+
+        string mail =
+            (email ?? string.Empty).Trim().ToLower();
+
+        bool userTaken =
+            await _context.Set<UserProfile>()
+                .AsNoTracking()
+                .AnyAsync(x => !x.IsDeleted && x.UserName.ToLower() == name);
+
+        if (userTaken)
+        {
+            return "This Login ID is already in use. Please choose another one.";
+        }
+
+        if (mail.Length > 0)
+        {
+            bool mailTaken =
+                await _context.Set<UserProfile>()
+                    .AsNoTracking()
+                    .AnyAsync(x => !x.IsDeleted && x.Email.ToLower() == mail);
+
+            if (mailTaken)
+            {
+                return "This email already belongs to a user. Please sign in, or use Forgot Password.";
+            }
+        }
+
+        IQueryable<AccessRequest> pending =
+            _context.Set<AccessRequest>()
+                .AsNoTracking()
+                .Where(x => x.Status == AccessRequest.Pending);
+
+        if (await pending.AnyAsync(x => x.UserName.ToLower() == name))
+        {
+            return "A request with this Login ID is already waiting for approval.";
+        }
+
+        if (mail.Length > 0
+            && await pending.AnyAsync(x => x.Email.ToLower() == mail))
+        {
+            return "A request with this email is already waiting for approval.";
+        }
+
+        if (await pending.CountAsync() >= MaxPendingRequests)
+        {
+            return "Too many requests are waiting for approval. Please contact the administrator.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(requestIp))
+        {
+            DateTime since =
+                DateTime.UtcNow.AddHours(-1);
+
+            int recent =
+                await _context.Set<AccessRequest>()
+                    .AsNoTracking()
+                    .CountAsync(x => x.RequestIp == requestIp && x.RequestedDate > since);
+
+            if (recent >= MaxRequestsPerIpPerHour)
+            {
+                return "Too many requests from this device. Please try again later.";
+            }
+        }
+
+        return null;
+    }
+
+    public async Task<long>
+        CreateAccessRequestAsync
+        (
+            AccessRequest request
+        )
+    {
+        request.Status = AccessRequest.Pending;
+        request.RequestedDate = DateTime.UtcNow;
+
+        _context.Set<AccessRequest>().Add(request);
+
+        await _context.SaveChangesAsync();
+
+        return request.AccessRequestId;
+    }
+
+    // The newest request with this Login ID (any status) : the
+    // sign-in page explains "waiting" / "not approved"
+    public async Task<AccessRequest?>
+        GetLatestAccessRequestAsync
+        (
+            string userName
+        )
+    {
+        string name =
+            (userName ?? string.Empty).Trim().ToLower();
+
+        if (name.Length == 0)
+        {
+            return null;
+        }
+
+        return await _context.Set<AccessRequest>()
+            .AsNoTracking()
+            .Where(x => x.UserName.ToLower() == name)
+            .OrderByDescending(x => x.RequestedDate)
+            .FirstOrDefaultAsync();
+    }
 }

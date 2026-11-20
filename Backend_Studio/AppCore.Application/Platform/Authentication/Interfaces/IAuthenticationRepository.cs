@@ -141,4 +141,20 @@ public interface IAuthenticationRepository
         string userName,
         LoginBranchDto? fromBranch,
         LoginBranchDto toBranch);
+
+    //===========================================================
+    // Access Requests (2026-11-20)
+    //===========================================================
+
+    // null = may be stored; otherwise the reason it can't
+    Task<string?> CheckAccessRequestAsync(
+        string userName,
+        string email,
+        string requestIp);
+
+    Task<long> CreateAccessRequestAsync(
+        AccessRequest request);
+
+    Task<AccessRequest?> GetLatestAccessRequestAsync(
+        string userName);
 }

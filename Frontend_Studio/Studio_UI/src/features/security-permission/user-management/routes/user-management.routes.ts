@@ -137,6 +137,24 @@ Routes =
 
                 // AUTO-END : SUB-006-002-001
 
+            //===========================================================
+            // Access Requests (hand-written, 2026-11-20 : never run
+            // Submenu Sync for it)
+            //===========================================================
+
+                {
+                    path:'access-requests',
+
+                    loadChildren:() =>
+                        import(
+                            './access-requests.routes'
+                        )
+                        .then(
+                            m =>
+                                m.AccessRequestsRoutes
+                        )
+                },
+
         ]
 
     }

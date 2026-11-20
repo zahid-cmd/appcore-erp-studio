@@ -142,13 +142,22 @@ export class TopbarFeedbackComponent
         inject(ChatService);
 
     // Send / Mine
-    tab:
-        'send' | 'mine' =
-        'send';
+    //
+    // Kept in signals (2026-11-20) : the template redraws itself as
+    // soon as "My feedback" arrives. Before, the list stayed on
+    // "Loading..." until a second click (zoneless change
+    // detection). The getters / setters keep the same names.
+    private readonly tabState =
+        signal<'send' | 'mine'>('send');
 
-    mine:
-        MyFeedbackItem[] =
-        [];
+    get tab(): 'send' | 'mine' { return this.tabState(); }
+    set tab(value: 'send' | 'mine') { this.tabState.set(value); }
+
+    private readonly mineState =
+        signal<MyFeedbackItem[]>([]);
+
+    get mine(): MyFeedbackItem[] { return this.mineState(); }
+    set mine(value: MyFeedbackItem[]) { this.mineState.set(value ?? []); }
 
     // The panel's height on the Send tab : My feedback keeps it
     // (both tabs the same size; measured, not guessed)
@@ -157,8 +166,11 @@ export class TopbarFeedbackComponent
         null;
 
     // "My feedback" could not be loaded (shown instead of the list)
-    mineFailed =
-        false;
+    private readonly mineFailedState =
+        signal(false);
+
+    get mineFailed(): boolean { return this.mineFailedState(); }
+    set mineFailed(value: boolean) { this.mineFailedState.set(value); }
 
     private mineRequest =
         0;
@@ -181,12 +193,17 @@ export class TopbarFeedbackComponent
         }
     }
 
-    mineLoading =
-        false;
+    private readonly mineLoadingState =
+        signal(false);
 
-    openedMine:
-        MyFeedbackItem | null =
-        null;
+    get mineLoading(): boolean { return this.mineLoadingState(); }
+    set mineLoading(value: boolean) { this.mineLoadingState.set(value); }
+
+    private readonly openedMineState =
+        signal<MyFeedbackItem | null>(null);
+
+    get openedMine(): MyFeedbackItem | null { return this.openedMineState(); }
+    set openedMine(value: MyFeedbackItem | null) { this.openedMineState.set(value); }
 
     showSection
     (

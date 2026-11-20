@@ -40,6 +40,7 @@ using AppCore.Domain.Entities.Settings.GeneralSettings;
 using AppCore.Domain.Platform.Accounting;
 using AppCore.Domain.Platform.Shell;
 using AppCore.Domain.Platform.Feedbacks;
+using AppCore.Domain.Platform.Authentication;
 
 using AppCore.Infrastructure.Persistence;
 
@@ -91,6 +92,13 @@ public class ShellRepository : IShellRepository
 
     private const string UserProfileEditRoute =
         "/security-permission/user-management/user-profile/edit/";
+
+    // Access Requests (2026-11-20) : requests from the sign-in page
+    private const string AccessRequestsRoutePart =
+        "access-requests";
+
+    private const string AccessRequestsRoute =
+        "/security-permission/user-management/access-requests";
 
 
     //===========================================================
@@ -349,6 +357,9 @@ public class ShellRepository : IShellRepository
 
         items.AddRange(
             await NewUserRequestsAsync(userId));
+
+        items.AddRange(
+            await AccessRequestsAsync(userId));
 
         items.AddRange(
             await NewFeedbackAsync(userId));
@@ -916,6 +927,78 @@ public class ShellRepository : IShellRepository
         catch
         {
             // the bell never fails because of the user check
+            return new List<ShellNotificationDto>();
+        }
+    }
+
+
+    //-----------------------------------------------------------
+    // Access requests (2026-11-20) : one item per request from
+    // the sign-in page waiting for approval, for users who may
+    // open Access Requests. Opening it goes to that page.
+    //-----------------------------------------------------------
+
+    private async Task<List<ShellNotificationDto>> AccessRequestsAsync
+    (
+        long userId
+    )
+    {
+        try
+        {
+            if (!await CanOpenPageAsync(userId, AccessRequestsRoutePart))
+            {
+                return new List<ShellNotificationDto>();
+            }
+
+            var rows =
+                await _context.Set<AccessRequest>()
+                    .AsNoTracking()
+                    .Where(x => x.Status == AccessRequest.Pending)
+                    .OrderByDescending(x => x.RequestedDate)
+                    .Take(MaxWebsiteItems)
+                    .Select(x => new
+                    {
+                        x.PublicId,
+                        x.UserName,
+                        x.FullName,
+                        x.DisplayName,
+                        x.MobileNo,
+                        x.Email,
+                        x.RequestedDate
+                    })
+                    .ToListAsync();
+
+            return rows
+                .Select(x =>
+                {
+                    string name =
+                        !string.IsNullOrWhiteSpace(x.FullName) ? x.FullName
+                        : !string.IsNullOrWhiteSpace(x.DisplayName) ? x.DisplayName
+                        : x.UserName;
+
+                    string contact =
+                        !string.IsNullOrWhiteSpace(x.MobileNo)
+                            ? x.MobileNo
+                            : x.Email;
+
+                    return new ShellNotificationDto
+                    {
+                        Key = $"access-{x.PublicId}",
+                        Kind = "user-request",
+                        Title = "Access request",
+                        Detail = $"{name} ({x.UserName})"
+                                 + (string.IsNullOrWhiteSpace(contact) ? string.Empty : $" · {contact}")
+                                 + " · waiting for approval",
+                        Route = AccessRequestsRoute,
+                        Date = x.RequestedDate
+                    };
+                })
+                .ToList();
+        }
+        catch
+        {
+            // the bell never fails because of this check (e.g. the
+            // table is not made yet on this database)
             return new List<ShellNotificationDto>();
         }
     }

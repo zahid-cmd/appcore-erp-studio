@@ -1,0 +1,225 @@
+<div class="app-workspace-page" data-canvas="fit">
+
+    <app-page-header
+        title="Access Requests"
+        subtitle="People who asked for an account on the sign-in page. Approve to make the user, or reject."
+        icon="fas fa-user-clock">
+
+        <div pageHeaderRight>
+
+            <app-command-center
+                command1Text="Refresh"
+                command1Icon="fas fa-rotate-right"
+                (command1Click)="load()"
+                [command2Visible]="false"
+                [command3Visible]="false">
+            </app-command-center>
+
+        </div>
+
+    </app-page-header>
+
+
+    <section class="ar-card">
+
+        <!-- status tabs -->
+        <div class="ar-tabs">
+            @for (t of tabs; track t)
+            {
+                <button type="button" class="ar-tab" [class.on]="status === t" (click)="show(t)">
+                    {{ t }}
+                    <span class="ar-count" [class.ar-count--hot]="t === 'Pending' && counts[t] > 0">{{ counts[t] }}</span>
+                </button>
+            }
+
+            @if (!canDecide && !loading)
+            {
+                <span class="ar-viewonly"><i class="fas fa-eye"></i> View only : approving needs Update on Access Requests</span>
+            }
+        </div>
+
+        <div class="ar-body appcore-scrollbar">
+
+            @if (loading)
+            {
+                <div class="ar-empty"><i class="fas fa-spinner fa-spin"></i> Loading requests...</div>
+            }
+            @else if (failed)
+            {
+                <div class="ar-empty ar-empty--bad"><i class="fas fa-triangle-exclamation"></i> {{ failed }}</div>
+            }
+            @else if (items.length === 0)
+            {
+                <div class="ar-empty">
+                    <i class="fas fa-inbox"></i>
+                    @if (status === 'Pending') { No requests are waiting. } @else { Nothing here. }
+                </div>
+            }
+            @else
+            {
+                <table class="ar-table">
+                    <thead>
+                        <tr>
+                            <th>Person</th>
+                            <th>Login ID</th>
+                            <th>Contact</th>
+                            <th>Requested</th>
+                            <th>Status</th>
+                            <th class="ar-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (r of items; track r.publicId)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="ar-person">
+                                        @if (photo(r); as src)
+                                        {
+                                            <img class="ar-avatar" [src]="src" alt="">
+                                        }
+                                        @else
+                                        {
+                                            <span class="ar-avatar ar-avatar--text">{{ initials(r) }}</span>
+                                        }
+                                        <div>
+                                            <div class="ar-name">{{ nameOf(r) }}</div>
+                                            @if (r.displayName && r.displayName !== nameOf(r))
+                                            {
+                                                <div class="ar-sub">{{ r.displayName }}</div>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><code class="ar-login">{{ r.userName }}</code></td>
+                                <td>
+                                    @if (r.mobileNo) { <div><i class="fas fa-mobile-screen-button"></i> {{ r.mobileNo }}</div> }
+                                    @if (r.email) { <div class="ar-sub"><i class="fas fa-envelope"></i> {{ r.email }}</div> }
+                                </td>
+                                <td>{{ when(r.requestedDate) }}</td>
+                                <td>
+                                    <span class="ar-status" [class]="'ar-status ar-status--' + r.status.toLowerCase()">{{ r.status }}</span>
+                                    @if (r.status !== 'Pending')
+                                    {
+                                        <div class="ar-sub">
+                                            {{ r.decidedByName }} · {{ when(r.decidedDate) }}
+                                            @if (r.decisionNote) { <br>{{ r.decisionNote }} }
+                                        </div>
+                                    }
+                                </td>
+                                <td class="ar-right">
+                                    @if (r.status === 'Pending')
+                                    {
+                                        <button type="button" class="ar-btn ar-btn--ok" [disabled]="!canDecide" (click)="openApprove(r)">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button type="button" class="ar-btn ar-btn--no" [disabled]="!canDecide" (click)="openReject(r)">
+                                            <i class="fas fa-xmark"></i> Reject
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= APPROVE ================= -->
+    @if (approving; as a)
+    {
+        <div class="ar-backdrop" (click)="closeDialogs()">
+            <div class="ar-dialog" (click)="$event.stopPropagation()">
+
+                <header class="ar-dialog-head">
+                    <i class="fas fa-user-check"></i>
+                    <div>
+                        <h3>Approve {{ nameOf(a) }}</h3>
+                        <p>Login ID <b>{{ a.userName }}</b> · signs in with the password they chose.</p>
+                    </div>
+                </header>
+
+                <label class="ar-label">Role</label>
+                <select class="ar-input" [(ngModel)]="roleId" [disabled]="busy">
+                    <option [ngValue]="null">Choose a role...</option>
+                    @for (o of roles; track o.id)
+                    {
+                        <option [ngValue]="o.id">{{ o.name }} ({{ o.code }})</option>
+                    }
+                </select>
+
+                <div class="ar-label ar-label--row">
+                    <span>Branches</span>
+                    @if (branches.length > 1)
+                    {
+                        <button type="button" class="ar-link" (click)="toggleAllBranches()">
+                            {{ branchIds.size === branches.length ? 'Clear all' : 'Select all' }}
+                        </button>
+                    }
+                </div>
+
+                <div class="ar-branches appcore-scrollbar">
+                    @if (branches.length === 0)
+                    {
+                        <div class="ar-sub"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                    }
+                    @for (b of branches; track b.id)
+                    {
+                        <label class="ar-check">
+                            <input type="checkbox" [checked]="branchIds.has(b.id)" (change)="toggleBranch(b.id)" [disabled]="busy">
+                            <span>{{ b.name }}</span>
+                            <small>{{ b.code }}</small>
+                        </label>
+                    }
+                </div>
+
+                <footer class="ar-dialog-foot">
+                    <button type="button" class="ar-btn" (click)="closeDialogs()" [disabled]="busy">Cancel</button>
+                    <button type="button" class="ar-btn ar-btn--ok" (click)="approve()" [disabled]="!canApprove">
+                        <i class="fas fa-check"></i> Approve and make the user
+                    </button>
+                </footer>
+
+            </div>
+        </div>
+    }
+
+
+    <!-- ================= REJECT ================= -->
+    @if (rejecting; as rj)
+    {
+        <div class="ar-backdrop" (click)="closeDialogs()">
+            <div class="ar-dialog ar-dialog--small" (click)="$event.stopPropagation()">
+
+                <header class="ar-dialog-head ar-dialog-head--no">
+                    <i class="fas fa-user-xmark"></i>
+                    <div>
+                        <h3>Reject {{ nameOf(rj) }}</h3>
+                        <p>No user is made. The request is kept 30 days as a record.</p>
+                    </div>
+                </header>
+
+                <label class="ar-label">Reason (optional)</label>
+                <textarea class="ar-input ar-text" rows="3" maxlength="500" [(ngModel)]="reason" [disabled]="busy"
+                          placeholder="e.g. Not one of our staff"></textarea>
+
+                <footer class="ar-dialog-foot">
+                    <button type="button" class="ar-btn" (click)="closeDialogs()" [disabled]="busy">Cancel</button>
+                    <button type="button" class="ar-btn ar-btn--no-solid" (click)="reject()" [disabled]="busy">
+                        <i class="fas fa-xmark"></i> Reject
+                    </button>
+                </footer>
+
+            </div>
+        </div>
+    }
+
+    <app-toast></app-toast>
+
+    <app-progress-dialog></app-progress-dialog>
+
+</div>

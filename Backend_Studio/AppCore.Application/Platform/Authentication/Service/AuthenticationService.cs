@@ -129,6 +129,28 @@ public class AuthenticationService : IAuthenticationService
 
         if (userProfile == null)
         {
+            //=======================================================
+            // Access Request (2026-11-20) : said only when the
+            // password matches the request, so nobody learns which
+            // Login IDs have asked for access
+            //=======================================================
+
+            AccessRequest? accessRequest =
+                await _authenticationRepository
+                    .GetLatestAccessRequestAsync(userName);
+
+            if (accessRequest != null
+                && accessRequest.Status != AccessRequest.Approved
+                && VerifyPassword(
+                    request.Password,
+                    accessRequest.PasswordHash))
+            {
+                return CreateFailureResponse(
+                    accessRequest.Status == AccessRequest.Pending
+                        ? "Your request is waiting for approval. You can sign in once your administrator approves it."
+                        : "Your request for access was not approved. Please contact your administrator.");
+            }
+
             return CreateFailureResponse(
                 "Invalid Login ID or password.");
         }
@@ -458,115 +480,69 @@ public class AuthenticationService : IAuthenticationService
 
 
         //===========================================================
-        // Check Existing User
+        // Access Request (2026-11-20)
+        //
+        // No user is made here any more : the request waits for
+        // the administrator (Security & Permission > User
+        // Management > Access Requests), who chooses the role
+        // and branches; the user is made only on approval.
+        // The password is kept only as its PBKDF2 hash.
         //===========================================================
 
-        UserProfile? existingUser =
+        string? refused =
             await _authenticationRepository
-                .GetUserProfileByUserNameAsync(userName);
+                .CheckAccessRequestAsync(
+                    userName,
+                    request.Email ?? string.Empty,
+                    request.RequestIp ?? string.Empty);
 
-
-        //===========================================================
-        // Existing User
-        //===========================================================
-
-        if (existingUser != null)
+        if (refused != null)
         {
             return CreateFailureResponse(
-                "This Login ID is already registered.");
+                refused);
         }
 
-
-        //===========================================================
-        // Create User Profile
-        //===========================================================
-
-        UserProfile userProfile =
-            new UserProfile
+        AccessRequest accessRequest =
+            new AccessRequest
             {
                 UserName =
                     userName,
-
                 DisplayName =
                     request.DisplayName?.Trim() ?? string.Empty,
-
                 FullName =
                     request.FullName?.Trim() ?? string.Empty,
-
                 Email =
                     request.Email?.Trim() ?? string.Empty,
-
                 MobileNo =
                     request.MobileNo?.Trim() ?? string.Empty,
-
                 // Saved by the API before this call ('' = no photo)
                 UserPhotoPath =
                     request.UserPhotoPath?.Trim() ?? string.Empty,
-
-                IsActive =
-                    false,
-
-                IsDeleted =
-                    false,
-
-                CreatedDate =
-                    DateTime.UtcNow
-            };
-
-
-        //===========================================================
-        // Create User Credential
-        //===========================================================
-
-        UserCredential credential =
-            new UserCredential
-            {
                 PasswordHash =
                     HashPassword(
                         request.Password),
-
-                PasswordChangedDate =
-                    DateTime.UtcNow,
-
-                CreatedDate =
-                    DateTime.UtcNow
+                RequestIp =
+                    request.RequestIp ?? string.Empty
             };
 
-
-        //===========================================================
-        // Create Registration
-        //===========================================================
-
-        long userProfileId =
-            await _authenticationRepository
-                .CreateRegistrationAsync(
-                    userProfile,
-                    credential);
-
-
-        //===========================================================
-        // Registration Success
-        //===========================================================
+        await _authenticationRepository
+            .CreateAccessRequestAsync(
+                accessRequest);
 
         return new LoginResponseDto
         {
             Success =
                 true,
-
             Message =
-                "User account created successfully. Please wait for administrator activation.",
-
+                "Your request has been sent. You can sign in once your administrator approves it.",
             UserProfileId =
-                userProfileId,
-
+                0,
             UserName =
-                userProfile.UserName,
-
+                accessRequest.UserName,
             DisplayName =
-                userProfile.DisplayName,
-
+                accessRequest.DisplayName,
             FullName =
-                userProfile.FullName
+                accessRequest.FullName
         };
     }
 

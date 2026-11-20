@@ -181,6 +181,13 @@ public class AuthenticationController
         request.UserPhotoPath =
             string.Empty;
 
+        // Access Requests (2026-11-20) : requests per device are
+        // limited; the address comes from the connection only
+        request.RequestIp =
+            HttpContext.Connection.RemoteIpAddress?.ToString()
+            ??
+            string.Empty;
+
         string? photoFile =
             null;
 

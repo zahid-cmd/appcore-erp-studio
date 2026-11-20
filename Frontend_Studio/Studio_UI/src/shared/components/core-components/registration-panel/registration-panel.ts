@@ -232,10 +232,10 @@ export class LoginPageRegistrationPanelComponent
             true,
 
         heading:
-            'Create Account',
+            'Request Access',
 
         subtitle:
-            'Join and get started with your workspace today.',
+            'Your administrator approves the request before you can sign in.',
 
         fullNameLabel:
             'Full Name',
@@ -292,7 +292,7 @@ export class LoginPageRegistrationPanelComponent
             'Privacy Policy',
 
         createAccountButtonText:
-            'Create Account',
+            'Send Request',
 
         createAccountButtonIcon:
             'fas fa-user-plus',

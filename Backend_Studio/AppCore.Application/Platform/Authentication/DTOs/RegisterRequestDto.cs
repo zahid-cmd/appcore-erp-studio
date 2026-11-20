@@ -97,4 +97,12 @@ public class RegisterRequestDto
         get;
         set;
     } = string.Empty;
+
+    // Set by the API from the connection (never trusted from the
+    // form) : limits requests per device (2026-11-20)
+    public string RequestIp
+    {
+        get;
+        set;
+    } = string.Empty;
 }
