@@ -475,7 +475,7 @@ implements OnInit
         {
             header:'Invoice No',
             field:'InvoiceNo',
-            width:'160px',
+            width:'170px',
             align:'left',
             // MB : a Corporate sale (several chassis)
             flagField:'IsCorporate',
@@ -484,13 +484,13 @@ implements OnInit
         {
             header:'Date',
             field:'InvoiceDateText',
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Customer',
             field:'CustomerText',
-            width:'160px',
+            width:'240px',
             align:'left',
             flagField:'IsWalkIn',
             flagText:'Walk-in',
@@ -499,8 +499,8 @@ implements OnInit
         {
             header:'Items',
             field:'LineCountText',
-            width:'160px',
-            align:'left'
+            width:'90px',
+            align:'center'
         },
         {
             header:'Invoice Total',
@@ -511,27 +511,27 @@ implements OnInit
         {
             header:'Paid',
             field:'PaidText',
-            width:'160px',
-            align:'left'
+            width:'130px',
+            align:'right'
         },
         {
             header:'Due',
             field:'DueText',
-            width:'160px',
-            align:'left'
+            width:'130px',
+            align:'right'
         },
         {
             header:'Status',
             field:'Status',
             type:'status',
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'140px',
+            width:'130px',
             align:'center'
         }
     ];

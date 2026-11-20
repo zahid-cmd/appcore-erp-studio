@@ -78,19 +78,13 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="hrs-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="hrs-summary-item">
-                    <span class="hrs-summary-label">{{ item.label }}</span>
-                    <b class="hrs-summary-value">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="hrs-summary-note">{{ page.note }}</span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="records"
+            art="people"
+            note="Search applied"
+            [noteDetail]="page.note">
+        </app-summary-line>
     }
 
     <app-history-drawer

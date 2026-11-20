@@ -37,6 +37,11 @@ const HOST = '127.0.0.1';
 const API_DIR = path.resolve(__dirname, '..', 'Console_Backend', 'AppCore.Console.API');
 const API_EXE = 'AppCore.Console.API.exe';
 const ALLOWED_ORIGINS = ['http://localhost:4300', 'http://127.0.0.1:4300'];
+// Who may deploy, switch back or change the server connection
+// (2026-11-20, review B13) : the Console API on this PC says who
+// the signed-in staff user is
+const CONSOLE_API = 'http://localhost:5300';
+const DEPLOY_ROLES = ['OWNER', 'DEVELOPER'];
 const MAX_LOG = 400;
 // the screens started by --all (each skipped when its port answers)
 const UIS =
@@ -1107,6 +1112,45 @@ function readBody(req)
     });
 }
 
+// The staff user behind the page's call (header X-Staff-Token, the
+// Console sign-in). Asked from the Console API, never taken from
+// the page : { name } when Owner / Developer, else { status, error }.
+async function deployStaff(req)
+{
+    const token = String(req.headers['x-staff-token'] || '');
+
+    if (!token)
+    {
+        return { status: 401, error: 'Sign in to the Console again, then retry.' };
+    }
+
+    let r;
+
+    try
+    {
+        r = await fetch(CONSOLE_API + '/api/auth/me', { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(8000) });
+    }
+    catch
+    {
+        return { status: 503, error: 'The Console API on this PC did not answer, so who is signed in could not be checked. Start it, then retry.' };
+    }
+
+    if (!r.ok)
+    {
+        return { status: 401, error: 'Sign in to the Console again, then retry.' };
+    }
+
+    const me = await r.json().catch(() => ({}));
+    const role = String(me.RoleCode ?? me.roleCode ?? '');
+
+    if (!DEPLOY_ROLES.includes(role))
+    {
+        return { status: 403, error: 'Only the Owner or a Developer may deploy, switch back or change the server connection.' };
+    }
+
+    return { name: String(me.FullName ?? me.fullName ?? me.LoginId ?? me.loginId ?? 'Console').slice(0, 60) };
+}
+
 async function handleDeploy(req, res, origin, url)
 {
     if (req.method === 'GET' && url === '/deploy/status')
@@ -1137,6 +1181,13 @@ async function handleDeploy(req, res, origin, url)
 
     if (req.method === 'POST' && url === '/deploy/settings')
     {
+        const staff = await deployStaff(req);
+
+        if (staff.error)
+        {
+            return send(res, origin, staff.status, { error: staff.error });
+        }
+
         const body = await readBody(req);
         const cfg = readDeploySettings();
         const agentUrl = String(body.agentUrl || cfg.agentUrl).trim().replace(/\/+$/, '');
@@ -1177,8 +1228,17 @@ async function handleDeploy(req, res, origin, url)
             return send(res, origin, 409, { error: 'A deployment is already running.' });
         }
 
+        const staff = await deployStaff(req);
+
+        if (staff.error)
+        {
+            return send(res, origin, staff.status, { error: staff.error });
+        }
+
         const body = await readBody(req);
-        const by = String(body.by || '').slice(0, 60);
+
+        // the name in the history : who the Console says it is
+        const by = staff.name;
 
         if (url === '/deploy/rollback')
         {
@@ -1219,7 +1279,7 @@ function send(res, origin, status, body)
     if (ALLOWED_ORIGINS.includes(origin))
     {
         headers['Access-Control-Allow-Origin'] = origin;
-        headers['Access-Control-Allow-Headers'] = 'X-AppCore-Dev, Content-Type';
+        headers['Access-Control-Allow-Headers'] = 'X-AppCore-Dev, X-Staff-Token, Content-Type';
         headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS';
         headers['Access-Control-Allow-Private-Network'] = 'true';
     }

@@ -307,16 +307,16 @@ export class SalesQuotationList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Quotation No', field:'QuotationNo', width:'160px', align:'left', sortable:true },
-        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
-        { header:'Customer', field:'CustomerText', width:'160px', align:'left', sortable:true },
-        { header:'Phone', field:'CustomerPhone', width:'150px', align:'center', sortable:true, priority:3 },
+        { header:'Quotation No', field:'QuotationNo', width:'170px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'120px', align:'center', sortable:true },
+        { header:'Customer', field:'CustomerText', width:'240px', align:'left', sortable:true },
+        { header:'Phone', field:'CustomerPhone', width:'140px', align:'center', sortable:true, priority:3 },
         { header:this.page.pageType === 'MB' ? 'Models' : 'Items', field:'ItemsText', width:'240px', align:'left', sortable:true, priority:2 },
         { header:'Total', field:'TotalText', width:'130px', align:'right', sortable:true },
-        { header:'Valid Until', field:'ValidText', width:'160px', align:'left', sortable:true, priority:2 },
-        { header:'Invoice', field:'InvoiceText', width:'160px', align:'left', sortable:true, priority:2 },
-        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Valid Until', field:'ValidText', width:'120px', align:'center', sortable:true, priority:2 },
+        { header:'Invoice', field:'InvoiceText', width:'170px', align:'left', sortable:true, priority:2 },
+        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     private open(r: QuotationRow): boolean

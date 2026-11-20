@@ -22,12 +22,14 @@ import { ToastService } from '../../ui/toast';
     imports: [FormsModule, SelectBox],
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [`
-        .tm { display: flex; flex-direction: column; gap: 14px; padding: 14px 18px 16px; }
+        :host { display: flex; flex-direction: column; }
+        :host > .ac-card { flex: 1; display: flex; flex-direction: column; }
+        .tm { display: flex; flex: 1; flex-direction: column; gap: 14px; padding: 14px 18px 16px; }
         .tm-row { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 10px; align-items: end; }
         .tm-label { display: block; margin-bottom: 6px; color: var(--ac-muted); font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
         .tm-desc { color: var(--ac-muted); font-size: 12.5px; }
-        .tm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
-        .tm-mod { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--ac-border-2); border-radius: 10px; background: var(--ac-card-2); font-size: 13px; cursor: pointer; }
+        .tm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+        .tm-mod { display: flex; align-items: center; gap: 8px; padding: 6px 9px; border: 1px solid var(--ac-border-2); border-radius: 9px; background: var(--ac-card-2); font-size: 12.5px; cursor: pointer; }
         .tm-mod.off { opacity: 0.55; }
         .tm-mod.extra { border-color: var(--ac-accent); }
         .tm-mod input { accent-color: var(--ac-accent); }
@@ -83,6 +85,7 @@ import { ToastService } from '../../ui/toast';
                         }
                     </div>
 
+                    @if (askAllOff()) { <div class="ac-error">No optional module is ticked : this switches every optional module off for the client. Press Save again to confirm.</div> }
                     @if (error()) { <div class="ac-error">{{ error() }}</div> }
                 </div>
             }
@@ -112,6 +115,10 @@ export class TenantModulesCard implements OnInit
     readonly dirty = signal(false);
     readonly saving = signal(false);
     readonly error = signal('');
+
+    // Save was pressed with no optional module ticked : the next
+    // Save confirms it (2026-11-20, review B4)
+    readonly askAllOff = signal(false);
 
     readonly packageOptions = computed<SelectOption[]>(() =>
     [
@@ -143,6 +150,7 @@ export class TenantModulesCard implements OnInit
             this.on.set(new Set(d.Modules.filter(m => m.Enabled).map(m => m.ModuleCode)));
             this.maxUsers.set(d.MaxUsers);
             this.dirty.set(false);
+            this.askAllOff.set(false);
         }
         catch (e)
         {
@@ -154,6 +162,7 @@ export class TenantModulesCard implements OnInit
     choosePackage(code: string): void
     {
         this.pkg.set(code ?? '');
+        this.askAllOff.set(false);
 
         const d = this.data();
 
@@ -175,6 +184,15 @@ export class TenantModulesCard implements OnInit
 
         this.on.set(next);
         this.dirty.set(true);
+        this.askAllOff.set(false);
+    }
+
+    // no optional module is ticked (there are some to tick)
+    private allOff(): boolean
+    {
+        const optional = (this.data()?.Modules ?? []).filter(m => !m.IsCore);
+
+        return optional.length > 0 && optional.every(m => !this.on().has(m.ModuleCode));
     }
 
     isExtra(code: string): boolean
@@ -202,6 +220,16 @@ export class TenantModulesCard implements OnInit
             return;
         }
 
+        // everything off : asked once, the next Save confirms
+        const allOff = this.allOff();
+
+        if (allOff && !this.askAllOff())
+        {
+            this.error.set('');
+            this.askAllOff.set(true);
+            return;
+        }
+
         this.saving.set(true);
         this.error.set('');
 
@@ -211,7 +239,8 @@ export class TenantModulesCard implements OnInit
             {
                 PackageCode: this.pkg() || null,
                 EnabledModules: [...this.on()],
-                MaxUsers: users
+                MaxUsers: users,
+                ConfirmAllOff: allOff
             });
 
             this.toast.success('Modules saved', r?.Message ?? 'Saved.');

@@ -423,15 +423,25 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
             var file =
                 files.FirstOrDefault(x => string.Equals(x.ChassisNo, bike.ChassisNo, StringComparison.OrdinalIgnoreCase));
 
+            // Registration Management off for this company
+            // (2026-11-20) : a profile or file that has moved on no
+            // longer holds the bike back (it is cancelled with the
+            // return). Fees stay a stop : they are money with
+            // vouchers of their own.
+            bool registrationOn =
+                AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Registration);
+
             string reason =
-                profile != null
+                profile != null && registrationOn
                     ? $"Registration Profile {profile.ProfileNo} was sent to BRTA ({profile.Status})."
-                    : file != null && file.TransferCount > 0
+                    : file != null && registrationOn && file.TransferCount > 0
                         ? $"Customer File {file.CustomerFileNo} was name-transferred."
-                        : file != null && file.Status != "Open"
+                        : file != null && registrationOn && file.Status != "Open"
                             ? $"Customer File {file.CustomerFileNo} is {file.Status}."
                             : file != null && withFees.Contains(file.CustomerFileId)
-                                ? $"Customer File {file.CustomerFileNo} has fees : cancel them on Customer Files first."
+                                ? (registrationOn
+                                    ? $"Customer File {file.CustomerFileNo} has fees : cancel them on Customer Files first."
+                                    : $"Customer File {file.CustomerFileNo} has fees collected, and Registration Management is switched off for this company : ask AppCore to switch it on, cancel the fees on Customer Files, then try again.")
                                 : unit != null && unit.Status != UnitSold && line.ReturnedQuantity < line.Quantity
                                     ? $"Chassis {bike.ChassisNo} is {unit.Status}, not Sold."
                                     : string.Empty;

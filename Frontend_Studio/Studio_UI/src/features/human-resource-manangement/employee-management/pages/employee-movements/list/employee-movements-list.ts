@@ -218,12 +218,12 @@ implements OnInit
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Code', field:'Code', width:'140px', align:'center' },
-        { header:'Employee', field:'EmployeeText', width:'160px', align:'left' },
+        { header:'Code', field:'Code', width:'130px', align:'center' },
+        { header:'Employee', field:'EmployeeText', width:'260px', align:'left' },
         { header:'Movement', field:'MovementType', width:'160px', align:'left', dotField:'TypeColor' },
-        { header:'Effective', field:'DateText', width:'160px', align:'left' },
-        { header:'What Changed', field:'Summary', width:'160px', align:'left' },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Effective', field:'DateText', width:'120px', align:'center' },
+        { header:'What Changed', field:'Summary', width:'360px', align:'left' },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     ngOnInit():

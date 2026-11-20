@@ -138,6 +138,10 @@ implements OnInit
     readonly content =
         this.data.content;
 
+    // Enquiry Management is switched off for this company
+    readonly enquiryOff =
+        this.data.enquiryOff;
+
 
     //===========================================================
     // Options from the ERP (areas, showrooms)

@@ -122,6 +122,12 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     SearchDropdownComponent
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
@@ -157,7 +163,8 @@ from '../../../services/membership-services.service';
         PaginationComponent,
         HistoryDrawerComponent,
         SearchDropdownComponent,
-        ToastComponent
+        ToastComponent,
+        SummaryLineComponent
     ],
     templateUrl:'./membership-services-list.html',
     styleUrl:'./membership-services-list.css'
@@ -405,7 +412,7 @@ implements OnInit
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
@@ -454,14 +461,14 @@ implements OnInit
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'100px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'130px',
             align:'center'
         }
     ];

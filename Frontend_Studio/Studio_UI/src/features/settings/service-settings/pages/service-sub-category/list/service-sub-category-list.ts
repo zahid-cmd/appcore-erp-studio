@@ -152,6 +152,12 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     SearchDropdownComponent
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
@@ -189,7 +195,8 @@ from '../../../services/service-sub-category.service';
         ConfirmDialogComponent,
         ProgressDialogComponent,
         SearchDropdownComponent,
-        ToastComponent
+        ToastComponent,
+        SummaryLineComponent
     ],
     templateUrl:'./service-sub-category-list.html',
     styleUrl:'./service-sub-category-list.css'
@@ -444,7 +451,7 @@ implements OnInit, OnDestroy
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
@@ -488,14 +495,14 @@ implements OnInit, OnDestroy
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'110px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'130px',
             align:'center'
         }
     ];

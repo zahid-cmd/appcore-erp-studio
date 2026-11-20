@@ -3,7 +3,7 @@
 // Code Sync for them). Wired by the MANUAL block in
 // human-resource-manangement.routes.ts.
 //
-//   employees            Employee Profiles : list / add / edit/:id / view/:id
+//   employees            moved to Settings > Employee Setup (2026-11-20)
 //   employee-movements   list / add / view/:id
 //===============================================================
 
@@ -13,15 +13,11 @@ import
 }
 from '@angular/router';
 
-const employeesList =
-    () =>
-        import('../pages/employees/list/employees-list')
-            .then(m => m.EmployeesList);
-
-const employeesForm =
-    () =>
-        import('../pages/employees/form/employees-form')
-            .then(m => m.EmployeesForm);
+import
+{
+    moved
+}
+from '../../../../shared/utils/moved-route';
 
 export const EmployeeManagementRoutes:
 Routes =
@@ -30,38 +26,10 @@ Routes =
         path:'',
         children:
         [
-            {
-                path:'employees',
-                data:{ breadcrumb:'Employee Profiles' },
-                children:
-                [
-                    {
-                        path:'',
-                        redirectTo:'list',
-                        pathMatch:'full'
-                    },
-                    {
-                        path:'list',
-                        data:{ breadcrumb:'Employee Profiles' },
-                        loadComponent:employeesList
-                    },
-                    {
-                        path:'add',
-                        data:{ breadcrumb:'Add Employee Profile' },
-                        loadComponent:employeesForm
-                    },
-                    {
-                        path:'edit/:id',
-                        data:{ breadcrumb:'Edit Employee Profile' },
-                        loadComponent:employeesForm
-                    },
-                    {
-                        path:'view/:id',
-                        data:{ breadcrumb:'View Employee Profile' },
-                        loadComponent:employeesForm
-                    }
-                ]
-            },
+            // Employee Profiles moved to Settings > Employee Setup
+            // (2026-11-20, EmployeeSetup_Navigation.sql) : the old
+            // address opens the new one. The page files stay here.
+            moved('employees', '/settings/employee-setup/employees'),
             {
                 path:'employee-movements',
                 data:{ breadcrumb:'Employee Movements' },

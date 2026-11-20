@@ -151,24 +151,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="msv-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="msv-summary-item">
-                    <span class="msv-summary-label">{{ item.label }}</span>
-                    <b
-                        class="msv-summary-value"
-                        [class.msv-ok]="item.tone === 'ok'"
-                        [class.msv-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="msv-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="services"
+            art="catalog"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================

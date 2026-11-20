@@ -14,6 +14,13 @@ from '@angular/core';
 
 import
 {
+    MODULE_KEYS,
+    ModuleSwitchService
+}
+from '../../../../../../core/shell/module-switch.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -384,6 +391,16 @@ interface CustomerDraft
 export class CustomerProfilesForm
 implements OnInit, OnDestroy
 {
+    private readonly moduleSwitch =
+        inject(ModuleSwitchService);
+
+    // Registration Management on for this company
+    get registrationOn():
+        boolean
+    {
+        return this.moduleSwitch.isOn(MODULE_KEYS.registration);
+    }
+
     //===========================================================
     // Dependency Injection
     //===========================================================

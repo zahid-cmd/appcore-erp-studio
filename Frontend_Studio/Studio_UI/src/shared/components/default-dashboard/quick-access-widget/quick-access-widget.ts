@@ -12,9 +12,17 @@ from '@angular/common';
 import
 {
     Component,
-    Input
+    Input,
+    inject
 }
 from '@angular/core';
+
+import
+{
+    MODULE_KEYS,
+    ModuleSwitchService
+}
+from '../../../../core/shell/module-switch.service';
 
 
 //===============================================================
@@ -71,6 +79,20 @@ interface QuickAccessItem
 
 export class QuickAccessWidgetComponent
 {
+
+    private readonly moduleSwitch =
+        inject(ModuleSwitchService);
+
+    // The tiles shown : not the Human Resources tile with Human
+    // Resource Management off for this company (2026-11-20)
+    get shownItems():
+        QuickAccessItem[]
+    {
+        return this.moduleSwitch.isOn(MODULE_KEYS.humanResource)
+            ? this.quickAccessItems
+            : this.quickAccessItems.filter(x => x.iconClass !== 'hr');
+    }
+
 
     //===========================================================
     // Preview Mode

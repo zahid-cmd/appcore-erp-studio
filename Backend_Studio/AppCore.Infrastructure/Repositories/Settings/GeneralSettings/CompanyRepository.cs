@@ -10,6 +10,7 @@ using AppCore.Infrastructure.Persistence.Paging;
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.Company.DTOs;
 using AppCore.Application.Platform.Tenancy;
+using AppCore.Infrastructure.Platform.Tenancy;
 
 using CompanyEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Company;
@@ -596,6 +597,10 @@ public class CompanyRepository : ICompanyRepository
             long userId
         )
     {
+        // one at a time, so two saves cannot both pass the limit
+        await using LimitLock limitLock =
+            await LimitLock.TakeAsync(_context, LimitLock.Companies);
+
         await EnsureCompanyLimitAsync();
 
 
@@ -1288,6 +1293,10 @@ public class CompanyRepository : ICompanyRepository
             return false;
         }
 
+
+        // one at a time, so two saves cannot both pass the limit
+        await using LimitLock limitLock =
+            await LimitLock.TakeAsync(_context, LimitLock.Companies);
 
         await EnsureCompanyLimitAsync();
 

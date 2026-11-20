@@ -330,14 +330,14 @@ export class ProductPricingList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Price Change No', field:'PricingNo', width:'130px', align:'right', sortable:true },
+        { header:'Price Change No', field:'PricingNo', width:'170px', align:'left', sortable:true },
         { header:'Effective Date', field:'DateText', width:'130px', align:'center', sortable:true },
-        { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
-        { header:'Products', field:'ProductCount', width:'160px', align:'left', sortable:true },
-        { header:'Batches', field:'BatchCount', width:'160px', align:'left', sortable:true },
-        { header:'Remarks', field:'Remarks', width:'260px', align:'left', sortable:true },
-        { header:'Status', field:'Status', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Product Type', field:'TypeText', width:'140px', align:'left', sortable:true },
+        { header:'Products', field:'ProductCount', width:'100px', align:'center', sortable:true },
+        { header:'Batches', field:'BatchCount', width:'100px', align:'center', sortable:true },
+        { header:'Remarks', field:'Remarks', width:'300px', align:'left', sortable:true },
+        { header:'Status', field:'Status', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     //===========================================================

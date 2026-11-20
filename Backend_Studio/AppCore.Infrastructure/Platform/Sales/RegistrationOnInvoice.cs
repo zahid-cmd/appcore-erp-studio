@@ -610,7 +610,11 @@ public static class RegistrationOnInvoice
             profiles.FirstOrDefault(
                 x => x.Status != RegistrationStages.Pending && x.Status != RegistrationStages.Processing);
 
-        if (moved != null)
+        // (with Registration Management off for this company the
+        // profile is cancelled whatever its stage : nobody can open
+        // Registration Processing to take it back)
+        if (moved != null
+            && AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Registration))
         {
             throw new InvalidOperationException(
                 $"Registration Profile {moved.ProfileNo} is {moved.Status} (sent to BRTA) : the registration cannot be cancelled.");

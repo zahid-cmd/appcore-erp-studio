@@ -182,4 +182,30 @@ export const settingsRoutes:
 
     // AUTO-END : MNU-003-005
 
+
+    //===========================================================
+    // MANUAL : Employee Setup (2026-11-20, hand-written, no sync;
+    // EmployeeSetup_Navigation.sql adds the menu and moves the
+    // pages Department, Designation and Employee Profiles here
+    // from Human Resource). The page files stay in
+    // features\human-resource-manangement.
+    //===========================================================
+
+    {
+        path:'employee-setup',
+
+        data:
+        {
+            breadcrumb:'Employee Setup'
+        },
+
+        loadChildren:() =>
+            import(
+                '../employee-setup/routes/employee-setup.routes'
+            )
+            .then(
+                m =>
+                    m.EmployeeSetupRoutes
+            )
+    }
 ];

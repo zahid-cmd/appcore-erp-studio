@@ -124,6 +124,13 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     ServerManagementService
 }
 from '../../../services/server-management.service';
@@ -147,6 +154,7 @@ interface ServerRow
     standalone:true,
     imports:
     [
+        SummaryLineComponent,
         CommonModule,
         PageHeaderComponent,
         PageToolbarComponent,
@@ -297,17 +305,17 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#',            field:'serial',          type:'serial', width:'50px',  align:'center' },
+        { header:'#',            field:'serial',          type:'serial', width:'56px',  align:'center' },
         { header:'Code',         field:'code',            width:'100px', align:'center' },
         { header:'Name',         field:'name',            align:'left' },
         { header:'Agent',        field:'endpoint',        width:'190px', align:'left' },
         { header:'App URL',      field:'appUrl',          width:'230px', align:'left' },
         { header:'Environment',  field:'environment',     width:'110px', align:'center' },
         { header:'Live Release', field:'currentRelease',  width:'110px', align:'center' },
-        { header:'Last Check',   field:'checkText',       type:'status', width:'130px', align:'center' },
+        { header:'Last Check',   field:'checkText',       type:'status', width:'120px', align:'center' },
         { header:'Checked',      field:'lastCheckedText', width:'150px', align:'center' },
-        { header:'Status',       field:'status',          type:'status', width:'90px',  align:'center' },
-        { header:'Actions',      field:'actions',         type:'actions', width:'170px', align:'center' }
+        { header:'Status',       field:'status',          type:'status', width:'120px',  align:'center' },
+        { header:'Actions',      field:'actions',         type:'actions', width:'130px', align:'center' }
     ];
 
     readonly rowActions:
@@ -901,5 +909,34 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+    //===========================================================
+    // Summary line items : the same array while the figures do
+    // not change (the summary line is OnPush)
+    //===========================================================
+
+    private summaryKey = '';
+
+    private summaryCache: SummaryLineItem[] = [];
+
+    get summaryLineItems(): SummaryLineItem[]
+    {
+        const items: SummaryLineItem[] =
+        [
+            { label:'Total', value:this.summaryText(this.summaryTotal), tone:'' },
+            { label:'Active', value:this.summaryText(this.summaryActive), tone:'ok' },
+            { label:'Online (last check)', value:this.summaryText(this.summaryOnline), tone:'ok', share:false }
+        ];
+
+        const key = JSON.stringify(items);
+
+        if (key !== this.summaryKey)
+        {
+            this.summaryKey = key;
+            this.summaryCache = items;
+        }
+
+        return this.summaryCache;
     }
 }

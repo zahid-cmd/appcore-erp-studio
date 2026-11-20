@@ -232,80 +232,35 @@
 
             @if (isRegister)
             {
-                <div class="ics-summary">
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Open</span>
-                        <b class="ics-summary-value">{{ summaryText(countOf('Open')) }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Ready for Delivery</span>
-                        <b class="ics-summary-value">{{ summaryText(countOf('ReadyForDelivery')) }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Delivered</span>
-                        <b class="ics-summary-value ics-ok">{{ summaryText(countOf('Delivered')) }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Cancelled</span>
-                        <b class="ics-summary-value ics-bad">{{ summaryText(countOf('Cancelled')) }}</b>
-                    </span>
-
-                    <span class="ics-summary-note">
-                        Showing {{ summaryText(filteredRows.length) }}
-                    </span>
-
-                </div>
+                <app-summary-line
+                    [items]="registerSummary"
+                    noun="files"
+                    art="bike"
+                    note="Filters applied"
+                    [noteDetail]="'Showing ' + summaryText(filteredRows.length)">
+                </app-summary-line>
             }
 
             @if (isFees)
             {
-                <div class="ics-summary">
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Pending</span>
-                        <b class="ics-summary-value">{{ money(feeTotal('Pending')) }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Due</span>
-                        <b class="ics-summary-value ics-bad">{{ money(feeTotal('Due')) }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Collected</span>
-                        <b class="ics-summary-value ics-ok">{{ money(feeTotal('Paid')) }}</b>
-                    </span>
-
-                    <span class="ics-summary-note">
-                        Showing {{ summaryText(filteredRows.length) }}
-                    </span>
-
-                </div>
+                <app-summary-line
+                    [items]="feesSummary"
+                    noun="fees"
+                    art="cash"
+                    note="Filters applied"
+                    [noteDetail]="'Showing ' + summaryText(filteredRows.length)">
+                </app-summary-line>
             }
 
             @if (isTransfer)
             {
-                <div class="ics-summary">
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Transfers</span>
-                        <b class="ics-summary-value">{{ summaryText(viewCount) }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Fees</span>
-                        <b class="ics-summary-value">{{ money(transferFeeTotal) }}</b>
-                    </span>
-
-                    <span class="ics-summary-note">
-                        Showing {{ summaryText(filteredRows.length) }}
-                    </span>
-
-                </div>
+                <app-summary-line
+                    [items]="transferSummary"
+                    noun="transfers"
+                    art="bike"
+                    note="Filters applied"
+                    [noteDetail]="'Showing ' + summaryText(filteredRows.length)">
+                </app-summary-line>
             }
 
         </div>

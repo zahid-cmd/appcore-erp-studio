@@ -406,31 +406,31 @@ implements OnInit, OnDestroy
         {
             header:'Card Code',
             field:'CardCode',
-            width:'140px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Card Name',
             field:'CardName',
-            width:'210px',
+            width:'230px',
             align:'left'
         },
         {
             header:'Rank',
             field:'CardRank',
-            width:'160px',
-            align:'left'
+            width:'90px',
+            align:'center'
         },
         {
             header:'Fee Ledger',
             field:'FeeLedgerCode',
-            width:'160px',
+            width:'180px',
             align:'left'
         },
         {
             header:'Discount Ledger',
             field:'DiscountLedgerCode',
-            width:'160px',
+            width:'180px',
             align:'left'
         },
         {
@@ -443,14 +443,14 @@ implements OnInit, OnDestroy
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'140px',
+            width:'130px',
             align:'center'
         }
     ];

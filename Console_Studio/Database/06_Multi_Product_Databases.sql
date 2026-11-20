@@ -32,6 +32,14 @@
   ASCII only.
 ===============================================================*/
 
+-- Stops here unless pgAdmin is on AppCore_Control (2026-11-20)
+DO $$
+BEGIN
+    IF current_database() <> 'AppCore_Control' THEN
+        RAISE EXCEPTION 'Wrong database (%). Run this on AppCore_Control.', current_database();
+    END IF;
+END $$;
+
 -- 1. Product short codes --------------------------------------------
 
 ALTER TABLE public."Products" ADD COLUMN IF NOT EXISTS "ShortCode" varchar(4);

@@ -580,6 +580,10 @@ public class UserProfileController : ControllerBase
     public async Task<ActionResult<long>> Create(
         CreateUserProfileDto dto)
     {
+        // one at a time, so two saves cannot both pass the limit
+        await using LimitLock? limitLock =
+            dto.IsActive ? await LimitLock.TakeAsync(_context, LimitLock.Users) : null;
+
         // user limit (Console MaxUsers, 2026-11-20)
         if (dto.IsActive)
         {
@@ -592,17 +596,73 @@ public class UserProfileController : ControllerBase
             }
         }
 
+        // a clear message instead of a database error (2026-11-20)
+        string? taken =
+            await TakenMessageAsync(dto.UserName, dto.ProfileCode, null);
+
+        if (taken != null)
+        {
+            return Conflict(new { message = taken });
+        }
+
         long userId =
             1;
 
-        long id =
-            await _repository.CreateAsync(
-                dto,
-                userId);
+        long id;
+
+        try
+        {
+            id =
+                await _repository.CreateAsync(
+                    dto,
+                    userId);
+        }
+        catch (DbUpdateException ex) when (IsDuplicate(ex))
+        {
+            return Conflict(new { message = DuplicateMessage });
+        }
 
         return Ok(
             id);
     }
+
+
+    //===========================================================
+    // Login ID / User Code already in use (2026-11-20)
+    //===========================================================
+
+    private const string DuplicateMessage =
+        "This Login ID or User Code is already in use (it may belong to a deleted user). Use another one.";
+
+    // null = free; otherwise the message
+    private async Task<string?> TakenMessageAsync(
+        string? userName,
+        string? profileCode,
+        long? exceptUserProfileId)
+    {
+        string name = (userName ?? string.Empty).Trim().ToLower();
+        string code = (profileCode ?? string.Empty).Trim().ToLower();
+
+        var users =
+            _context.Set<AppCore.Domain.Entities.SecurityPermission.UserManagement.UserProfile>()
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted && (exceptUserProfileId == null || x.UserProfileId != exceptUserProfileId));
+
+        if (name.Length > 0 && await users.AnyAsync(x => x.UserName.ToLower() == name))
+        {
+            return $"The Login ID '{userName!.Trim()}' is already in use. Use another one.";
+        }
+
+        if (code.Length > 0 && await users.AnyAsync(x => x.ProfileCode.ToLower() == code))
+        {
+            return $"The User Code '{profileCode!.Trim()}' is already in use. Use another one.";
+        }
+
+        return null;
+    }
+
+    private static bool IsDuplicate(DbUpdateException ex) =>
+        ex.InnerException is Npgsql.PostgresException { SqlState: "23505" };
 
 
     //===========================================================
@@ -645,6 +705,10 @@ public class UserProfileController : ControllerBase
         // (Console MaxUsers, 2026-11-20)
         //=======================================================
 
+        // one at a time, so two saves cannot both pass the limit
+        await using LimitLock? limitLock =
+            dto.IsActive ? await LimitLock.TakeAsync(_context, LimitLock.Users) : null;
+
         if (dto.IsActive)
         {
             bool wasActive =
@@ -679,9 +743,25 @@ public class UserProfileController : ControllerBase
         // Update
         //=======================================================
 
-        await _repository.UpdateAsync(
-            dto,
-            userId);
+        // a clear message instead of a database error (2026-11-20)
+        string? taken =
+            await TakenMessageAsync(dto.UserName, dto.ProfileCode, id);
+
+        if (taken != null)
+        {
+            return Conflict(new { message = taken });
+        }
+
+        try
+        {
+            await _repository.UpdateAsync(
+                dto,
+                userId);
+        }
+        catch (DbUpdateException ex) when (IsDuplicate(ex))
+        {
+            return Conflict(new { message = DuplicateMessage });
+        }
 
 
         return NoContent();
@@ -1064,6 +1144,10 @@ public class UserProfileController : ControllerBase
     [HttpPut("restore")]
     public async Task<IActionResult> Restore()
     {
+        // one at a time, so two saves cannot both pass the limit
+        await using LimitLock limitLock =
+            await LimitLock.TakeAsync(_context, LimitLock.Users);
+
         // user limit (Console MaxUsers, 2026-11-20)
         string? refused =
             await UserLimit.RefusalAsync(_context, _limits);

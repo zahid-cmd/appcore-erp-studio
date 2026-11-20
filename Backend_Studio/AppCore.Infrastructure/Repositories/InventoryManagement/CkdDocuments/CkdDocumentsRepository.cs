@@ -189,9 +189,14 @@ public class CkdDocumentsRepository
                 .OrderByDescending(x => x.MotorBikeUnitId)
                 .ToListAsync();
 
+        // Registration Management off for this company : no
+        // customer file number on a bike, no opening-file rows
+        bool registrationOn =
+            AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Registration);
+
         List<CustomerFiles> files =
             await _context.Set<CustomerFiles>().AsNoTracking()
-                .Where(x => !x.IsDeleted && x.Status != "Cancelled")
+                .Where(x => registrationOn && !x.IsDeleted && x.Status != "Cancelled")
                 .ToListAsync();
 
         Dictionary<string, CustomerFiles> fileByChassis =
@@ -396,6 +401,12 @@ public class CkdDocumentsRepository
             string userName
         )
     {
+        if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.Registration))
+        {
+            throw new InvalidOperationException(
+                "Registration Management is not part of this company's package : a customer file cannot be changed.");
+        }
+
         CustomerFiles file =
             await _context.Set<CustomerFiles>()
                 .FirstOrDefaultAsync(x => x.PublicId == customerFilePublicId && !x.IsDeleted)

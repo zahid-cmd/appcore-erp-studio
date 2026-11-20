@@ -115,7 +115,13 @@ public class ShellController : ControllerBase
     [HttpGet("context")]
     public async Task<ActionResult<ShellContextDto>> GetContext()
     {
-        return Ok(
-            await _repository.GetContextAsync());
+        ShellContextDto row =
+            await _repository.GetContextAsync();
+
+        // set by the module gate for this request
+        row.OffModules =
+            AppCore.Application.Platform.Tenancy.ModuleSwitch.OffModules;
+
+        return Ok(row);
     }
 }

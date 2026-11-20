@@ -242,16 +242,16 @@ implements OnInit, OnDestroy
     [
         // balanced widths, one scheme for every list
         { header:'#',          field:'serial',       type:'serial', width:'56px',  align:'center' },
-        { header:'Date',       field:'DateText',     width:'130px', align:'center' },
-        { header:'Time',       field:'SlotText',     width:'160px', align:'left' },
-        { header:'Enquiry No', field:'EnquiryNo',    width:'160px', align:'left', priority:2 },
-        { header:'Customer',   field:'CustomerText', width:'160px', align:'left' },
-        { header:'Bike to Ride', field:'ModelName',  width:'160px', align:'left' },
-        { header:'Interest',   field:'InterestLevelName', width:'160px', align:'left', dotField:'InterestLevelColor', priority:3 },
-        { header:'Executive',  field:'AdvisorName',  width:'160px', align:'left', priority:2 },
-        { header:'Moved',      field:'MovedText',    width:'160px',  align:'left', priority:3 },
-        { header:'Status',     field:'StatusText',   width:'160px', align:'left', dotField:'StatusColor' },
-        { header:'Actions',    field:'actions',      type:'actions', width:'140px', align:'center' }
+        { header:'Date',       field:'DateText',     width:'120px', align:'center' },
+        { header:'Time',       field:'SlotText',     width:'120px', align:'center' },
+        { header:'Enquiry No', field:'EnquiryNo',    width:'170px', align:'left', priority:2 },
+        { header:'Customer',   field:'CustomerText', width:'220px', align:'left' },
+        { header:'Bike to Ride', field:'ModelName',  width:'190px', align:'left' },
+        { header:'Interest',   field:'InterestLevelName', width:'130px', align:'left', dotField:'InterestLevelColor', priority:3 },
+        { header:'Executive',  field:'AdvisorName',  width:'150px', align:'left', priority:2 },
+        { header:'Moved',      field:'MovedText',    width:'90px',  align:'center', priority:3 },
+        { header:'Status',     field:'StatusText',   width:'130px', align:'left', dotField:'StatusColor' },
+        { header:'Actions',    field:'actions',      type:'actions', width:'130px', align:'center' }
     ];
 
     // Table column → the API's sort key ('' = date + time)

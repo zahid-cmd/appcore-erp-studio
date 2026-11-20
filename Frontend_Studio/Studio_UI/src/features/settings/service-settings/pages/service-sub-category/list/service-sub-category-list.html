@@ -122,24 +122,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="ssc-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="ssc-summary-item">
-                    <span class="ssc-summary-label">{{ item.label }}</span>
-                    <b
-                        class="ssc-summary-value"
-                        [class.ssc-ok]="item.tone === 'ok'"
-                        [class.ssc-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="ssc-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="sub categories"
+            art="catalog"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================

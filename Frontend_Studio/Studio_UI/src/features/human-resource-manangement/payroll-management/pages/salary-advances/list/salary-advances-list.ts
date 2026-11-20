@@ -209,16 +209,16 @@ implements OnInit
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Code', field:'Code', width:'140px', align:'center' },
-        { header:'Employee', field:'EmployeeText', width:'160px', align:'left' },
+        { header:'Code', field:'Code', width:'130px', align:'center' },
+        { header:'Employee', field:'EmployeeText', width:'240px', align:'left' },
         { header:'Type', field:'AdvanceType', width:'110px', align:'center' },
-        { header:'Date', field:'DateText', width:'130px', align:'center' },
+        { header:'Date', field:'DateText', width:'120px', align:'center' },
         { header:'Amount', field:'AmountText', width:'130px', align:'right' },
-        { header:'Per Month', field:'InstallmentText', width:'160px', align:'left' },
-        { header:'Recovered', field:'RecoveredText', width:'160px', align:'left' },
+        { header:'Per Month', field:'InstallmentText', width:'130px', align:'right' },
+        { header:'Recovered', field:'RecoveredText', width:'130px', align:'right' },
         { header:'Balance', field:'BalanceText', width:'130px', align:'right' },
-        { header:'Status', field:'Status', width:'160px', align:'left', dotField:'StatusColor' },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Status', field:'Status', width:'140px', align:'left', dotField:'StatusColor' },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     ngOnInit():

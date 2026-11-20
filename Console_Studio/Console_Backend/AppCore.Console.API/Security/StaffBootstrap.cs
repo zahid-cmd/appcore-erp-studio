@@ -2,6 +2,11 @@
 // First start : when AppCore_Control has no staff user, create the
 // Owner "owner" with a one-time password printed ONCE in the API
 // window. It must be changed at the first login.
+//
+// 2026-11-20 : the live Console runs as a Windows service and has
+// no window, so the password is ALSO written to the file
+// first-owner-password.txt beside the API (the log names the file,
+// never the password). Delete the file after the first login.
 //===============================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -48,7 +53,45 @@ public static class StaffBootstrap
 
         db.AuditLog.Add(new AuditLogEntry { Action = "Staff.Bootstrap", EntityName = "StaffUser", Details = "First Owner created" });
 
-        await db.SaveChangesAsync();
+        // the file first : if the owner cannot be saved it is removed
+        // again; if the file cannot be written the window still shows
+        // the password
+        string file = Path.Combine(AppContext.BaseDirectory, "first-owner-password.txt");
+        bool written = false;
+
+        try
+        {
+            await File.WriteAllTextAsync(file,
+                "AppCore Console : first Owner (created " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm") + " UTC)\r\n" +
+                "Login ID : owner\r\n" +
+                "Password : " + password + "\r\n" +
+                "It must be changed at the first login. Delete this file after that.\r\n");
+
+            written = true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning("The first Owner's password could not be written to {File} : {Error}. It is shown only in the API window.", file, ex.Message);
+        }
+
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch
+        {
+            if (written)
+            {
+                try { File.Delete(file); } catch { }
+            }
+
+            throw;
+        }
+
+        if (written)
+        {
+            logger.LogWarning("First Owner created. Login ID owner; its one-time password is in the file {File}. Sign in, change it, then delete the file.", file);
+        }
 
         System.Console.ForegroundColor = ConsoleColor.Yellow;
         System.Console.WriteLine();

@@ -184,6 +184,13 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     FormSectionComponent
 }
 from '../../../../../../shared/components/layout/form-section/form-section';
@@ -249,6 +256,7 @@ from '../../../services/enquiry-setup.service';
         ProgressDialogComponent,
 
         ToastComponent,
+        SummaryLineComponent,
 
         FormSectionComponent,
 
@@ -3273,5 +3281,36 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+    // Summary line items, kept as the same array while the figures
+    // do not change (the summary line is OnPush)
+    private summaryKey = '';
+
+    private summaryCache: SummaryLineItem[] = [];
+
+    private summaryLine(items: SummaryLineItem[]): SummaryLineItem[]
+    {
+        const key = JSON.stringify(items);
+
+        if (key !== this.summaryKey)
+        {
+            this.summaryKey = key;
+            this.summaryCache = items;
+        }
+
+        return this.summaryCache;
+    }
+
+    get summaryItems(): SummaryLineItem[]
+    {
+        const total = this.summaryTotal, active = this.summaryActive;
+
+        return this.summaryLine(
+        [
+            { label:'Total', value:this.summaryText(total), tone:'' },
+            { label:'Active', value:this.summaryText(active), tone:'ok' },
+            { label:'Inactive', value:this.summaryText(total - active), tone:'bad' }
+        ]);
     }
 }

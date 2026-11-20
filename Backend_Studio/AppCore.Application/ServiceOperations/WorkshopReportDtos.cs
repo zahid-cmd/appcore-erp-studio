@@ -120,6 +120,10 @@ public class WorkshopDashboardDto
 
     public List<WsTileDto> Tiles { get; set; } = new();
 
+    // What happened today (owner 2026-11-20) : opened, assigned,
+    // parts allocated, work done, billed, closed
+    public List<WsTileDto> Activity { get; set; } = new();
+
     // The open job cards by status
     public List<WsTileDto> Statuses { get; set; } = new();
 

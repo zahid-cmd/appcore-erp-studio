@@ -420,7 +420,7 @@ implements OnInit
 
             field:'ProfileCode',
 
-            width:'140px',
+            width:'150px',
 
             align:'center'
         },
@@ -428,7 +428,7 @@ implements OnInit
         {
             header:'Profile Name',
 
-            field:'ProfileName', width:'210px',
+            field:'ProfileName', width:'280px',
 
             align:'left'
         },
@@ -438,9 +438,9 @@ implements OnInit
 
             field:'DisplayOrder',
 
-            width:'160px',
+            width:'120px',
 
-            align:'left'
+            align:'center'
         },
 
         {
@@ -450,7 +450,7 @@ implements OnInit
 
             type:'status',
 
-            width:'130px',
+            width:'120px',
 
             align:'center'
         },
@@ -462,7 +462,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'140px',
+            width:'130px',
 
             align:'center'
         }

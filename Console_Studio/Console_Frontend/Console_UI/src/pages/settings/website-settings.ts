@@ -68,6 +68,27 @@ type Tab = 'company' | 'home' | 'requests' | 'pricing' | 'about';
         .add-plan { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 200px; border: 1.5px dashed var(--ac-border); border-radius: 14px; background: transparent; color: var(--ac-muted); font: inherit; font-weight: 700; cursor: pointer; }
         .add-plan:hover { border-color: var(--ac-accent); color: var(--ac-accent); }
         .add-plan i { font-size: 20px; }
+
+        /* Pricing fits the card : no scroll (2026-11-20) */
+        .ws-scroll.fit { gap: 12px; padding: 16px 20px; overflow: hidden; }
+        .pr-top { display: grid; flex: none; grid-template-columns: minmax(0, 1.1fr) 160px minmax(0, 2fr); gap: 14px; align-items: end; }
+        .pr-top .sw { padding: 9px 14px; }
+        .pr-plans-head { display: flex; flex: none; align-items: baseline; gap: 14px; }
+        .pr-plans-head .ac-hint { margin: 0; }
+        .fit .plans { flex: 1; min-height: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 12px; }
+        .fit .plan { gap: 8px; min-height: 0; padding: 12px 14px; }
+        .fit .plan .ws-grid { flex: 1; gap: 8px 10px; min-height: 0; grid-template-rows: auto auto auto auto minmax(0, 1fr); }
+        .fit .plan .feat { display: flex; flex-direction: column; min-height: 0; }
+        .fit .plan .feat .ac-textarea { flex: 1; min-height: 60px; resize: none; }
+        .fit .add-plan { min-height: 0; }
+        .pop { display: inline-flex; align-items: center; gap: 6px; margin-right: 4px; color: var(--ac-muted); font-size: 11.5px; font-weight: 700; cursor: pointer; }
+        .pop input { position: absolute; opacity: 0; pointer-events: none; }
+        .pop .sw-track { width: 30px; height: 17px; margin: 0; }
+        .pop .sw-track::after { top: 2.5px; left: 2.5px; width: 12px; height: 12px; }
+        .pop input:checked + .sw-track { background: var(--ac-accent); }
+        .pop input:checked + .sw-track::after { transform: translateX(13px); }
+        .pop input:checked ~ span { color: var(--ac-accent); }
+        @media (max-width: 1400px) { .ws-scroll.fit { overflow-y: auto; } .fit .plans { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; flex: none; } .fit .plan .feat .ac-textarea { min-height: 110px; } }
         .ws-loading { display: flex; flex: 1; align-items: center; justify-content: center; gap: 10px; color: var(--ac-muted); }
         .ws-readonly { padding: 10px 12px; border-radius: 10px; background: var(--ac-amber-soft); color: var(--ac-amber); font-weight: 600; }
         @media (max-width: 1000px) { .ws { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); } .ws-tabs { flex-direction: row; overflow-x: auto; align-self: start; } .ws-tab small { display: none; } .ws-grid { grid-template-columns: minmax(0, 1fr); } }
@@ -99,7 +120,7 @@ type Tab = 'company' | 'home' | 'requests' | 'pricing' | 'about';
                 </nav>
 
                 <div class="ac-card ws-body">
-                    <div class="ws-scroll ac-scroll" (input)="dirty.set(true)" (change)="dirty.set(true)">
+                    <div class="ws-scroll ac-scroll" [class.fit]="tab() === 'pricing'" (input)="dirty.set(true)" (change)="dirty.set(true)">
                         @if (!canSave) { <div class="ws-readonly"><i class="fas fa-lock"></i> Only the Owner can change the website settings.</div> }
                         @if (error()) { <div class="ac-error">{{ error() }}</div> }
 
@@ -189,23 +210,28 @@ type Tab = 'company' | 'home' | 'requests' | 'pricing' | 'about';
                             @case ('pricing')
                             {
                                 <span class="ac-section-label">Pricing page</span>
-                                <label class="sw">
-                                    <input type="checkbox" [(ngModel)]="m.ShowPricing"><span class="sw-track"></span>
-                                    <span><b>Show the Pricing page</b><span class="t">Off : the menu hides Pricing.</span></span>
-                                </label>
-                                <div class="ws-grid">
+                                <div class="pr-top">
+                                    <label class="sw">
+                                        <input type="checkbox" [(ngModel)]="m.ShowPricing"><span class="sw-track"></span>
+                                        <span><b>Show the Pricing page</b><span class="t">Off : the menu hides Pricing.</span></span>
+                                    </label>
                                     <div class="ac-field"><label>Currency</label><input class="ac-input" [(ngModel)]="m.Currency" placeholder="USD, GBP, BDT..."></div>
                                     <div class="ac-field"><label>Note under the plans</label><input class="ac-input" [(ngModel)]="m.PricingNote"></div>
                                 </div>
 
-                                <span class="ac-section-label">Plans</span>
-                                <span class="ac-hint">Leave the monthly price empty to show "On request". One feature per line.</span>
+                                <div class="pr-plans-head">
+                                    <span class="ac-section-label">Plans</span>
+                                    <span class="ac-hint">Leave the monthly price empty to show "On request". One feature per line.</span>
+                                </div>
                                 <div class="plans">
                                     @for (p of m.Plans; track $index; let i = $index; let last = $last)
                                     {
                                         <div class="plan" [class.hi]="p.Highlight">
                                             <div class="plan-head">
                                                 <b>{{ p.Name || 'New plan' }}</b>
+                                                <label class="pop" title="Most popular : shown raised with a badge">
+                                                    <input type="checkbox" [(ngModel)]="p.Highlight"><span class="sw-track"></span><span>Popular</span>
+                                                </label>
                                                 <div class="plan-tools">
                                                     <button class="ac-icon-btn" type="button" title="Move left" [disabled]="i === 0" (click)="move(i, -1)"><i class="fas fa-arrow-left"></i></button>
                                                     <button class="ac-icon-btn" type="button" title="Move right" [disabled]="last" (click)="move(i, 1)"><i class="fas fa-arrow-right"></i></button>
@@ -220,12 +246,8 @@ type Tab = 'company' | 'home' | 'requests' | 'pricing' | 'about';
                                                 <div class="ac-field"><label>Setup fee</label><div class="money"><span>{{ m.Currency }}</span><input class="ac-input" type="number" min="0" [(ngModel)]="p.SetupFee"></div></div>
                                                 <div class="ac-field"><label>Branches</label><input class="ac-input" [(ngModel)]="p.Branches" placeholder="Up to 5"></div>
                                                 <div class="ac-field"><label>Users</label><input class="ac-input" [(ngModel)]="p.Users" placeholder="Up to 25"></div>
-                                                <div class="ac-field wide"><label>Features</label><textarea class="ac-textarea" rows="5" [ngModel]="p.Features.join('\\n')" (ngModelChange)="p.Features = $event.split('\\n')"></textarea></div>
+                                                <div class="ac-field wide feat"><label>Features</label><textarea class="ac-textarea" rows="5" [ngModel]="p.Features.join('\\n')" (ngModelChange)="p.Features = $event.split('\\n')"></textarea></div>
                                             </div>
-                                            <label class="sw">
-                                                <input type="checkbox" [(ngModel)]="p.Highlight"><span class="sw-track"></span>
-                                                <span><b>Most popular</b><span class="t">Shown raised with a badge.</span></span>
-                                            </label>
                                         </div>
                                     }
                                     @if (m.Plans.length < 5)

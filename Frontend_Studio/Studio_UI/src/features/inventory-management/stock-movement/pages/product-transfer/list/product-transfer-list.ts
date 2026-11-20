@@ -349,16 +349,16 @@ export class ProductTransferList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Transfer No', field:'TransferNo', width:'160px', align:'left', sortable:true },
-        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
-        { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
-        { header:'From', field:'FromText', width:'160px', align:'left', sortable:true },
-        { header:'To', field:'ToText', width:'160px', align:'left', sortable:true },
-        { header:'Lines', field:'LineCount', width:'160px', align:'left', sortable:true },
+        { header:'Transfer No', field:'TransferNo', width:'170px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'120px', align:'center', sortable:true },
+        { header:'Product Type', field:'TypeText', width:'140px', align:'left', sortable:true },
+        { header:'From', field:'FromText', width:'200px', align:'left', sortable:true },
+        { header:'To', field:'ToText', width:'200px', align:'left', sortable:true },
+        { header:'Lines', field:'LineCount', width:'90px', align:'center', sortable:true },
         { header:'Qty', field:'QtyText', width:'90px', align:'center', sortable:true },
         { header:'Value', field:'ValueText', width:'130px', align:'right', sortable:true },
-        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     // Extra row buttons before View / Edit / Delete

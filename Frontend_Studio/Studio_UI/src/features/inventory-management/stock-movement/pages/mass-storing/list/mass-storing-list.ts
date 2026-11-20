@@ -339,14 +339,14 @@ export class MassStoringList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Storing No', field:'StoringNo', width:'160px', align:'left', sortable:true },
-        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
-        { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
-        { header:'Warehouse', field:'WarehouseText', width:'160px', align:'left', sortable:true },
-        { header:'Lines', field:'LineCount', width:'160px', align:'left', sortable:true },
-        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Saved By', field:'CreatedByName', width:'160px', align:'left', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Storing No', field:'StoringNo', width:'170px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'120px', align:'center', sortable:true },
+        { header:'Product Type', field:'TypeText', width:'140px', align:'left', sortable:true },
+        { header:'Warehouse', field:'WarehouseText', width:'220px', align:'left', sortable:true },
+        { header:'Lines', field:'LineCount', width:'90px', align:'center', sortable:true },
+        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Saved By', field:'CreatedByName', width:'180px', align:'left', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     // Extra row buttons before View / Edit / Delete

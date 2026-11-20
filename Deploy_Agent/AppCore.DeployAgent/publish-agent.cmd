@@ -17,6 +17,7 @@ if errorlevel 1 (
     exit /b 1
 )
 copy /y install-agent.cmd publish\ >nul
+copy /y secure-services.cmd publish\ >nul
 echo.
 echo   Done : %~dp0publish
 echo   Copy it to skyhost and run install-agent.cmd as administrator.

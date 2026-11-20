@@ -168,6 +168,16 @@ public class ChartOfServicesRepository : IChartOfServicesRepository
     }
 
 
+    // The sources of this company : Membership Services are left
+    // out while Membership Management is switched off (2026-11-20)
+    private static IEnumerable<ServiceSource> ActiveSources() =>
+        ServiceSources.Where
+        (
+            x =>
+                x.ItemType != ChartOfServicesItemTypes.MembershipService
+                || AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Membership)
+        );
+
     private static readonly ServiceSource[] ServiceSources =
     {
         //=======================================================
@@ -401,7 +411,7 @@ public class ChartOfServicesRepository : IChartOfServicesRepository
         foreach
         (
             ServiceSource source
-            in ServiceSources
+            in ActiveSources()
         )
         {
             rows.AddRange(
@@ -554,7 +564,7 @@ public class ChartOfServicesRepository : IChartOfServicesRepository
         foreach
         (
             ServiceSource source
-            in ServiceSources
+            in ActiveSources()
         )
         {
             var rows =

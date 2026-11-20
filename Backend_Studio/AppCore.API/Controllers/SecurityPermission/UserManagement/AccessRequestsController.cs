@@ -275,6 +275,9 @@ public class AccessRequestsController : ControllerBase
             return Conflict(new { message = $"The Login ID '{request.UserName}' is already in use. Reject this request and ask for a new one." });
         }
 
+        // one at a time, so two approvals cannot both pass the limit
+        await using LimitLock limitLock = await LimitLock.TakeAsync(_context, LimitLock.Users);
+
         // user limit (Console MaxUsers, 2026-11-20)
         string? overLimit = await UserLimit.RefusalAsync(_context, _limits);
 

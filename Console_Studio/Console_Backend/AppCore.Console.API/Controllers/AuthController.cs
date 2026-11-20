@@ -4,6 +4,7 @@
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 using AppCore.Console.API.Data;
@@ -21,9 +22,6 @@ public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private const int MaxFailures = 5;
-    private static readonly TimeSpan LockFor = TimeSpan.FromMinutes(15);
-
     private readonly ControlDbContext _db;
     private readonly StaffTokens _tokens;
     private readonly Audit _audit;
@@ -35,37 +33,52 @@ public class AuthController : ControllerBase
         _audit = audit;
     }
 
+    // Limits (2026-11-20, Security\LoginGuard.cs) : 10 tries / 5 min
+    // per address, and 5 wrong passwords lock the login ID from
+    // THAT address only, so a stranger cannot lock the Owner out.
     [AllowAnonymous]
     [HttpPost("login")]
+    [EnableRateLimiting(LoginGuard.Policy)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         string loginId = (request.LoginId ?? string.Empty).Trim().ToLowerInvariant();
+
+        // a made-up, very long login ID is not kept
+        if (loginId.Length > 100)
+        {
+            return Unauthorized(new { message = "Wrong login ID or password." });
+        }
+
+        string address = VisitorIp.Of(HttpContext);
+
+        // the same answer for a real and an unknown login ID
+        if (LoginGuard.LockedUntil(loginId, address) is DateTime locked)
+        {
+            int minutes = Math.Max(1, (int)Math.Ceiling((locked - DateTime.UtcNow).TotalMinutes));
+
+            return Unauthorized(new { message = $"Locked after {LoginGuard.MaxFailures} wrong passwords. Try again in {minutes} minute(s)." });
+        }
 
         StaffUser? user =
             await _db.StaffUsers.FirstOrDefaultAsync(x => x.LoginId.ToLower() == loginId);
 
         if (user is null || user.Status != "Active")
         {
+            LoginGuard.Failed(loginId, address);
+
             _audit.Add("Login.Failed", "StaffUser", loginId, details: "Unknown or inactive login");
             await _db.SaveChangesAsync();
 
             return Unauthorized(new { message = "Wrong login ID or password." });
         }
 
-        if (user.LockedUntil is DateTime locked && locked > DateTime.UtcNow)
-        {
-            return Unauthorized(new { message = $"Locked after {MaxFailures} wrong passwords. Try again after {locked.ToLocalTime():HH:mm}." });
-        }
-
         if (!StaffPassword.Verify(request.Password ?? string.Empty, user.PasswordHash))
         {
-            user.FailedLogins++;
+            LoginGuard.Failed(loginId, address);
 
-            if (user.FailedLogins >= MaxFailures)
-            {
-                user.LockedUntil = DateTime.UtcNow.Add(LockFor);
-                user.FailedLogins = 0;
-            }
+            // counted for information; the account itself is no
+            // longer locked
+            user.FailedLogins++;
 
             _audit.Add("Login.Failed", "StaffUser", user.StaffUserId.ToString(), staffUserId: user.StaffUserId);
             await _db.SaveChangesAsync();
@@ -74,6 +87,8 @@ public class AuthController : ControllerBase
         }
 
         StaffRole role = await _db.StaffRoles.FirstAsync(x => x.StaffRoleId == user.StaffRoleId);
+
+        LoginGuard.Succeeded(loginId, address);
 
         user.FailedLogins = 0;
         user.LockedUntil = null;

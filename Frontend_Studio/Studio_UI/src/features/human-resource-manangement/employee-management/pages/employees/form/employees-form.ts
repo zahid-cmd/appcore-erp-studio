@@ -13,6 +13,13 @@ from '@angular/core';
 
 import
 {
+    MODULE_KEYS,
+    ModuleSwitchService
+}
+from '../../../../../../core/shell/module-switch.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -168,6 +175,18 @@ type TabKey =
 export class EmployeesForm
 implements OnInit
 {
+    private readonly moduleSwitch =
+        inject(ModuleSwitchService);
+
+    // Human Resource Management on for this company. Off : the
+    // profile is only the general part (no shift, weekly holiday
+    // or salary; the API keeps what is saved of them)
+    get hrOn():
+        boolean
+    {
+        return this.moduleSwitch.isOn(MODULE_KEYS.humanResource);
+    }
+
     // The shared date picker works with a Date; the page keeps
     // yyyy-MM-dd text
     readonly asDate = hrToDate;
@@ -204,7 +223,7 @@ implements OnInit
         { label:'Inactive', value:false }
     ];
 
-    readonly tabs:
+    private readonly allTabs:
         ControlTab[] =
     [
         { id:'personal', label:'Personal' },
@@ -212,6 +231,17 @@ implements OnInit
         { id:'job', label:'Job' },
         { id:'salary', label:'Salary Structure' }
     ];
+
+    // (no Salary Structure tab with Human Resource off)
+    private readonly generalTabs:
+        ControlTab[] =
+        this.allTabs.filter(x => x.id !== 'salary');
+
+    get tabs():
+        ControlTab[]
+    {
+        return this.hrOn ? this.allTabs : this.generalTabs;
+    }
 
     selectedTab:
         TabKey =
@@ -943,7 +973,7 @@ implements OnInit
             add('job', 'Pick the designation.');
         }
 
-        if (!e.ShiftId)
+        if (this.hrOn && !e.ShiftId)
         {
             add('job', 'Pick the shift.');
         }
@@ -1095,7 +1125,7 @@ implements OnInit
     private goToList():
         void
     {
-        void this.router.navigate(['/human-resource-manangement/employee-management/employees/list']);
+        void this.router.navigate(['/settings/employee-setup/employees/list']);
     }
 
     onBackToList():

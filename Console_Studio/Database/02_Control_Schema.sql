@@ -13,6 +13,14 @@
   on first start (no password in this file).
 ===============================================================*/
 
+-- Stops here unless pgAdmin is on AppCore_Control (2026-11-20)
+DO $$
+BEGIN
+    IF current_database() <> 'AppCore_Control' THEN
+        RAISE EXCEPTION 'Wrong database (%). Run this on AppCore_Control.', current_database();
+    END IF;
+END $$;
+
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

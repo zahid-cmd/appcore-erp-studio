@@ -48,6 +48,7 @@ import { ListTableComponent, ListTableColumn } from '../../../../../shared/compo
 import { PaginationComponent } from '../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../shared/components/utilities/toast/toast';
+import { SummaryLineComponent, SummaryLineItem } from '../../../../../shared/components/layout/summary-line/summary-line';
 import { ConfirmDialogComponent } from '../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
 import { ProgressDialogComponent } from '../../../../../shared/components/utilities/progress-dialog/progress-dialog';
 import { ToastService } from '../../../../../shared/components/utilities/toast/toast.service';
@@ -258,6 +259,7 @@ const PAGES:
         PaginationComponent,
         HistoryDrawerComponent,
         ToastComponent,
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -327,7 +329,7 @@ implements OnInit
         10;
 
     summaryItems:
-        { label: string; value: string }[] = [];
+        SummaryLineItem[] = [];
 
     historyOpened =
         false;
@@ -429,7 +431,8 @@ implements OnInit
             { label:'Total', value:matched.length.toLocaleString('en-US') },
             ...this.page.totals.map(t => ({
                 label:t.label,
-                value:`Tk ${pfMoney(matched.reduce((sum, x) => sum + (Number(x[t.field]) || 0), 0))}`
+                value:`Tk ${pfMoney(matched.reduce((sum, x) => sum + (Number(x[t.field]) || 0), 0))}`,
+                share:false
             }))
         ];
 

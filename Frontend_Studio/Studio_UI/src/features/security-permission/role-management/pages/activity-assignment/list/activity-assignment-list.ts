@@ -418,7 +418,7 @@ implements OnInit
         {
             header:'Role Profile',
 
-            field:'roleProfileName', width:'160px',
+            field:'roleProfileName', width:'300px',
 
             align:'left'
         },
@@ -428,9 +428,9 @@ implements OnInit
 
             field:'pageCount',
 
-            width:'160px',
+            width:'120px',
 
-            align:'left'
+            align:'center'
         },
 
         {
@@ -438,9 +438,9 @@ implements OnInit
 
             field:'masterActivityCount',
 
-            width:'160px',
+            width:'120px',
 
-            align:'left'
+            align:'center'
         },
 
         {
@@ -450,7 +450,7 @@ implements OnInit
 
             type:'status',
 
-            width:'130px',
+            width:'120px',
 
             align:'center'
         },
@@ -462,7 +462,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'140px',
+            width:'130px',
 
             align:'center'
         }

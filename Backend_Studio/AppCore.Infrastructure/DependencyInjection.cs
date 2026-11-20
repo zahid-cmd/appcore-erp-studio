@@ -623,10 +623,17 @@ public static class DependencyInjection
         // string; otherwise (Mode Off, or a background job) the
         // one database above. The options are built per scope, so
         // every request opens the right company's database.
+        //
+        // Mode Host with no company (2026-11-20, review B9) :
+        // NoCompanyGuard writes a warning, or refuses
+        // (Tenancy:NoCompany).
         //-------------------------------------------------------
         services.AddDbContext<AppDbContext>
         (
             (serviceProvider, options) =>
+            {
+                AppCore.Infrastructure.Platform.Tenancy.NoCompanyGuard.Check(serviceProvider);
+
                 options
                     .UseNpgsql
                     (
@@ -637,7 +644,8 @@ public static class DependencyInjection
                     .AddInterceptors
                     (
                         serviceProvider.GetRequiredService<CurrentUserStampInterceptor>()
-                    )
+                    );
+            }
         );
 
 

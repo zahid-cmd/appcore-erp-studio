@@ -30,6 +30,13 @@ from '@angular/core';
 
 import
 {
+    MODULE_KEYS,
+    ModuleSwitchService
+}
+from '../../../../../../core/shell/module-switch.service';
+
+import
+{
     MotorPowerService
 }
 from '../../../../../../core/motor-power/motor-power.service';
@@ -229,6 +236,9 @@ type CkdTab =
 export class CkdDocumentsStatusList
 implements OnInit
 {
+    private readonly moduleSwitch =
+        inject(ModuleSwitchService);
+
     private readonly service =
         inject(CkdDocumentsStatusService);
 
@@ -444,6 +454,37 @@ implements OnInit
         { header:'Checked', field:'CheckedText', width:'190px', align:'left', priority:3 },
         { header:'Actions', field:'actions', type:'actions', width:'90px', align:'center' }
     ];
+
+    // The columns shown : no Customer File with Registration
+    // Management off for this company. Asked each time : the
+    // company's switches may arrive after the page opens (a page
+    // refresh). Kept until the columns or the switch change.
+    private shownFrom:
+        ListTableColumn[] | null =
+        null;
+
+    private shownOn =
+        true;
+
+    private shown:
+        ListTableColumn[] =
+        [];
+
+    get shownColumns():
+        ListTableColumn[]
+    {
+        const on =
+            this.moduleSwitch.isOn(MODULE_KEYS.registration);
+
+        if (this.shownFrom !== this.columns || this.shownOn !== on)
+        {
+            this.shownFrom = this.columns;
+            this.shownOn = on;
+            this.shown = on ? this.columns : this.columns.filter(x => x.field !== 'FileText');
+        }
+
+        return this.shown;
+    }
 
 
     //===========================================================

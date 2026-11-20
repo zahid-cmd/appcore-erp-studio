@@ -17,6 +17,14 @@ ROLLBACK;
   tenant starts with 1 company and no branch limit.
 ===============================================================*/
 
+-- Stops here unless pgAdmin is on AppCore_Control (2026-11-20)
+DO $$
+BEGIN
+    IF current_database() <> 'AppCore_Control' THEN
+        RAISE EXCEPTION 'Wrong database (%). Run this on AppCore_Control.', current_database();
+    END IF;
+END $$;
+
 BEGIN;
 
 ALTER TABLE public."Tenants" ADD COLUMN IF NOT EXISTS "MaxCompanies" integer NOT NULL DEFAULT 1;

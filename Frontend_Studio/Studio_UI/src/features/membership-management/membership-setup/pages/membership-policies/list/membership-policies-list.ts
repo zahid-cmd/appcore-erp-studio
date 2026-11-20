@@ -424,57 +424,57 @@ implements OnInit, OnDestroy
         {
             header:'Policy Code',
             field:'PolicyCode',
-            width:'140px',
+            width:'130px',
             align:'center'
         },
         {
             header:'Membership Policy',
             field:'CardDisplay',
-            width:'160px',
+            width:'200px',
             align:'left'
         },
         {
             header:'Validity',
             field:'ValidityDisplay',
-            width:'160px',
-            align:'left'
+            width:'110px',
+            align:'center'
         },
         {
             header:'Enrollment Fee',
             field:'EnrollmentFeeDisplay',
-            width:'160px',
-            align:'left'
+            width:'130px',
+            align:'right'
         },
         {
             header:'Renewal Fee',
             field:'RenewalFeeDisplay',
-            width:'160px',
-            align:'left'
+            width:'130px',
+            align:'right'
         },
         {
             header:'Discounts (SP / AC / SC)',
             field:'DiscountDisplay',
-            width:'160px',
-            align:'left'
+            width:'180px',
+            align:'center'
         },
         {
             header:'Free Services',
             field:'FreeServiceDisplay',
-            width:'160px',
+            width:'190px',
             align:'left'
         },
         {
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'140px',
+            width:'130px',
             align:'center'
         }
     ];

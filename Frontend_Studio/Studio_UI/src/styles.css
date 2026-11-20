@@ -396,3 +396,20 @@ body:not(.login-page-preview-active)
     overflow:
         hidden;
 }
+
+/* Website : Enquiry Management is switched off for this company
+   (core/website/website-data.service.ts). Every link to the
+   enquire form and every button marked site-enquiry-only goes. */
+body.site-no-enquiry a[href^="/enquire"],
+body.site-no-enquiry .site-enquiry-only
+{
+    display:
+        none !important;
+}
+
+/* Website : EMI Management is switched off for this company */
+body.site-no-emi app-emi-estimator
+{
+    display:
+        none !important;
+}

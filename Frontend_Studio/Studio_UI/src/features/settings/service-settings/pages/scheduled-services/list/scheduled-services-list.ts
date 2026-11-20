@@ -109,6 +109,12 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
+    SummaryLineComponent
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     SearchDropdownComponent
 }
 from '../../../../../../shared/components/controls/search-dropdown/search-dropdown';
@@ -156,7 +162,8 @@ from '../../../models/service-policy.model';
         PaginationComponent,
         HistoryDrawerComponent,
         SearchDropdownComponent,
-        ToastComponent
+        ToastComponent,
+        SummaryLineComponent
     ],
     templateUrl:'./scheduled-services-list.html',
     styleUrl:'./scheduled-services-list.css'
@@ -389,7 +396,7 @@ implements OnInit
             header:'#',
             field:'serial',
             type:'serial',
-            width:'50px',
+            width:'56px',
             align:'center'
         },
         {
@@ -456,14 +463,14 @@ implements OnInit
             header:'Status',
             field:'IsActive',
             type:'status',
-            width:'100px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'80px',
+            width:'130px',
             align:'center'
         }
     ];

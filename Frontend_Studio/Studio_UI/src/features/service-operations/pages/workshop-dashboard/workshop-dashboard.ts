@@ -115,6 +115,10 @@ implements OnInit
     private readonly destroyRef = inject(DestroyRef);
 
     readonly dateTime = wsDateTime;
+
+    // "Service Bay 3" -> words "Service Bay" + number "3" (the number shows bigger)
+    readonly bayLead = (name: string): string => (name ?? '').replace(/\s*\d+\s*$/, '');
+    readonly bayNo = (name: string): string => ((name ?? '').match(/\d+\s*$/)?.[0] ?? '').trim();
     readonly color = wsStatusColor;
     readonly day = wsDay;
 
@@ -263,12 +267,78 @@ implements OnInit
         return (this.data?.Tiles ?? []).filter(x => isMoney(x));
     }
 
-    // the bar of a status : its share of the biggest one
-    barWidth(value: string): number
+    // the pie of the job cards by status (owner 2026-11-20)
+    get statusTotal(): number
     {
-        const most = Math.max(1, ...(this.data?.Statuses ?? []).map(x => Number(x.Value) || 0));
+        return (this.data?.Statuses ?? []).reduce((sum, x) => sum + (Number(x.Value) || 0), 0);
+    }
 
-        return Math.round(((Number(value) || 0) / most) * 100);
+    num(value: string | number): number
+    {
+        return Number(value) || 0;
+    }
+
+    // a status : its share of all job cards, in %
+    share(value: string): number
+    {
+        const total = this.statusTotal;
+
+        return total ? Math.round(((Number(value) || 0) / total) * 100) : 0;
+    }
+
+    // the slices : the circle is 100 long, the first slice starts at the top
+    get slices(): { Label: string; Value: number; Color: string; Pct: number; Offset: number; PctText: number; X: number; Y: number }[]
+    {
+        const total = this.statusTotal;
+        let used = 0;
+
+        if (!total)
+        {
+            return [];
+        }
+
+        return (this.data?.Statuses ?? [])
+            .filter(x => (Number(x.Value) || 0) > 0)
+            .map(x =>
+            {
+                const value = Number(x.Value) || 0;
+                const pct = (value / total) * 100;
+                // the % label sits on the middle of the slice (ring radius 15.9 of a 42 box)
+                const angle = ((used + pct / 2) / 100) * 2 * Math.PI - Math.PI / 2;
+                const ring = (15.9155 / 42) * 100;
+                const slice =
+                {
+                    Label: x.Label, Value: value, Color: wsStatusColor(x.Label), Pct: pct, Offset: 25 - used,
+                    PctText: Math.round(pct), X: 50 + ring * Math.cos(angle), Y: 50 + ring * Math.sin(angle)
+                };
+
+                used += pct;
+
+                return slice;
+            });
+    }
+
+    // an icon for each figure
+    tileIcon(label: string): string
+    {
+        const l = (label ?? '').toLowerCase();
+
+        if (l.includes('opened')) return 'fa-folder-open';
+        if (l.includes('assigned')) return 'fa-user-check';
+        if (l.includes('work done')) return 'fa-screwdriver-wrench';
+        if (l.includes('billed')) return 'fa-file-invoice-dollar';
+        if (l.includes('closed')) return 'fa-circle-check';
+        if (l.includes('pending')) return 'fa-hourglass-half';
+        if (l.includes('in the workshop')) return 'fa-motorcycle';
+        if (l.includes('checked in')) return 'fa-right-to-bracket';
+        if (l.includes('parts')) return 'fa-box-open';
+        if (l.includes('ready')) return 'fa-flag-checkered';
+        if (l.includes('late')) return 'fa-clock';
+        if (l.includes('invoiced')) return 'fa-file-invoice';
+        if (l.includes('collected')) return 'fa-hand-holding-dollar';
+        if (l.includes('due')) return 'fa-scale-unbalanced';
+
+        return 'fa-chart-simple';
     }
 
     // a bar : the bikes of that status

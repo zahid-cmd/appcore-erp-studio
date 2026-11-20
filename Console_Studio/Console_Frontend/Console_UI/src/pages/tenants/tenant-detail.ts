@@ -6,8 +6,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ConsoleApi } from '../../core/console-api.service';
 import { apiMessage } from '../../core/auth.interceptor';
-import { TENANT_STATUSES, TenantDatabasePlan, TenantDatabaseResult, TenantDetail } from '../../core/models';
-import { TenantFormComponent } from './tenant-form';
+import { TENANT_STATUSES, TenantDatabasePlan, TenantResetResult, TenantDatabaseResult, TenantDetail } from '../../core/models';
 import { TenantModulesCard } from './tenant-modules';
 import { PageHeader } from '../../ui/page-header';
 import { SelectBox, SelectOption } from '../../ui/select-box';
@@ -15,19 +14,25 @@ import { ToastService } from '../../ui/toast';
 
 @Component({
     selector: 'ac-tenant-detail',
-    imports: [FormsModule, RouterLink, DatePipe, TenantFormComponent, TenantModulesCard, PageHeader, SelectBox],
+    imports: [FormsModule, RouterLink, DatePipe, TenantModulesCard, PageHeader, SelectBox],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'ac-page' },
     styles: [`
-        .td-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-        .td-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+        /* three columns, as tall as the longest one (not the whole page); a column scrolls on its own only if it must (2026-11-20) */
+        .td-fit { display: flex; flex: 0 1 auto; min-height: 0; }
+        .td-grid { display: grid; flex: 0 1 auto; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr) minmax(0, 0.9fr); gap: 16px; align-items: stretch; }
+        .td-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0; overflow-y: auto; }
+        .td-col > * { flex-shrink: 0; }
+        /* same height for the three columns : each column's last card reaches the bottom */
+        .td-col > :last-child { flex-grow: 1; }
+        .td-grid > .ac-card { min-height: 0; overflow-y: auto; }
         .td-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .td-fact { display: flex; flex-direction: column; gap: 4px; padding: 13px 18px; border-bottom: 1px solid var(--ac-border-2); }
+        .td-fact { display: flex; flex-direction: column; gap: 3px; padding: 10px 16px; border-bottom: 1px solid var(--ac-border-2); }
         .td-fact:nth-child(odd) { border-right: 1px solid var(--ac-border-2); }
         .td-fact span { color: var(--ac-muted); font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
         .td-fact b { color: var(--ac-text); font-weight: 600; overflow-wrap: anywhere; }
         .td-remarks { padding: 13px 18px; color: var(--ac-text-2); }
-        .td-domains { display: flex; flex-direction: column; gap: 8px; padding: 14px 18px; }
+        .td-domains { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; }
         .td-domain { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--ac-border-2); border-radius: 11px; background: var(--ac-card-2); }
         .td-domain > i { color: var(--ac-accent); }
         .td-domain a { flex: 1; font-family: var(--ac-mono-font); font-size: 12.5px; overflow-wrap: anywhere; }
@@ -44,6 +49,7 @@ import { ToastService } from '../../ui/toast';
         .td-db-rows span { color: var(--ac-muted); }
         .td-db-rows b { color: var(--ac-text); font-family: var(--ac-mono-font); font-weight: 600; overflow-wrap: anywhere; }
         .td-db-problems { margin: 0; padding-left: 18px; color: var(--ac-danger, #b42318); font-size: 12.5px; }
+        .td-reset-actions { display: flex; flex-wrap: wrap; gap: 8px; }
         .td-db-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
         .td-once { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(10, 10, 12, 0.55); }
         .td-once-box { display: flex; flex-direction: column; gap: 14px; width: min(640px, 100%); padding: 20px 22px; border: 1px solid var(--ac-border); border-radius: 14px; background: var(--ac-card); box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.5); }
@@ -54,7 +60,8 @@ import { ToastService } from '../../ui/toast';
         .td-secret code { padding: 7px 10px; border: 1px solid var(--ac-border-2); border-radius: 8px; background: var(--ac-card-2); font-family: var(--ac-mono-font); font-size: 12.5px; overflow-wrap: anywhere; }
         .td-confirm { width: min(480px, 100%); }
         .td-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
-        @media (max-width: 1100px) { .td-grid { grid-template-columns: minmax(0, 1fr); } }
+        @media (max-width: 1400px) { .td-fit { overflow-y: auto; } .td-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); flex: none; } .td-col { overflow: visible; } }
+        @media (max-width: 1000px) { .td-grid { grid-template-columns: minmax(0, 1fr); } }
     `],
     template: `
         @if (t(); as t)
@@ -66,12 +73,12 @@ import { ToastService } from '../../ui/toast';
                     <a class="ac-btn" routerLink="/tenants"><i class="fas fa-arrow-left"></i> Tenants</a>
                     @if (canManage)
                     {
-                        <button class="ac-btn ac-btn-primary" type="button" (click)="editOpen.set(true)"><i class="fas fa-pen"></i> Edit</button>
+                        <a class="ac-btn ac-btn-primary" [routerLink]="['/tenants', t.PublicId, 'edit']"><i class="fas fa-pen"></i> Edit</a>
                     }
                 </ng-container>
             </ac-page-header>
 
-            <div class="ac-page-scroll ac-scroll">
+            <div class="td-fit ac-scroll">
                 <div class="td-grid">
                     <div class="td-col">
                         <div class="ac-card">
@@ -110,11 +117,41 @@ import { ToastService } from '../../ui/toast';
                             </div>
                         </div>
 
+                    </div>
+
+                    <div class="td-col">
                         <!-- Package, modules and users (2026-11-20) -->
                         <ac-tenant-modules [publicId]="t.PublicId" [canManage]="canManage" />
 
                         <!-- Create database (onboarding) : only while the
                              tenant has none -->
+                        @if (t.DatabaseName && canManage)
+                        {
+                            <div class="ac-card">
+                                <div class="ac-card-title"><i class="fas fa-key"></i> Access</div>
+                                <div class="td-db">
+                                    <div class="td-reset-actions">
+                                        <button class="ac-btn" type="button" [disabled]="resetting()" (click)="askReset('admin')">
+                                            <i class="fas fa-user-shield"></i> Reset admin password
+                                        </button>
+                                        <button class="ac-btn" type="button" [disabled]="resetting()" (click)="askReset('login')">
+                                            <i class="fas fa-database"></i> Reset database login
+                                        </button>
+                                    </div>
+                                    <span class="ac-sub">Admin password : when the client's administrator lost it. Database login : after the ERP server's key was replaced, or if the password may have leaked.</span>
+                                    @if (resetError()) { <div class="ac-error">{{ resetError() }}</div> }
+                                </div>
+                            </div>
+                        }
+
+                        @if (!t.DatabaseName && planError())
+                        {
+                            <div class="ac-card">
+                                <div class="ac-card-title"><i class="fas fa-database"></i> Create database</div>
+                                <div class="ac-error">The check before Create database failed : {{ planError() }} Refresh the page to try again.</div>
+                            </div>
+                        }
+
                         @if (!t.DatabaseName && plan(); as plan)
                         {
                             <div class="ac-card">
@@ -132,6 +169,28 @@ import { ToastService } from '../../ui/toast';
                                         <ul class="td-db-problems">
                                             @for (p of plan.Problems; track $index) { <li>{{ p }}</li> }
                                         </ul>
+                                    }
+                                    @else if (plan.LeftoverNote)
+                                    {
+                                        <div class="ac-error">{{ plan.LeftoverNote }}</div>
+                                    }
+                                    @else if (plan.Leftover)
+                                    {
+                                        <!-- left by a Create database that failed (2026-11-20) -->
+                                        <div class="td-once-warn">
+                                            A database named <b>{{ plan.DatabaseName }}</b> is already on the server, but this tenant has none recorded :
+                                            it was left by a Create database that failed. Remove it, then create the database again.
+                                        </div>
+
+                                        @if (canManage)
+                                        {
+                                            <div class="td-db-actions">
+                                                <button class="ac-btn" type="button" [disabled]="removing()" (click)="askRemoveLeftover()">
+                                                    <i [class]="removing() ? 'fas fa-spinner fa-spin' : 'fas fa-broom'"></i>
+                                                    {{ removing() ? 'Removing...' : 'Remove leftover' }}
+                                                </button>
+                                            </div>
+                                        }
                                     }
                                     @else if (canManage)
                                     {
@@ -208,6 +267,94 @@ import { ToastService } from '../../ui/toast';
                 </div>
             }
 
+            <!-- Confirm Remove leftover : the name typed again -->
+            @if (leftoverAsk() && plan(); as plan)
+            {
+                <div class="td-once" (click)="leftoverAsk.set(false)">
+                    <div class="td-once-box td-confirm" (click)="$event.stopPropagation()">
+                        <h3><i class="fas fa-broom"></i> Remove the leftover database?</h3>
+                        <div class="ac-sub">For <b>{{ t.DisplayName }}</b>. The half-made database <b>{{ plan.DatabaseName }}</b> and its login are deleted from the server.</div>
+                        <div class="td-once-warn">This cannot be undone. It is only for a database left by a Create database that failed : nothing of a client is in it.</div>
+                        <input class="ac-input" [placeholder]="'Type ' + plan.DatabaseName + ' to confirm'" [ngModel]="leftoverTyped()" (ngModelChange)="leftoverTyped.set($event)">
+
+                        <div class="td-confirm-actions">
+                            <button class="ac-btn" type="button" (click)="leftoverAsk.set(false)">Cancel</button>
+                            <button class="ac-btn ac-btn-primary" type="button" [disabled]="leftoverTyped().trim() !== plan.DatabaseName" (click)="removeLeftover(t)">
+                                <i class="fas fa-broom"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Confirm a reset -->
+            @if (resetAsk(); as kind)
+            {
+                <div class="td-once" (click)="resetAsk.set(null)">
+                    <div class="td-once-box td-confirm" (click)="$event.stopPropagation()">
+                        @if (kind === 'admin')
+                        {
+                            <h3><i class="fas fa-user-shield"></i> Reset the admin password?</h3>
+                            <div class="ac-sub">For <b>{{ t.DisplayName }}</b>. The user <b>admin</b> of this client gets a new password.</div>
+                            <div class="td-once-warn">The present admin password stops working at once. The new one is shown once : keep the window open until you copy it.</div>
+                        }
+                        @else
+                        {
+                            <h3><i class="fas fa-database"></i> Reset the database login?</h3>
+                            <div class="ac-sub">For <b>{{ t.DisplayName }}</b> ({{ t.DatabaseName }}). The client's own database login gets a new password, stored sealed for the ERP.</div>
+                            <div class="td-once-warn">The client's ERP may show errors for up to a minute, until the ERP picks up the new password. Best done outside working hours.</div>
+                        }
+
+                        <div class="td-confirm-actions">
+                            <button class="ac-btn" type="button" (click)="resetAsk.set(null)">Cancel</button>
+                            <button class="ac-btn ac-btn-primary" type="button" (click)="doReset(t, kind)">
+                                <i class="fas fa-rotate"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- The result of a reset -->
+            @if (resetDone(); as r)
+            {
+                <div class="td-once">
+                    <div class="td-once-box">
+                        @if (r.Kind === 'admin')
+                        {
+                            <h3><i class="fas fa-circle-check"></i> New admin password</h3>
+                            <div class="td-once-warn"><b>Shown only now.</b> Copy it before closing : the Console does not keep it.</div>
+
+                            <div class="td-secret"><span>ERP login</span><code>{{ r.AdminUser }}</code><span></span></div>
+                            <div class="td-secret">
+                                <span>Admin password</span><code>{{ r.AdminPassword }}</code>
+                                <button class="ac-btn" type="button" (click)="copy(r.AdminPassword!)"><i class="fas fa-copy"></i></button>
+                            </div>
+                            @if (r.PasswordBookSaved)
+                            {
+                                <div class="ac-sub"><i class="fas fa-book"></i> Also added to your {{ r.PasswordBook }} (Console PC; earlier entries kept).</div>
+                            }
+                            @else
+                            {
+                                <div class="ac-sub"><i class="fas fa-triangle-exclamation"></i> Not saved to the password book (not found on this computer) : copy it now.</div>
+                            }
+
+                            <button class="ac-btn ac-btn-primary" type="button" (click)="resetDone.set(null)">I have copied it</button>
+                        }
+                        @else
+                        {
+                            <h3><i class="fas fa-circle-check"></i> Database login reset</h3>
+                            <div class="ac-sub">
+                                <i class="fas fa-lock"></i> Login {{ r.LoginName }} has a new password, stored sealed : the ERP opens it itself.
+                                Nothing to paste, no redeploy. The client works again within a minute.
+                            </div>
+
+                            <button class="ac-btn ac-btn-primary" type="button" (click)="resetDone.set(null)">Close</button>
+                        }
+                    </div>
+                </div>
+            }
+
             <!-- The passwords : shown once, never stored -->
             @if (created(); as r)
             {
@@ -224,6 +371,14 @@ import { ToastService } from '../../ui/toast';
                             <button class="ac-btn" type="button" (click)="copy(r.AdminPassword)"><i class="fas fa-copy"></i></button>
                         </div>
                         <div class="ac-sub">Give these to the client's administrator. Financial year : {{ r.FinancialYear }}.</div>
+                        @if (r.PasswordBookSaved)
+                        {
+                            <div class="ac-sub"><i class="fas fa-book"></i> Also added to your {{ r.PasswordBook }} (Console PC; earlier entries kept).</div>
+                        }
+                        @else
+                        {
+                            <div class="ac-sub"><i class="fas fa-triangle-exclamation"></i> Not saved to the password book (not found on this computer) : copy it now.</div>
+                        }
 
                         @if (r.SettingsSnippet)
                         {
@@ -247,11 +402,6 @@ import { ToastService } from '../../ui/toast';
                         <button class="ac-btn ac-btn-primary" type="button" (click)="closeCreated()">{{ r.SettingsSnippet ? 'I have copied both' : 'I have copied it' }}</button>
                     </div>
                 </div>
-            }
-
-            @if (editOpen())
-            {
-                <ac-tenant-form [tenant]="t" (closed)="editClosed($event)" />
             }
         }
         @else if (error())
@@ -281,7 +431,6 @@ export class TenantDetailPage implements OnInit
     readonly error = signal('');
     readonly busy = signal(false);
     readonly statusError = signal('');
-    readonly editOpen = signal(false);
 
     readonly newStatus = signal('');
     readonly reason = signal('');
@@ -290,9 +439,21 @@ export class TenantDetailPage implements OnInit
     readonly plan = signal<TenantDatabasePlan | null>(null);
     readonly creating = signal(false);
     readonly dbError = signal('');
+    readonly planError = signal('');
     readonly created = signal<TenantDatabaseResult | null>(null);
     readonly fyStart = signal(7);
     readonly confirmOpen = signal(false);
+
+    // Remove what a failed Create database left (2026-11-20)
+    readonly leftoverAsk = signal(false);
+    readonly leftoverTyped = signal('');
+    readonly removing = signal(false);
+
+    // Reset admin password / database login (2026-11-20)
+    readonly resetAsk = signal<'admin' | 'login' | null>(null);
+    readonly resetting = signal(false);
+    readonly resetError = signal('');
+    readonly resetDone = signal<TenantResetResult | null>(null);
     readonly fyOptions: SelectOption[] =
     [
         { value: 7, label: 'Financial year from July' },
@@ -314,7 +475,17 @@ export class TenantDetailPage implements OnInit
             this.newStatus.set(t.Status);
             this.reason.set('');
 
-            this.plan.set(t.DatabaseName ? null : await this.api.tenantDatabasePlan(t.PublicId).catch(() => null));
+            // a failed check is shown, not hidden (2026-11-20)
+            this.planError.set('');
+
+            this.plan.set(t.DatabaseName
+                ? null
+                : await this.api.tenantDatabasePlan(t.PublicId).catch(e =>
+                {
+                    this.planError.set(apiMessage(e));
+
+                    return null;
+                }));
         }
         catch (e)
         {
@@ -355,6 +526,12 @@ export class TenantDetailPage implements OnInit
     {
         this.confirmOpen.set(false);
 
+        // one at a time (a second click is ignored; the API refuses it too)
+        if (this.creating())
+        {
+            return;
+        }
+
         this.creating.set(true);
         this.dbError.set('');
 
@@ -364,11 +541,94 @@ export class TenantDetailPage implements OnInit
         }
         catch (e)
         {
-            this.dbError.set(apiMessage(e));
+            const message = apiMessage(e);
+
+            // the check again : a leftover of this try shows at once
+            await this.load();
+
+            this.dbError.set(message);
         }
         finally
         {
             this.creating.set(false);
+        }
+    }
+
+    askRemoveLeftover(): void
+    {
+        this.dbError.set('');
+        this.leftoverTyped.set('');
+        this.leftoverAsk.set(true);
+    }
+
+    async removeLeftover(t: TenantDetail): Promise<void>
+    {
+        this.leftoverAsk.set(false);
+
+        // one at a time (a second click is ignored; the API locks too)
+        if (this.removing())
+        {
+            return;
+        }
+
+        this.removing.set(true);
+        this.dbError.set('');
+
+        try
+        {
+            const r = await this.api.removeTenantDatabaseLeftover(t.PublicId, this.leftoverTyped().trim());
+
+            this.toast.success(
+                r.DatabaseRemoved ? 'Leftover removed' : 'Nothing to remove',
+                r.Note || `${r.DatabaseName} is gone. Create database can be tried again.`);
+
+            await this.load();
+        }
+        catch (e)
+        {
+            this.dbError.set(apiMessage(e));
+
+            // the page shows what is on the server now
+            await this.load();
+        }
+        finally
+        {
+            this.removing.set(false);
+        }
+    }
+
+    askReset(kind: 'admin' | 'login'): void
+    {
+        this.resetError.set('');
+        this.resetAsk.set(kind);
+    }
+
+    async doReset(t: TenantDetail, kind: 'admin' | 'login'): Promise<void>
+    {
+        this.resetAsk.set(null);
+
+        // one at a time (a second click is ignored)
+        if (this.resetting())
+        {
+            return;
+        }
+
+        this.resetting.set(true);
+        this.resetError.set('');
+
+        try
+        {
+            this.resetDone.set(kind === 'admin'
+                ? await this.api.resetTenantAdminPassword(t.PublicId)
+                : await this.api.resetTenantDatabaseLogin(t.PublicId));
+        }
+        catch (e)
+        {
+            this.resetError.set(apiMessage(e));
+        }
+        finally
+        {
+            this.resetting.set(false);
         }
     }
 
@@ -382,17 +642,5 @@ export class TenantDetailPage implements OnInit
         this.created.set(null);
 
         void this.load();
-    }
-
-    editClosed(saved: boolean): void
-    {
-        this.editOpen.set(false);
-
-        if (saved)
-        {
-            this.toast.success('Tenant saved');
-
-            void this.load();
-        }
     }
 }

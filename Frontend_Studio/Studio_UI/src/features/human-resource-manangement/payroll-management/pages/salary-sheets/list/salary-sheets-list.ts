@@ -42,6 +42,7 @@ import { ListTableComponent, ListTableColumn } from '../../../../../../shared/co
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
+import { SummaryLineComponent, SummaryLineItem } from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogComponent } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
@@ -117,6 +118,7 @@ type SheetRow =
         PaginationComponent,
         HistoryDrawerComponent,
         ToastComponent,
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -186,7 +188,7 @@ implements OnInit
         10;
 
     summaryItems:
-        { label: string; value: string; tone: '' | 'ok' | 'bad' }[] = [];
+        SummaryLineItem[] = [];
 
     historyOpened =
         false;
@@ -419,7 +421,7 @@ implements OnInit
             { label:'Draft', value:count('Draft'), tone:'' },
             { label:'Approved', value:count('Approved'), tone:'' },
             { label:'Posted', value:count('Posted'), tone:'ok' },
-            { label:'Net Pay Posted', value:`Tk ${payMoney(posted.reduce((sum, x) => sum + x.TotalNet, 0))}`, tone:'' }
+            { label:'Net Pay Posted', value:`Tk ${payMoney(posted.reduce((sum, x) => sum + x.TotalNet, 0))}`, tone:'', share:false }
         ];
 
         this.cdr.detectChanges();

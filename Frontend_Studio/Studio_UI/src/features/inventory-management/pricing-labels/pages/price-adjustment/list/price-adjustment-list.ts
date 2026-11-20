@@ -342,17 +342,17 @@ export class PriceAdjustmentList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Adjustment No', field:'AdjustmentNo', width:'160px', align:'left', sortable:true },
-        { header:'Cut-off Date', field:'CutOffText', width:'130px', align:'center', sortable:true },
-        { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
-        { header:'Circular', field:'CircularText', width:'160px', align:'left', sortable:true },
-        { header:'Products', field:'ProductCount', width:'160px', align:'left', sortable:true },
-        { header:'Batches', field:'BatchCount', width:'160px', align:'left', sortable:true },
-        { header:'Increase', field:'IncreaseText', width:'160px', align:'left', sortable:true },
-        { header:'Reduction', field:'ReductionText', width:'160px', align:'left', sortable:true },
-        { header:'Net', field:'NetText', width:'160px', align:'left', sortable:true },
-        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Adjustment No', field:'AdjustmentNo', width:'170px', align:'left', sortable:true },
+        { header:'Cut-off Date', field:'CutOffText', width:'120px', align:'center', sortable:true },
+        { header:'Product Type', field:'TypeText', width:'140px', align:'left', sortable:true },
+        { header:'Circular', field:'CircularText', width:'200px', align:'left', sortable:true },
+        { header:'Products', field:'ProductCount', width:'100px', align:'center', sortable:true },
+        { header:'Batches', field:'BatchCount', width:'100px', align:'center', sortable:true },
+        { header:'Increase', field:'IncreaseText', width:'130px', align:'right', sortable:true },
+        { header:'Reduction', field:'ReductionText', width:'130px', align:'right', sortable:true },
+        { header:'Net', field:'NetText', width:'130px', align:'right', sortable:true },
+        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     // Extra row buttons before View / Edit / Delete

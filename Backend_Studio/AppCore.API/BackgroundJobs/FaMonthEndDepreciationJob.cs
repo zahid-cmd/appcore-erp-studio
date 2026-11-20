@@ -92,6 +92,13 @@ public class FaMonthEndDepreciationJob : BackgroundService
             // company (Tenancy : TenantScopes)
             await _tenants.ForEachAsync("Fixed Assets month-end depreciation", async sp =>
             {
+                // Fixed Assets Management off for this company
+                // (2026-11-20) : nothing is charged
+                if (ModuleSwitch.IsOff(ModuleKeys.FixedAssets))
+                {
+                    return;
+                }
+
                 IFaDepreciationRepository repository =
                     sp.GetRequiredService<IFaDepreciationRepository>();
 

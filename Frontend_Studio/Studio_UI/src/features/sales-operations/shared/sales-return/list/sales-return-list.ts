@@ -306,15 +306,15 @@ export class SalesReturnList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Return No', field:'ReturnNo', width:'160px', align:'left', sortable:true },
-        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
-        { header:'Invoice', field:'InvoiceText', width:'160px', align:'left', sortable:true },
-        { header:'Customer', field:'CustomerName', width:'160px', align:'left', sortable:true },
+        { header:'Return No', field:'ReturnNo', width:'170px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'120px', align:'center', sortable:true },
+        { header:'Invoice', field:'InvoiceText', width:'170px', align:'left', sortable:true },
+        { header:'Customer', field:'CustomerName', width:'240px', align:'left', sortable:true },
         { header:this.page.pageType === 'MB' ? 'Bikes' : 'Items', field:'ItemsText', width:'240px', align:'left', sortable:true, priority:2 },
         { header:'Qty', field:'QtyText', width:'90px', align:'center', sortable:true, priority:3 },
-        { header:'Credit (Tk)', field:'TotalText', width:'160px', align:'left', sortable:true },
-        { header:'Status', field:'Status', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Credit (Tk)', field:'TotalText', width:'130px', align:'right', sortable:true },
+        { header:'Status', field:'Status', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     readonly rowActions: ListTableRowAction[] =

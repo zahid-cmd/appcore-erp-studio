@@ -528,15 +528,15 @@ implements OnInit
     [
         // balanced widths, one scheme for every list
         { header:'#',             field:'serial',           type:'serial', width:'56px',  align:'center' },
-        { header:'Enquiry No',    field:'EnquiryNo',        width:'160px', align:'left' },
-        { header:'Date',          field:'DateText',         width:'130px', align:'center' },
-        { header:'Enquirer',      field:'EnquirerText', width:'160px',     align:'left' },
-        { header:'Model',         field:'ModelColourText',  width:'160px', align:'left' },
+        { header:'Enquiry No',    field:'EnquiryNo',        width:'170px', align:'left' },
+        { header:'Date',          field:'DateText',         width:'120px', align:'center' },
+        { header:'Enquirer',      field:'EnquirerText', width:'230px',     align:'left' },
+        { header:'Model',         field:'ModelColourText',  width:'200px', align:'left' },
         { header:'Executive',     field:'ExecutiveText',    width:'160px', align:'left' },
-        { header:'Interest',      field:'InterestText',     width:'160px', align:'left', dotField:'InterestLevelColor' },
-        { header:'Status',        field:'StatusText',       width:'160px', align:'left', dotField:'StatusDot' },
-        { header:'Next Follow-up', field:'NextFollowUpText', width:'160px', align:'left' },
-        { header:'Actions',       field:'actions',          type:'actions', width:'140px', align:'center' }
+        { header:'Interest',      field:'InterestText',     width:'130px', align:'left', dotField:'InterestLevelColor' },
+        { header:'Status',        field:'StatusText',       width:'140px', align:'left', dotField:'StatusDot' },
+        { header:'Next Follow-up', field:'NextFollowUpText', width:'150px', align:'left' },
+        { header:'Actions',       field:'actions',          type:'actions', width:'130px', align:'center' }
     ];
 
 

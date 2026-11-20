@@ -144,7 +144,7 @@
                             <header>
                                 <span class="wd-ramp-icon"><i class="fas fa-warehouse"></i></span>
                                 <span class="wd-ramp-name">
-                                    <b>{{ ramp.Name }}</b>
+                                    <b>{{ bayLead(ramp.Name) }} @if (bayNo(ramp.Name)) { <span class="wd-bay-no">{{ bayNo(ramp.Name) }}</span> }</b>
                                     <small>{{ ramp.BranchName }}</small>
                                 </span>
                                 <em>{{ ramp.Jobs.length === 0 ? 'Free' : ramp.Jobs[0].Working ? 'Working' : 'Occupied' }}</em>
@@ -303,23 +303,25 @@
 
             @if (tab === 'figures')
             {
-                <section class="wd-card">
+                <!-- Figures redesigned (owner 2026-11-20) : tiles on top, money beside a pie of the job cards -->
+                <section class="wd-card wd-fig-card">
 
                     <header>
                         <i class="fas fa-screwdriver-wrench"></i>
                         The workshop now
                     </header>
 
-                    <div class="wd-figures">
+                    <div class="wd-kpis">
 
                         @for (tile of workTiles; track tile.Label)
                         {
-                            <div
-                                class="wd-tile wd-figure"
-                                [ngClass]="'wd-' + tile.Tone">
-                                <small>{{ tile.Label }}</small>
-                                <b>{{ tile.Value }}</b>
-                                <span>{{ tile.Hint }}</span>
+                            <div class="wd-kpi" [ngClass]="'wd-' + tile.Tone">
+                                <span class="wd-kpi-icon"><i class="fas" [ngClass]="tileIcon(tile.Label)"></i></span>
+                                <div>
+                                    <small>{{ tile.Label }}</small>
+                                    <b>{{ tile.Value }}</b>
+                                    <span>{{ tile.Hint }}</span>
+                                </div>
                             </div>
                         }
 
@@ -327,54 +329,124 @@
 
                 </section>
 
-                <section class="wd-card">
+                @if (data.Activity?.length)
+                {
+                    <section class="wd-card wd-fig-card">
 
-                    <header>
-                        <i class="fas fa-coins"></i>
-                        Money
-                    </header>
+                        <header>
+                            <i class="fas fa-calendar-day"></i>
+                            Today at the workshop
+                            <small class="wd-head-hint">{{ day(data.Today) }}</small>
+                        </header>
 
-                    <div class="wd-figures">
+                        <div class="wd-kpis wd-kpis-six">
 
-                        @for (tile of moneyTiles; track tile.Label)
-                        {
-                            <div
-                                class="wd-tile wd-figure"
-                                [ngClass]="'wd-' + tile.Tone">
-                                <small>{{ tile.Label }}</small>
-                                <b>{{ tile.Value }}</b>
-                                <span>{{ tile.Hint }}</span>
+                            @for (tile of data.Activity; track tile.Label)
+                            {
+                                <div class="wd-kpi" [ngClass]="'wd-' + tile.Tone">
+                                    <span class="wd-kpi-icon"><i class="fas" [ngClass]="tileIcon(tile.Label)"></i></span>
+                                    <div>
+                                        <small>{{ tile.Label }}</small>
+                                        <b>{{ tile.Value }}</b>
+                                        <span>{{ tile.Hint }}</span>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+
+                    </section>
+                }
+
+                <div class="wd-fig-row wd-fill">
+
+                    <section class="wd-card wd-fig-card">
+
+                        <header>
+                            <i class="fas fa-coins"></i>
+                            Money
+                        </header>
+
+                        <div class="wd-kpis wd-kpis-stack">
+
+                            @for (tile of moneyTiles; track tile.Label)
+                            {
+                                <div class="wd-kpi" [ngClass]="'wd-' + tile.Tone">
+                                    <span class="wd-kpi-icon"><i class="fas" [ngClass]="tileIcon(tile.Label)"></i></span>
+                                    <div>
+                                        <small>{{ tile.Label }}</small>
+                                        <b>{{ tile.Value }}</b>
+                                        <span>{{ tile.Hint }}</span>
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+
+                    </section>
+
+                    <section class="wd-card wd-fig-card">
+
+                        <header>
+                            <i class="fas fa-chart-pie"></i>
+                            Job cards by status
+                            <small class="wd-head-hint">Click a status to see its bikes</small>
+                        </header>
+
+                        <div class="wd-pie-wrap">
+
+                            <div class="wd-pie">
+                                <svg viewBox="0 0 42 42" aria-hidden="true">
+                                    <circle class="wd-pie-track" cx="21" cy="21" r="15.9155"></circle>
+                                    @for (s of slices; track s.Label)
+                                    {
+                                        <circle
+                                            class="wd-pie-slice"
+                                            cx="21" cy="21" r="15.9155"
+                                            [attr.stroke]="s.Color"
+                                            [attr.stroke-dasharray]="s.Pct + ' ' + (100 - s.Pct)"
+                                            [attr.stroke-dashoffset]="s.Offset"
+                                            (click)="showStatus(s.Label)">
+                                            <title>{{ s.Label }} : {{ s.Value }}</title>
+                                        </circle>
+                                    }
+                                </svg>
+                                @for (s of slices; track s.Label)
+                                {
+                                    @if (s.Pct >= 6)
+                                    {
+                                        <span class="wd-pie-label" [style.left.%]="s.X" [style.top.%]="s.Y">{{ s.PctText }}%</span>
+                                    }
+                                }
+                                <div class="wd-pie-mid">
+                                    <b>{{ statusTotal }}</b>
+                                    <small>job cards</small>
+                                </div>
                             </div>
-                        }
 
-                    </div>
-
-                </section>
-
-                <section class="wd-card wd-fill">
-
-                    <header>
-                        <i class="fas fa-chart-simple"></i>
-                        Job cards by status
-                    </header>
-
-                    <div class="wd-bars">
-
-                        @for (item of data.Statuses; track item.Label)
-                        {
-                            <div
-                                class="wd-bar"
-                                title="Show these bikes"
-                                (click)="showStatus(item.Label)">
-                                <span>{{ item.Label }}</span>
-                                <div><i [style.width.%]="barWidth(item.Value)" [style.background]="color(item.Label)"></i></div>
-                                <b>{{ item.Value }}</b>
+                            <div class="wd-legend">
+                                @for (item of data.Statuses; track item.Label)
+                                {
+                                    <button
+                                        type="button"
+                                        class="wd-legend-row"
+                                        [class.wd-legend-zero]="!num(item.Value)"
+                                        title="Show these bikes"
+                                        (click)="showStatus(item.Label)">
+                                        <i [style.background]="color(item.Label)"></i>
+                                        <span>{{ item.Label }}</span>
+                                        <u><s [style.width.%]="share(item.Value)" [style.background]="color(item.Label)"></s></u>
+                                        <b>{{ item.Value }}</b>
+                                        <em [style.color]="num(item.Value) ? color(item.Label) : null">{{ share(item.Value) }}%</em>
+                                    </button>
+                                }
                             </div>
-                        }
 
-                    </div>
+                        </div>
 
-                </section>
+                    </section>
+
+                </div>
             }
         }
         @else

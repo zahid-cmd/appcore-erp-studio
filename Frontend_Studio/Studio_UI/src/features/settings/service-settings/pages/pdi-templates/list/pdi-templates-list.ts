@@ -41,6 +41,7 @@ import { ListTableComponent, ListTableColumn, ListTableRowAction, ListTableRowAc
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
+import { SummaryLineComponent, SummaryLineItem } from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogComponent } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
@@ -90,7 +91,8 @@ type PdiTemplateRow =
         HistoryDrawerComponent,
         ToastComponent,
         ConfirmDialogComponent,
-        ProgressDialogComponent
+        ProgressDialogComponent,
+        SummaryLineComponent
     ],
     templateUrl:'./pdi-templates-list.html',
     styleUrl:'./pdi-templates-list.css'
@@ -139,6 +141,10 @@ implements OnInit
     rows:
         PdiTemplateRow[] = [];
 
+    // Summary line below the canvas (search applied, all statuses)
+    summaryItems:
+        SummaryLineItem[] = [];
+
     totalRecords =
         0;
 
@@ -175,13 +181,13 @@ implements OnInit
     readonly columns:
         ListTableColumn[] =
     [
-        { header:'#', field:'serial', type:'serial', width:'50px', align:'center' },
+        { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
         { header:'Code', field:'Code', width:'110px', align:'center' },
         { header:'Template Name', field:'Name', width:'280px', align:'left' },
         { header:'Bike Models', field:'ModelsText', width:'360px', align:'left' },
         { header:'Sheet', field:'SectionsText', width:'190px', align:'center' },
-        { header:'Status', field:'IsActive', type:'status', width:'110px', align:'center' },
-        { header:'Actions', field:'actions', type:'actions', width:'120px', align:'center' }
+        { header:'Status', field:'IsActive', type:'status', width:'120px', align:'center' },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     ngOnInit():
@@ -235,6 +241,18 @@ implements OnInit
                 (!find || [x.Code, x.Name, x.ModelsText].some(v => (v ?? '').toLowerCase().includes(find))));
 
         this.totalRecords = matched.length;
+
+        const base =
+            this.all.filter(x => !find || [x.Code, x.Name, x.ModelsText].some(v => (v ?? '').toLowerCase().includes(find)));
+
+        const text = (value: number): string => value.toLocaleString('en-US');
+
+        this.summaryItems =
+        [
+            { label:'Total', value:text(base.length), tone:'' },
+            { label:'Active', value:text(base.filter(x => x.IsActive).length), tone:'ok' },
+            { label:'Inactive', value:text(base.filter(x => !x.IsActive).length), tone:'bad' }
+        ];
 
         const pages = Math.max(1, Math.ceil(matched.length / this.pageSize));
 

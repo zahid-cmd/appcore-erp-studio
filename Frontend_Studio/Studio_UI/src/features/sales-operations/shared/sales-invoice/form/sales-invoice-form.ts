@@ -27,6 +27,13 @@ from '@angular/core';
 
 import
 {
+    MODULE_KEYS,
+    ModuleSwitchService
+}
+from '../../../../../core/shell/module-switch.service';
+
+import
+{
     takeUntilDestroyed
 }
 from '@angular/core/rxjs-interop';
@@ -539,6 +546,9 @@ implements OnInit, OnDestroy
     //===========================================================
     // Dependency Injection
     //===========================================================
+
+    private readonly moduleSwitch =
+        inject(ModuleSwitchService);
 
     private readonly salesInvoiceService =
         inject(SalesInvoiceService);
@@ -4853,6 +4863,20 @@ implements OnInit, OnDestroy
         Set<number> =
         new Set();
 
+    // Membership Management on for this company
+    get membershipOn():
+        boolean
+    {
+        return this.moduleSwitch.isOn(MODULE_KEYS.membership);
+    }
+
+    // Warranty Management on for this company
+    get warrantyOn():
+        boolean
+    {
+        return this.moduleSwitch.isOn(MODULE_KEYS.warranty);
+    }
+
     warrantyOf
     (
         productId:
@@ -4860,7 +4884,9 @@ implements OnInit, OnDestroy
     ):
         SalesInvoiceWarranty | null | undefined
     {
-        if (!(productId > 0))
+        // Warranty Management off for this company : nothing shown,
+        // nothing asked
+        if (!this.warrantyOn || !(productId > 0))
         {
             return null;
         }
@@ -5341,11 +5367,18 @@ implements OnInit, OnDestroy
     get termItems():
         ControlSegmentItem[]
     {
-        return [
+        const items: ControlSegmentItem[] =
+        [
             { value:'Cash', text:'Cash' },
             { value:'Credit', text:'Credit', disabled:this.paymentTerm !== 'Credit' && !!this.creditBlockText },
             { value:'EMI', text:'EMI', disabled:this.paymentTerm !== 'EMI' && !!this.emiBlockText }
         ];
+
+        // EMI Management off for this company : the term is not
+        // offered at all (an EMI invoice made before still shows it)
+        return this.moduleSwitch.isOff(MODULE_KEYS.emi) && this.paymentTerm !== 'EMI'
+            ? items.filter(x => x.value !== 'EMI')
+            : items;
     }
 
     get termTitle():
@@ -5357,6 +5390,11 @@ implements OnInit, OnDestroy
                 this.creditBlockText ? `Credit : ${this.creditBlockText}` : 'Credit : the balance goes to the customer receivable',
                 this.emiBlockText ? `EMI : ${this.emiBlockText}` : 'EMI : the balance is collected through the EMI account; take the down payment on Checkout'
             ];
+
+        if (this.moduleSwitch.isOff(MODULE_KEYS.emi) && this.paymentTerm !== 'EMI')
+        {
+            notes.pop();
+        }
 
         return notes.join('\n');
     }

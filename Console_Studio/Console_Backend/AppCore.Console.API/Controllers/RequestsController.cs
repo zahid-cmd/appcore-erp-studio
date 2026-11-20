@@ -5,7 +5,10 @@
 //   GET  api/requests                     list (+ count of New)
 //   GET  api/requests/{publicId}          one request
 //   PUT  api/requests/{publicId}          status + staff notes
-//   POST api/requests/{publicId}/convert  make the Customer
+//   GET  api/requests/{publicId}/customer-matches
+//                                         customers that look the same
+//   POST api/requests/{publicId}/convert  make the Customer, or use
+//                                         an existing one
 // After converting, the Console opens Register tenant filled in
 // from the request (product, code, web address).
 //===============================================================
@@ -21,6 +24,12 @@ namespace AppCore.Console.API.Controllers;
 
 
 public record SiteRequestUpdate(string Status, string? StaffNotes);
+
+// Convert (2026-11-20, review B5) : NewCustomer = make the customer
+// from the request; CustomerPublicId = this request is from a
+// customer the Console already has. One of the two is needed while
+// the request has no customer.
+public record SiteRequestConvert(bool? NewCustomer, Guid? CustomerPublicId);
 
 
 [ApiController]
@@ -160,11 +169,61 @@ public class RequestsController : ControllerBase
         return Ok();
     }
 
+    // Customers with the same phone, email or VAT number as the
+    // request : shown before Convert, so a returning client is not
+    // made twice (2026-11-20, review B5)
+    [HttpGet("{publicId:guid}/customer-matches")]
+    public async Task<IActionResult> CustomerMatches(Guid publicId)
+    {
+        SiteRequest? r = await _db.SiteRequests.AsNoTracking().FirstOrDefaultAsync(x => x.PublicId == publicId);
+
+        if (r is null)
+        {
+            return NotFound();
+        }
+
+        string phone = (r.Phone ?? string.Empty).Trim();
+        string email = (r.Email ?? string.Empty).Trim().ToLower();
+        string bin = (r.BinNo ?? string.Empty).Trim().ToLower();
+
+        var rows =
+            await _db.Customers.AsNoTracking()
+                .Where(x =>
+                    (phone != "" && x.Phone != null && x.Phone.Trim() == phone) ||
+                    (email != "" && x.Email != null && x.Email.Trim().ToLower() == email) ||
+                    (bin != "" && x.BinNo != null && x.BinNo.Trim().ToLower() == bin))
+                .OrderBy(x => x.CustomerCode)
+                .Select(x => new { x.PublicId, x.CustomerCode, x.DisplayName, x.Phone, x.Email, x.BinNo })
+                .Take(10)
+                .ToListAsync();
+
+        return Ok(rows.Select(x => new
+        {
+            x.PublicId,
+            x.CustomerCode,
+            x.DisplayName,
+            Same = string.Join(", ", new[]
+            {
+                phone != "" && x.Phone?.Trim() == phone ? "phone" : null,
+                email != "" && x.Email?.Trim().ToLower() == email ? "email" : null,
+                bin != "" && x.BinNo?.Trim().ToLower() == bin ? "VAT no." : null
+            }.Where(v => v != null))
+        }));
+    }
+
     [HttpPost("{publicId:guid}/convert")]
     [Authorize(Roles = StaffRoles.ManageTenants)]
-    public async Task<IActionResult> Convert(Guid publicId)
+    public async Task<IActionResult> Convert(Guid publicId, [FromBody] SiteRequestConvert? body)
     {
-        SiteRequest? r = await _db.SiteRequests.FirstOrDefaultAsync(x => x.PublicId == publicId);
+        // One at a time per request (review B5) : the request row is
+        // locked until this ends, so a double click or two staff
+        // members make one customer; the second sees the first's.
+        await using var tx = await _db.Database.BeginTransactionAsync();
+
+        SiteRequest? r =
+            await _db.SiteRequests
+                .FromSqlInterpolated($"SELECT * FROM public.\"SiteRequests\" WHERE \"PublicId\" = {publicId} FOR UPDATE")
+                .FirstOrDefaultAsync();
 
         if (r is null)
         {
@@ -173,6 +232,26 @@ public class RequestsController : ControllerBase
 
         Customer? customer =
             r.CustomerId is null ? null : await _db.Customers.FirstOrDefaultAsync(x => x.CustomerId == r.CustomerId);
+
+        if (customer is null && r.Status == "Closed")
+        {
+            return BadRequest(new { message = "This request is Closed : it cannot be converted. Set its status back to New or Contacted first." });
+        }
+
+        if (customer is null && body?.CustomerPublicId is Guid existing)
+        {
+            // a customer the Console already has
+            customer = await _db.Customers.FirstOrDefaultAsync(x => x.PublicId == existing);
+
+            if (customer is null)
+            {
+                return BadRequest(new { message = "Pick the customer from the list." });
+            }
+        }
+        else if (customer is null && body?.NewCustomer != true)
+        {
+            return BadRequest(new { message = "Choose first : a new customer, or a customer that is already in the Console." });
+        }
 
         if (customer is null)
         {
@@ -204,19 +283,34 @@ public class RequestsController : ControllerBase
 
             _db.Customers.Add(customer);
 
-            await _db.SaveChangesAsync();
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // nothing was saved : another request was converted at
+                // the same moment and took the customer code
+                return Conflict(new { message = "The customer was not made : another customer was created at the same moment. Press Convert again." });
+            }
 
             _audit.Add("Customer.Create", "Customer", code, details: $"from {r.RequestNo}");
         }
 
-        r.CustomerId = customer.CustomerId;
-        r.Status = "Converted";
-        r.ModifiedDate = DateTime.UtcNow;
-        r.ModifiedBy = User.StaffId();
+        if (r.CustomerId != customer.CustomerId)
+        {
+            r.CustomerId = customer.CustomerId;
+            r.Status = "Converted";
+            r.ModifiedDate = DateTime.UtcNow;
+            r.ModifiedBy = User.StaffId();
 
-        _audit.Add("SiteRequest.Convert", "SiteRequest", r.RequestNo, details: customer.CustomerCode);
+            _audit.Add("SiteRequest.Convert", "SiteRequest", r.RequestNo,
+                details: body?.CustomerPublicId is null ? customer.CustomerCode : $"{customer.CustomerCode} (existing customer)");
+        }
 
         await _db.SaveChangesAsync();
+
+        await tx.CommitAsync();
 
         // for the Register tenant form
         string tenantCode =
@@ -236,6 +330,11 @@ public class RequestsController : ControllerBase
             r.ProductCode,
             TenantCode = tenantCode,
             DisplayName = r.DisplayName ?? r.LegalName,
+
+            // what the client asked for on the website (review B4) :
+            // put in the Register form, staff can change them
+            MaxBranches = r.Branches,
+            MaxUsers = r.Users,
             HostName = r.PreferredSubdomain is null ? $"{tenantCode.ToLowerInvariant()}.{PublicController.Domain}" : $"{r.PreferredSubdomain}.{PublicController.Domain}",
             Status = r.RequestType == "Demo" ? "Trial" : "Provisioning"
         });

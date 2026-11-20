@@ -5,7 +5,7 @@
 // Customer (and then a Tenant) without retyping.
 //===============================================================
 
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -244,7 +244,7 @@ const ICONS: Record<string, string> =
                                     @case ('checking') { <span class="sub-state wait"><i class="fas fa-spinner fa-spin"></i> Checking...</span> }
                                     @case ('ok') { <span class="sub-state ok"><i class="fas fa-circle-check"></i> {{ sub() }}.appcoretech.net is free</span> }
                                     @case ('bad') { <span class="sub-state bad"><i class="fas fa-circle-xmark"></i> {{ subReason() }}</span> }
-                                    @default { <span class="hint">Where your team will open AppCore. We reserve it for you.</span> }
+                                    @default { <span class="hint">Where your team will open AppCore. We hold it for you once your request is in.</span> }
                                 }
                             </div>
                             @if (form.RequestType === 'Demo')
@@ -389,7 +389,36 @@ export class RequestPage implements OnInit
 
     readonly planName = computed(() => this.s().Plans.find(p => p.Code === (this.plan() ?? '').toUpperCase())?.Name ?? null);
 
+    // The first choices (Demo / Purchase, product, plan text) need
+    // the website settings and the product list from the Console.
+    // They may arrive after the page opens, so the choices are made
+    // once both the page is open and the settings are in (review
+    // B15); before, they were made from the built-in defaults.
+    private readonly opened = signal(false);
+
+    private firstChoicesMade = false;
+
+    private readonly changes = inject(ChangeDetectorRef);
+
+    private readonly whenReady =
+        effect(() =>
+        {
+            if (this.opened() && this.site.ready() && !this.firstChoicesMade)
+            {
+                this.firstChoicesMade = true;
+
+                untracked(() => this.firstChoices());
+
+                this.changes.markForCheck();
+            }
+        });
+
     ngOnInit(): void
+    {
+        this.opened.set(true);
+    }
+
+    private firstChoices(): void
     {
         const t = (this.type() ?? '').toLowerCase();
 

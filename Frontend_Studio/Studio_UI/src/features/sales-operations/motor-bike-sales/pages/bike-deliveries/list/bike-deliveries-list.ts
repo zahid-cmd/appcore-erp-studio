@@ -41,6 +41,7 @@ import { ListTableComponent, ListTableColumn, ListTableRowAction, ListTableRowAc
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
+import { SummaryLineComponent, SummaryLineItem } from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
 
 import
@@ -103,7 +104,8 @@ function shortDate(iso: string): string
         ListTableComponent,
         PaginationComponent,
         HistoryDrawerComponent,
-        ToastComponent
+        ToastComponent,
+        SummaryLineComponent
     ],
     templateUrl:'./bike-deliveries-list.html',
     styleUrl:'./bike-deliveries-list.css'
@@ -129,6 +131,10 @@ implements OnInit
 
     tabs:
         ControlTab[] = this.buildTabs(0, 0, 0);
+
+    // Summary line below the canvas (search applied, all tabs)
+    summaryItems:
+        SummaryLineItem[] = [];
 
     selectedTab =
         'Pending';
@@ -285,6 +291,16 @@ implements OnInit
                 next:data =>
                 {
                     this.tabs = this.buildTabs(data.Pending, data.Delivered, data.Undone);
+
+                    const n = (v: number): string => Number(v ?? 0).toLocaleString('en-US');
+
+                    this.summaryItems =
+                    [
+                        { label:'Total', value:n(data.Pending + data.Delivered + data.Undone), tone:'' },
+                        { label:'Pending', value:n(data.Pending), tone:'warn' },
+                        { label:'Delivered', value:n(data.Delivered), tone:'ok' },
+                        { label:'Undone', value:n(data.Undone), tone:'bad' }
+                    ];
 
                     this.all =
                         data.Rows.map(x => ({

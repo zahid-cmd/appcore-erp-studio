@@ -488,15 +488,15 @@ implements OnInit, OnDestroy
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Code', field:'VatCode', width:'140px', align:'center' },
-        { header:'VAT Type', field:'VatType', width:'160px', align:'left' },
-        { header:'VAT %', field:'RateText', width:'160px', align:'left' },
-        { header:'Price Includes VAT', field:'FlagText', width:'130px', align:'right' },
-        { header:'Effective From', field:'EffectiveFromText', width:'160px', align:'left' },
-        { header:'Valid To', field:'ValidToText', width:'160px', align:'left' },
-        { header:'VAT Current Account', field:'LedgerText', width:'160px', align:'left' },
-        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center' },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center', cellAlign:'center' }
+        { header:'Code', field:'VatCode', width:'120px', align:'center' },
+        { header:'VAT Type', field:'VatType', width:'200px', align:'left' },
+        { header:'VAT %', field:'RateText', width:'100px', align:'center' },
+        { header:'Price Includes VAT', field:'FlagText', width:'150px', align:'center' },
+        { header:'Effective From', field:'EffectiveFromText', width:'130px', align:'center' },
+        { header:'Valid To', field:'ValidToText', width:'130px', align:'center' },
+        { header:'VAT Current Account', field:'LedgerText', width:'260px', align:'left' },
+        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center' },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center', cellAlign:'center' }
     ];
 
 

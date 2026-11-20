@@ -1995,7 +1995,9 @@ public class ServiceInvoicesRepository
         }
 
         // A membership free service : the window of today is used
-        if (card.JobType == Sb.MembershipJob && card.ChassisNo.Length > 0)
+        // (not with Membership Management off for this company)
+        if (card.JobType == Sb.MembershipJob && card.ChassisNo.Length > 0
+            && AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Membership))
         {
             List<long> membershipIds =
                 await _context.Set<MembershipStatus>().AsNoTracking()

@@ -241,6 +241,23 @@ public partial class PublicController : ControllerBase
             return "That address is already taken.";
         }
 
+        // Asked for in a request that is still open (2026-11-20,
+        // review B15) : held for that company, so the form's "we
+        // hold it for you" is true. Let go when the request is
+        // Closed, or Converted and its customer has a tenant (the
+        // tenant's real address is in TenantDomains, checked above).
+        bool asked =
+            await _db.SiteRequests.AnyAsync(x =>
+                x.PreferredSubdomain == sub
+                && x.Status != "Closed"
+                && !(x.Status == "Converted"
+                     && (x.CustomerId == null || _db.Tenants.Any(t => t.CustomerId == x.CustomerId))));
+
+        if (asked)
+        {
+            return "That address is already asked for. Try another.";
+        }
+
         return null;
     }
 

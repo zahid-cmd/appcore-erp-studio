@@ -324,11 +324,26 @@ Routes =
                 },
 
             //===========================================================
-            // Bike Accessory Schemes : moved 2026-11-15 to Sales
-            // Operations > Sales Setup (the old address opens it)
+            // Bike Accessory Schemes : back here 2026-11-20 (it was under
+            // Sales Operations > Sales Setup since 2026-11-15). Motor bike
+            // purchases need it, and Sales Operations can be switched off
+            // for a company.
             //===========================================================
-
-            moved('bike-accessory-schemes', '/sales-operations/sales-setup/bike-accessory-schemes'),
+            {
+                path:'bike-accessory-schemes',
+                data:
+                {
+                    breadcrumb:'Bike Accessory Schemes'
+                },
+                loadChildren:() =>
+                    import(
+                        './bike-accessory-schemes.routes'
+                    )
+                    .then(
+                        m =>
+                            m.BikeAccessorySchemesRoutes
+                    )
+            },
 
             // AUTO-BEGIN : SUB-003-003-013
 

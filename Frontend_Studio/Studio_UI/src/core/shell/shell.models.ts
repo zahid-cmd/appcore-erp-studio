@@ -176,6 +176,11 @@ export interface ShellContextDto
 
     yearStatus:
         string | null;
+
+    // module route keys switched off for this company in the
+    // Console (module-switch.service.ts)
+    offModules?:
+        string[] | null;
 }
 
 

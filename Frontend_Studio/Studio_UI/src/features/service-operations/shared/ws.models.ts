@@ -1368,6 +1368,8 @@ export interface WorkshopDashboard
     Today: string;
     Branches: WsLookup[];
     Tiles: WsTile[];
+    // what happened today : opened, assigned, parts, work done, billed, closed
+    Activity?: WsTile[];
     Statuses: WsTile[];
     Jobs: WorkshopDashboardJob[];
     Bays: WsTile[];

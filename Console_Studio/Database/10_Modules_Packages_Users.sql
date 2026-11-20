@@ -82,7 +82,7 @@ INSERT INTO tmp_modules VALUES
     ('security-permission',        'Security & Permission',      true,   1, 'STARTER'),
     ('settings',                   'Settings',                   true,   2, 'STARTER'),
     ('accounts-finance',           'Accounts & Finance',         true,   3, 'STARTER'),
-    ('procurement',                'Procurement',                false,  4, 'STARTER'),
+    ('procurement',                'Procurement',                true,   4, 'STARTER'),
     ('inventory-management',       'Inventory Management',       true,   5, 'STARTER'),
     ('sales-operations',           'Sales Operations',           false,  6, 'STARTER'),
     ('service-operations',         'Service Operations',         false,  7, 'STARTER'),
@@ -94,7 +94,7 @@ INSERT INTO tmp_modules VALUES
     ('human-resource-manangement', 'Human Resource Management',  false, 13, 'STANDARD'),
     ('warranty-management',        'Warranty Management',        false, 14, 'PROFESSIONAL'),
     ('emi-management',             'EMI Management',             false, 15, 'PROFESSIONAL'),
-    ('vat-management',             'VAT Management',             false, 16, 'PROFESSIONAL'),
+    ('vat-management',             'VAT Management',             true,  16, 'PROFESSIONAL'),
     ('fixed-assets-management',    'Fixed Assets Management',    false, 17, 'PROFESSIONAL');
 
 INSERT INTO public."ProductModules" ("ProductId", "ModuleCode", "ModuleName", "IsCore", "DisplayOrder")

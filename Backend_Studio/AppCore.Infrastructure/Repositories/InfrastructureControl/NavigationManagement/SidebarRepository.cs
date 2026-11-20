@@ -65,6 +65,11 @@ public class SidebarRepository : ISidebarRepository
             ((await _limits.GetAsync())?.OffModules ?? new HashSet<string>())
                 .ToList();
 
+        // pages inside other modules that only show an off module's
+        // data (2026-11-20)
+        List<string> offPages =
+            AppCore.Application.Platform.Tenancy.ModuleSwitch.OffPages(off);
+
         return await _context.NavigationModules
 
             .AsNoTracking()
@@ -128,7 +133,9 @@ public class SidebarRepository : ISidebarRepository
                             .Where(submenu =>
                                 !submenu.IsDeleted
                                 &&
-                                submenu.IsActive)
+                                submenu.IsActive
+                                &&
+                                !offPages.Contains(submenu.RouteKey.ToLower()))
 
                             .OrderBy(submenu =>
                                 submenu.DisplayOrder)

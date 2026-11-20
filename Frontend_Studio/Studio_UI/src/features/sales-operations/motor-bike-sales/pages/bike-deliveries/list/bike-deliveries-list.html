@@ -94,6 +94,16 @@
 
     </app-page-canvas>
 
+    @if (summaryItems.length > 0)
+    {
+        <app-summary-line
+            [items]="summaryItems"
+            noun="bikes"
+            art="truck"
+            note="Search applied">
+        </app-summary-line>
+    }
+
     <app-history-drawer
         [opened]="historyOpened"
         [title]="historyTitle"

@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../environments/environment';
-import { Customer, CustomerRow, CustomerSave, ProductRow, ServerRow, SiteRequest, SiteRequestRow, TenantDatabasePlan, TenantDatabaseResult, TenantDetail, TenantModules, TenantModulesSave, TenantPrefill, TenantRow, TenantSave, WebsiteSettings } from './models';
+import { Customer, CustomerMatch, CustomerRow, CustomerSave, PackageRow, ProductRow, ServerRow, SiteRequest, SiteRequestRow, TenantDatabasePlan, TenantLeftoverResult, TenantResetResult, TenantDatabaseResult, TenantDetail, TenantModules, TenantModulesSave, TenantPrefill, TenantRow, TenantSave, WebsiteSettings } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ConsoleApi
@@ -81,6 +81,24 @@ export class ConsoleApi
         return firstValueFrom(this.http.post<TenantDatabaseResult>(`${this.base}/tenants/${publicId}/database`, { FinancialYearStartMonth: financialYearStartMonth }));
     }
 
+    // a new password for the client's admin user (shown once)
+    resetTenantAdminPassword(publicId: string): Promise<TenantResetResult>
+    {
+        return firstValueFrom(this.http.post<TenantResetResult>(`${this.base}/tenants/${publicId}/database/admin-password`, {}));
+    }
+
+    // drops what a failed Create database left (the name typed again)
+    removeTenantDatabaseLeftover(publicId: string, confirm: string): Promise<TenantLeftoverResult>
+    {
+        return firstValueFrom(this.http.post<TenantLeftoverResult>(`${this.base}/tenants/${publicId}/database/leftover/remove`, { Confirm: confirm }));
+    }
+
+    // a new sealed password for the client's database login
+    resetTenantDatabaseLogin(publicId: string): Promise<TenantResetResult>
+    {
+        return firstValueFrom(this.http.post<TenantResetResult>(`${this.base}/tenants/${publicId}/database/login`, {}));
+    }
+
     tenantModules(publicId: string): Promise<TenantModules>
     {
         return firstValueFrom(this.http.get<TenantModules>(`${this.base}/tenants/${publicId}/modules`));
@@ -89,6 +107,12 @@ export class ConsoleApi
     saveTenantModules(publicId: string, body: TenantModulesSave): Promise<{ Message: string }>
     {
         return firstValueFrom(this.http.put<{ Message: string }>(`${this.base}/tenants/${publicId}/modules`, body));
+    }
+
+    // the packages of a product, for Register tenant
+    tenantPackages(productCode: string): Promise<PackageRow[]>
+    {
+        return firstValueFrom(this.http.get<PackageRow[]>(`${this.base}/tenants/packages`, { params: new HttpParams().set('product', productCode) }));
     }
 
     servers(): Promise<ServerRow[]>
@@ -118,9 +142,22 @@ export class ConsoleApi
         return firstValueFrom(this.http.put<void>(`${this.base}/requests/${publicId}`, { Status: status, StaffNotes: staffNotes }));
     }
 
-    convertRequest(publicId: string): Promise<TenantPrefill>
+    // customerPublicId : a customer the Console already has;
+    // null : a new customer from the request. A request that has its
+    // customer needs neither.
+    convertRequest(publicId: string, customerPublicId?: string | null): Promise<TenantPrefill>
     {
-        return firstValueFrom(this.http.post<TenantPrefill>(`${this.base}/requests/${publicId}/convert`, {}));
+        const body = customerPublicId === undefined
+            ? {}
+            : customerPublicId ? { CustomerPublicId: customerPublicId } : { NewCustomer: true };
+
+        return firstValueFrom(this.http.post<TenantPrefill>(`${this.base}/requests/${publicId}/convert`, body));
+    }
+
+    // customers with the same phone, email or VAT no. as the request
+    requestCustomerMatches(publicId: string): Promise<CustomerMatch[]>
+    {
+        return firstValueFrom(this.http.get<CustomerMatch[]>(`${this.base}/requests/${publicId}/customer-matches`));
     }
 
     // ---------------- settings ----------------

@@ -43,6 +43,7 @@ builder.Services.AddDbContext<ControlDbContext>(options => options.UseNpgsql(con
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<Audit>();
 builder.Services.AddSingleton<StaffTokens>();
+builder.Services.AddSingleton<StaffCheck>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -62,6 +63,29 @@ builder.Services
             ClockSkew = TimeSpan.FromMinutes(1),
             NameClaimType = System.Security.Claims.ClaimTypes.Name,
             RoleClaimType = System.Security.Claims.ClaimTypes.Role
+        };
+
+        // The staff user behind the token must still be Active and
+        // have the same role (review B10, Security\StaffCheck.cs)
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                long? staffId = context.Principal?.StaffId();
+
+                bool valid =
+                    staffId is long id
+                    && await context.HttpContext.RequestServices.GetRequiredService<StaffCheck>().IsValidAsync(
+                        context.HttpContext.RequestServices.GetRequiredService<ControlDbContext>(),
+                        id,
+                        context.Principal!.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
+                        context.HttpContext.RequestAborted);
+
+                if (!valid)
+                {
+                    context.Fail("The staff user is not active any more, or the role changed : sign in again.");
+                }
+            }
         };
     });
 
@@ -101,6 +125,13 @@ builder.Services.AddRateLimiter(options =>
         RateLimitPartition.GetFixedWindowLimiter(
             VisitorIp.Of(http),
             _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
+    // Console sign-in per address : 10 tries / 5 min (2026-11-20,
+    // Security\LoginGuard.cs)
+    options.AddPolicy(LoginGuard.Policy, http =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            VisitorIp.Of(http),
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(5), QueueLimit = 0 }));
 });
 
 // PascalCase JSON (as the ERP)

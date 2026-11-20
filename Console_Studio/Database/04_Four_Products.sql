@@ -14,6 +14,14 @@
      Everything else saved in Website settings is kept.
 ===============================================================*/
 
+-- Stops here unless pgAdmin is on AppCore_Control (2026-11-20)
+DO $$
+BEGIN
+    IF current_database() <> 'AppCore_Control' THEN
+        RAISE EXCEPTION 'Wrong database (%). Run this on AppCore_Control.', current_database();
+    END IF;
+END $$;
+
 BEGIN;
 
 UPDATE public."Products" SET "ProductName" = 'AppCore Automobiles',  "DisplayOrder" = 1, "ModifiedDate" = now() WHERE "ProductCode" = 'AUTOMOBILE';

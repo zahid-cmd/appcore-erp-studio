@@ -31,9 +31,9 @@ const NAV: NavItem[] =
     { path: '/customers', label: 'Customers', icon: 'fas fa-building-user', group: 'Clients' },
     { path: '/tenants', label: 'Tenants', icon: 'fas fa-server', group: 'Clients' },
     { path: '/requests', label: 'Requests', icon: 'fas fa-inbox', group: 'Clients', badge: true },
+    { path: '/onboarding', label: 'Onboarding', icon: 'fas fa-wand-magic-sparkles', group: 'Clients' },
     { path: '/settings/website', label: 'Website settings', icon: 'fas fa-globe', group: 'Settings' },
     { path: '/deployments', label: 'Deployments', icon: 'fas fa-rocket', group: 'Operations' },
-    { path: '', label: 'Onboarding', icon: 'fas fa-wand-magic-sparkles', group: 'Coming next', soon: true },
     { path: '', label: 'Billing', icon: 'fas fa-file-invoice-dollar', group: 'Coming next', soon: true },
     { path: '', label: 'Support', icon: 'fas fa-headset', group: 'Coming next', soon: true },
     { path: '', label: 'Monitoring', icon: 'fas fa-heart-pulse', group: 'Coming next', soon: true }

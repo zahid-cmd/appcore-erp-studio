@@ -514,6 +514,33 @@ public class EmployeesRepository
     {
         Guid self = entity.PublicId;
 
+        // Human Resource Management off for this company
+        // (2026-11-20) : the profile is only the general part
+        // (identity, contact, branch, department, designation,
+        // dates, login). The shift, weekly holiday, salary,
+        // overtime, bonus and payment part is not asked and stays
+        // as it is saved (a new profile : no shift, no salary).
+        bool hrOn =
+            AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.HumanResource);
+
+        if (!hrOn)
+        {
+            dto.ShiftId = entity.ShiftId;
+            dto.WeeklyOffDays = entity.WeeklyOffDays;
+            dto.GrossSalary = entity.GrossSalary;
+            dto.SalaryStructureId = entity.SalaryStructureId ?? 0;
+            dto.OvertimeAllowed = entity.OvertimeAllowed;
+            dto.OvertimeStructureId = entity.OvertimeStructureId ?? 0;
+            dto.OvertimeRate = entity.OvertimeRate;
+            dto.BonusStructureId = entity.BonusStructureId ?? 0;
+            dto.LeaveEncashPolicyId = entity.LeaveEncashPolicyId ?? 0;
+            dto.PaymentMode = entity.PaymentMode;
+            dto.BankName = entity.BankName;
+            dto.BankAccountNo = entity.BankAccountNo;
+            dto.MfsName = entity.MfsName;
+            dto.MfsNo = entity.MfsNo;
+        }
+
         // ---------- Personal ----------
         string fullName = Limited(dto.FullName, 150, "Full Name");
 
@@ -571,7 +598,8 @@ public class EmployeesRepository
             throw new InvalidOperationException("Pick the designation.");
         }
 
-        if (!await _context.Set<HrShifts>().AsNoTracking().AnyAsync(x => x.ShiftId == dto.ShiftId && !x.IsDeleted))
+        if (hrOn
+            && !await _context.Set<HrShifts>().AsNoTracking().AnyAsync(x => x.ShiftId == dto.ShiftId && !x.IsDeleted))
         {
             throw new InvalidOperationException("Pick the shift.");
         }
@@ -759,6 +787,12 @@ public class EmployeesRepository
     private async Task ApplyStructureAsync(HrEmployees entity, long? structureId, decimal gross)
     {
         if (structureId == null && entity.SalaryStructureId == null)
+        {
+            return;
+        }
+
+        // Human Resource Management off : the salary is not touched
+        if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.HumanResource))
         {
             return;
         }

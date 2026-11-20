@@ -91,6 +91,19 @@ export interface LiveServer
     releases: { release: string; commit: string; deployedBy: string; createdAt: string; isCurrent: boolean }[];
 }
 
+// the Console sign-in of this tab (AuthService keeps it there)
+function staffToken(): string | null
+{
+    try
+    {
+        return sessionStorage.getItem('appcore.console.token');
+    }
+    catch
+    {
+        return null;
+    }
+}
+
 @Injectable({ providedIn: 'root' })
 export class DevAgentService
 {
@@ -144,7 +157,15 @@ export class DevAgentService
             r = await fetch(`${AGENT}${url}`,
             {
                 method,
-                headers: body === undefined ? { 'X-AppCore-Dev': '1' } : { 'X-AppCore-Dev': '1', 'Content-Type': 'application/json' },
+                headers:
+                {
+                    'X-AppCore-Dev': '1',
+                    ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+
+                    // a change (deploy, switch back, server connection) :
+                    // the agent asks the Console API who this is (B13)
+                    ...(method === 'POST' && staffToken() ? { 'X-Staff-Token': staffToken()! } : {})
+                },
                 body: body === undefined ? undefined : JSON.stringify(body),
                 cache: 'no-store',
                 signal: AbortSignal.timeout(30000)

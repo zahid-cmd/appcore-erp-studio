@@ -21,13 +21,18 @@ ROLLBACK;
 --
 -- The support login's password : type it below between the quotes
 -- (it is turned into the ERP's PBKDF2 hash here; never send it to
--- anyone). Leave it empty and the support login stays switched off
--- (no password = cannot sign in); write OFF to switch it off again.
+-- anyone). REQUIRED (2026-11-20 : left empty, the script used to
+-- finish quietly with appcore unable to sign in) :
+--     a password      sets it (appcore switched ON)
+--     KEEP            leaves the present password as it is
+--     OFF             switches the support login off
+-- Empty : the script stops, nothing is changed.
 -- The password stays in pgAdmin's Query History on this PC : clear
 -- the line after running if you like.
 --
 -- Needs the pgcrypto extension (made here when missing).
--- Run the whole file (F5), read Messages, then COMMIT; (or ROLLBACK;).
+-- Run the whole file (F5). It SAVES ITSELF at the end (2026-11-20 :
+-- no separate COMMIT any more); if anything fails, nothing is saved.
 -- Safe to run again. ASCII only.
 -- =====================================================================
 
@@ -73,7 +78,7 @@ END $f$;
 DO $$
 DECLARE
     -- ===============================================================
-    v_password text := '';     -- the support login's password ('' = off)
+    v_password text := 'appcore';     -- REQUIRED : a password, KEEP or OFF
     -- ===============================================================
     v_appcore_role bigint;
     v_admin_role   bigint;
@@ -88,6 +93,10 @@ DECLARE
 BEGIN
     IF current_database() = 'AppCoreERP_Studio' THEN
         RAISE EXCEPTION 'This is the development database. Nothing was changed.';
+    END IF;
+
+    IF trim(v_password) = '' THEN
+        RAISE EXCEPTION 'Type the support password in v_password (line 76), or KEEP, or OFF. Nothing was changed.';
     END IF;
 
     -- 1. AppCore Admin = the hidden developer role -----------------------
@@ -230,7 +239,7 @@ BEGIN
     IF upper(trim(v_password)) = 'OFF' THEN
         DELETE FROM "UserCredentials" WHERE "UserProfileId" = v_support;
         RAISE NOTICE 'Support login appcore : switched OFF (no password).';
-    ELSIF v_password <> '' THEN
+    ELSIF upper(trim(v_password)) <> 'KEEP' THEN
         v_salt := gen_random_bytes(16);
         DELETE FROM "UserCredentials" WHERE "UserProfileId" = v_support;
         INSERT INTO "UserCredentials" ("UserProfileId", "PasswordHash", "PasswordChangedDate", "CreatedDate")
@@ -244,9 +253,16 @@ BEGIN
         RAISE NOTICE 'Support login appcore : no password (OFF).';
     END IF;
 
-    RAISE NOTICE 'Done on %. Check the lines above, then run COMMIT; (or ROLLBACK;).', current_database();
+    RAISE NOTICE 'Done on %. Saved.', current_database();
 END $$;
 
--- Run one of these by hand :
--- COMMIT;
--- ROLLBACK;
+-- saves everything above (after an error PostgreSQL turns this into
+-- a ROLLBACK : nothing half-done is kept)
+COMMIT;
+
+-- Check : appcore must show has_password = true
+SELECT p."UserName", p."IsActive",
+       (c."PasswordHash" IS NOT NULL AND c."PasswordHash" <> '') AS has_password
+FROM   "UserProfiles" p
+LEFT JOIN "UserCredentials" c ON c."UserProfileId" = p."UserProfileId"
+WHERE  lower(p."UserName") IN ('appcore', 'admin');

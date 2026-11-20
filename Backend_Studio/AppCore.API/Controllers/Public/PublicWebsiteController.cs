@@ -94,8 +94,24 @@ public class PublicWebsiteController : ControllerBase
 
     public async Task<ActionResult<PublicWebsiteDto>> Get()
     {
-        return Ok(await _repository.GetAsync());
+        PublicWebsiteDto site =
+            await _repository.GetAsync();
+
+        site.EnquiryOff = EnquiryOff;
+
+        site.EmiOff =
+            AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.Emi);
+
+        return Ok(site);
     }
+
+    // Enquiry Management off for this company (set by the module
+    // gate for this request)
+    private static bool EnquiryOff =>
+        AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.Enquiry);
+
+    private const string EnquiryOffMessage =
+        "Online enquiries are not available at the moment. Please call or visit the showroom.";
 
 
     // GET api/public/website/parts?brand=BRAND-001 : that brand's
@@ -176,6 +192,11 @@ public class PublicWebsiteController : ControllerBase
     public async Task<ActionResult<PublicEnquiryResultDto>> PostEnquiry(
         [FromBody] PublicEnquiryRequestDto? dto)
     {
+        if (EnquiryOff)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = EnquiryOffMessage });
+        }
+
         if (dto == null)
         {
             return BadRequest(new { message = "Fill in the form, please." });
@@ -229,6 +250,11 @@ public class PublicWebsiteController : ControllerBase
     public async Task<ActionResult<PublicEnquiryResultDto>> PostServiceEnquiry(
         [FromBody] PublicServiceEnquiryRequestDto? dto)
     {
+        if (EnquiryOff)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = EnquiryOffMessage });
+        }
+
         if (dto == null)
         {
             return BadRequest(new { message = "Fill in the form, please." });

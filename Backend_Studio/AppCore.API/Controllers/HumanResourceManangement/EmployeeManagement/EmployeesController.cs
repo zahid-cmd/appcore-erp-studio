@@ -35,8 +35,10 @@ namespace AppCore.Api.Controllers.HumanResourceManangement.EmployeeManagement;
 public class EmployeesController
     : ControllerBase
 {
+    // The page moved to Settings > Employee Setup (2026-11-20,
+    // EmployeeSetup_Navigation.sql) : found in either place
     private const string PageRoute =
-        "/human-resource-manangement/%/employees";
+        "/%/%/employees";
 
     private readonly IEmployeesRepository _repository;
 

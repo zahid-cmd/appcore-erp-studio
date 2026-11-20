@@ -258,7 +258,7 @@ public static class ApiSecurity
                             if (context.User.IsLoggedIn())
                             {
                                 return RateLimitPartition.GetTokenBucketLimiter(
-                                    "user:" + context.User.GetUserId().ToString(CultureInfo.InvariantCulture),
+                                    ClientKey(context) + "user:" + context.User.GetUserId().ToString(CultureInfo.InvariantCulture),
                                     _ => Bucket(limits.UserRequestsPerMinute, limits.UserBurst));
                             }
 
@@ -306,7 +306,7 @@ public static class ApiSecurity
 
                         string key =
                             context.User.IsLoggedIn()
-                                ? "heavy-user:" + context.User.GetUserId().ToString(CultureInfo.InvariantCulture)
+                                ? ClientKey(context) + "heavy-user:" + context.User.GetUserId().ToString(CultureInfo.InvariantCulture)
                                 : "heavy-ip:" + ClientIp(context);
 
                         return RateLimitPartition.GetConcurrencyLimiter(
@@ -318,6 +318,27 @@ public static class ApiSecurity
                             });
                     });
             });
+    }
+
+
+    // The client company of the request, in front of the per-user
+    // keys (2026-11-20, review B8). One service serves several
+    // clients and their user ids are the same numbers (every first
+    // admin has the same id), so "user:1" alone made two clients
+    // share one allowance and one client's backup refuse another's.
+    // No client (Tenancy Mode Off) : nothing in front, as before.
+    private static string ClientKey(
+        HttpContext context)
+    {
+        string? code =
+            context.RequestServices
+                .GetService<AppCore.Application.Platform.Tenancy.ITenantContext>()
+                ?.Tenant
+                ?.TenantCode;
+
+        return string.IsNullOrWhiteSpace(code)
+            ? string.Empty
+            : code.Trim().ToUpperInvariant() + ":";
     }
 
 

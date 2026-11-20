@@ -46,6 +46,13 @@ from '@angular/core';
 
 import
 {
+    MODULE_KEYS,
+    ModuleSwitchService
+}
+from '../../../../../../core/shell/module-switch.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -222,6 +229,13 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     TextboxComponent
 }
 from '../../../../../../shared/components/controls/textbox/textbox';
@@ -302,6 +316,7 @@ const MONTHS =
 
     imports:
     [
+        SummaryLineComponent,
         CommonModule,
         PageHeaderComponent,
         PageToolbarComponent,
@@ -330,6 +345,16 @@ const MONTHS =
 export class BookingsList
     implements OnInit
 {
+    private readonly moduleSwitch =
+        inject(ModuleSwitchService);
+
+    // Membership Management on for this company
+    get membershipOn():
+        boolean
+    {
+        return this.moduleSwitch.isOn(MODULE_KEYS.membership);
+    }
+
     private readonly service =
         inject(BookingsService);
 
@@ -1116,6 +1141,76 @@ export class BookingsList
     sumOf(field: string): number
     {
         return roundMoney(this.filteredRows.reduce((sum, x: any) => sum + (Number(x[field]) || 0), 0));
+    }
+
+    //===========================================================
+    // Summary line (the open tab), the same array while the
+    // figures do not change (the summary line is OnPush)
+    //===========================================================
+
+    private summaryKey = '';
+
+    private summaryCache: SummaryLineItem[] = [];
+
+    get summaryLineItems(): SummaryLineItem[]
+    {
+        const n = (value: number): string => value.toLocaleString('en-US');
+
+        let items: SummaryLineItem[];
+
+        if (this.tab === 'collections')
+        {
+            items =
+            [
+                { label:'Collections', value:n(this.filteredRows.length), tone:'' },
+                { label:'Amount', value:this.money(this.sumOf('Amount')), tone:'ok', share:false }
+            ];
+        }
+        else if (this.tab === 'cancellations')
+        {
+            items =
+            [
+                { label:'Cancelled', value:n(this.filteredRows.length), tone:'' },
+                { label:'Forfeited', value:this.money(this.sumOf('ForfeitAmount')), tone:'ok', share:false },
+                { label:'To refund', value:this.money(this.sumOf('RefundAmount')), tone:'bad', share:false }
+            ];
+        }
+        else
+        {
+            const open = this.countOf('Open'), expired = this.countOf('Expired'), converted = this.countOf('Converted');
+
+            items =
+            [
+                { label:'Bookings', value:n(open + expired + converted), tone:'' },
+                { label:'Open', value:n(open), tone:'warn' },
+                { label:'Expired', value:n(expired), tone:'bad' },
+                { label:'Converted', value:n(converted), tone:'ok' },
+                { label:'Advance held', value:this.money(this.openAdvance), tone:'', icon:'fas fa-coins', share:false }
+            ];
+        }
+
+        const key = JSON.stringify(items);
+
+        if (key !== this.summaryKey)
+        {
+            this.summaryKey = key;
+            this.summaryCache = items;
+        }
+
+        return this.summaryCache;
+    }
+
+    get summaryNoteText(): string
+    {
+        if (this.tab === 'cancellations')
+        {
+            return 'Refund by Payment Voucher from the customer\'s ledger';
+        }
+
+        const minimum = this.switches.MinimumAmount ? this.money(this.switches.MinimumAmount) : 'none';
+        const valid = this.switches.ValidityDays ? this.switches.ValidityDays + ' days' : 'no expiry';
+
+        return `Minimum ${minimum} · Valid ${valid}`;
     }
 
     get viewCollections(): CollectionRow[]

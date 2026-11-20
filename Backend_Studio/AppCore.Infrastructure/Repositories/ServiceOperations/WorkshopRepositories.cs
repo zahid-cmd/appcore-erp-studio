@@ -1031,7 +1031,16 @@ public class JobCardsRepository
                     .ToListAsync(),
             Engineers = await Ws.TechnicianEmployeesAsync(_context),
             Switches = await Ws.SwitchesAsync(_context),
-            JobTypes = Ws.JobTypes.ToList(),
+            // an off module's job type is not offered (job cards
+            // saved with it before stay valid)
+            JobTypes = Ws.JobTypes
+                .Where(x => x != "Warranty"
+                            || AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(
+                                AppCore.Application.Platform.Tenancy.ModuleKeys.Warranty))
+                .Where(x => x != "Membership Service"
+                            || AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(
+                                AppCore.Application.Platform.Tenancy.ModuleKeys.Membership))
+                .ToList(),
             FuelLevels = Ws.FuelLevels.ToList()
         };
     }
@@ -1211,9 +1220,16 @@ public class JobCardsRepository
 
         DateOnly today = HrCalendar.Today();
 
+        // Enquiry Management off for this company : its sold bikes
+        // and their service positions are not offered (bikes of
+        // earlier job cards still are)
+        bool enquiryOn =
+            AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Enquiry);
+
         List<ServiceVehicles> vehicles =
             await _context.Set<ServiceVehicles>().AsNoTracking()
-                .Where(x => !x.IsDeleted
+                .Where(x => enquiryOn
+                         && !x.IsDeleted
                          && (x.ChassisNo.ToLower().Contains(text)
                              || x.EngineNo.ToLower().Contains(text)
                              || x.RegistrationNo.ToLower().Contains(text)

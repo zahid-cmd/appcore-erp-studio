@@ -10,6 +10,7 @@ using AppCore.Infrastructure.Persistence.Paging;
 using AppCore.Application.Settings.GeneralSettings;
 using AppCore.Application.Settings.GeneralSettings.Branches.DTOs;
 using AppCore.Application.Platform.Tenancy;
+using AppCore.Infrastructure.Platform.Tenancy;
 
 using BranchesEntity =
     AppCore.Domain.Entities.Settings.GeneralSettings.Branches;
@@ -693,6 +694,10 @@ public class BranchesRepository : IBranchesRepository
             long userId
         )
     {
+        // one at a time, so two saves cannot both pass the limit
+        await using LimitLock limitLock =
+            await LimitLock.TakeAsync(_context, LimitLock.Branches);
+
         await EnsureBranchLimitAsync();
 
 
@@ -1893,6 +1898,10 @@ public class BranchesRepository : IBranchesRepository
             return false;
         }
 
+
+        // one at a time, so two saves cannot both pass the limit
+        await using LimitLock limitLock =
+            await LimitLock.TakeAsync(_context, LimitLock.Branches);
 
         await EnsureBranchLimitAsync();
 

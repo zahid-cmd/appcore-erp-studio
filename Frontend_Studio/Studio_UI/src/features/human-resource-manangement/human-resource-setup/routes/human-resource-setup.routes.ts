@@ -4,6 +4,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../../shared/utils/moved-route';
+
 
 //===========================================================
 // MNU-005-001 Routes
@@ -33,57 +39,15 @@ Routes =
 
             // SUBMENU ROUTE PLACEHOLDER
 
-            // AUTO-BEGIN : SUB-005-001-001
-
-                //===========================================================
-                // Department
-                //===========================================================
-
-                {
-                    path:'department',
-
-                    data:
-                    {
-                        breadcrumb:'Department'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './department.routes'
-                        )
-                        .then(
-                            m =>
-                                m.DepartmentRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-005-001-001
-
-            // AUTO-BEGIN : SUB-005-001-002
-
-                //===========================================================
-                // Designation
-                //===========================================================
-
-                {
-                    path:'designation',
-
-                    data:
-                    {
-                        breadcrumb:'Designation'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './designation.routes'
-                        )
-                        .then(
-                            m =>
-                                m.DesignationRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-005-001-002
+            //===========================================================
+            // Department and Designation moved to Settings > Employee
+            // Setup (2026-11-20, EmployeeSetup_Navigation.sql). The old
+            // addresses open the new ones. The page files stay here.
+            // Never run Submenu / Code Sync for SUB-005-001-001 or
+            // SUB-005-001-002 : it would bring the old blocks back.
+            //===========================================================
+            moved('department', '/settings/employee-setup/department'),
+            moved('designation', '/settings/employee-setup/designation'),
 
             // MANUAL : Shifts, Holidays, Leave Types, Salary Structures,
             // Salary Heads

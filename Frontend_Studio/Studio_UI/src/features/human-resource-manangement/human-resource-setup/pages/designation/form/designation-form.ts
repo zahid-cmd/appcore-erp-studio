@@ -1076,8 +1076,8 @@ implements OnInit
             void this.router.navigate
             (
                 [
-                    '/human-resource-manangement',
-                    'human-resource-setup',
+                    '/settings',
+                    'employee-setup',
                     'designation',
                     'list'
                 ]
@@ -1096,8 +1096,8 @@ implements OnInit
                 void this.router.navigate
                 (
                     [
-                        '/human-resource-manangement',
-                        'human-resource-setup',
+                        '/settings',
+                        'employee-setup',
                         'designation',
                         'list'
                     ]

@@ -107,6 +107,11 @@ export class WebsiteDataService
     private readonly http =
         inject(HttpClient);
 
+    // Enquiry Management is switched off for this company
+    // (api/public/website : EnquiryOff)
+    readonly enquiryOff =
+        signal(false);
+
     private requested =
         false;
 
@@ -225,6 +230,21 @@ export class WebsiteDataService
                         raw =>
                         {
                             erp = raw ?? null;
+
+                            // Enquiry Management off for this company :
+                            // styles.css hides every link to /enquire
+                            const off =
+                                !!(erp?.EnquiryOff ?? erp?.enquiryOff);
+
+                            this.enquiryOff.set(off);
+
+                            document.body.classList.toggle('site-no-enquiry', off);
+
+                            // EMI Management off : no EMI calculator
+                            document.body.classList.toggle(
+                                'site-no-emi',
+                                !!(erp?.EmiOff ?? erp?.emiOff));
+
                             done();
                         },
                     error:

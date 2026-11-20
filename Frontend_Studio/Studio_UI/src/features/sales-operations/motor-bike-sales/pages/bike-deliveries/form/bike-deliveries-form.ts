@@ -13,6 +13,13 @@ from '@angular/core';
 
 import
 {
+    MODULE_KEYS,
+    ModuleSwitchService
+}
+from '../../../../../../core/shell/module-switch.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -120,6 +127,16 @@ const fromDay =
 export class BikeDeliveriesForm
 implements OnInit
 {
+    private readonly moduleSwitch =
+        inject(ModuleSwitchService);
+
+    // Warranty Management on for this company
+    get warrantyOn():
+        boolean
+    {
+        return this.moduleSwitch.isOn(MODULE_KEYS.warranty);
+    }
+
     private readonly service = inject(BikeDeliveriesService);
 
     private readonly router = inject(Router);

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth.service';
 import { ConsoleApi } from '../../core/console-api.service';
@@ -11,11 +11,10 @@ import { PageHeader } from '../../ui/page-header';
 import { Pagination, pageSlice } from '../../ui/pagination';
 import { SelectBox, SelectOption } from '../../ui/select-box';
 import { ToastService } from '../../ui/toast';
-import { TenantFormComponent } from './tenant-form';
 
 @Component({
     selector: 'ac-tenants',
-    imports: [FormsModule, PageHeader, PageCanvas, Pagination, SelectBox, TenantFormComponent],
+    imports: [FormsModule, RouterLink, PageHeader, PageCanvas, Pagination, SelectBox],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'ac-page' },
     template: `
@@ -23,7 +22,7 @@ import { TenantFormComponent } from './tenant-form';
             subtitle="One per customer and product : its own database and web address">
             @if (canManage)
             {
-                <button pageHeaderRight class="ac-btn ac-btn-primary" type="button" (click)="formOpen.set(true)"><i class="fas fa-plus"></i> Register tenant</button>
+                <a pageHeaderRight class="ac-btn ac-btn-primary" routerLink="/tenants/new"><i class="fas fa-plus"></i> Register tenant</a>
             }
         </ac-page-header>
 
@@ -77,11 +76,6 @@ import { TenantFormComponent } from './tenant-form';
             <ac-pagination canvasFooter noun="tenants" [total]="filtered().length" [page]="page()" [size]="size()"
                 (pageChange)="page.set($event)" (sizeChange)="size.set($event); page.set(1)" />
         </ac-page-canvas>
-
-        @if (formOpen())
-        {
-            <ac-tenant-form (closed)="formClosed($event)" />
-        }
     `
 })
 export class TenantsPage implements OnInit
@@ -109,7 +103,6 @@ export class TenantsPage implements OnInit
     readonly products = signal<ProductRow[]>([]);
     readonly loading = signal(false);
     readonly error = signal('');
-    readonly formOpen = signal(false);
 
     readonly productOptions = computed<SelectOption[]>(() =>
     [
@@ -171,17 +164,5 @@ export class TenantsPage implements OnInit
     openTenant(t: TenantRow): void
     {
         void this.router.navigate(['/tenants', t.PublicId]);
-    }
-
-    formClosed(saved: boolean): void
-    {
-        this.formOpen.set(false);
-
-        if (saved)
-        {
-            this.toast.success('Tenant registered', 'It is now listed below.');
-
-            void this.load();
-        }
     }
 }

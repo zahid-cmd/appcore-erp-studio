@@ -590,44 +590,44 @@ implements OnInit, OnDestroy
         {
             header:'Purchase No',
             field:'PurchaseNo',
-            width:'160px',
+            width:'170px',
             align:'left'
         },
         {
             header:'Date',
             field:'PurchaseDateText',
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Supplier',
             field:'SupplierName',
-            width:'160px',
+            width:'230px',
             align:'left'
         },
         // How the supplier bills : DP / MRP invoice (MB : always DP)
         {
             header:'Invoice',
             field:'InvoiceText',
-            width:'160px',
+            width:'150px',
             align:'left'
         },
         {
             header:'Invoice / Mushak',
             field:'DocumentText',
-            width:'160px',
+            width:'170px',
             align:'left'
         },
         {
             header:'PO No',
             field:'OrderNo',
-            width:'160px',
+            width:'170px',
             align:'left'
         },
         {
             header:'Qty',
             field:'TotalQuantityText',
-            width:'90px',
+            width:'80px',
             align:'center'
         },
         {
@@ -641,14 +641,14 @@ implements OnInit, OnDestroy
             field:'Status',
             type:'status',
             // The pill is 110px wide : room for it and the cell padding
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'140px',
+            width:'130px',
             align:'center'
         }
     ];

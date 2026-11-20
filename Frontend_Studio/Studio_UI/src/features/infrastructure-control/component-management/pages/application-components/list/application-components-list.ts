@@ -112,6 +112,13 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
+import
+{
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
 
 //===============================================================
 // Component Renderer
@@ -147,6 +154,7 @@ from '../../../services/application-components.service';
 
     imports:
     [
+        SummaryLineComponent,
         CommonModule,
 
         PageHeaderComponent,
@@ -910,5 +918,34 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+    //===========================================================
+    // Summary line items : the same array while the figures do
+    // not change (the summary line is OnPush)
+    //===========================================================
+
+    private summaryKey = '';
+
+    private summaryCache: SummaryLineItem[] = [];
+
+    get summaryLineItems(): SummaryLineItem[]
+    {
+        const items: SummaryLineItem[] =
+        [
+            { label:'Total', value:this.summaryText(this.summaryTotal), tone:'' },
+            { label:'Active', value:this.summaryText(this.summaryActive), tone:'ok' },
+            { label:'Inactive', value:this.summaryText(this.summaryTotal - this.summaryActive), tone:'bad' }
+        ];
+
+        const key = JSON.stringify(items);
+
+        if (key !== this.summaryKey)
+        {
+            this.summaryKey = key;
+            this.summaryCache = items;
+        }
+
+        return this.summaryCache;
     }
 }

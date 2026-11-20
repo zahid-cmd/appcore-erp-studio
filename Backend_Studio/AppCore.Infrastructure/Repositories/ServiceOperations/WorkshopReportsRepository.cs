@@ -145,6 +145,39 @@ public class WorkshopReportsRepository
 
         int waiting = open.Count(x => x.Status == Ws.WaitingParts);
 
+        // The day of the workshop (owner 2026-11-20) : the business
+        // day (UTC+6) as UTC times, for the time stamps
+        DateTime dayStart = DateTime.SpecifyKind(today.ToDateTime(TimeOnly.MinValue).AddHours(-6), DateTimeKind.Utc);
+        DateTime dayEnd = dayStart.AddDays(1);
+
+        int assignedToday =
+            await _context.Set<JobCards>().AsNoTracking()
+                .CountAsync(x => !x.IsDeleted && x.Status != Ws.Cancelled && x.AssignedAt >= dayStart && x.AssignedAt < dayEnd && (branchId == null || x.BranchId == branchId));
+
+        var issuesToday =
+            await (from issue in _context.Set<PartsIssues>().AsNoTracking()
+                   join card in _context.Set<JobCards>().AsNoTracking() on issue.JobCardId equals card.JobCardId
+                   where issue.IssueDate == today && issue.Status != "Cancelled" && (branchId == null || card.BranchId == branchId)
+                   select issue.JobCardId)
+                .ToListAsync();
+
+        // The status changes of today : one per job card and status
+        var changedToday =
+            await (from history in _context.Set<JobCardStatusHistory>().AsNoTracking()
+                   join card in _context.Set<JobCards>().AsNoTracking() on history.JobCardId equals card.JobCardId
+                   where !card.IsDeleted && history.ChangedAt >= dayStart && history.ChangedAt < dayEnd
+                         && (history.Status == Ws.WorkDone || history.Status == Ws.Delivered)
+                         && (branchId == null || card.BranchId == branchId)
+                   select new { history.JobCardId, history.Status })
+                .Distinct()
+                .ToListAsync();
+
+        int workDoneToday = changedToday.Count(x => x.Status == Ws.WorkDone);
+
+        int closedToday = changedToday.Count(x => x.Status == Ws.Delivered);
+
+        int pending = open.Count(x => x.JobDate < today);
+
         int ready = open.Count(x => x.Status == Ws.Ready || x.Status == Ws.Invoiced);
 
         int late = jobs.Count(x => x.IsLate);
@@ -215,13 +248,23 @@ public class WorkshopReportsRepository
                 new List<WsTileDto>
                 {
                     new() { Label = "In the workshop", Value = open.Count.ToString(), Hint = "Job cards not delivered yet", Tone = "blue" },
-                    new() { Label = "Checked in today", Value = checkedIn.ToString(), Hint = "Job cards of today", Tone = "slate" },
+                    new() { Label = "Pending from earlier days", Value = pending.ToString(), Hint = "Opened before today, not delivered", Tone = pending > 0 ? "amber" : "slate" },
                     new() { Label = "Waiting for parts", Value = waiting.ToString(), Hint = "See Parts Back-Orders", Tone = waiting > 0 ? "amber" : "slate" },
                     new() { Label = "Ready for delivery", Value = ready.ToString(), Hint = "Ready or invoiced, bike still here", Tone = "green" },
                     new() { Label = "Late", Value = late.ToString(), Hint = "Promised time is over", Tone = late > 0 ? "red" : "slate" },
                     new() { Label = "Invoiced today", Value = Money(todayInvoices.Sum(x => x.GrandTotal)), Hint = $"{todayInvoices.Count} service invoice(s)", Tone = "blue" },
                     new() { Label = "Collected today", Value = Money(todayInvoices.Sum(x => x.PaidAmount)), Hint = "On the invoices of today", Tone = "green" },
                     new() { Label = "Due on invoices", Value = Money(due), Hint = "All posted service invoices", Tone = due > 0m ? "amber" : "slate" }
+                },
+            Activity =
+                new List<WsTileDto>
+                {
+                    new() { Label = "Opened today", Value = checkedIn.ToString(), Hint = "New job cards", Tone = "blue" },
+                    new() { Label = "Assigned today", Value = assignedToday.ToString(), Hint = "Given to a technician", Tone = "blue" },
+                    new() { Label = "Parts allocated today", Value = issuesToday.Distinct().Count().ToString(), Hint = $"{issuesToday.Count} parts issue(s)", Tone = "amber" },
+                    new() { Label = "Work done today", Value = workDoneToday.ToString(), Hint = "Repair finished", Tone = "green" },
+                    new() { Label = "Billed today", Value = todayInvoices.Count.ToString(), Hint = $"{Money(todayInvoices.Sum(x => x.GrandTotal))} invoiced", Tone = "blue" },
+                    new() { Label = "Closed today", Value = closedToday.ToString(), Hint = "Delivered to the customer", Tone = "green" }
                 },
             Statuses =
                 new[] { Ws.Open, Ws.Assigned, Ws.Allocated, Ws.InProgress, Ws.WaitingParts, Ws.WorkDone, Ws.Ready, Ws.Invoiced }

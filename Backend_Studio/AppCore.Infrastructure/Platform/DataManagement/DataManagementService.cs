@@ -751,6 +751,13 @@ public class DataManagementService
 
         foreach (DataResetGroup group in DataResetGroups.All)
         {
+            // an off module's groups are not offered
+            if (group.Key.StartsWith("membership", StringComparison.OrdinalIgnoreCase)
+                && AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.Membership))
+            {
+                continue;
+            }
+
             var dto =
                 new DataResetGroupDto
                 {

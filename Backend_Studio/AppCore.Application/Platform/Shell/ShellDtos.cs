@@ -82,4 +82,9 @@ public class ShellContextDto
 
     // Open / Closed …
     public string YearStatus { get; set; } = string.Empty;
+
+    // Module route keys switched off for this company in the
+    // Console (2026-11-20) : the pages of other modules hide what
+    // belongs to them (UI : core\shell\module-switch.service.ts)
+    public List<string> OffModules { get; set; } = new();
 }

@@ -102,23 +102,12 @@
 
     @if (summaryTotal > 0)
     {
-        <div class="ics-summary">
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Total</span>
-                <b class="ics-summary-value">{{ summaryText(summaryTotal) }}</b>
-            </span>
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Active</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryActive) }}</b>
-            </span>
-            <span class="ics-summary-item">
-                <span class="ics-summary-label">Online (last check)</span>
-                <b class="ics-summary-value ics-ok">{{ summaryText(summaryOnline) }}</b>
-            </span>
-            <span class="ics-summary-note">
-                Plug button = Test Connection
-            </span>
-        </div>
+        <app-summary-line
+            [items]="summaryLineItems"
+            noun="servers"
+            art="workspace"
+            [note]="'Plug button = Test Connection'">
+        </app-summary-line>
     }
 
 

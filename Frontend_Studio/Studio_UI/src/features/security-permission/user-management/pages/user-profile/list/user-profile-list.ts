@@ -417,7 +417,7 @@ implements OnInit
 
             field:'ProfileCode',
 
-            width:'140px',
+            width:'150px',
 
             align:'center'
         },
@@ -427,7 +427,7 @@ implements OnInit
 
             field:'UserName',
 
-            width:'210px',
+            width:'190px',
 
             align:'left'
         },
@@ -437,7 +437,7 @@ implements OnInit
 
             field:'DisplayName',
 
-            width:'240px',
+            width:'200px',
 
             align:'left'
         },
@@ -447,7 +447,7 @@ implements OnInit
 
             field:'FullName',
 
-            width:'210px',
+            width:'200px',
 
             align:'left'
         },
@@ -457,7 +457,7 @@ implements OnInit
 
             field:'PrimaryRoleName',
 
-            width:'160px',
+            width:'170px',
 
             align:'left'
         },
@@ -487,7 +487,7 @@ implements OnInit
 
             field:'IsActive',
 
-            width:'130px',
+            width:'120px',
 
             align:'center',
 
@@ -501,7 +501,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'140px',
+            width:'130px',
 
             align:'center'
         }

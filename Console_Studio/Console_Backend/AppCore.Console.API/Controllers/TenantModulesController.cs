@@ -24,7 +24,10 @@ namespace AppCore.Console.API.Controllers;
 public record TenantModulesSave(
     string? PackageCode,
     List<string>? EnabledModules,
-    int? MaxUsers);
+    int? MaxUsers,
+
+    // the staff member confirmed "switch every optional module off"
+    bool? ConfirmAllOff = null);
 
 
 [ApiController]
@@ -99,6 +102,16 @@ public class TenantModulesController : ControllerBase
         });
     }
 
+    // module -> the module whose documents it works on
+    private static readonly (string Module, string Needs)[] Needs =
+    {
+        // Registration Profiles and Customer Files come from bike invoices
+        ("registration-management", "sales-operations"),
+
+        // Sales Warranty Records come from bike deliveries
+        ("warranty-management", "sales-operations")
+    };
+
     [HttpPut]
     [Authorize(Roles = StaffRoles.ManageTenants)]
     public async Task<IActionResult> Save(Guid publicId, [FromBody] TenantModulesSave request)
@@ -113,6 +126,13 @@ public class TenantModulesController : ControllerBase
         if (request.MaxUsers is < 1 or > 100000)
         {
             return BadRequest(new { message = "Users allowed : 1 or more, or leave it empty for no limit." });
+        }
+
+        // no list at all is a broken request, not "everything off"
+        // (2026-11-20, review B4)
+        if (request.EnabledModules is null)
+        {
+            return BadRequest(new { message = "The module list is missing : nothing was saved. Refresh the page and try again." });
         }
 
         string? package = string.IsNullOrWhiteSpace(request.PackageCode) ? null : request.PackageCode.Trim().ToUpperInvariant();
@@ -136,6 +156,28 @@ public class TenantModulesController : ControllerBase
             .OrderBy(m => m.DisplayOrder)
             .Select(m => m.ModuleCode.ToLowerInvariant())
             .ToList();
+
+        // every optional module off : only when confirmed (B4)
+        if (off.Count > 0
+            && off.Count == modules.Count(m => !m.IsCore)
+            && request.ConfirmAllOff != true)
+        {
+            return BadRequest(new { message = "No optional module is ticked : this switches every optional module off for the client. Press Save again to confirm.", NeedsConfirmAllOff = true });
+        }
+
+        // A module that only works on another one's documents cannot
+        // be on while that one is off (2026-11-20, ERP blueprint
+        // claude\blueprint-module-isolation.md, decision D6)
+        foreach ((string module, string needs) in Needs)
+        {
+            var a = modules.FirstOrDefault(m => m.ModuleCode.ToLowerInvariant() == module);
+            var b = modules.FirstOrDefault(m => m.ModuleCode.ToLowerInvariant() == needs);
+
+            if (a is not null && b is not null && !off.Contains(module) && off.Contains(needs))
+            {
+                return BadRequest(new { message = $"{a.ModuleName} works on the documents of {b.ModuleName}. Switch {b.ModuleName} on too, or switch {a.ModuleName} off." });
+            }
+        }
 
         t.PackageCode = package;
         t.MaxUsers = request.MaxUsers;

@@ -521,6 +521,10 @@ app.UseAuthentication();
 
 app.UseTenantTokenCheck();
 
+// a module switched off in the Console : its API refuses
+// saving too (2026-11-20, Platform\Tenancy\ModuleGate.cs)
+app.UseModuleGate();
+
 
 //===============================================================
 // Rate Limiting

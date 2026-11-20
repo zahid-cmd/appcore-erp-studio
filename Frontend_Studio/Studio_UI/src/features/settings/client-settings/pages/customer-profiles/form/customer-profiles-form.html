@@ -399,6 +399,9 @@
                                     [disabled]="isViewMode || isSaving">
                                 </app-textarea>
 
+                                <!-- not with Registration Management off, unless an address is already saved -->
+                                @if (registrationOn || entity.RegistrationAddress)
+                                {
                                 <app-textarea
                                     label="Registration Address"
                                     placeholder="Address for bike registration"
@@ -407,6 +410,7 @@
                                     (valueChange)="onUpperCaseChange('RegistrationAddress')"
                                     [disabled]="isViewMode || isSaving">
                                 </app-textarea>
+                                }
                             </div>
 
                         </section>

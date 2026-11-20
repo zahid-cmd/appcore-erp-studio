@@ -31,7 +31,12 @@ public record TenantSave(
     string? Remarks,
     List<string>? HostNames,
     int? MaxCompanies = null,
-    int? MaxBranches = null);
+    int? MaxBranches = null,
+
+    // Register only (2026-11-20, review B4) : the package the client
+    // buys and his user limit. Later changes : the tenant page.
+    string? PackageCode = null,
+    int? MaxUsers = null);
 
 public record TenantStatusChange(string Status, string? Reason);
 
@@ -150,6 +155,10 @@ public partial class TenantsController : ControllerBase
             t.TrialEndsOn,
             t.DatabaseServerId,
             t.DatabaseName,
+
+            // the Console created this database and its login : code,
+            // product, server and database name are fixed from then on
+            DatabaseLocked = !string.IsNullOrEmpty(t.DbPasswordSealed),
             t.MaxCompanies,
             t.MaxBranches,
             t.TimeZone,
@@ -181,6 +190,51 @@ public partial class TenantsController : ControllerBase
 
         string status = request.Status ?? "Provisioning";
 
+        // The package decides the modules from the first day (review
+        // B4) : before, a new tenant had every module on and no user
+        // limit until someone opened the tenant page.
+        if (request.MaxUsers is < 1 or > 100000)
+        {
+            return BadRequest(new { message = "Users allowed : 1 or more, or leave it empty for no limit." });
+        }
+
+        var packages = await _db.ProductPackages.AsNoTracking()
+            .Where(x => x.ProductId == product!.ProductId)
+            .ToListAsync();
+
+        string? packageCode = Clean(request.PackageCode)?.ToUpperInvariant();
+        string disabled = string.Empty;
+
+        if (packages.Count > 0)
+        {
+            ProductPackage? package = packages.FirstOrDefault(x => x.PackageCode == packageCode);
+
+            if (package is null)
+            {
+                return BadRequest(new { message = "Pick the package." });
+            }
+
+            List<long> inPackage = await _db.ProductPackageModules.AsNoTracking()
+                .Where(x => x.ProductPackageId == package.ProductPackageId)
+                .Select(x => x.ProductModuleId)
+                .ToListAsync();
+
+            // off : every module of the product that is not core and
+            // not in the package (what the ERP reads)
+            List<string> off = await _db.ProductModules.AsNoTracking()
+                .Where(x => x.ProductId == product!.ProductId && !x.IsCore && !inPackage.Contains(x.ProductModuleId))
+                .OrderBy(x => x.DisplayOrder)
+                .Select(x => x.ModuleCode.ToLower())
+                .ToListAsync();
+
+            disabled = string.Join(",", off);
+        }
+        else
+        {
+            // a product without packages : every module, as before
+            packageCode = null;
+        }
+
         Tenant tenant = new()
         {
             TenantCode = request.TenantCode.Trim().ToUpperInvariant(),
@@ -193,36 +247,59 @@ public partial class TenantsController : ControllerBase
             TrialEndsOn = request.TrialEndsOn,
             MaxCompanies = request.MaxCompanies ?? 1,
             MaxBranches = request.MaxBranches,
+            PackageCode = packageCode,
+            MaxUsers = request.MaxUsers,
+            DisabledModules = disabled,
             Remarks = Clean(request.Remarks),
             CreatedBy = User.StaffId()
         };
 
-        _db.Tenants.Add(tenant);
-
-        await _db.SaveChangesAsync();
-
-        for (int i = 0; i < hosts.Count; i++)
+        // The tenant, its web addresses and its first history line
+        // are saved together or not at all (2026-11-20, review B2) :
+        // before, a failure after the first save left a tenant with
+        // no address, and "code already used" on the next try.
+        try
         {
-            _db.TenantDomains.Add(new TenantDomain
+            await using var tx = await _db.Database.BeginTransactionAsync();
+
+            _db.Tenants.Add(tenant);
+
+            // gives the tenant its id, inside the transaction
+            await _db.SaveChangesAsync();
+
+            for (int i = 0; i < hosts.Count; i++)
+            {
+                _db.TenantDomains.Add(new TenantDomain
+                {
+                    TenantId = tenant.TenantId,
+                    HostName = hosts[i],
+                    DomainType = DomainTypeOf(hosts[i]),
+                    IsPrimary = i == 0
+                });
+            }
+
+            _db.TenantStatusHistory.Add(new TenantStatusHistory
             {
                 TenantId = tenant.TenantId,
-                HostName = hosts[i],
-                DomainType = DomainTypeOf(hosts[i]),
-                IsPrimary = i == 0
+                ToStatus = status,
+                Reason = "Tenant registered",
+                ChangedBy = User.StaffId()
             });
+
+            _audit.Add("Tenant.Create", "Tenant", tenant.TenantCode, tenant.TenantId,
+                $"package {packageCode ?? "-"}; users {request.MaxUsers?.ToString() ?? "no limit"}; off : {(disabled.Length == 0 ? "none" : disabled)}");
+
+            await _db.SaveChangesAsync();
+
+            await tx.CommitAsync();
         }
-
-        _db.TenantStatusHistory.Add(new TenantStatusHistory
+        catch (DbUpdateException)
         {
-            TenantId = tenant.TenantId,
-            ToStatus = status,
-            Reason = "Tenant registered",
-            ChangedBy = User.StaffId()
-        });
-
-        _audit.Add("Tenant.Create", "Tenant", tenant.TenantCode, tenant.TenantId);
-
-        await _db.SaveChangesAsync();
+            // nothing was saved (the transaction is undone). The usual
+            // cause : the same code or web address was registered a
+            // moment ago (a double click, or another staff member).
+            return Conflict(new { message = "The tenant was not saved : nothing was registered. The tenant code or a web address may have just been taken (a second click, or another staff member). Refresh the tenant list and try again." });
+        }
 
         return Ok(new { tenant.PublicId, tenant.TenantCode });
     }
@@ -244,6 +321,20 @@ public partial class TenantsController : ControllerBase
         if (problem is not null)
         {
             return BadRequest(new { message = problem });
+        }
+
+        // Once the Console has created the database and its login
+        // (2026-11-20) the database name, the login and the sealed
+        // password all hang on the tenant code : changing code,
+        // product, server or database name here would take the
+        // client offline.
+        if (!string.IsNullOrEmpty(tenant.DbPasswordSealed)
+            && (request.TenantCode.Trim().ToUpperInvariant() != tenant.TenantCode
+                || product!.ProductId != tenant.ProductId
+                || request.DatabaseServerId != tenant.DatabaseServerId
+                || Clean(request.DatabaseName) != tenant.DatabaseName))
+        {
+            return BadRequest(new { message = "This tenant's database was created by the Console : tenant code, product, database server and database name can no longer be changed." });
         }
 
         tenant.TenantCode = request.TenantCode.Trim().ToUpperInvariant();
@@ -338,6 +429,16 @@ public partial class TenantsController : ControllerBase
         return Ok();
     }
 
+    // the packages of a product, for Register tenant
+    [HttpGet("packages")]
+    public async Task<IActionResult> Packages([FromQuery] string? product)
+        => Ok(await (from k in _db.ProductPackages
+                     join p in _db.Products on k.ProductId equals p.ProductId
+                     where p.ProductCode == product
+                     orderby k.DisplayOrder
+                     select new { k.PackageCode, k.PackageName, k.Description })
+                    .ToListAsync());
+
     [HttpGet("servers")]
     public async Task<IActionResult> Servers()
         => Ok(await _db.DatabaseServers
@@ -394,6 +495,41 @@ public partial class TenantsController : ControllerBase
         if (await _db.Tenants.AnyAsync(x => x.TenantCode == code && x.TenantId != tenantId))
         {
             return ($"Tenant code {code} is already used.", null, null, hosts);
+        }
+
+        // A new or changed code (2026-11-20) : Create database makes
+        // the database and login name from the code without '-' and
+        // needs a letter first, so the same rule applies here. Codes
+        // registered before keep working.
+        bool codeIsNew =
+            tenantId is null
+            || !await _db.Tenants.AnyAsync(x => x.TenantId == tenantId && x.TenantCode == code);
+
+        if (codeIsNew)
+        {
+            if (!char.IsLetter(code[0]))
+            {
+                return ("Tenant code must start with a letter (e.g. MOTOZONE).", null, null, hosts);
+            }
+
+            string bare = code.Replace("-", string.Empty);
+
+            string? clash =
+                await _db.Tenants
+                    .Where(x => x.TenantId != tenantId && x.TenantCode.Replace("-", "") == bare)
+                    .Select(x => x.TenantCode)
+                    .FirstOrDefaultAsync();
+
+            if (clash is not null)
+            {
+                return ($"Tenant code {code} is too close to {clash} : both would use the same database name.", null, null, hosts);
+            }
+        }
+
+        if (r.DatabaseServerId is not null
+            && !await _db.DatabaseServers.AnyAsync(x => x.DatabaseServerId == r.DatabaseServerId))
+        {
+            return ("Pick the database server from the list.", null, null, hosts);
         }
 
         Customer? customer = await _db.Customers.FirstOrDefaultAsync(x => x.PublicId == r.CustomerPublicId);

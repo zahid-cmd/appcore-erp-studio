@@ -11,6 +11,15 @@ namespace AppCore.Application.Public.Website;
 
 public class PublicWebsiteDto
 {
+    // Enquiry Management is switched off for this company
+    // (2026-11-20) : the website hides Enquire / Book a test ride /
+    // Book a service, and the two send addresses refuse
+    public bool EnquiryOff { get; set; }
+
+    // EMI Management is switched off for this company : the
+    // website hides its EMI calculator
+    public bool EmiOff { get; set; }
+
     public PublicCompanyDto Company { get; set; } = new();
 
     public List<PublicBranchDto> Branches { get; set; } = new();

@@ -1702,7 +1702,7 @@ implements OnInit, OnDestroy
             (): void =>
             {
                 void this.router.navigate(
-                    ['/sales-operations', 'sales-setup', 'bike-accessory-schemes', 'list']
+                    ['/inventory-management', 'product-setup', 'bike-accessory-schemes', 'list']
                 );
             };
 

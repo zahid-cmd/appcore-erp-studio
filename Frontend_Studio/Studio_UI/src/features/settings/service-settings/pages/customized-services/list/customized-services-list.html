@@ -137,24 +137,12 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="csv-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="csv-summary-item">
-                    <span class="csv-summary-label">{{ item.label }}</span>
-                    <b
-                        class="csv-summary-value"
-                        [class.csv-ok]="item.tone === 'ok'"
-                        [class.csv-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="csv-summary-note">
-                All records
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="services"
+            art="catalog"
+            note="All records">
+        </app-summary-line>
     }
 
     <!-- =====================================================

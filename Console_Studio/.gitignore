@@ -1,3 +1,5 @@
 publish/
 dev-agent/deploy.json
 dev-agent/deploy-history.json
+# owner's passwords : never in Git (2026-11-20)
+Console_Frontend/Password_Book/

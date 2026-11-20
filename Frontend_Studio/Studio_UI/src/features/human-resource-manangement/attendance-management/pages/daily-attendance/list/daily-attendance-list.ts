@@ -42,6 +42,7 @@ import { ListTableComponent, ListTableColumn, ListTableRowAction, ListTableRowAc
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
+import { SummaryLineComponent, SummaryLineItem } from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogComponent } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
@@ -124,6 +125,7 @@ const STATUS:
         PaginationComponent,
         HistoryDrawerComponent,
         ToastComponent,
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -258,7 +260,7 @@ implements OnInit
         10;
 
     summaryItems:
-        { label: string; value: string }[] = [];
+        SummaryLineItem[] = [];
 
     historyOpened =
         false;
@@ -403,10 +405,10 @@ implements OnInit
         this.summaryItems =
         [
             { label:'Sheets', value:matched.length.toLocaleString('en-US') },
-            { label:'Days Marked', value:sum('Days') },
-            { label:'Present', value:(matched.reduce((total, x) => total + x.Present + x.Late, 0)).toLocaleString('en-US') },
-            { label:'Absent', value:sum('Absent') },
-            { label:'Overtime Hours', value:sum('OvertimeHours') }
+            { label:'Days Marked', value:sum('Days'), share:false },
+            { label:'Present', value:(matched.reduce((total, x) => total + x.Present + x.Late, 0)).toLocaleString('en-US'), share:false },
+            { label:'Absent', value:sum('Absent'), share:false },
+            { label:'Overtime Hours', value:sum('OvertimeHours'), share:false }
         ];
 
         this.cdr.detectChanges();

@@ -135,6 +135,13 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
+import
+{
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
 
 //===============================================================
 // Service
@@ -161,6 +168,7 @@ from '../../../services/dashboards.service';
 
     imports:
     [
+        SummaryLineComponent,
         CommonModule,
 
         PageHeaderComponent,
@@ -440,7 +448,7 @@ implements
                 'serial',
 
             width:
-                '60px',
+                '56px',
 
             align:
                 'center'
@@ -527,7 +535,7 @@ implements
                 'status',
 
             width:
-                '180px',
+                '120px',
 
             align:
                 'center'
@@ -544,7 +552,7 @@ implements
                 'operation',
 
             width:
-                '180px',
+                '110px',
 
             align:
                 'center'
@@ -561,7 +569,7 @@ implements
                 'actions',
 
             width:
-                '180px',
+                '130px',
 
             align:
                 'center'
@@ -1599,5 +1607,34 @@ implements
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+    //===========================================================
+    // Summary line items : the same array while the figures do
+    // not change (the summary line is OnPush)
+    //===========================================================
+
+    private summaryKey = '';
+
+    private summaryCache: SummaryLineItem[] = [];
+
+    get summaryLineItems(): SummaryLineItem[]
+    {
+        const items: SummaryLineItem[] =
+        [
+            { label:'Total', value:this.summaryText(this.summaryTotal), tone:'' },
+            { label:'Active', value:this.summaryText(this.summaryActive), tone:'ok' },
+            { label:'Inactive', value:this.summaryText(this.summaryTotal - this.summaryActive), tone:'bad' }
+        ];
+
+        const key = JSON.stringify(items);
+
+        if (key !== this.summaryKey)
+        {
+            this.summaryKey = key;
+            this.summaryCache = items;
+        }
+
+        return this.summaryCache;
     }
 }

@@ -196,77 +196,13 @@
             </app-page-canvas>
 
 
-            <div class="ics-summary">
-
-                @if (tab === 'bookings')
-                {
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Open</span>
-                        <b class="ics-summary-value">{{ countOf('Open') }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Expired</span>
-                        <b class="ics-summary-value ics-bad">{{ countOf('Expired') }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Advance held</span>
-                        <b class="ics-summary-value">{{ money(openAdvance) }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Converted</span>
-                        <b class="ics-summary-value ics-ok">{{ countOf('Converted') }}</b>
-                    </span>
-                }
-
-                @if (tab === 'collections')
-                {
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Collections</span>
-                        <b class="ics-summary-value">{{ filteredRows.length }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Amount</span>
-                        <b class="ics-summary-value ics-ok">{{ money(sumOf('Amount')) }}</b>
-                    </span>
-                }
-
-                @if (tab === 'cancellations')
-                {
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Cancelled</span>
-                        <b class="ics-summary-value">{{ filteredRows.length }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">Forfeited</span>
-                        <b class="ics-summary-value ics-ok">{{ money(sumOf('ForfeitAmount')) }}</b>
-                    </span>
-
-                    <span class="ics-summary-item">
-                        <span class="ics-summary-label">To refund</span>
-                        <b class="ics-summary-value ics-bad">{{ money(sumOf('RefundAmount')) }}</b>
-                    </span>
-                }
-
-                <span class="ics-summary-note">
-
-                    @if (tab === 'cancellations')
-                    {
-                        Refund by Payment Voucher from the customer's ledger
-                    }
-                    @else
-                    {
-                        Minimum {{ switches.MinimumAmount ? money(switches.MinimumAmount) : 'none' }}
-                        · Valid {{ switches.ValidityDays ? switches.ValidityDays + ' days' : 'no expiry' }}
-                    }
-
-                </span>
-
-            </div>
+            <app-summary-line
+                [items]="summaryLineItems"
+                noun="records"
+                art="bike"
+                note="Filters applied"
+                [noteDetail]="summaryNoteText">
+            </app-summary-line>
 
         </div>
 
@@ -930,7 +866,7 @@
 
                                     </div>
 
-                                    <div class="bkm-cust-fact">
+                                    <div class="bkm-cust-fact" [style.display]="membershipOn || customerCard.MembershipNo ? null : 'none'">
 
                                         <span>Membership</span>
 

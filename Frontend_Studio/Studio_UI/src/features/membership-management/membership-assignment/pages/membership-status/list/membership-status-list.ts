@@ -488,25 +488,25 @@ implements OnInit, OnDestroy
         {
             header:'Membership No',
             field:'MembershipNo',
-            width:'160px',
+            width:'170px',
             align:'left'
         },
         {
             header:'Card',
             field:'CardName',
-            width:'160px',
+            width:'140px',
             align:'left'
         },
         {
             header:'Customer',
             field:'CustomerName',
-            width:'160px',
+            width:'210px',
             align:'left'
         },
         {
             header:'Motor Bike',
             field:'MotorBikeName',
-            width:'160px',
+            width:'180px',
             align:'left'
         },
         {
@@ -518,38 +518,38 @@ implements OnInit, OnDestroy
         {
             header:'Start',
             field:'StartDisplay',
-            width:'160px',
-            align:'left'
+            width:'120px',
+            align:'center'
         },
         {
             header:'Expiry',
             field:'ExpiryDisplay',
-            width:'160px',
-            align:'left'
+            width:'120px',
+            align:'center'
         },
         {
             header:'Fee',
             field:'FeeDisplay',
-            width:'160px',
-            align:'left'
+            width:'110px',
+            align:'right'
         },
         {
             header:'Free Services',
             field:'FreeServiceDisplay',
-            width:'160px',
-            align:'left'
+            width:'120px',
+            align:'center'
         },
         {
             header:'Status',
             field:'Status',
-            width:'160px',
+            width:'120px',
             align:'left'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'140px',
+            width:'130px',
             align:'center'
         }
     ];

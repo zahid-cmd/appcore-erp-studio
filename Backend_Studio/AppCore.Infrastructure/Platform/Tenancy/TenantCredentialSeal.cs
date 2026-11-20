@@ -16,9 +16,16 @@
 // Keep a copy of the private file in a safe place : without it the
 // sealed logins cannot be opened (the Console can reset them).
 //
+// The private file is locked every start (2026-11-20, review B12) :
+// only SYSTEM, Administrators and the account this service runs as
+// may read it. Before, it had the folder's normal rights and every
+// Windows user of the server could read it.
+//
 //===============================================================
 
+using System.Security.AccessControl;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 
 namespace AppCore.Infrastructure.Platform.Tenancy;
@@ -71,10 +78,55 @@ public sealed class TenantCredentialSeal
                 File.WriteAllText(_privateFile, rsa.ExportPkcs8PrivateKeyPem());
             }
 
+            LockPrivateFile();
+
             // the public half is (re)written every start : harmless
             File.WriteAllText(PublicFile, rsa.ExportSubjectPublicKeyInfoPem());
 
             _rsa = rsa;
+        }
+    }
+
+
+    // Only SYSTEM, Administrators and this service's own account
+    // may read the private key (nothing is inherited from the
+    // folder). Never stops the start : a problem here leaves the
+    // file as it was.
+    private void LockPrivateFile()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        try
+        {
+            FileSecurity security = new();
+
+            // no rights from the folder
+            security.SetAccessRuleProtection(true, false);
+
+            List<IdentityReference> allowed =
+            [
+                new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null),
+                new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null)
+            ];
+
+            if (WindowsIdentity.GetCurrent().User is SecurityIdentifier me && !allowed.Contains(me))
+            {
+                allowed.Add(me);
+            }
+
+            foreach (IdentityReference who in allowed)
+            {
+                security.AddAccessRule(new FileSystemAccessRule(who, FileSystemRights.FullControl, AccessControlType.Allow));
+            }
+
+            new FileInfo(_privateFile).SetAccessControl(security);
+        }
+        catch (Exception)
+        {
+            // the key still works; the file keeps its old rights
         }
     }
 

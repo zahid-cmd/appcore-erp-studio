@@ -923,7 +923,7 @@
 
                                         </div>
 
-                                        <div class="si-fact si-fact-wide">
+                                        <div class="si-fact si-fact-wide" [style.display]="membershipOn || membershipText ? null : 'none'">
 
                                             <span>Membership</span>
 
@@ -1218,7 +1218,7 @@
                                     </span>
 
                                     @let vw = warrantyOf(vr.entry.ProductId);
-                                    <span class="si-warranty" [class.si-warranty-none]="vw === null">
+                                    <span class="si-warranty" [class.si-warranty-none]="vw === null" [style.display]="warrantyOn ? null : 'none'">
 
                                         <i class="fas fa-shield-halved"></i>
 
@@ -1499,7 +1499,7 @@
                                         <!-- Warranty (Warranty Management : the
                                              policy in force) on hover -->
                                         @let w = warrantyOf(b.ProductId);
-                                        <span class="si-warranty" [class.si-warranty-none]="w === null">
+                                        <span class="si-warranty" [class.si-warranty-none]="w === null" [style.display]="warrantyOn ? null : 'none'">
 
                                             <i class="fas fa-shield-halved"></i>
 

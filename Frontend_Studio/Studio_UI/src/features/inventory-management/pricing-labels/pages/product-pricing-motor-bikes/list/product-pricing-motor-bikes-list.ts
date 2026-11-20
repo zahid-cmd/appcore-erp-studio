@@ -318,14 +318,14 @@ export class ProductPricingMotorBikesList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Card No', field:'CardNo', width:'160px', align:'left', sortable:true, flagField:'InForce', flagText:'In Force', flagTitleField:'InForceTitle' },
-        { header:'Supplier', field:'SupplierName', width:'160px', align:'left', sortable:true },
-        { header:'Effective From', field:'FromText', width:'160px', align:'left', sortable:true },
-        { header:'Effective To', field:'ToText', width:'160px', align:'left', sortable:true },
-        { header:'Models', field:'ProductCount', width:'160px', align:'left', sortable:true },
-        { header:'Reference', field:'Reference', width:'160px', align:'left', sortable:true },
-        { header:'Status', field:'Status', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Card No', field:'CardNo', width:'170px', align:'left', sortable:true, flagField:'InForce', flagText:'In Force', flagTitleField:'InForceTitle' },
+        { header:'Supplier', field:'SupplierName', width:'240px', align:'left', sortable:true },
+        { header:'Effective From', field:'FromText', width:'130px', align:'center', sortable:true },
+        { header:'Effective To', field:'ToText', width:'130px', align:'center', sortable:true },
+        { header:'Models', field:'ProductCount', width:'100px', align:'center', sortable:true },
+        { header:'Reference', field:'Reference', width:'220px', align:'left', sortable:true },
+        { header:'Status', field:'Status', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     //===========================================================

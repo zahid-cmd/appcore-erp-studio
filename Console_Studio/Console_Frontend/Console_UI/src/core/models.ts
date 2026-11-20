@@ -104,6 +104,10 @@ export interface TenantDetail
     TrialEndsOn: string | null;
     DatabaseServerId: number | null;
     DatabaseName: string | null;
+
+    // the Console created the database : code, product, server and
+    // database name are fixed
+    DatabaseLocked?: boolean;
     MaxCompanies: number;
     MaxBranches: number | null;
     TimeZone: string;
@@ -130,7 +134,24 @@ export interface TenantDatabasePlan
     Template: string | null;
     TemplateVersion: string | null;
     Problems: string[];
+
+    // a database with this name is on the server, left by a Create
+    // database that failed (2026-11-20) : removed before a new try
+    Leftover?: boolean;
+
+    // the name is taken by another tenant's database
+    LeftoverNote?: string | null;
     CanCreate: boolean;
+}
+
+// Remove leftover (api/tenants/{id}/database/leftover/remove)
+export interface TenantLeftoverResult
+{
+    DatabaseName: string;
+    DatabaseRemoved: boolean;
+    LoginName: string;
+    LoginRemoved: boolean;
+    Note: string | null;
 }
 
 // shown ONCE : nothing of the passwords is kept
@@ -147,6 +168,20 @@ export interface TenantDatabaseResult
     // null when the login was sealed into AppCore_Control (2026-11-20)
     SettingsSnippet: string | null;
     Sealed?: boolean;
+    // the first admin password was added to the owner's Password_Book.md
+    PasswordBookSaved?: boolean;
+    PasswordBook?: string | null;
+}
+
+// Reset first admin password / Reset database login (2026-11-20)
+export interface TenantResetResult
+{
+    Kind: 'admin' | 'login';
+    AdminUser?: string;
+    AdminPassword?: string;
+    LoginName?: string;
+    PasswordBookSaved?: boolean;
+    PasswordBook?: string | null;
 }
 
 export interface TenantSave
@@ -165,6 +200,19 @@ export interface TenantSave
     // limits the ERP enforces (MaxBranches null = no limit)
     MaxCompanies: number | null;
     MaxBranches: number | null;
+
+    // Register only (2026-11-20) : the package and the user limit.
+    // Changed later on the tenant page.
+    PackageCode?: string | null;
+    MaxUsers?: number | null;
+}
+
+// a package of a product (api/tenants/packages?product=...)
+export interface PackageRow
+{
+    PackageCode: string;
+    PackageName: string;
+    Description: string | null;
 }
 
 export interface ServerRow
@@ -245,6 +293,16 @@ export interface SiteRequest extends SiteRequestRow
     CustomerName: string | null;
 }
 
+// A customer that looks like the request (same phone, email or
+// VAT no.) : api/requests/{id}/customer-matches
+export interface CustomerMatch
+{
+    PublicId: string;
+    CustomerCode: string;
+    DisplayName: string;
+    Same: string;
+}
+
 // What Convert returns : fills the Register tenant form
 export interface TenantPrefill
 {
@@ -256,6 +314,10 @@ export interface TenantPrefill
     DisplayName: string;
     HostName: string;
     Status: string;
+
+    // asked for on the website request
+    MaxBranches?: number | null;
+    MaxUsers?: number | null;
 }
 
 //===============================================================
@@ -326,4 +388,7 @@ export interface TenantModulesSave
     PackageCode: string | null;
     EnabledModules: string[];
     MaxUsers: number | null;
+
+    // "switch every optional module off" was confirmed
+    ConfirmAllOff?: boolean;
 }

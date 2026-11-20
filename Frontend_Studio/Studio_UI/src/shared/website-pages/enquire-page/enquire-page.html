@@ -3,7 +3,20 @@
      Live preview (left) · form (right) · thank-you card
 ============================================================ -->
 
-@if (content(); as site)
+<!-- Enquiry Management is switched off for this company -->
+@if (enquiryOff())
+{
+    <section class="enq">
+        <div class="wrap">
+            <header class="head enq-head">
+                <h1 class="title">Online enquiries are not available</h1>
+                <p class="lead">Please call or visit the showroom. <a routerLink="/">Back to home</a></p>
+            </header>
+        </div>
+    </section>
+}
+
+@if (!enquiryOff() && content(); as site)
 {
     <section class="enq">
         <span class="glow" aria-hidden="true"></span>

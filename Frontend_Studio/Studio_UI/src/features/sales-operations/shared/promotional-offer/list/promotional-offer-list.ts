@@ -181,6 +181,13 @@ import
 }
 from '../../../../../shared/components/controls/control-tabs/control-tabs';
 
+import
+{
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../shared/components/layout/summary-line/summary-line';
+
 
 //===============================================================
 // Row with display texts
@@ -220,7 +227,8 @@ const MONTHS =
         ToastComponent,
         TextboxComponent,
         SearchDropdownComponent,
-        ControlTabsComponent
+        ControlTabsComponent,
+        SummaryLineComponent
     ],
 
     templateUrl:'./promotional-offer-list.html',
@@ -302,6 +310,9 @@ export class PromotionalOfferList
     pageSize = 10;
 
     private counts: Record<string, number> = {};
+
+    // Summary line below the canvas (brand and search applied, all tabs)
+    summaryItems: SummaryLineItem[] = [];
 
     private sortField = '';
 
@@ -496,6 +507,8 @@ export class PromotionalOfferList
 
                         this.counts = result.counts ?? {};
 
+                        this.updateSummary();
+
                         if (result.page > 0)
                         {
                             this.currentPage = result.page;
@@ -634,6 +647,21 @@ export class PromotionalOfferList
     summaryText(value: number): string
     {
         return value.toLocaleString('en-US');
+    }
+
+    private updateSummary(): void
+    {
+        const n = (key: string): string => this.summaryText(this.countOf(key));
+
+        this.summaryItems =
+        [
+            { label:'Total', value:n('All'), tone:'' },
+            { label:'Running', value:n('Running'), tone:'ok' },
+            { label:'Upcoming', value:n('Upcoming'), tone:'warn' },
+            { label:'Draft', value:n('Draft'), tone:'', icon:'fas fa-pen-ruler' },
+            { label:'Closed', value:this.summaryText(this.countOf('Closed') + this.countOf('Ended')), tone:'', icon:'fas fa-flag-checkered' },
+            { label:'Cancelled', value:n('Cancelled'), tone:'bad' }
+        ];
     }
 
 

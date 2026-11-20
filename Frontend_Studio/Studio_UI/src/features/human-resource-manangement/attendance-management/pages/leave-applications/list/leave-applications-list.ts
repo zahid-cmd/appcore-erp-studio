@@ -229,14 +229,14 @@ implements OnInit
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Code', field:'Code', width:'140px', align:'center' },
-        { header:'Employee', field:'EmployeeText', width:'160px', align:'left' },
-        { header:'Leave', field:'LeaveText', width:'160px', align:'left' },
-        { header:'From', field:'FromText', width:'160px', align:'left' },
-        { header:'To', field:'ToText', width:'160px', align:'left' },
-        { header:'Days', field:'DaysText', width:'160px', align:'left' },
-        { header:'Status', field:'Status', width:'160px', align:'left', dotField:'StatusColor' },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Code', field:'Code', width:'130px', align:'center' },
+        { header:'Employee', field:'EmployeeText', width:'260px', align:'left' },
+        { header:'Leave', field:'LeaveText', width:'180px', align:'left' },
+        { header:'From', field:'FromText', width:'120px', align:'center' },
+        { header:'To', field:'ToText', width:'120px', align:'center' },
+        { header:'Days', field:'DaysText', width:'90px', align:'center' },
+        { header:'Status', field:'Status', width:'140px', align:'left', dotField:'StatusColor' },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     ngOnInit():

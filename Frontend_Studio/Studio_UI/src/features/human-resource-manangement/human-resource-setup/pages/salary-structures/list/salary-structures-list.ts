@@ -41,6 +41,7 @@ import { ListTableComponent, ListTableColumn } from '../../../../../../shared/co
 import { PaginationComponent } from '../../../../../../shared/components/controls/pagination/pagination';
 import { HistoryDrawerComponent } from '../../../../../../shared/components/utilities/history-drawer/history-drawer';
 import { ToastComponent } from '../../../../../../shared/components/utilities/toast/toast';
+import { SummaryLineComponent, SummaryLineItem } from '../../../../../../shared/components/layout/summary-line/summary-line';
 import { ToastService } from '../../../../../../shared/components/utilities/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog.service';
 import { ConfirmDialogComponent } from '../../../../../../shared/components/utilities/confirm-dialog/confirm-dialog';
@@ -100,6 +101,7 @@ type StructureRow =
         PaginationComponent,
         HistoryDrawerComponent,
         ToastComponent,
+        SummaryLineComponent,
         ConfirmDialogComponent,
         ProgressDialogComponent
     ],
@@ -158,7 +160,7 @@ implements OnInit
         10;
 
     summaryItems:
-        { label: string; value: string; tone: '' | 'ok' | 'bad' }[] = [];
+        SummaryLineItem[] = [];
 
     historyOpened =
         false;
@@ -273,7 +275,7 @@ implements OnInit
             { label:'Total', value:count(base.length), tone:'' },
             { label:'Active', value:count(base.filter(x => x.IsActive).length), tone:'ok' },
             { label:'Inactive', value:count(base.filter(x => !x.IsActive).length), tone:'bad' },
-            { label:'Employees on a Structure', value:count(base.reduce((sum, x) => sum + x.EmployeeCount, 0)), tone:'' }
+            { label:'Employees on a Structure', value:count(base.reduce((sum, x) => sum + x.EmployeeCount, 0)), tone:'', share:false }
         ];
 
         this.cdr.detectChanges();

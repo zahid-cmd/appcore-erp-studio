@@ -64,3 +64,32 @@ curl -H "X-Agent-Token: <token>" http://100.117.11.97:5099/agent/health
 The release zip must have `AppCore.API.exe` at its top level (the API
 publish output with the Angular build in `wwwroot`). The Deployment Center
 builds it.
+
+## Services under their own accounts (once, on skyhost)
+By default the ERP and the Console run as LocalSystem (full control of the
+server), and every Windows user of the server can read `C:\AppCore`
+(settings files with passwords). `secure-services.cmd` (in the published
+agent folder) changes that. cmd "Run as administrator", at a quiet hour,
+one line at a time, trying the site after each :
+
+    secure-services.cmd status
+    secure-services.cmd console
+    secure-services.cmd erp
+    secure-services.cmd lock
+
+- `console` / `erp` : the service gets its own small Windows account
+  (`NT SERVICE\AppCoreConsole`, `NT SERVICE\AppCoreERP`) with rights on its
+  own folders only. The service is asked if it answers; if not, it goes
+  back to LocalSystem by itself.
+- `lock` : `C:\AppCore`, `C:\ProgramData\AppCore` and `C:\ProgramData\AppCoreERP`
+  can be opened only by the system, administrators and the two services.
+  Both services are restarted and asked; if one does not answer, the
+  folders are opened again by themselves. After this, edit a settings
+  file with Notepad started "Run as administrator".
+- Everything back as it was :  `secure-services.cmd back`
+- The Deploy Agent stays LocalSystem : it must stop, change and start
+  services and write the release folders.
+
+After `erp`, also try once : a database backup from the ERP, and a
+picture upload. After `console` : Create database for a test tenant
+(the password book file may need its own right, see the message).

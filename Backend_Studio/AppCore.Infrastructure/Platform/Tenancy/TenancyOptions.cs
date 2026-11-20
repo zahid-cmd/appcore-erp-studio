@@ -6,7 +6,9 @@
 //     "Mode": "Off",                    // Off (default) | Host
 //     "LocalHostTenant": "MOTOZONE",    // company for http://localhost
 //                                       // (Deploy Agent health checks)
-//     "CacheSeconds": 60,
+//     "CacheSeconds": 15,               // optional (default 15)
+//     "NoCompany": "Warn",              // optional : Warn (default) | Refuse
+//                                       // Mode Host, work with no company
 //     "MapFile": "",                    // optional : last known map
 //                                       // (default %ProgramData%\AppCore\tenant-map.json)
 //     "Credentials": {
@@ -56,7 +58,11 @@ public sealed class TenancyOptions
 
     public string? LocalHostTenant { get; set; }
 
-    public int CacheSeconds { get; set; } = 60;
+    // How long the answer for a web address is kept. A change made
+    // in the Console (suspend, modules, limits) takes effect within
+    // this time. 15 since 2026-11-20 (was 60, review B6) : one small
+    // read of AppCore_Control per address every 15 seconds.
+    public int CacheSeconds { get; set; } = 15;
 
     // Last known map of addresses -> companies (no passwords), used
     // when AppCore_Control cannot be reached. Empty =
@@ -72,6 +78,17 @@ public sealed class TenancyOptions
         new(StringComparer.OrdinalIgnoreCase);
 
     public string? CredentialKeyFile { get; set; }
+
+    // Mode Host, work that asks for the database with no company
+    // (2026-11-20, review B9; see NoCompanyGuard) :
+    //   Warn   : (default) the default database as before, and a
+    //            warning line in the log saying what asked;
+    //   Refuse : an error, the database is not opened.
+    // Start with Warn; when the log on live stays clean, set Refuse.
+    public string NoCompany { get; set; } = "Warn";
+
+    public bool RefusesNoCompany =>
+        string.Equals(NoCompany, "Refuse", StringComparison.OrdinalIgnoreCase);
 
     public bool IsHostMode =>
         string.Equals(Mode, "Host", StringComparison.OrdinalIgnoreCase);

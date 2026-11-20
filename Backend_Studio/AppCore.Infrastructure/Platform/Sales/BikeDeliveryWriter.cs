@@ -263,6 +263,15 @@ public static class BikeDeliveryWriter
             DateTime now
         )
     {
+        // Warranty Management off for this company : a delivery
+        // makes no warranty record. (Voiding a record made earlier
+        // keeps working : VoidWarrantyAsync.)
+        if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(
+                AppCore.Application.Platform.Tenancy.ModuleKeys.Warranty))
+        {
+            return null;
+        }
+
         BikeModelInfo info =
             await BikeModelAsync(context, delivery.ProductId);
 

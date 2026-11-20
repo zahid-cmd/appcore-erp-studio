@@ -192,24 +192,13 @@
 
     @if (summaryItems.length > 0)
     {
-        <div class="pay-summary">
-
-            @for (item of summaryItems; track item.label)
-            {
-                <span class="pay-summary-item">
-                    <span class="pay-summary-label">{{ item.label }}</span>
-                    <b
-                        class="pay-summary-value"
-                        [class.pay-ok]="item.tone === 'ok'"
-                        [class.pay-bad]="item.tone === 'bad'">{{ item.value }}</b>
-                </span>
-            }
-
-            <span class="pay-summary-note">
-                Click a row to see its employees; open a sheet to approve, post, pay and print payslips
-            </span>
-
-        </div>
+        <app-summary-line
+            [items]="summaryItems"
+            noun="sheets"
+            art="ledger"
+            note="Search applied"
+            [noteDetail]="'Click a row to see its employees; open a sheet to approve, post, pay and print payslips'">
+        </app-summary-line>
     }
 
     <app-history-drawer

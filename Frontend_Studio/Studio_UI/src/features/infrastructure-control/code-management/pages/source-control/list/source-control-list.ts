@@ -133,6 +133,13 @@ import
 }
 from '../../../../../../shared/components/utilities/toast/toast';
 
+import
+{
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
 
 //===============================================================
 // Service
@@ -157,6 +164,7 @@ from '../../../services/source-control.service';
 
     imports:
     [
+        SummaryLineComponent,
         CommonModule,
 
         PageHeaderComponent,
@@ -400,7 +408,7 @@ implements OnInit
 
             type:'serial',
 
-            width:'60px',
+            width:'56px',
 
             align:'center'
         },
@@ -448,7 +456,7 @@ implements OnInit
 
             type:'status',
 
-            width:'180px',
+            width:'120px',
 
             align:'center'
         },
@@ -460,7 +468,7 @@ implements OnInit
 
             type:'operation',
 
-            width:'180px',
+            width:'110px',
 
             align:'center'
         },
@@ -472,7 +480,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'180px',
+            width:'130px',
 
             align:'center'
         }
@@ -1371,5 +1379,34 @@ implements OnInit
         string
     {
         return value.toLocaleString('en-US');
+    }
+
+    //===========================================================
+    // Summary line items : the same array while the figures do
+    // not change (the summary line is OnPush)
+    //===========================================================
+
+    private summaryKey = '';
+
+    private summaryCache: SummaryLineItem[] = [];
+
+    get summaryLineItems(): SummaryLineItem[]
+    {
+        const items: SummaryLineItem[] =
+        [
+            { label:'Total', value:this.summaryText(this.summaryTotal), tone:'' },
+            { label:'Active', value:this.summaryText(this.summaryActive), tone:'ok' },
+            { label:'Inactive', value:this.summaryText(this.summaryTotal - this.summaryActive), tone:'bad' }
+        ];
+
+        const key = JSON.stringify(items);
+
+        if (key !== this.summaryKey)
+        {
+            this.summaryKey = key;
+            this.summaryCache = items;
+        }
+
+        return this.summaryCache;
     }
 }

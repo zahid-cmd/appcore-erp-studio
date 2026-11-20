@@ -362,15 +362,15 @@ export class MembershipFeesCollectionList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Membership No', field:'MembershipNo', width:'160px', align:'left', sortable:true },
-        { header:'Card', field:'CardName', width:'160px', align:'left', sortable:true },
-        { header:'Customer', field:'CustomerText', width:'160px', align:'left', sortable:true },
+        { header:'Membership No', field:'MembershipNo', width:'170px', align:'left', sortable:true },
+        { header:'Card', field:'CardName', width:'150px', align:'left', sortable:true },
+        { header:'Customer', field:'CustomerText', width:'240px', align:'left', sortable:true },
         { header:'Chassis', field:'ChassisNo', width:'160px', align:'left', sortable:true, priority:2 },
-        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
-        { header:'Fee (Tk)', field:'AmountText', width:'160px', align:'left', sortable:true },
-        { header:'Voucher', field:'VoucherText', width:'160px', align:'left', sortable:true, priority:2 },
-        { header:'Status', field:'StatusText', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Date', field:'DateText', width:'120px', align:'center', sortable:true },
+        { header:'Fee (Tk)', field:'AmountText', width:'120px', align:'right', sortable:true },
+        { header:'Voucher', field:'VoucherText', width:'170px', align:'left', sortable:true, priority:2 },
+        { header:'Status', field:'StatusText', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     readonly rowActions: ListTableRowAction[] =

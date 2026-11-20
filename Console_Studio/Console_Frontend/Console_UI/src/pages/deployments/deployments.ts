@@ -90,8 +90,11 @@ interface Row extends DeployRun
                     <button class="ac-btn" type="button" (click)="closeRun()" title="Back to the list (Esc)"><i class="fas fa-arrow-left"></i> Back to list</button>
                 }
                 <button class="ac-btn" type="button" (click)="serverOpen.set(true)"><i class="fas fa-server"></i> Live server</button>
+                @if (mayDeploy)
+                {
                 <button class="ac-btn ac-btn-primary" type="button" [disabled]="busy() || !server()" (click)="confirming.set(true)"
                     [title]="server() ? '' : 'The live server is not connected : open Live server'"><i class="fas fa-rocket"></i> Deploy to live</button>
+                }
             }
             </ng-container>
         </ac-page-header>
@@ -111,9 +114,9 @@ interface Row extends DeployRun
                         </span>
                         <span [class]="'st ' + statusClass(r)">{{ statusText(r) }}</span>
                     </div>
-                    @if (canSwitchBack(r))
+                    @if (mayDeploy && canSwitchBack(r))
                     {
-                        <button class="ac-btn" type="button" [disabled]="busy()" (click)="rollback(r.release)" title="Make this release live again"><i class="fas fa-rotate-left"></i> Switch back to {{ r.release }}</button>
+                        <button class="ac-btn" type="button" [disabled]="busy()" (click)="switchingBack.set(r.release)" title="Make this release live again"><i class="fas fa-rotate-left"></i> Switch back to {{ r.release }}</button>
                     }
                 }
                     @else
@@ -238,6 +241,28 @@ interface Row extends DeployRun
             </div>
         }
 
+        <!-- ============ confirm switch back ============ -->
+        @if (switchingBack(); as release)
+        {
+            <div class="ac-backdrop">
+                <div class="ac-modal" style="max-width:520px">
+                    <div class="ac-modal-head">
+                        <i class="fas fa-rotate-left"></i>
+                        <h3>Switch back to {{ release }}</h3>
+                        <button class="ac-icon-btn" type="button" (click)="switchingBack.set(null)"><i class="fas fa-xmark"></i></button>
+                    </div>
+                    <div class="ac-modal-body">
+                        <p class="ac-sub" style="line-height:1.6">Makes the older release <b>{{ release }}</b> live again. The files of that release are used as they were; the database is not changed back.</p>
+                        <div class="cf"><i class="fas fa-triangle-exclamation"></i><span>Everyone on the live website and Console gets this older version at once (a restart of about 15 seconds).</span></div>
+                    </div>
+                    <div class="ac-modal-foot">
+                        <button class="ac-btn" type="button" (click)="switchingBack.set(null)">Cancel</button>
+                        <button class="ac-btn ac-btn-primary" type="button" (click)="rollback(release)"><i class="fas fa-check"></i> Yes, switch back</button>
+                    </div>
+                </div>
+            </div>
+        }
+
         <!-- ============ live server ============ -->
         @if (serverOpen())
         {
@@ -279,7 +304,10 @@ interface Row extends DeployRun
                         <button class="ac-btn" type="button" (click)="loadServer()"><i class="fas fa-rotate"></i> Refresh</button>
                         <span style="flex:1"></span>
                         <button class="ac-btn" type="button" (click)="serverOpen.set(false)">Close</button>
+                        @if (mayDeploy)
+                        {
                         <button class="ac-btn ac-btn-primary" type="button" (click)="saveConnection()"><i class="fas fa-floppy-disk"></i> Save</button>
+                        }
                     </div>
                 </div>
             </div>
@@ -313,6 +341,15 @@ export class DeploymentsPage implements OnInit
         { value: 'Deploy', label: 'Deploy' },
         { value: 'Switch back', label: 'Switch back' }
     ];
+
+    // the release "Switch back" was pressed on : asked before it runs
+    readonly switchingBack = signal<string | null>(null);
+
+    // Owner and Developer only (the dev agent checks it again)
+    get mayDeploy(): boolean
+    {
+        return this.auth.hasRole('OWNER', 'DEVELOPER');
+    }
 
     readonly state = signal<DeployState | null>(null);
     readonly history = signal<DeployRun[]>([]);
@@ -632,6 +669,8 @@ export class DeploymentsPage implements OnInit
 
     async rollback(release: string): Promise<void>
     {
+        this.switchingBack.set(null);
+
         await this.begin('/deploy/rollback', { release });
     }
 

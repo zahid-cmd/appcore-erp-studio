@@ -115,7 +115,7 @@
                         {
                             <a class="btn btn-accent btn-lg" [href]="directions()" target="_blank" rel="noopener">Get directions</a>
                         }
-                        <button type="button" class="btn btn-lg" [class.btn-accent]="!(hero().showAddress && directions())" (click)="testRide()">Book a test ride</button>
+                        <button type="button" class="btn btn-lg site-enquiry-only" [class.btn-accent]="!(hero().showAddress && directions())" (click)="testRide()">Book a test ride</button>
                     </div>
 
                 </div>
@@ -179,7 +179,7 @@
 
                     <div class="actions rise" style="--d:4">
                         <a class="btn btn-accent btn-lg" [routerLink]="['/bikes', s.slug]">View specification</a>
-                        <button type="button" class="btn btn-lg" (click)="testRide()">Book a test ride</button>
+                        <button type="button" class="btn btn-lg site-enquiry-only" (click)="testRide()">Book a test ride</button>
                         @if (price())
                         {
                             <span class="price">from <b>{{ price() }}</b></span>

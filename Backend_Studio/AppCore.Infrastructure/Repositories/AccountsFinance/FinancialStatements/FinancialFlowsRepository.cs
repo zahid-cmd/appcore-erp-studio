@@ -354,8 +354,21 @@ public class FinancialFlowsRepository
                 .GroupBy(x => Clean(x.LedgerCode), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
-        HashSet<string> fixedAssetLedgers =
-            await FixedAssetLedgersAsync(chart.Values);
+        // A database without the Fixed Assets tables (the module was
+        // never set up for this company) still gets its Cash Flow :
+        // there is then nothing to mark as investing (2026-11-20)
+        HashSet<string> fixedAssetLedgers;
+
+        try
+        {
+            fixedAssetLedgers =
+                await FixedAssetLedgersAsync(chart.Values);
+        }
+        catch (Exception ex) when (ex is Npgsql.PostgresException || ex.InnerException is Npgsql.PostgresException)
+        {
+            fixedAssetLedgers =
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
 
         //=======================================================
         // Lines of the period's vouchers that move money

@@ -590,19 +590,19 @@ implements OnInit, OnDestroy
         {
             header:'PO No',
             field:'OrderNo',
-            width:'160px',
+            width:'170px',
             align:'left'
         },
         {
             header:'Date',
             field:'OrderDateText',
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Supplier',
             field:'SupplierName',
-            width:'160px',
+            width:'240px',
             align:'left'
         },
         // How the supplier bills : DP / MRP invoice (MB : always DP)
@@ -615,13 +615,13 @@ implements OnInit, OnDestroy
         {
             header:'Expected',
             field:'ExpectedDateText',
-            width:'160px',
-            align:'left'
+            width:'120px',
+            align:'center'
         },
         {
             header:'Qty',
             field:'TotalQuantityText',
-            width:'90px',
+            width:'80px',
             align:'center'
         },
         {
@@ -635,14 +635,14 @@ implements OnInit, OnDestroy
             field:'Status',
             type:'status',
             // The pill is 110px wide : room for it and the cell padding
-            width:'130px',
+            width:'120px',
             align:'center'
         },
         {
             header:'Actions',
             field:'actions',
             type:'actions',
-            width:'140px',
+            width:'130px',
             align:'center'
         }
     ];

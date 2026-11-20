@@ -684,9 +684,14 @@ public partial class ServiceEnquiriesRepository
                 Info = "Package · any brand"
             }));
 
+        // Membership Management off for this company : its
+        // services are not offered
+        bool membershipOn =
+            AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Membership);
+
         var membership =
             await _context.Set<MembershipServicesEntity>().AsNoTracking()
-                .Where(x => !x.IsDeleted && x.IsActive)
+                .Where(x => membershipOn && !x.IsDeleted && x.IsActive)
                 .OrderBy(x => x.ServiceName)
                 .ToListAsync();
 

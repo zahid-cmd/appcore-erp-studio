@@ -14,14 +14,18 @@
 // (Tenants.DbUsername / DbPasswordSealed, 2026-11-20; opened by
 // TenantCredentialSeal, never written anywhere in clear). Each company has its own login (2026-11-19) :
 // Tenants.CredentialKey, else the server's CredentialKey. Answers
-// are cached for Tenancy:CacheSeconds (an unknown address for 15
-// seconds), so the Control database is asked about once a minute
-// per address, not on every request.
+// are cached for Tenancy:CacheSeconds (15 by default; an unknown
+// address for 15 seconds), so the Control database is asked about
+// every 15 seconds per address, not on every request, and a change
+// in the Console (suspend, modules, limits) takes effect within
+// that time.
 //
 // Last known map (2026-11-19) : every company found is also kept
 // in a file (Tenancy:MapFile; no passwords in it). When
 // AppCore_Control cannot be reached, the companies keep working
-// from that file; an address never seen before gets 503.
+// from that file; an address never seen before gets 503. An address
+// AppCore_Control no longer has is taken out of the file (2026-11-20,
+// review B6), so it cannot come back during an outage.
 //
 //===============================================================
 
@@ -285,12 +289,23 @@ public sealed class TenantResolver
     //===========================================================
     // Tenancy:Mode = Off : the limits of the tenant whose database
     // is ConnectionStrings:DefaultConnection. Cached like a tenant.
-    // No Control connection, no such tenant, or AppCore_Control
-    // not reachable : null (nothing is limited, the ERP keeps
-    // working).
+    // No Control connection or no such tenant : null (nothing is
+    // limited, the ERP keeps working).
+    //
+    // AppCore_Control not reachable (2026-11-20, review B7) : the
+    // last good answer, kept in memory and in a small file beside
+    // the map file (tenant-limits-<database>.json), so an outage or
+    // a restart during one does not lift the limits or switch every
+    // module on. Never answered yet : null, as before.
     //===========================================================
 
     private (TenantLimits? Limits, DateTime Until)? _defaultLimits;
+
+    // the last answer AppCore_Control gave for this database
+    private TenantLimits? _lastDefaultLimits;
+
+    // the answer above was written to (or cleared from) the file
+    private bool _limitsRemembered;
 
     public async Task<TenantLimits?> LimitsOfDefaultDatabaseAsync(CancellationToken ct = default)
     {
@@ -303,9 +318,14 @@ public sealed class TenantResolver
 
         bool found = false;
 
+        // AppCore_Control was asked and answered
+        bool answered = false;
+
+        string? database = null;
+
         try
         {
-            string? database =
+            database =
                 string.IsNullOrWhiteSpace(_defaultConnection)
                     ? null
                     : new NpgsqlConnectionStringBuilder(_defaultConnection).Database;
@@ -341,11 +361,19 @@ public sealed class TenantResolver
                         r.IsDBNull(2) ? null : r.GetInt32(2),
                         r.IsDBNull(3) ? string.Empty : r.GetString(3));
                 }
+
+                answered = true;
             }
         }
         catch (Exception) when (!ct.IsCancellationRequested)
         {
-            limits = null;
+            // AppCore_Control not reachable : the last good answer
+            limits = _lastDefaultLimits ?? ReadLimitsFile(database);
+        }
+
+        if (answered)
+        {
+            RememberLimits(database!, limits);
         }
 
         _defaultLimits = (limits, DateTime.UtcNow.AddSeconds(found ? Math.Max(5, _options.CacheSeconds) : 15));
@@ -399,6 +427,10 @@ public sealed class TenantResolver
 
         if (!await r.ReadAsync(ct))
         {
+            // AppCore_Control answered and does not have this address
+            // (removed in the Console) : out of the last known map too
+            ForgetAddress(host);
+
             return new TenantLookup(null, "This address is not registered.");
         }
 
@@ -554,6 +586,106 @@ public sealed class TenantResolver
 
     private static readonly JsonSerializerOptions MapJson = new() { WriteIndented = true };
 
+
+    //===========================================================
+    // Last good limits of the default database (Mode Off, B7)
+    //===========================================================
+
+    private string LimitsFile(string database)
+    {
+        string safe = new(database.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) || c == '_' || c == '-' ? c : '_').ToArray());
+
+        return Path.Combine(Path.GetDirectoryName(_mapFile)!, $"tenant-limits-{safe}.json");
+    }
+
+    // limits null = AppCore_Control has no tenant for this database
+    private void RememberLimits(string database, TenantLimits? limits)
+    {
+        if (_limitsRemembered && _lastDefaultLimits == limits)
+        {
+            return;
+        }
+
+        _lastDefaultLimits = limits;
+        _limitsRemembered = true;
+
+        try
+        {
+            lock (_fileLock)
+            {
+                string file = LimitsFile(database);
+
+                if (limits is null)
+                {
+                    File.Delete(file);
+
+                    return;
+                }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+
+                string temp = file + ".tmp";
+
+                File.WriteAllText(
+                    temp,
+                    JsonSerializer.Serialize(
+                        new SavedLimits
+                        {
+                            MaxCompanies = limits.MaxCompanies,
+                            MaxBranches = limits.MaxBranches,
+                            MaxUsers = limits.MaxUsers,
+                            DisabledModules = limits.DisabledModules
+                        },
+                        MapJson));
+
+                File.Move(temp, file, true);
+            }
+        }
+        catch (Exception)
+        {
+            // a safety net : never stop a request for it
+        }
+    }
+
+    private TenantLimits? ReadLimitsFile(string? database)
+    {
+        if (string.IsNullOrWhiteSpace(database))
+        {
+            return null;
+        }
+
+        try
+        {
+            lock (_fileLock)
+            {
+                string file = LimitsFile(database);
+
+                if (!File.Exists(file))
+                {
+                    return null;
+                }
+
+                SavedLimits? saved = JsonSerializer.Deserialize<SavedLimits>(File.ReadAllText(file));
+
+                return saved is null
+                    ? null
+                    : new TenantLimits(Math.Max(1, saved.MaxCompanies), saved.MaxBranches, saved.MaxUsers, saved.DisabledModules ?? string.Empty);
+            }
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private sealed class SavedLimits
+    {
+        public int MaxCompanies { get; set; } = 1;
+        public int? MaxBranches { get; set; }
+        public int? MaxUsers { get; set; }
+        public string? DisabledModules { get; set; }
+    }
+
     private void ReadMapFile()
     {
         try
@@ -591,6 +723,20 @@ public sealed class TenantResolver
 
         _known[row.HostName] = row;
 
+        WriteMapFile();
+    }
+
+    // an address AppCore_Control no longer has
+    private void ForgetAddress(string host)
+    {
+        if (_known.TryRemove(host, out _))
+        {
+            WriteMapFile();
+        }
+    }
+
+    private void WriteMapFile()
+    {
         try
         {
             lock (_fileLock)

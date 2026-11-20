@@ -220,6 +220,13 @@ from '../../../../../../shared/components/utilities/toast/toast';
 
 import
 {
+    SummaryLineComponent,
+    SummaryLineItem
+}
+from '../../../../../../shared/components/layout/summary-line/summary-line';
+
+import
+{
     CheckboxComponent
 }
 from '../../../../../../shared/components/utilities/checkbox/checkbox';
@@ -354,6 +361,7 @@ type LookupOption =
         ConfirmDialogComponent,
         ProgressDialogComponent,
         ToastComponent,
+        SummaryLineComponent,
         CheckboxComponent,
         FormSectionComponent,
         TextboxComponent,
@@ -3080,5 +3088,60 @@ implements OnInit
     summaryText(value: number): string
     {
         return value.toLocaleString('en-US');
+    }
+
+    // Summary line items, kept as the same array while the figures
+    // do not change (the summary line is OnPush)
+    private summaryKey = '';
+
+    private summaryCache: SummaryLineItem[] = [];
+
+    private summaryLine(items: SummaryLineItem[]): SummaryLineItem[]
+    {
+        const key = JSON.stringify(items);
+
+        if (key !== this.summaryKey)
+        {
+            this.summaryKey = key;
+            this.summaryCache = items;
+        }
+
+        return this.summaryCache;
+    }
+
+    get registerSummary(): SummaryLineItem[]
+    {
+        const open = this.countOf('Open'), ready = this.countOf('ReadyForDelivery'), done = this.countOf('Delivered'), cancelled = this.countOf('Cancelled');
+
+        return this.summaryLine(
+        [
+            { label:'Total', value:this.summaryText(open + ready + done + cancelled), tone:'' },
+            { label:'Open', value:this.summaryText(open), tone:'warn' },
+            { label:'Ready for Delivery', value:this.summaryText(ready), tone:'', icon:'fas fa-box-open' },
+            { label:'Delivered', value:this.summaryText(done), tone:'ok' },
+            { label:'Cancelled', value:this.summaryText(cancelled), tone:'bad' }
+        ]);
+    }
+
+    get feesSummary(): SummaryLineItem[]
+    {
+        const pending = this.feeTotal('Pending'), due = this.feeTotal('Due'), paid = this.feeTotal('Paid');
+
+        return this.summaryLine(
+        [
+            { label:'Total Fees', value:this.money(pending + due + paid), tone:'' },
+            { label:'Pending', value:this.money(pending), tone:'warn' },
+            { label:'Due', value:this.money(due), tone:'bad' },
+            { label:'Collected', value:this.money(paid), tone:'ok' }
+        ]);
+    }
+
+    get transferSummary(): SummaryLineItem[]
+    {
+        return this.summaryLine(
+        [
+            { label:'Transfers', value:this.summaryText(this.viewCount), tone:'' },
+            { label:'Fees', value:this.money(this.transferFeeTotal), tone:'', icon:'fas fa-coins', share:false }
+        ]);
     }
 }

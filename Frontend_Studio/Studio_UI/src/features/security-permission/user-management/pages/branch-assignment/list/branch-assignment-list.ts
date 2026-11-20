@@ -440,7 +440,7 @@ implements OnInit
 
             field:'userProfileCode',
 
-            width:'140px',
+            width:'150px',
 
             align:'center'
         },
@@ -470,7 +470,7 @@ implements OnInit
 
             field:'defaultBranchName',
 
-            width:'160px',
+            width:'200px',
 
             align:'left'
         },
@@ -480,9 +480,9 @@ implements OnInit
 
             field:'branchCount',
 
-            width:'160px',
+            width:'100px',
 
-            align:'left'
+            align:'center'
         },
 
         {
@@ -492,7 +492,7 @@ implements OnInit
 
             type:'status',
 
-            width:'130px',
+            width:'120px',
 
             align:'center'
         },
@@ -504,7 +504,7 @@ implements OnInit
 
             type:'actions',
 
-            width:'140px',
+            width:'130px',
 
             align:'center'
         }

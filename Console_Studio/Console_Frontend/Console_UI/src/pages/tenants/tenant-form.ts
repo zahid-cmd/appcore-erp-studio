@@ -1,27 +1,31 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { ConsoleApi } from '../../core/console-api.service';
 import { apiMessage } from '../../core/auth.interceptor';
-import { CustomerRow, ProductRow, ServerRow, TENANT_STATUSES, TenantDetail, TenantPrefill, TenantSave, productIcon } from '../../core/models';
+import { CustomerRow, PackageRow, ProductRow, ServerRow, TENANT_STATUSES, TenantDetail, TenantPrefill, TenantSave, productIcon } from '../../core/models';
 import { SelectBox, SelectOption } from '../../ui/select-box';
 
-// New / edit tenant (pop-up). Phase 1 registers an EXISTING
-// database; onboarding (new database from the template) comes next.
+// New / edit tenant. asPage : a full page (Register tenant and Edit
+// open /tenants/new and /tenants/<id>/edit, 2026-11-20); otherwise
+// the pop-up (kept for other callers).
 @Component({
     selector: 'ac-tenant-form',
-    imports: [FormsModule, SelectBox],
+    imports: [FormsModule, NgTemplateOutlet, SelectBox],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    styles: [`
+        :host { display: contents; }
+        .tf-page { display: flex; flex: 0 1 auto; flex-direction: column; gap: 16px; min-height: 0; }
+        .tf-cols { display: grid; flex: 0 1 auto; min-height: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+        .tf-col { display: flex; flex-direction: column; gap: 14px; min-height: 0; padding: 18px 20px; overflow-y: auto; }
+        .tf-foot { display: flex; flex: none; align-items: center; gap: 10px; padding: 12px 18px; }
+        .tf-spacer { flex: 1; }
+        .tf-error { margin: 0; }
+        @media (max-width: 1000px) { .tf-cols { grid-template-columns: minmax(0, 1fr); } }
+    `],
     template: `
-        <div class="ac-backdrop">
-            <form class="ac-modal" (ngSubmit)="save()">
-                <div class="ac-modal-head">
-                    <i class="fas fa-server"></i>
-                    <h3>{{ tenant() ? 'Edit tenant ' + tenant()!.TenantCode : 'Register a tenant' }}</h3>
-                    <button class="ac-icon-btn" type="button" (click)="closed.emit(false)"><i class="fas fa-xmark"></i></button>
-                </div>
-
-                <div class="ac-modal-body">
+        <ng-template #partA>
                     <span class="ac-section-label">Client and product</span>
                     <div class="ac-grid-2">
                         <div class="ac-field">
@@ -30,12 +34,12 @@ import { SelectBox, SelectOption } from '../../ui/select-box';
                         </div>
                         <div class="ac-field">
                             <label>Product <b>*</b></label>
-                            <ac-select-box [options]="productOptions()" [value]="form.ProductCode" (valueChange)="form.ProductCode = $any($event)" />
+                            <ac-select-box [options]="productOptions()" [value]="form.ProductCode" [disabled]="locked()" (valueChange)="chooseProduct($any($event))" />
                         </div>
                         <div class="ac-field">
                             <label>Tenant code <b>*</b></label>
-                            <input class="ac-input ac-mono" name="code" [(ngModel)]="form.TenantCode" placeholder="MOTOZONE" (input)="suggestHost()" required>
-                            <span class="ac-hint">Letters, digits and '-'; never shown to the client.</span>
+                            <input class="ac-input ac-mono" name="code" [(ngModel)]="form.TenantCode" placeholder="MOTOZONE" (input)="suggestHost()" [disabled]="locked()" required>
+                            <span class="ac-hint">{{ locked() ? 'Fixed : the database was created with this code.' : "Starts with a letter; letters, digits and '-'; never shown to the client." }}</span>
                         </div>
                         <div class="ac-field">
                             <label>Display name <b>*</b></label>
@@ -56,8 +60,24 @@ import { SelectBox, SelectOption } from '../../ui/select-box';
                             <input class="ac-input" type="number" min="1" name="maxBranches" [(ngModel)]="form.MaxBranches" placeholder="No limit">
                             <span class="ac-hint">Empty = no limit. Takes effect in the ERP within a minute.</span>
                         </div>
+                        @if (!tenant())
+                        {
+                            <div class="ac-field">
+                                <label>Package @if (packages().length) { <b>*</b> }</label>
+                                <ac-select-box placeholder="Pick the package" [options]="packageOptions()" [value]="form.PackageCode || null" [disabled]="!packages().length" (valueChange)="form.PackageCode = $any($event)" />
+                                <span class="ac-hint">{{ packageHint() }}</span>
+                            </div>
+                            <div class="ac-field">
+                                <label>Users allowed</label>
+                                <input class="ac-input" type="number" min="1" name="maxUsers" [(ngModel)]="form.MaxUsers" placeholder="No limit">
+                                <span class="ac-hint">Empty = no limit. Both can be changed later on the tenant page.</span>
+                            </div>
+                        }
                     </div>
 
+        </ng-template>
+
+        <ng-template #partB>
                     <span class="ac-section-label">Web addresses</span>
                     <div class="ac-field">
                         <label>Addresses <b>*</b></label>
@@ -69,17 +89,19 @@ import { SelectBox, SelectOption } from '../../ui/select-box';
                     <div class="ac-grid-2">
                         <div class="ac-field">
                             <label>Database server</label>
-                            <ac-select-box [options]="serverOptions()" [value]="form.DatabaseServerId" (valueChange)="form.DatabaseServerId = $any($event)" />
+                            <ac-select-box [options]="serverOptions()" [value]="form.DatabaseServerId" [disabled]="locked()" (valueChange)="form.DatabaseServerId = $any($event)" />
                         </div>
                         <div class="ac-field">
                             <label>Database name</label>
-                            <input class="ac-input ac-mono" name="db" [(ngModel)]="form.DatabaseName" placeholder="AppCoreERP_Studio">
+                            <input class="ac-input ac-mono" name="db" [(ngModel)]="form.DatabaseName" [disabled]="locked()" [placeholder]="tenant() ? '' : 'Leave empty : Create database fills it'">
+                            @if (locked()) { <span class="ac-hint">Fixed : created by the Console.</span> }
                         </div>
                         @if (!tenant())
                         {
                             <div class="ac-field">
                                 <label>Status</label>
                                 <ac-select-box [options]="statusOptions" [value]="form.Status" (valueChange)="form.Status = $any($event)" />
+                                <span class="ac-hint">Keep Provisioning : Create database is offered on the tenant page.</span>
                             </div>
                         }
                         <div class="ac-field">
@@ -93,17 +115,52 @@ import { SelectBox, SelectOption } from '../../ui/select-box';
                         <input class="ac-input" name="remarks" [(ngModel)]="form.Remarks">
                     </div>
 
-                    @if (error()) { <div class="ac-error">{{ error() }}</div> }
-                </div>
+        </ng-template>
 
-                <div class="ac-modal-foot">
-                    <button class="ac-btn" type="button" (click)="closed.emit(false)">Cancel</button>
-                    <button class="ac-btn ac-btn-primary" type="submit" [disabled]="saving()">
-                        <i class="fas" [class.fa-floppy-disk]="!saving()" [class.fa-spinner]="saving()" [class.fa-spin]="saving()"></i> Save
-                    </button>
+        <ng-template #buttons>
+            <button class="ac-btn" type="button" (click)="closed.emit(false)">Cancel</button>
+            <button class="ac-btn ac-btn-primary" type="submit" [disabled]="saving()">
+                <i class="fas" [class.fa-floppy-disk]="!saving()" [class.fa-spinner]="saving()" [class.fa-spin]="saving()"></i> Save
+            </button>
+        </ng-template>
+
+        @if (asPage())
+        {
+            <!-- full page (Register tenant / Edit, 2026-11-20) : two columns, no scrolling -->
+            <form class="tf-page" (ngSubmit)="save()">
+                <div class="tf-cols">
+                    <div class="ac-card tf-col"><ng-container [ngTemplateOutlet]="partA"></ng-container></div>
+                    <div class="ac-card tf-col"><ng-container [ngTemplateOutlet]="partB"></ng-container></div>
+                </div>
+                <div class="ac-card tf-foot">
+                    @if (error()) { <div class="ac-error tf-error">{{ error() }}</div> }
+                    <span class="tf-spacer"></span>
+                    <ng-container [ngTemplateOutlet]="buttons"></ng-container>
                 </div>
             </form>
-        </div>
+        }
+        @else
+        {
+            <div class="ac-backdrop">
+                <form class="ac-modal" (ngSubmit)="save()">
+                    <div class="ac-modal-head">
+                        <i class="fas fa-server"></i>
+                        <h3>{{ tenant() ? 'Edit tenant ' + tenant()!.TenantCode : 'Register a tenant' }}</h3>
+                        <button class="ac-icon-btn" type="button" (click)="closed.emit(false)"><i class="fas fa-xmark"></i></button>
+                    </div>
+
+                    <div class="ac-modal-body">
+                        <ng-container [ngTemplateOutlet]="partA"></ng-container>
+                        <ng-container [ngTemplateOutlet]="partB"></ng-container>
+                        @if (error()) { <div class="ac-error">{{ error() }}</div> }
+                    </div>
+
+                    <div class="ac-modal-foot">
+                        <ng-container [ngTemplateOutlet]="buttons"></ng-container>
+                    </div>
+                </form>
+            </div>
+        }
     `
 })
 export class TenantFormComponent implements OnInit
@@ -115,6 +172,9 @@ export class TenantFormComponent implements OnInit
     // a new tenant filled from a converted website request
     readonly prefill = input<TenantPrefill | null>(null);
 
+    // full page instead of the pop-up
+    readonly asPage = input(false);
+
     readonly closed = output<boolean>();
 
     readonly statusOptions: SelectOption[] = TENANT_STATUSES.map(s => ({ value: s, label: s }));
@@ -122,7 +182,13 @@ export class TenantFormComponent implements OnInit
     readonly customers = signal<CustomerRow[]>([]);
     readonly products = signal<ProductRow[]>([]);
     readonly servers = signal<ServerRow[]>([]);
+
+    // the packages of the chosen product (a new tenant only)
+    readonly packages = signal<PackageRow[]>([]);
     readonly saving = signal(false);
+
+    readonly packageOptions = computed<SelectOption[]>(() =>
+        this.packages().map(k => ({ value: k.PackageCode, label: k.PackageName })));
 
     readonly customerOptions = computed<SelectOption[]>(() =>
         this.customers().map(c => ({ value: c.PublicId, label: c.DisplayName, hint: c.CustomerCode })));
@@ -137,6 +203,11 @@ export class TenantFormComponent implements OnInit
     ]);
     readonly error = signal('');
 
+    // the Console created this tenant's database : code, product,
+    // server and database name can no longer change (the API
+    // refuses it too)
+    readonly locked = computed(() => !!this.tenant()?.DatabaseLocked);
+
     form: TenantSave =
     {
         TenantCode: '',
@@ -145,12 +216,18 @@ export class TenantFormComponent implements OnInit
         DisplayName: '',
         DatabaseServerId: null,
         DatabaseName: null,
-        Status: 'Active',
+
+        // Provisioning : the tenant page then offers Create database.
+        // Pick another status only when registering a client whose
+        // database already exists.
+        Status: 'Provisioning',
         TrialEndsOn: null,
         Remarks: null,
         HostNames: [],
         MaxCompanies: 1,
-        MaxBranches: null
+        MaxBranches: null,
+        PackageCode: null,
+        MaxUsers: null
     };
 
     hostsText = '';
@@ -191,6 +268,10 @@ export class TenantFormComponent implements OnInit
             this.form.TenantCode = p.TenantCode;
             this.form.DisplayName = p.DisplayName;
             this.form.Status = p.Status;
+
+            // what the client asked for on the website
+            this.form.MaxBranches = p.MaxBranches ?? null;
+            this.form.MaxUsers = p.MaxUsers ?? null;
             this.hostsText = p.HostName;
             this.hostTouched = true;
         }
@@ -203,9 +284,64 @@ export class TenantFormComponent implements OnInit
             this.customers.set(customers);
             this.products.set(products);
             this.servers.set(servers);
+
+            if (!t)
+            {
+                await this.loadPackages();
+            }
         }
         catch (e)
         {
+            this.error.set(apiMessage(e));
+        }
+    }
+
+    // what the chosen package holds, or why there is none to pick
+    packageHint(): string
+    {
+        if (!this.packages().length)
+        {
+            return 'This product has no packages : every module is on.';
+        }
+
+        return this.packages().find(k => k.PackageCode === this.form.PackageCode)?.Description
+            ?? 'Decides the modules the client gets.';
+    }
+
+    // another product has other packages
+    chooseProduct(code: string): void
+    {
+        if (code === this.form.ProductCode)
+        {
+            return;
+        }
+
+        this.form.ProductCode = code;
+        this.form.PackageCode = null;
+
+        if (!this.tenant())
+        {
+            void this.loadPackages();
+        }
+    }
+
+    private async loadPackages(): Promise<void>
+    {
+        const product = this.form.ProductCode;
+
+        try
+        {
+            const rows = await this.api.tenantPackages(product);
+
+            // the product may have been changed while this loaded
+            if (product === this.form.ProductCode)
+            {
+                this.packages.set(rows);
+            }
+        }
+        catch (e)
+        {
+            this.packages.set([]);
             this.error.set(apiMessage(e));
         }
     }
@@ -239,6 +375,14 @@ export class TenantFormComponent implements OnInit
         // an empty number box sends '' or null : 1 company, no branch limit
         this.form.MaxCompanies = Number(this.form.MaxCompanies) || 1;
         this.form.MaxBranches = Number(this.form.MaxBranches) || null;
+        this.form.MaxUsers = Number(this.form.MaxUsers) || null;
+
+        if (!this.tenant() && this.packages().length && !this.form.PackageCode)
+        {
+            this.error.set('Pick the package.');
+            this.saving.set(false);
+            return;
+        }
 
         try
         {

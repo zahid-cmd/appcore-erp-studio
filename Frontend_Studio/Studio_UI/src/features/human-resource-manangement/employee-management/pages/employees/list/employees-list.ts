@@ -14,6 +14,13 @@ from '@angular/core';
 
 import
 {
+    MODULE_KEYS,
+    ModuleSwitchService
+}
+from '../../../../../../core/shell/module-switch.service';
+
+import
+{
     CommonModule
 }
 from '@angular/common';
@@ -128,6 +135,9 @@ function dayText(value: string): string
 export class EmployeesList
 implements OnInit
 {
+    private readonly moduleSwitch =
+        inject(ModuleSwitchService);
+
     private readonly service = inject(EmployeesService);
 
     private readonly router = inject(Router);
@@ -221,22 +231,37 @@ implements OnInit
         footerHeight:56
     };
 
-    readonly columns:
+    private readonly allColumns:
         ListTableColumn[] =
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Code', field:'Code', width:'140px', align:'center' },
-        { header:'Employee Name', field:'FullName', width:'210px', align:'left' },
-        { header:'Mobile', field:'MobileNo', width:'150px', align:'center' },
-        { header:'Designation', field:'DesignationName', width:'160px', align:'left' },
+        { header:'Code', field:'Code', width:'130px', align:'center' },
+        { header:'Employee Name', field:'FullName', width:'230px', align:'left' },
+        { header:'Mobile', field:'MobileNo', width:'140px', align:'center' },
+        { header:'Designation', field:'DesignationName', width:'170px', align:'left' },
         { header:'Department', field:'DepartmentName', width:'160px', align:'left' },
-        { header:'Branch', field:'BranchName', width:'160px', align:'left' },
-        { header:'Joined', field:'JoiningText', width:'160px', align:'left' },
-        { header:'Gross Salary', field:'GrossText', width:'160px', align:'left' },
-        { header:'Status', field:'IsActive', type:'status', width:'130px', align:'center' },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Branch', field:'BranchName', width:'170px', align:'left' },
+        { header:'Joined', field:'JoiningText', width:'120px', align:'center' },
+        { header:'Gross Salary', field:'GrossText', width:'130px', align:'right' },
+        { header:'Status', field:'IsActive', type:'status', width:'120px', align:'center' },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
+
+    // (no Gross Salary with Human Resource off for this company)
+    private readonly generalColumns:
+        ListTableColumn[] =
+        this.allColumns.filter(x => x.field !== 'GrossText');
+
+    // asked each time : the company's switches may arrive after the
+    // page opens (a page refresh)
+    get columns():
+        ListTableColumn[]
+    {
+        return this.moduleSwitch.isOn(MODULE_KEYS.humanResource)
+            ? this.allColumns
+            : this.generalColumns;
+    }
 
     ngOnInit():
         void
@@ -360,11 +385,15 @@ implements OnInit
             { label:'Active', value:count(active.length), tone:'ok' },
             { label:'Inactive', value:count(base.length - active.length), tone:'bad' },
             { label:'With Login', value:count(base.filter(x => x.HasLogin).length), tone:'' },
-            {
-                label:'Monthly Gross (active)',
-                value:`Tk ${active.reduce((sum, x) => sum + x.GrossSalary, 0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 })}`,
-                tone:''
-            }
+
+            // (not with Human Resource off for this company)
+            ...(this.moduleSwitch.isOn(MODULE_KEYS.humanResource)
+                ? [{
+                    label:'Monthly Gross (active)',
+                    value:`Tk ${active.reduce((sum, x) => sum + x.GrossSalary, 0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 })}`,
+                    tone:'' as const
+                }]
+                : [])
         ];
 
         this.cdr.detectChanges();

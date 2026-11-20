@@ -53,7 +53,19 @@ public sealed class TenantScopes
         {
             using IServiceScope scope = _scopes.CreateScope();
 
-            await work(scope.ServiceProvider);
+            // the off modules of the one company (2026-11-20) : the
+            // job's code asks ModuleSwitch like a request does
+            ModuleSwitch.Set(
+                (await scope.ServiceProvider.GetRequiredService<ITenantLimits>().GetAsync(ct))?.OffModules);
+
+            try
+            {
+                await work(scope.ServiceProvider);
+            }
+            finally
+            {
+                ModuleSwitch.Set(null);
+            }
 
             return;
         }
@@ -70,6 +82,10 @@ public sealed class TenantScopes
 
                 scope.ServiceProvider.GetRequiredService<TenantContext>().Set(tenant);
 
+                // this company's off modules, for the job's code
+                ModuleSwitch.Set(
+                    new TenantLimits(tenant.MaxCompanies, tenant.MaxBranches, tenant.MaxUsers, tenant.DisabledModules).OffModules);
+
                 await work(scope.ServiceProvider);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -79,6 +95,10 @@ public sealed class TenantScopes
             catch (Exception ex)
             {
                 _log.LogError(ex, "{Job} failed for {Tenant}; the other companies continue.", jobName, tenant.TenantCode);
+            }
+            finally
+            {
+                ModuleSwitch.Set(null);
             }
         }
     }

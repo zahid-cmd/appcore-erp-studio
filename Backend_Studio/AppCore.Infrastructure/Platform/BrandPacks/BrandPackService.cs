@@ -789,6 +789,18 @@ public sealed class BrandPackService
 
             Dictionary<string, long> partIds = new();
 
+            // Warranty Management off for this company : the pack's
+            // warranty part is left out
+            if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(
+                    AppCore.Application.Platform.Tenancy.ModuleKeys.Warranty)
+                && (pack.WarrantyParts.Count > 0 || pack.WarrantyPolicies.Count > 0))
+            {
+                Line("Warranty left out : Warranty Management is switched off for this company.");
+
+                pack.WarrantyParts = new();
+                pack.WarrantyPolicies = new();
+            }
+
             foreach (BrandPackWarrantyPart p in pack.WarrantyParts)
             {
                 string k = Key(p.Name);

@@ -136,6 +136,20 @@ public class PostingSetupRepository : IPostingSetupRepository
                 .ThenBy(x => x.PurposeCode)
                 .ToListAsync();
 
+        // The purposes of a module switched off for this company
+        // are not listed (2026-11-20)
+        if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.FixedAssets))
+        {
+            setups.RemoveAll(x => x.PurposeCode.StartsWith("ASSET-", StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Human Resource Management : payroll and provident fund
+        if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.HumanResource))
+        {
+            setups.RemoveAll(x => x.PurposeCode.StartsWith("PAYROLL-", StringComparison.OrdinalIgnoreCase)
+                               || x.PurposeCode.StartsWith("PF-", StringComparison.OrdinalIgnoreCase));
+        }
+
         // All ledgers (inactive too, to explain a row's status)
         List<VoucherLedgerDto> ledgers =
             await _ledgerRepository.GetAllAsync(false);

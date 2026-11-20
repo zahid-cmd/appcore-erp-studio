@@ -1807,10 +1807,17 @@ implements OnInit
                     );
 
 
+                    // the API answers { message } (user limit, Login ID
+                    // already in use) or plain text
+                    const body =
+                        (error as any)?.error;
+
                     const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to create User Profile.';
+                        typeof body?.message === 'string'
+                            ? body.message
+                            : typeof body === 'string' && body.length > 0
+                                ? body
+                                : 'Failed to create User Profile.';
 
 
                     this.toast.error(
@@ -1929,10 +1936,17 @@ implements OnInit
                     );
 
 
+                    // the API answers { message } (user limit, Login ID
+                    // already in use) or plain text
+                    const body =
+                        (error as any)?.error;
+
                     const message =
-                        (error as any)?.error
-                        ??
-                        'Failed to update User Profile.';
+                        typeof body?.message === 'string'
+                            ? body.message
+                            : typeof body === 'string' && body.length > 0
+                                ? body
+                                : 'Failed to update User Profile.';
 
 
                     this.toast.error(

@@ -108,12 +108,16 @@
                     }
                 </dl>
 
+                <!-- not with Human Resource off -->
+                @if (hrOn)
+                {
                 <dl class="hre-money">
                     <dt>Gross Salary</dt>
                     <dd>{{ money(gross) }}</dd>
                     <dt class="hre-money-net">Net Salary</dt>
                     <dd class="hre-money-net">{{ money(net) }}</dd>
                 </dl>
+                }
 
             </section>
 
@@ -361,6 +365,9 @@
                                     (valueChange)="onLookup('DesignationId', $event)">
                                 </app-search-dropdown>
 
+                                <!-- not with Human Resource off -->
+                                @if (hrOn)
+                                {
                                 <app-search-dropdown
                                     label="Shift"
                                     [required]="true"
@@ -370,6 +377,7 @@
                                     [disabled]="isViewMode"
                                     (valueChange)="onLookup('ShiftId', $event)">
                                 </app-search-dropdown>
+                                }
 
                                 <app-dropdown
                                     label="Employment Type"
@@ -414,6 +422,9 @@
                                     (valueChange)="onLookup('UserProfileId', $event)">
                                 </app-search-dropdown>
 
+                                <!-- not with Human Resource off -->
+                                @if (hrOn)
+                                {
                                 <div class="hre-span-3 hre-week">
                                     <span class="hre-label">Weekly Holiday</span>
                                     <div class="hre-week-row">
@@ -431,6 +442,7 @@
                                         <small>{{ weeklyHint }}</small>
                                     </div>
                                 </div>
+                                }
 
                             </div>
 

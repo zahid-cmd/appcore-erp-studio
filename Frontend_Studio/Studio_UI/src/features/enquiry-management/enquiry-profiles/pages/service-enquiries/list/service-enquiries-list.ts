@@ -411,16 +411,16 @@ implements OnInit
     [
         // balanced widths, one scheme for every list
         { header:'#',              field:'serial',       type:'serial', width:'56px',  align:'center' },
-        { header:'Enquiry No',     field:'EnquiryNo',    width:'160px', align:'left' },
-        { header:'Date',           field:'DateText',     width:'130px', align:'center' },
+        { header:'Enquiry No',     field:'EnquiryNo',    width:'170px', align:'left' },
+        { header:'Date',           field:'DateText',     width:'120px', align:'center' },
         { header:'Type',           field:'TypeText',     width:'110px',  align:'center', dotField:'TypeDot' },
-        { header:'Enquirer',       field:'EnquirerText', width:'160px', align:'left' },
-        { header:'Bike',           field:'BikeText',     width:'160px', align:'left' },
-        { header:'Request',        field:'RequestText',  width:'160px', align:'left' },
-        { header:'Executive',      field:'ExecutiveText', width:'160px', align:'left' },
-        { header:'Status',         field:'StatusText',   width:'160px', align:'left', dotField:'StatusDot' },
-        { header:'Next',           field:'NextText',     width:'160px', align:'left' },
-        { header:'Actions',        field:'actions',      type:'actions', width:'140px', align:'center' }
+        { header:'Enquirer',       field:'EnquirerText', width:'210px', align:'left' },
+        { header:'Bike',           field:'BikeText',     width:'180px', align:'left' },
+        { header:'Request',        field:'RequestText',  width:'200px', align:'left' },
+        { header:'Executive',      field:'ExecutiveText', width:'150px', align:'left' },
+        { header:'Status',         field:'StatusText',   width:'130px', align:'left', dotField:'StatusDot' },
+        { header:'Next',           field:'NextText',     width:'140px', align:'left' },
+        { header:'Actions',        field:'actions',      type:'actions', width:'130px', align:'center' }
     ];
 
 

@@ -8,6 +8,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../shared/utils/moved-route';
+
 
 //===============================================================
 // Sales Operations > Sales Setup (hand-written : NEVER run Menu /
@@ -24,28 +30,14 @@ Routes =
     {
         path:'',
 
-        redirectTo:'bike-accessory-schemes',
+        redirectTo:'pdi-templates',
 
         pathMatch:'full'
     },
 
-    {
-        path:'bike-accessory-schemes',
-
-        data:
-        {
-            breadcrumb:'Bike Accessory Schemes'
-        },
-
-        loadChildren:() =>
-            import(
-                '../../settings/product-settings/routes/bike-accessory-schemes.routes'
-            )
-            .then(
-                m =>
-                    m.BikeAccessorySchemesRoutes
-            )
-    },
+    // Bike Accessory Schemes : moved 2026-11-20 to Inventory
+    // Management > Product Setup (the old address opens it)
+    moved('bike-accessory-schemes', '/inventory-management/product-setup/bike-accessory-schemes'),
 
     {
         path:'pdi-templates',

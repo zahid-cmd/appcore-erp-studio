@@ -208,9 +208,16 @@ public static class CustomerFileWriter
             await context.Set<CustomerFileFees>()
                 .AnyAsync(x => ids.Contains(x.CustomerFileId) && !x.IsDeleted && x.Status != CustomerFileFeeStatuses.Cancelled);
 
+        // Registration Management off for this company (2026-11-20) :
+        // nobody can open Customer Files to put a file back, so a
+        // file that has moved on no longer holds the invoice : it is
+        // cancelled with it. Fees stay a stop (money with vouchers).
+        bool registrationOn =
+            AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Registration);
+
         foreach (CustomerFiles file in files)
         {
-            if (file.TransferCount > 0 || file.Status != CustomerFileStatuses.Open)
+            if (registrationOn && (file.TransferCount > 0 || file.Status != CustomerFileStatuses.Open))
             {
                 throw new InvalidOperationException(
                     $"The customer file {file.CustomerFileNo} has moved on ({(file.TransferCount > 0 ? "name transferred" : file.Status)}) : the {(returning ? "bike cannot be returned" : "invoice cannot be cancelled")}.");
@@ -220,7 +227,9 @@ public static class CustomerFileWriter
         if (hasFees)
         {
             throw new InvalidOperationException(
-                "A customer file of this invoice has fees : cancel them on Customer Files first.");
+                registrationOn
+                    ? "A customer file of this invoice has fees : cancel them on Customer Files first."
+                    : "A customer file of this invoice has fees collected, and Registration Management is switched off for this company : ask AppCore to switch it on, cancel the fees on Customer Files, then try again.");
         }
 
         foreach (CustomerFiles file in files)

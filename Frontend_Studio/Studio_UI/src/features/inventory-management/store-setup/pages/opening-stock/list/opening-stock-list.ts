@@ -333,17 +333,17 @@ export class OpeningStockList
     [
         // balanced widths, one scheme for every list
         { header:'#', field:'serial', type:'serial', width:'56px', align:'center' },
-        { header:'Opening Voucher No', field:'OpeningNo', width:'160px', align:'left', sortable:true },
-        { header:'Date', field:'DateText', width:'130px', align:'center', sortable:true },
-        { header:'Product Type', field:'TypeText', width:'160px', align:'left', sortable:true },
-        { header:'Branch', field:'BranchName', width:'160px', align:'left', sortable:true },
-        { header:'Warehouse', field:'WarehouseName', width:'160px', align:'left', sortable:true },
-        { header:'Credit Ledger', field:'LedgerName', width:'160px', align:'left', sortable:true },
-        { header:'Lines', field:'LineCount', width:'160px', align:'left', sortable:true },
+        { header:'Opening Voucher No', field:'OpeningNo', width:'180px', align:'left', sortable:true },
+        { header:'Date', field:'DateText', width:'120px', align:'center', sortable:true },
+        { header:'Product Type', field:'TypeText', width:'140px', align:'left', sortable:true },
+        { header:'Branch', field:'BranchName', width:'170px', align:'left', sortable:true },
+        { header:'Warehouse', field:'WarehouseName', width:'170px', align:'left', sortable:true },
+        { header:'Credit Ledger', field:'LedgerName', width:'200px', align:'left', sortable:true },
+        { header:'Lines', field:'LineCount', width:'80px', align:'center', sortable:true },
         { header:'Quantity', field:'QuantityText', width:'90px', align:'center', sortable:true },
         { header:'Value', field:'ValueText', width:'130px', align:'right', sortable:true },
-        { header:'Status', field:'Status', type:'status', width:'130px', align:'center', sortable:true },
-        { header:'Actions', field:'actions', type:'actions', width:'140px', align:'center' }
+        { header:'Status', field:'Status', type:'status', width:'120px', align:'center', sortable:true },
+        { header:'Actions', field:'actions', type:'actions', width:'130px', align:'center' }
     ];
 
     //===========================================================

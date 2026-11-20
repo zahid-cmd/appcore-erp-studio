@@ -1340,7 +1340,9 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
                 ? Math.Min(fractionalDefault, TkLimit(Page.SwitchRoundDownWholeTaka) ?? fractionalDefault)
                 : null,
             AllowCorporate = corporate,
-            AllowRegistration = Page.PageType == "MB" && On(SwitchRegistrationOnInvoice, true),
+            // (never with Registration Management off for this company)
+            AllowRegistration = Page.PageType == "MB" && On(SwitchRegistrationOnInvoice, true)
+                                && AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Registration),
             // No date window any more (kept empty for the page)
             CorporateFrom = null,
             CorporateUntil = null
@@ -1872,6 +1874,14 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
         )
     {
         if (Page.PageType != "MB" || productId <= 0)
+        {
+            return null;
+        }
+
+        // Warranty Management off for this company : no warranty
+        // is shown on the invoice
+        if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(
+                AppCore.Application.Platform.Tenancy.ModuleKeys.Warranty))
         {
             return null;
         }
@@ -2699,6 +2709,15 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
         )
     {
         if (string.IsNullOrWhiteSpace(Page.MembershipDiscountOf))
+        {
+            return null;
+        }
+
+        // Membership Management off for this company : no member is
+        // found, so no membership box, discount or posting on a new
+        // invoice or booking. (Invoices saved before keep their
+        // figures; a return reverses what the invoice saved.)
+        if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.Membership))
         {
             return null;
         }
@@ -4573,6 +4592,13 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
                 result.Errors.Add("EMI : only motor bikes are sold on EMI.");
             }
 
+            // EMI Management off for this company : no new EMI sale
+            // (EMI sales made before keep their dues and receipts)
+            if (AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOff(AppCore.Application.Platform.Tenancy.ModuleKeys.Emi))
+            {
+                result.Errors.Add("EMI : EMI sales are not part of this company's package. Choose Cash or Credit.");
+            }
+
             string emiCode =
                 (dto.EmiAccountCode ?? string.Empty).Trim();
 
@@ -5256,7 +5282,9 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
                 Today = DateText(BusinessToday()),
                 InvoiceDate = DateText(invoiceDate),
                 Switches = ToSwitchesDto(switches),
-                EmiAvailable = page.PageType == "MB",
+                // (not with EMI Management off for this company)
+                EmiAvailable = page.PageType == "MB"
+                               && AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Emi),
                 MaxPriceEditPercent = switches.AllowPriceEdit ? switches.MaxPriceEditPercent : null,
                 MaxDiscountPercent = switches.AllowDiscount ? switches.MaxDiscountPercent : null,
                 DefaultSalesPersonId = userId
@@ -7706,8 +7734,11 @@ public abstract partial class SalesInvoiceRepositoryBase<THeader, TLine, TPaymen
         }
 
         // MB : one Customer File per chassis (owner 2026-11-11 :
-        // every posted sale, dues or not)
-        if (Page.PageType == "MB")
+        // every posted sale, dues or not). Not with Registration
+        // Management off for this company (2026-11-20) : no file,
+        // no profile.
+        if (Page.PageType == "MB"
+            && AppCore.Application.Platform.Tenancy.ModuleSwitch.IsOn(AppCore.Application.Platform.Tenancy.ModuleKeys.Registration))
         {
             await AppCore.Infrastructure.Platform.Sales.CustomerFileWriter.CreateForInvoiceAsync(
                 _context,
