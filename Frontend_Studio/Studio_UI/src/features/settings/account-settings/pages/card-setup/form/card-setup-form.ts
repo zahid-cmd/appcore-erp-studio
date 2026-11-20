@@ -1490,8 +1490,8 @@ model
 
         const listRoute =
         [
-            '/settings',
-            'account-settings',
+            '/accounts-finance',
+            'accounts-setup',
             'card-setup',
             'list'
         ];

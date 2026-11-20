@@ -6,6 +6,7 @@ import
 {
     Component,
     OnInit,
+    computed,
     inject,
     signal
 }
@@ -124,6 +125,60 @@ export class BrandPacksPageComponent implements OnInit
 
     readonly report =
         signal<BrandPackReport | null>(null);
+
+
+    // the report in blocks : a main line with its indented lines,
+    // and the kind of change for its icon / colour
+    readonly blocks =
+        computed(() =>
+        {
+            const r =
+                this.report();
+
+            const blocks: { kind: string; title: string; subs: string[] }[] = [];
+
+            for (const line of r?.lines ?? [])
+            {
+                if (line.startsWith('  ') && blocks.length)
+                {
+                    blocks[blocks.length - 1].subs.push(line.trim());
+                    continue;
+                }
+
+                if (line.startsWith('Done'))
+                {
+                    continue;
+                }
+
+                blocks.push({ kind: BrandPacksPageComponent.kindOf(line), title: line, subs: [] });
+            }
+
+            return blocks;
+        });
+
+    private static kindOf(line: string):
+        string
+    {
+        const t =
+            line.toLowerCase();
+
+        if (t.startsWith('stopped'))
+        {
+            return 'bad';
+        }
+
+        if (t.includes(' created'))
+        {
+            return 'new';
+        }
+
+        if (t.includes('updated') || t.includes('refreshed'))
+        {
+            return 'upd';
+        }
+
+        return 'kept';
+    }
 
 
     ngOnInit():

@@ -4,10 +4,25 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 
 export const serviceOperationsRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'service-setup', 'Service Setup', 'MOD-014', 'Service Configuration'),
+
     //===========================================================
     // Module Routes
     //===========================================================

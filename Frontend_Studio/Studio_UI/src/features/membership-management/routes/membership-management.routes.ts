@@ -4,10 +4,25 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 
 export const membershipManagementRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'membership-setup', 'Membership Setup', 'MOD-009', 'Membership Configuration'),
+
     //===========================================================
     // Module Routes
     //===========================================================

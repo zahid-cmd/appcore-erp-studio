@@ -4,9 +4,49 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 export const accountsFinanceRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'accounts-setup', 'Accounts Setup', 'MOD-004', 'Accounts Configuration'),
+
+    //===========================================================
+    // Accounts Setup : the pages that were Settings > Account
+    // Settings (moved 2026-11-20). Hand-written : never run Menu /
+    // Submenu Sync for it. The page files stay in
+    // features\settings\account-settings.
+    //===========================================================
+
+    {
+        path:'accounts-setup',
+
+        data:
+        {
+            breadcrumb:'Accounts Setup'
+        },
+
+        loadChildren:() =>
+            import(
+                '../../settings/account-settings/routes/account-settings.routes'
+            )
+            .then(
+                m =>
+                    m.mnu003002Routes
+            )
+    },
+
     //===========================================================
     // Module Routes
     //===========================================================

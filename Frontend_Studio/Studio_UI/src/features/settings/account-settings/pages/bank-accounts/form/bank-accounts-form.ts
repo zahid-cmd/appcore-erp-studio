@@ -2400,9 +2400,9 @@ model
     {
         const listRoute =
         [
-            '/settings',
+            '/accounts-finance',
 
-            'account-settings',
+            'accounts-setup',
 
             'bank-accounts',
 

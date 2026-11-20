@@ -4,10 +4,25 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 
 export const procurementRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'procurement-setup', 'Procurement Setup', 'MOD-007', 'Procurement Configuration'),
+
     //===========================================================
     // Module Routes
     //===========================================================

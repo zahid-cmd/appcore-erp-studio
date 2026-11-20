@@ -4,10 +4,25 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 
 export const inventoryManagementRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'store-setup', 'Store Setup', 'MOD-012', 'Inventory Configuration'),
+
     //===========================================================
     // Module Routes
     //===========================================================

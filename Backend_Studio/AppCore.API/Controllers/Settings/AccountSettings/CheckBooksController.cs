@@ -42,7 +42,7 @@ public class CheckBooksController
     : ControllerBase
 {
     private const string PageRoute =
-        "/settings/%/check-books";
+        "/%/%/check-books";
 
     private readonly ICheckBooksRepository _repository;
 

@@ -1087,7 +1087,7 @@ implements OnInit
     private goToList():
         void
     {
-        void this.router.navigate(['/settings/account-settings/check-books/list']);
+        void this.router.navigate(['/accounts-finance/accounts-setup/check-books/list']);
     }
 
     onBackToList():

@@ -31,6 +31,7 @@ from '@angular/forms';
 
 import
 {
+    ActivatedRoute,
     Router
 }
 from '@angular/router';
@@ -385,6 +386,70 @@ implements OnInit
     private readonly router =
         inject(Router);
 
+    private readonly route =
+        inject(ActivatedRoute);
+
+
+    //===========================================================
+    // Module Configuration (2026-11-20)
+    //
+    // Opened from a module's setup menu (route data
+    // configurationModule = the module's code, e.g. MOD-008) the
+    // page shows that module's switches only : the module
+    // dropdown is hidden and no filter reset leaves the module.
+    // Without that route data it is the all-modules page.
+    //===========================================================
+
+    // '' = all modules
+    lockedModuleCode =
+        '';
+
+    // 0 = not locked ; -1 = locked to a module with no switch here
+    lockedModuleId =
+        0;
+
+    lockedTitle =
+        '';
+
+    get isModuleLocked():
+        boolean
+    {
+        return !!this.lockedModuleCode;
+    }
+
+    get pageTitle():
+        string
+    {
+        return this.isModuleLocked
+            ? (this.lockedTitle || 'Configuration')
+            : 'System Configurations';
+    }
+
+    private applyModuleLock():
+        void
+    {
+        if
+        (
+            !this.isModuleLocked
+        )
+        {
+            return;
+        }
+
+        const module =
+            (this.workspace?.Modules ?? []).find
+            (
+                x =>
+                    (x.Code || '').toUpperCase() === this.lockedModuleCode
+            );
+
+        this.lockedModuleId =
+            module?.NavigationModuleId ?? -1;
+
+        this.selectedModuleId =
+            this.lockedModuleId;
+    }
+
     private readonly service =
         inject(SystemConfigurationsService);
 
@@ -611,6 +676,12 @@ implements OnInit
     ngOnInit():
         void
     {
+        this.lockedModuleCode =
+            String(this.route.snapshot.data['configurationModule'] ?? '').trim().toUpperCase();
+
+        this.lockedTitle =
+            String(this.route.snapshot.data['configurationTitle'] ?? '').trim();
+
         this.load();
     }
 
@@ -696,6 +767,16 @@ implements OnInit
         )
         {
             return 'Turn module features on or off';
+        }
+
+        if
+        (
+            this.isModuleLocked
+        )
+        {
+            return this.canManage
+                ? 'The switches of this module : turn its features on or off'
+                : 'You can change the switches of your pages in this module · critical ones need approval';
         }
 
         return this.canManage
@@ -928,6 +1009,8 @@ implements OnInit
                     this.workspace =
                         workspace;
 
+                    this.applyModuleLock();
+
                     this.switchByCode =
                         new Map(
                             workspace.Switches.map
@@ -1035,7 +1118,7 @@ implements OnInit
         void
     {
         // Back to the default view : everything, no filter
-        this.selectedModuleId = 0;
+        this.selectedModuleId = this.lockedModuleId;
         this.selectedMenuCode = '';
         this.selectedSubmenuCode = '';
         this.chip = 'all';
@@ -2009,7 +2092,7 @@ implements OnInit
     ):
         void
     {
-        this.selectedModuleId = Number(value) || 0;
+        this.selectedModuleId = this.isModuleLocked ? this.lockedModuleId : (Number(value) || 0);
         this.selectedMenuCode = '';
         this.selectedSubmenuCode = '';
         this.rebuild();
@@ -2074,7 +2157,7 @@ implements OnInit
     clearFilters():
         void
     {
-        this.selectedModuleId = 0;
+        this.selectedModuleId = this.lockedModuleId;
         this.selectedMenuCode = '';
         this.selectedSubmenuCode = '';
         this.chip = 'all';

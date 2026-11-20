@@ -2668,8 +2668,8 @@ model
 
         const listRoute =
         [
-            '/settings',
-            'account-settings',
+            '/accounts-finance',
+            'accounts-setup',
             'mfs-accounts',
             'list'
         ];

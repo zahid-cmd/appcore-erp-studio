@@ -171,6 +171,89 @@ Step 0 check script: `Backend_Studio\Database\SettingsRearrangement_Step0_Check.
 
 ---
 
+## 9a. Step 0 result so far (owner ran tab 3 on AppCoreERP_Studio, 2026-11-20)
+
+48 switches carry a code of another module than the one they sit under, all of them coded `CFG-MOD-008` (Sales Operations):
+
+- 24 under **Service Operations (MOD-014)**: spare-parts sales invoice (`SUB-014-004-002`, 15), sales return (`SUB-014-004-003`, 4), quotation (`SUB-014-004-001`, 1), booking (`SUB-014-006-001`, 4).
+- 24 under **Accessories Operations (MOD-018)**: the same four pages (`SUB-018-001-002`, `-003`, `-001`, `SUB-018-003-001`).
+
+This is expected and nothing to repair: those pages were split out of Sales Operations and their switches followed, keeping their codes. It proves rule 4 (a switch's code is only a name; its module is the `NavigationModuleId` column), so each module's Configuration page will show these 24 under Service and Accessories, not under Sales. Module numbers known so far: Service Operations = MOD-014, Accessories Operations = MOD-018. **Tab 2 (menus of every module, AppCoreERP_Studio, 2026-11-20) changes the plan. THIS SECTION REPLACES sections 3, 4 and 7 where they differ.**
+
+Setup menus that already exist (all are the FIRST menu of their module, so the convention is: setup menu first, named "<Short name> Setup"):
+
+| Module | Setup menu today | Pages |
+|---|---|---|
+| Sales Operations | Sales Setup (MNU-008-006) | 2 |
+| Service Operations | Service Setup (MNU-014-003) | 8 |
+| Inventory Management | Store Setup (MNU-012-001) | 2 |
+| Human Resource | Human Resource Setup (MNU-005-001) | 10 |
+| VAT Management | VAT Setup (MNU-013-001) | 3 |
+| Membership Management | Membership Setup (MNU-009-001) | 3 |
+| EMI Management | EMI Setup (MNU-016-002), after EMI Control | 3 |
+| Fixed Assets | Asset Setup (MNU-017-001) | 3 |
+
+Modules with no setup menu: Accounts & Finance, Procurement, Accessories Operations, Registration (has Registration Control), Warranty (has Warranty Control), Enquiry, Security & Permission.
+
+Settings today has 5 menus: General Settings (11), Application Configuration (5), Account Settings (15), Product Settings (12), Client Settings (2). **Service Settings is no longer under Settings: it is already Service Operations > Service Setup.** So the old step 3 is done.
+
+Revised work:
+
+| Step | What |
+|---|---|
+| 1 | Module Configuration page (shared, locked to one module). Add it as the last page of: General Settings (Settings), Sales Setup, Service Setup, Store Setup, VAT Setup |
+| 2 | New setup menu, first in the module, holding Configuration: Procurement Setup, Accessories Setup, Enquiry Setup, Accounts Setup (filled in step 3). Registration (1 switch) and Security & Permission (1 switch): Configuration goes into Registration Control and User Management instead of a one-page menu (owner to confirm) |
+| 3 | Move Account Settings (MNU-003-002, 15 pages) to Accounts & Finance as **Accounts Setup**, first menu |
+| 4 | Move Product Settings (MNU-003-003, 12 pages) to Inventory Management as **Product Setup**, first menu, before Store Setup |
+| 5 | Settings clean-up: General Settings' "System Configurations" becomes "Configuration" (Settings' 4 switches); all-modules screen under Infrastructure Control |
+| 6 | Same state in `AppCoreTpl_TW`, `AppCore_TW_DEMO` and client databases; update the standards document |
+
+After step 4 Settings holds exactly: General Settings, Application Configuration, Client Settings.
+
+Tab 2 (all menus) received.
+
+**Owner, 2026-11-20 (later): "we will make config page for all even they now have no or a single switch."** So every client module gets a Configuration page from the start, also the ones with 0 or 1 switch. This overrides "add the page only when the module gets its first switch" above. Modules without a setup menu get one for it (Procurement, Accessories, Enquiry, Accounts, Registration, Warranty, Security & Permission). Not included unless the owner says so: Infrastructure Control (AppCore-only all-modules screen) and Reports (reports only).
+
+**Tab 1 (modules and switches, AppCoreERP_Studio, 2026-11-20): 283 switches in 12 of 18 modules.**
+
+| Order | Module | Code | Switches |
+|---|---|---|---|
+| 1 | Infrastructure Control | MOD-002 | 3 |
+| 2 | Security & Permission | MOD-006 | 1 |
+| 3 | Settings | MOD-003 | 4 |
+| 4 | Accounts & Finance | MOD-004 | 56 |
+| 5 | Procurement | MOD-007 | 90 |
+| 6 | Sales Operations | MOD-008 | 32 |
+| 7 | Service Operations | MOD-014 | 24 (coded 008) |
+| 8 | Accessories Operations | MOD-018 | 24 (coded 008) |
+| 9 | Registration Management | MOD-011 | 1 |
+| 10 | Inventory Management | MOD-012 | 28 |
+| 11 | Human Resource Manangement | MOD-005 | 0 |
+| 12 | VAT Management | MOD-013 | 4 |
+| 13 | Membership Management | MOD-009 | 0 |
+| 14 | Warranty Management | MOD-015 | 0 |
+| 15 | EMI Management | MOD-016 | 0 |
+| 16 | Enquiry Management | MOD-010 | 16 |
+| 17 | Fixed Assets Management | MOD-017 | 0 |
+| 18 | Reports | MOD-001 | 0 |
+
+What follows for the plan:
+
+- Settings keeps only 4 switches; 279 of 283 already belong to other modules. The split is display only, as expected.
+- Six modules have no switch yet (HR, Membership, Warranty, EMI, Fixed Assets, Reports). Their Configuration page would open empty: add the page only when the module gets its first switch (step 2 is then: Procurement, Sales, Accessories, Registration, Enquiry, Security & Permission).
+- **Reports (MOD-001)** is a module the map in section 4 did not list; it has no setup and no switches, so it is left as it is.
+- Infrastructure Control's 3 switches stay on the AppCore-only all-modules screen (the module is hidden on client addresses).
+
+---
+
 ## 10. Not verified
 
 Written from the code and SQL scripts only; no database access. Not checked: the exact module behind each switch number, how favourites and recent pages are stored, and whether the Console's module on / off list already treats any module as "always on".
+
+---
+
+## 11. Progress
+
+- 2026-11-20 : steps 1-2 built. `ModuleConfiguration_Navigation.sql` run by the owner on AppCoreERP_Studio (15 Configuration pages, 7 new setup menus). Not yet on AppCoreTpl_TW / AppCore_TW_DEMO.
+- 2026-11-20 : step 3 built, not run / not tested : `AccountSettings_To_AccountsSetup.sql`. Because Accounts Setup already existed, the PAGES move into it (new codes SUB-004-005-002...) and the menu Account Settings is marked deleted; this differs from section 6 (which moves the menu). Old addresses redirect (`moved`), page links corrected, the two API permission lookups by address (Check Books, Posting Setup) made address-independent.
+- Step 4 (Product Settings) : same way; note `ProductPricingController` looks up "/settings/%/spare-parts".

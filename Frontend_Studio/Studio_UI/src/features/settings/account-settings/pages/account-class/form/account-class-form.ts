@@ -2078,8 +2078,8 @@ model
             void this.router.navigate
             (
                 [
-                    '/settings',
-                    'account-settings',
+                    '/accounts-finance',
+                    'accounts-setup',
                     'account-class',
                     'list'
                 ]
@@ -2098,8 +2098,8 @@ model
                 void this.router.navigate
                 (
                     [
-                        '/settings',
-                        'account-settings',
+                        '/accounts-finance',
+                        'accounts-setup',
                         'account-class',
                         'list'
                     ]

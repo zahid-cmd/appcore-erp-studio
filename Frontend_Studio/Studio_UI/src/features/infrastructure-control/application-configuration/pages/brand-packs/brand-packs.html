@@ -77,22 +77,40 @@
                 <small>{{ fileName() || 'no pack installed yet' }}</small>
             </header>
 
-            <div class="ws-pane-body appcore-scrollbar bp-body">
+            <div class="ws-pane-body appcore-scrollbar bp-body bp-report">
 
                 @if (report(); as r)
                 {
-                    <div class="bp-summary" [class.bp-bad]="!r.success">
-                        <i [class]="r.success ? 'fas fa-circle-check' : 'fas fa-triangle-exclamation'"></i>
-                        <b>{{ r.brand }}</b>
-                        <span>{{ r.created }} created · {{ r.updated }} updated · {{ r.kept }} kept</span>
+                    <div class="bp-stats">
+                        <div class="bp-stat" [class.bp-stat--bad]="!r.success" [class.bp-stat--ok]="r.success">
+                            <i [class]="r.success ? 'fas fa-circle-check' : 'fas fa-triangle-exclamation'"></i>
+                            <div><b>{{ r.brand }}</b><small>{{ r.success ? 'Installed' : 'Stopped' }}</small></div>
+                        </div>
+                        <div class="bp-stat bp-stat--new"><i class="fas fa-plus"></i><div><b>{{ r.created }}</b><small>Created</small></div></div>
+                        <div class="bp-stat bp-stat--upd"><i class="fas fa-rotate"></i><div><b>{{ r.updated }}</b><small>Updated</small></div></div>
+                        <div class="bp-stat bp-stat--kept"><i class="fas fa-check"></i><div><b>{{ r.kept }}</b><small>Kept</small></div></div>
                     </div>
 
-                    <ol class="bp-lines">
-                        @for (line of r.lines; track $index)
+                    @if (!r.success && r.error)
+                    {
+                        <div class="bp-error"><i class="fas fa-circle-exclamation"></i> {{ r.error }} Fix the cause, then Install again.</div>
+                    }
+
+                    <div class="bp-blocks">
+                        @for (b of blocks(); track $index)
                         {
-                            <li [class.bp-sub]="line.startsWith('  ')" [class.bp-bad]="line.startsWith('Stopped')">{{ line }}</li>
+                            <div class="bp-block" [attr.data-kind]="b.kind">
+                                <div class="bp-block-title">
+                                    <i [class]="b.kind === 'new' ? 'fas fa-plus' : b.kind === 'upd' ? 'fas fa-rotate' : b.kind === 'bad' ? 'fas fa-xmark' : 'fas fa-check'"></i>
+                                    <span>{{ b.title }}</span>
+                                </div>
+                                @for (s of b.subs; track $index)
+                                {
+                                    <div class="bp-block-sub">{{ s }}</div>
+                                }
+                            </div>
                         }
-                    </ol>
+                    </div>
                 }
                 @else
                 {

@@ -2194,8 +2194,8 @@ model
             void this.router.navigate
             (
                 [
-                    '/settings',
-                    'account-settings',
+                    '/accounts-finance',
+                    'accounts-setup',
                     'account-sub-group',
                     'list'
                 ]
@@ -2212,8 +2212,8 @@ model
                 void this.router.navigate
                 (
                     [
-                        '/settings',
-                        'account-settings',
+                        '/accounts-finance',
+                        'accounts-setup',
                         'account-sub-group',
                         'list'
                     ]

@@ -51,7 +51,7 @@ public class PostingSetupRepository : IPostingSetupRepository
     //===========================================================
 
     private const string PageRoute =
-        "/settings/account-settings/posting-setup";
+        "/%/%/posting-setup";
 
     private const string UpdateActivity =
         "Update";

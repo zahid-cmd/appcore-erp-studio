@@ -4,10 +4,25 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 
 export const registrationManagementRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'registration-setup', 'Registration Setup', 'MOD-011', 'Registration Configuration'),
+
     //===========================================================
     // Module Routes
     //===========================================================

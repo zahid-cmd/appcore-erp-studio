@@ -1277,8 +1277,8 @@ model
 
         const listRoute =
         [
-            '/settings',
-            'account-settings',
+            '/accounts-finance',
+            'accounts-setup',
             'bank-setup',
             'list'
         ];

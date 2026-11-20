@@ -2545,8 +2545,8 @@ model
             void this.router.navigate
             (
                 [
-                    '/settings',
-                    'account-settings',
+                    '/accounts-finance',
+                    'accounts-setup',
                     'general-ledgers',
                     'list'
                 ]
@@ -2563,8 +2563,8 @@ model
                 void this.router.navigate
                 (
                     [
-                        '/settings',
-                        'account-settings',
+                        '/accounts-finance',
+                        'accounts-setup',
                         'general-ledgers',
                         'list'
                     ]

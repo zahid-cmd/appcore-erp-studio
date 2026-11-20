@@ -2270,8 +2270,8 @@ implements OnInit, OnDestroy
 
         const listRoute =
         [
-            '/settings',
-            'account-settings',
+            '/accounts-finance',
+            'accounts-setup',
             'card-charges',
             'list'
         ];

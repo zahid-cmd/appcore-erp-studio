@@ -4,10 +4,31 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../shared/utils/moved-route';
+
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 
 export const settingsRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'general-settings', 'General Settings', 'MOD-003', 'Settings Configuration'),
+
     //===========================================================
     // Module Routes
     //===========================================================
@@ -87,31 +108,16 @@ export const settingsRoutes:
             )
     },
 
-    // AUTO-BEGIN : MNU-003-002
-
     //===========================================================
-    // Account Settings
+    // Account Settings moved to Accounts & Finance > Accounts
+    // Setup (2026-11-20, AccountSettings_To_AccountsSetup.sql).
+    // The old addresses open the new ones. The page files stay
+    // in features\settings\account-settings. Never run Menu /
+    // Submenu Sync for MNU-003-002 : it would bring the old
+    // block back.
     //===========================================================
 
-    {
-        path:'account-settings',
-
-        data:
-        {
-            breadcrumb:'Account Settings'
-        },
-
-        loadChildren:() =>
-            import(
-                '../account-settings/routes/account-settings.routes'
-            )
-            .then(
-                m =>
-                    m.mnu003002Routes
-            )
-    },
-
-    // AUTO-END : MNU-003-002
+    moved('account-settings', '/accounts-finance/accounts-setup'),
 
     // AUTO-BEGIN : MNU-003-003
 

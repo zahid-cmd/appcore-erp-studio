@@ -5,7 +5,7 @@
     ====================================================== -->
 
     <app-page-header
-        title="System Configurations"
+        [title]="pageTitle"
         [subtitle]="subtitle"
         icon="fas fa-sliders">
 
@@ -62,6 +62,8 @@
                 @for (version of [filtersVersion]; track version)
                 {
 
+                @if (!isModuleLocked)
+                {
                 <app-search-dropdown
                     class="sc-filter-module"
                     placeholder="All Modules"
@@ -71,6 +73,7 @@
                     [value]="selectedModuleId"
                     (valueChange)="onModuleFilter($event)">
                 </app-search-dropdown>
+                }
 
                 <app-search-dropdown
                     class="sc-filter-menu"

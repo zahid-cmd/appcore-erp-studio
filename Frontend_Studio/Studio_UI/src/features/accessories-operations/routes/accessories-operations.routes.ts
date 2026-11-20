@@ -8,6 +8,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 
 //===============================================================
 // Accessories Operations : the accessory shop (wing 03), made
@@ -25,6 +31,15 @@ from '@angular/router';
 export const accessoriesOperationsRoutes:
 Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'accessories-setup', 'Accessories Setup', 'MOD-018', 'Accessories Configuration'),
+
     {
         path:'',
 

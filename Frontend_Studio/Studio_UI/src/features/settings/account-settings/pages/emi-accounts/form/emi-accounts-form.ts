@@ -2338,8 +2338,8 @@ model
 
         const listRoute =
         [
-            '/settings',
-            'account-settings',
+            '/accounts-finance',
+            'accounts-setup',
             'emi-accounts',
             'list'
         ];

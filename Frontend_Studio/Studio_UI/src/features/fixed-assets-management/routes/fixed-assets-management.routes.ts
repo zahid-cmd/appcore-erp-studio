@@ -14,6 +14,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
 // The routes of a page : one component for every mode
 function page(name: string, load: () => Promise<any>): Routes
 {
@@ -29,6 +35,15 @@ function page(name: string, load: () => Promise<any>): Routes
 export const fixedAssetsManagementRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'asset-setup', 'Asset Setup', 'MOD-017', 'Fixed Assets Configuration'),
+
     //===========================================================
     // Asset Setup
     //===========================================================

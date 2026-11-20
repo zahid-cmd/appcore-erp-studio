@@ -6,6 +6,12 @@ from '@angular/router';
 
 import
 {
+    moduleConfigurationRoutes
+}
+from '../../settings/general-settings/routes/module-configuration.routes';
+
+import
+{
     moved
 }
 from '../../../shared/utils/moved-route';
@@ -14,6 +20,15 @@ from '../../../shared/utils/moved-route';
 export const salesOperationsRoutes:
     Routes =
 [
+
+    //===========================================================
+    // Module Configuration (2026-11-20) : this module's switches.
+    // Kept first : the setup menu's own route follows.
+    //===========================================================
+
+    ...moduleConfigurationRoutes(
+        'sales-setup', 'Sales Setup', 'MOD-008', 'Sales Configuration'),
+
     //===========================================================
     // Module Routes
     //===========================================================
