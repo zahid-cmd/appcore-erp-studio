@@ -2959,9 +2959,9 @@ implements OnInit, OnDestroy
             void this.router.navigate
             (
                 [
-                    '/settings',
+                    '/inventory-management',
 
-                    'product-settings',
+                    'product-setup',
 
                     'motor-bikes',
 
@@ -2986,9 +2986,9 @@ implements OnInit, OnDestroy
                 void this.router.navigate
                 (
                     [
-                        '/settings',
+                        '/inventory-management',
 
-                        'product-settings',
+                        'product-setup',
 
                         'motor-bikes',
 

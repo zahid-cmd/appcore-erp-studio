@@ -4,6 +4,7 @@
 
 import
 {
+    ChangeDetectorRef,
     Component,
     EventEmitter,
     Input,
@@ -163,7 +164,9 @@ export class ChangePasswordComponent
             ProgressDialogService,
 
         private readonly router:
-            Router
+            Router,
+        private readonly cdr:
+            ChangeDetectorRef
     )
     {
     }
@@ -1929,6 +1932,11 @@ export class ChangePasswordComponent
                             ||
                             'Unable to change password.';
 
+                        // the panel was closed for the confirmation :
+                        // bring it back so the reason is seen
+                        this.reopen.emit();
+                        this.cdr.markForCheck();
+
                         return;
                     }
 
@@ -2029,6 +2037,10 @@ export class ChangePasswordComponent
                         this.getApiErrorMessage(
                             error
                         );
+
+                    // bring the panel back with the reason
+                    this.reopen.emit();
+                    this.cdr.markForCheck();
                 }
             });
     }

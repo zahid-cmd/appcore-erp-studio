@@ -1757,8 +1757,8 @@ implements OnInit
         string
     {
         return this.lastResult?.ProductType === 'Accessories'
-            ? '/settings/product-settings/accessories/list'
-            : '/settings/product-settings/spare-parts/list';
+            ? '/inventory-management/product-setup/accessories/list'
+            : '/inventory-management/product-setup/spare-parts/list';
     }
 }
 

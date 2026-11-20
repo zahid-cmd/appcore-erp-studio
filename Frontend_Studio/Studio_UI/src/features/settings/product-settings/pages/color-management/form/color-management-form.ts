@@ -1474,9 +1474,9 @@ model
             void this.router.navigate
             (
                 [
-                    '/settings',
+                    '/inventory-management',
 
-                    'product-settings',
+                    'product-setup',
 
                     'color-management',
 
@@ -1501,9 +1501,9 @@ model
                 void this.router.navigate
                 (
                     [
-                        '/settings',
+                        '/inventory-management',
 
-                        'product-settings',
+                        'product-setup',
 
                         'color-management',
 

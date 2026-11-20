@@ -119,31 +119,16 @@ export const settingsRoutes:
 
     moved('account-settings', '/accounts-finance/accounts-setup'),
 
-    // AUTO-BEGIN : MNU-003-003
-
     //===========================================================
-    // Product Settings
+    // Product Settings moved to Inventory Management > Product
+    // Setup (2026-11-20, ProductSettings_To_ProductSetup.sql).
+    // The old addresses open the new ones. The page files stay
+    // in features\settings\product-settings. Never run Menu /
+    // Submenu Sync for MNU-003-003 : it would bring the old
+    // block back.
     //===========================================================
 
-    {
-        path:'product-settings',
-
-        data:
-        {
-            breadcrumb:'Product Settings'
-        },
-
-        loadChildren:() =>
-            import(
-                '../product-settings/routes/product-settings.routes'
-            )
-            .then(
-                m =>
-                    m.mnu003003Routes
-            )
-    },
-
-    // AUTO-END : MNU-003-003
+    moved('product-settings', '/inventory-management/product-setup'),
 
     // AUTO-BEGIN : MNU-003-004
 

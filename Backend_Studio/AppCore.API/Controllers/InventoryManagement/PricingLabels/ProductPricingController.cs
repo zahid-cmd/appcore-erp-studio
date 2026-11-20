@@ -61,7 +61,7 @@ public class ProductPricingController
     private readonly ISparePartsRepository _spareParts;
 
     private const string SparePartsRoute =
-        "/settings/%/spare-parts";
+        "/%/product-s%/spare-parts";
 
     private readonly IEffectiveAccessRepository _effectiveAccess;
 

@@ -2049,9 +2049,9 @@ model
             void this.router.navigate
             (
                 [
-                    '/settings',
+                    '/inventory-management',
 
-                    'product-settings',
+                    'product-setup',
 
                     'brand-management',
 
@@ -2076,9 +2076,9 @@ model
                 void this.router.navigate
                 (
                     [
-                        '/settings',
+                        '/inventory-management',
 
-                        'product-settings',
+                        'product-setup',
 
                         'brand-management',
 

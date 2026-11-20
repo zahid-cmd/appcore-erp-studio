@@ -4443,9 +4443,9 @@ implements OnInit, OnDestroy
             void this.router.navigate
             (
                 [
-                    '/settings',
+                    '/inventory-management',
 
-                    'product-settings',
+                    'product-setup',
 
                     'accessories',
 
@@ -4470,9 +4470,9 @@ implements OnInit, OnDestroy
                 void this.router.navigate
                 (
                     [
-                        '/settings',
+                        '/inventory-management',
 
-                        'product-settings',
+                        'product-setup',
 
                         'accessories',
 

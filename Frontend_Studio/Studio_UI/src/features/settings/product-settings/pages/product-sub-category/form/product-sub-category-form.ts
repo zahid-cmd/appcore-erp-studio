@@ -2342,8 +2342,8 @@ model
 
         const listRoute =
         [
-            '/settings',
-            'product-settings',
+            '/inventory-management',
+            'product-setup',
             'product-sub-category',
             'list'
         ];

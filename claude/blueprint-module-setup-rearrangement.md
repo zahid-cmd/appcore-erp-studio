@@ -256,4 +256,5 @@ Written from the code and SQL scripts only; no database access. Not checked: the
 
 - 2026-11-20 : steps 1-2 built. `ModuleConfiguration_Navigation.sql` run by the owner on AppCoreERP_Studio (15 Configuration pages, 7 new setup menus). Not yet on AppCoreTpl_TW / AppCore_TW_DEMO.
 - 2026-11-20 : step 3 built, not run / not tested : `AccountSettings_To_AccountsSetup.sql`. Because Accounts Setup already existed, the PAGES move into it (new codes SUB-004-005-002...) and the menu Account Settings is marked deleted; this differs from section 6 (which moves the menu). Old addresses redirect (`moved`), page links corrected, the two API permission lookups by address (Check Books, Posting Setup) made address-independent.
-- Step 4 (Product Settings) : same way; note `ProductPricingController` looks up "/settings/%/spare-parts".
+- 2026-11-20 : step 4 built, not run / not tested : `ProductSettings_To_ProductSetup.sql`. Here the MENU moves (keeps its Id; renamed Product Setup, route key product-setup, first in Inventory Management), as in section 6. Old addresses redirect, 21 page links corrected, `ProductPricingController` finds Spare Parts at either address.
+- Left : step 5 (Settings clean-up), step 6 (template / demo databases), Console must refuse switching off Accounts & Finance and Inventory.

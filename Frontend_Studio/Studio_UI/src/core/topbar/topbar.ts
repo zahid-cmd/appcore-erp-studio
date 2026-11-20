@@ -4,6 +4,7 @@
 
 import
 {
+    ChangeDetectorRef,
     Component,
     inject
 }
@@ -180,6 +181,11 @@ export class TopbarComponent
 
     private readonly router =
         inject(Router);
+
+    // the app has no zone : events from the Change Password panel
+    // that arrive after a server answer must ask for a redraw
+    private readonly cdr =
+        inject(ChangeDetectorRef);
 
 
     private readonly authenticationStorageService =
@@ -480,6 +486,8 @@ export class TopbarComponent
     {
         this.changePasswordOpened =
             false;
+
+        this.cdr.markForCheck();
     }
 
 
@@ -502,6 +510,8 @@ export class TopbarComponent
 
         this.changePasswordOpened =
             true;
+
+        this.cdr.markForCheck();
     }
 
 
