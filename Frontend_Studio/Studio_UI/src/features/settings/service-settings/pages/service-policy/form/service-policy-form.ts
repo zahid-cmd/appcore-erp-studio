@@ -85,9 +85,40 @@ from '../../../../../../shared/components/controls/control-tabs/control-tabs';
 
 import
 {
-    PageCanvasComponent
+    PageCanvasComponent,
+    PageCanvasConfig
 }
 from '../../../../../../shared/components/layout/page-canvas/page-canvas';
+
+import
+{
+    WorkspaceArtComponent
+}
+from '../../../../../../shared/components/layout/workspace-art/workspace-art';
+
+import
+{
+    StepTabsComponent
+}
+from '../../../../../../shared/components/layout/step-tabs/step-tabs';
+
+import
+{
+    StepNavComponent
+}
+from '../../../../../../shared/components/layout/step-nav/step-nav';
+
+import
+{
+    ToggleSwitchComponent
+}
+from '../../../../../../shared/components/controls/toggle-switch/toggle-switch';
+
+import
+{
+    NotePadComponent
+}
+from '../../../../../../shared/components/controls/note-pad/note-pad';
 
 import
 {
@@ -228,17 +259,18 @@ from '../../../services/service-policy.service';
         PageHeaderComponent,
         PageToolbarComponent,
         CommandCenterComponent,
-        ControlTabsComponent,
         PageCanvasComponent,
-        FormGridComponent,
-        FormSectionComponent,
+        WorkspaceArtComponent,
+        StepTabsComponent,
+        StepNavComponent,
+        ToggleSwitchComponent,
+        NotePadComponent,
 
         //=======================================================
         // Form Controls
         //=======================================================
 
         TextboxComponent,
-        TextareaComponent,
         DropdownComponent,
         SearchDropdownComponent,
 
@@ -364,6 +396,36 @@ implements OnInit, OnDestroy
     selectedTab:
         string =
         'general';
+
+    // Workspace layout : the canvas body scrolls inside, never the page
+    readonly formConfig:
+        PageCanvasConfig =
+    {
+        mode:'list',
+        showHeader:false,
+        showFooter:false,
+        reserveFooterSpace:false,
+        bodyScrollable:true,
+        fixedHeight:true
+    };
+
+    // More than one screen, no scrolling
+    readonly formSteps =
+    [
+        { id:'general', label:'Policy' },
+        { id:'limit', label:'Limit & Ledger' }
+    ];
+
+    onTabChange
+    (
+        tabId:
+            string
+    ):
+        void
+    {
+        this.selectedTab =
+            tabId;
+    }
 
     get tabs():
         ControlTab[]

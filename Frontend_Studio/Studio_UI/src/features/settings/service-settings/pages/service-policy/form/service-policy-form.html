@@ -35,6 +35,8 @@
 
     <app-page-header
 
+        art="helmet"
+
         icon="fas fa-scale-balanced"
 
         [title]="pageTitle"
@@ -85,15 +87,19 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
@@ -103,253 +109,201 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-scale-balanced"></i>
+                            <span>Basic Information</span>
+                            <small>One policy per brand</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+
+                            <app-textbox
+                                label="Policy Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.PolicyCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-search-dropdown
+                                label="Brand"
+                                [items]="brandItems"
+                                [(value)]="entity.BrandManagementId"
+                                (valueChange)="onBrandChange($event)"
+                                [disabled]="!isAddMode || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
 
-            [columns]="4">
+                    </section>
 
+                </div>
 
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'limit'">
 
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
+                    <section class="ws-card">
 
-            <app-form-section
+                        <header class="ws-card-head">
+                            <i class="fas fa-shield-halved"></i>
+                            <span>Free Service Limit</span>
+                            <small>Set the schedule from the command bar</small>
+                        </header>
 
-                title="Basic Information"
+                        <div class="ws-grid ws-cols-2">
 
-                icon="fas fa-scale-balanced">
+                            <app-textbox
+                                label="Warranty (Years)"
+                                placeholder="e.g. 3"
+                                [value]="numberText(entity.WarrantyYears)"
+                                (valueChange)="onWarrantyValueChange('WarrantyYears', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
 
+                            <app-textbox
+                                label="Warranty Km"
+                                placeholder="e.g. 40000"
+                                [value]="numberText(entity.WarrantyKm)"
+                                (valueChange)="onWarrantyValueChange('WarrantyKm', $event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
 
-                <!-- Policy Code : SVP-nnn -->
+                            <app-textbox
+                                label="Service Schedule"
+                                placeholder="Required : use Schedule above"
+                                [value]="scheduleSummary"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-                <app-textbox
+                        </div>
 
-                    label="Policy Code"
+                    </section>
 
-                    placeholder="Auto generated"
 
-                    [(value)]="entity.PolicyCode"
+                    <section class="ws-card">
 
-                    [readonly]="true"
+                        <header class="ws-card-head">
+                            <i class="fas fa-hand-holding-dollar"></i>
+                            <span>Associated Ledger</span>
+                            <small>The brand receivable for reimbursed free services</small>
+                        </header>
 
-                    [required]="true">
+                        <div class="ws-grid ws-cols-2">
 
-                </app-textbox>
+                            <app-search-dropdown
+                                label="Associated Sub Group"
+                                [items]="subGroupItems"
+                                [(value)]="entity.AssociatedSubGroupId"
+                                (valueChange)="onSubGroupChange($event)"
+                                [disabled]="isSubGroupLocked || isSaving"
+                                [required]="true">
+                            </app-search-dropdown>
 
+                            <app-textbox
+                                label="Associated Ledger Code"
+                                [placeholder]="ledgerCodePlaceholder"
+                                [(value)]="entity.AssociatedLedgerCode"
+                                [readonly]="true">
+                            </app-textbox>
 
-                <!-- Brand : one policy per brand, declared first; locked once saved -->
+                            <app-textbox
+                                label="Associated Ledger Name"
+                                placeholder="Sub Group Name - Brand Name"
+                                [(value)]="entity.AssociatedLedgerName"
+                                [readonly]="true">
+                            </app-textbox>
 
-                <app-search-dropdown
+                        </div>
 
-                    label="Brand"
+                    </section>
 
-                    [items]="brandItems"
+                </div>
 
-                    [(value)]="entity.BrandManagementId"
+            </div>
 
-                    (valueChange)="onBrandChange($event)"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    [disabled]="!isAddMode || isSaving"
+            <aside class="ws-panel">
 
-                    [required]="true">
+                <div class="ws-hero">
 
-                </app-search-dropdown>
+                    <app-workspace-art theme="helmet"></app-workspace-art>
 
+                    <div class="ws-identity">
 
-            </app-form-section>
+                        <b [class.ws-new]="!(selectedBrandName)">{{ selectedBrandName || 'New service policy' }}</b>
 
+                        <div class="ws-chips">
 
+                            @if (entity.PolicyCode)
+                            {
+                                <span
+                                    class="ws-chip" data-tone="info">{{ entity.PolicyCode }}</span>
+                            }
 
-            <!-- =============================================
-                 SECTION 02
-                 FREE SERVICE LIMIT (WARRANTY)
-                 Every free service must be taken within this
-                 period or km, whichever comes first.
-            ============================================== -->
+                        </div>
 
-            <app-form-section
+                    </div>
 
-                title="Free Service Limit"
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                icon="fas fa-shield-halved">
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-calendar-check"></i><span>Its schedule creates the scheduled services</span></li>
+                        <li><i class="fas fa-hand-holding-dollar"></i><span>Free services are claimed from the brand</span></li>
+                    </ul>
 
+                </div>
 
-                <app-textbox
+            </aside>
 
-                    label="Warranty (Years)"
-
-                    placeholder="e.g. 3"
-
-                    [value]="numberText(entity.WarrantyYears)"
-
-                    (valueChange)="onWarrantyValueChange('WarrantyYears', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Warranty Km"
-
-                    placeholder="e.g. 40000"
-
-                    [value]="numberText(entity.WarrantyKm)"
-
-                    (valueChange)="onWarrantyValueChange('WarrantyKm', $event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Required; set on the Service Schedule page
-                     (command center : Schedule) -->
-
-                <app-textbox
-
-                    label="Service Schedule"
-
-                    placeholder="Required : use Schedule above"
-
-                    [value]="scheduleSummary"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 FREE SERVICE CLAIM
-                 ASSOCIATED LEDGER : the brand's receivable for
-                 reimbursed free services, created with the
-                 policy under the Associated Sub Group (the
-                 same sub group for every policy). Its name is
-                 "<Sub Group Name> - <Brand Name>", built from
-                 the current names.
-            ============================================== -->
-
-            <app-form-section
-
-                title="Associated Ledger"
-
-                icon="fas fa-hand-holding-dollar">
-
-
-                <!-- Associated Sub Group : chosen by the first policy,
-                     fixed for every policy after that -->
-
-                <app-search-dropdown
-
-                    label="Associated Sub Group"
-
-                    [items]="subGroupItems"
-
-                    [(value)]="entity.AssociatedSubGroupId"
-
-                    (valueChange)="onSubGroupChange($event)"
-
-                    [disabled]="isSubGroupLocked || isSaving"
-
-                    [required]="true">
-
-                </app-search-dropdown>
-
-
-                <app-textbox
-
-                    label="Associated Ledger Code"
-
-                    [placeholder]="ledgerCodePlaceholder"
-
-                    [(value)]="entity.AssociatedLedgerCode"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Associated Ledger Name"
-
-                    placeholder="Sub Group Name - Brand Name"
-
-                    [(value)]="entity.AssociatedLedgerName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 

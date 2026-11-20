@@ -259,6 +259,10 @@ public static class NoCompanyGuard
         {
             List<string> names = new();
 
+            // no AppCore code in the call : the nearest other code,
+            // so the list still says what asked (2026-11-21)
+            List<string> others = new();
+
             foreach (StackFrame frame in new StackTrace(2, false).GetFrames())
             {
                 Type? type = frame.GetMethod()?.DeclaringType;
@@ -270,6 +274,18 @@ public static class NoCompanyGuard
                 }
 
                 string? name = type?.FullName;
+
+                if (name is not null
+                    && others.Count < 6
+                    && !others.Contains(name)
+                    && !name.StartsWith("Microsoft.Extensions.DependencyInjection", StringComparison.Ordinal)
+                    && !name.StartsWith("System.Runtime", StringComparison.Ordinal)
+                    && !name.StartsWith("System.Threading", StringComparison.Ordinal)
+                    && !name.Contains("DependencyInjection", StringComparison.Ordinal)
+                    && !name.Contains(nameof(NoCompanyGuard), StringComparison.Ordinal))
+                {
+                    others.Add(name);
+                }
 
                 if (name is null
                     || !name.StartsWith("AppCore.", StringComparison.Ordinal)
@@ -290,7 +306,11 @@ public static class NoCompanyGuard
                 }
             }
 
-            return names.Count == 0 ? "(not AppCore code : the service start?)" : string.Join(" < ", names);
+            return names.Count > 0
+                ? string.Join(" < ", names)
+                : others.Count > 0
+                    ? "(not AppCore code) " + string.Join(" < ", others)
+                    : "(not AppCore code : the service start?)";
         }
         catch (Exception)
         {

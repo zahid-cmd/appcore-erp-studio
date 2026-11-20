@@ -101,6 +101,15 @@ public sealed class TenantCredentialSeal
 
         try
         {
+            // Locked already : left as it is (2026-11-21). Setting the
+            // rights again would take away the right of the service's
+            // own account (secure-services.cmd gives it on this file)
+            // whenever the ERP starts once as another account.
+            if (new FileInfo(_privateFile).GetAccessControl().AreAccessRulesProtected)
+            {
+                return;
+            }
+
             FileSecurity security = new();
 
             // no rights from the folder

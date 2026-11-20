@@ -7,6 +7,8 @@
 
     <app-page-header
 
+        art="parts"
+
         icon="fas fa-sitemap"
 
         [title]="pageTitle"
@@ -51,15 +53,19 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
@@ -69,292 +75,223 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Basic Information</span>
+                            <small>Named by hand under its category</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+
+                            <app-search-dropdown
+                                label="Service Category"
+                                [items]="categoryItems"
+                                [(value)]="entity.ServiceCategoryId"
+                                (valueChange)="onCategoryChange($event)"
+                                [disabled]="isViewMode || isSaving || isCategoryLocked"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-dropdown
+                                label="Sub Category Type"
+                                [items]="subCategoryTypeItems"
+                                [(value)]="entity.SubCategoryType"
+                                (valueChange)="onSubCategoryTypeChange($event)"
+                                [disabled]="isViewMode || isSaving || isCategoryLocked || !entity.ServiceCategoryId"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-textbox
+                                label="Sub Category Code"
+                                placeholder="Follows the service category"
+                                [(value)]="entity.SubCategoryCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Sub Category Name"
+                                [placeholder]="namePlaceholder"
+                                [(value)]="entity.SubCategoryName"
+                                (valueChange)="onSubCategoryNameChange()"
+                                [readonly]="!isDifferentialServices"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
 
-            [columns]="4">
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
 
+                    </section>
 
+                </div>
 
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'group'">
 
-            <app-form-section
+                    <section class="ws-card">
 
-                title="Basic Information"
+                        <header class="ws-card-head">
+                            <i class="fas fa-sack-dollar"></i>
+                            <span>Income Account Sub Group</span>
+                            <small>Made on save under the category income group</small>
+                        </header>
 
-                icon="fas fa-sitemap">
+                        <div class="ws-grid ws-cols-2">
 
+                            <app-textbox
+                                label="Account Class"
+                                placeholder="Follows the service category"
+                                [(value)]="incomeClassDisplay"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Income Group"
+                                placeholder="Follows the service category"
+                                [(value)]="incomeGroupDisplay"
+                                [readonly]="true">
+                            </app-textbox>
 
-                <!-- Service Category : locked once saved -->
+                            <app-textbox
+                                label="Income Sub Group Code"
+                                placeholder="Follows the service category"
+                                [(value)]="entity.IncomeSubGroupCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-                <app-search-dropdown
+                        </div>
 
-                    label="Service Category"
+                    </section>
 
-                    [items]="categoryItems"
 
-                    [(value)]="entity.ServiceCategoryId"
+                    <section class="ws-card">
 
-                    (valueChange)="onCategoryChange($event)"
+                        <header class="ws-card-head">
+                            <i class="fas fa-folder-tree"></i>
+                            <span>Account Sub Group Name</span>
+                            <small>Renamed with the sub category</small>
+                        </header>
 
-                    [disabled]="isViewMode || isSaving || isCategoryLocked"
+                        <div class="ws-grid ws-cols-2">
 
-                    [required]="true">
+                            <app-textbox
+                                label="Income Sub Group Name"
+                                placeholder="Follows the sub category name"
+                                [(value)]="entity.IncomeSubGroupName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-                </app-search-dropdown>
+                            <app-textbox
+                                label="Category Type"
+                                placeholder="Follows the service category"
+                                [(value)]="categoryTypeDisplay"
+                                [readonly]="true">
+                            </app-textbox>
 
+                        </div>
 
-                <!-- Sub Category Type : allowed for the category's type;
-                     locked once saved -->
+                    </section>
 
-                <app-dropdown
+                </div>
 
-                    label="Sub Category Type"
+            </div>
 
-                    [items]="subCategoryTypeItems"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    [(value)]="entity.SubCategoryType"
+            <aside class="ws-panel">
 
-                    (valueChange)="onSubCategoryTypeChange($event)"
+                <div class="ws-hero">
 
-                    [disabled]="isViewMode || isSaving || isCategoryLocked || !entity.ServiceCategoryId"
+                    <app-workspace-art theme="parts"></app-workspace-art>
 
-                    [required]="true">
+                    <div class="ws-identity">
 
-                </app-dropdown>
+                        <b [class.ws-new]="!(entity.SubCategoryName)">{{ entity.SubCategoryName || 'New service sub category' }}</b>
 
+                        <div class="ws-chips">
 
-                <!-- Sub Category Code : <Category Code>-sss -->
+                            @if (entity.SubCategoryCode)
+                            {
+                                <span
+                                    class="ws-chip" data-tone="info">{{ entity.SubCategoryCode }}</span>
+                            }
 
-                <app-textbox
+                            @if (entity.SubCategoryType)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.SubCategoryType }}</span>
+                            }
 
-                    label="Sub Category Code"
+                        </div>
 
-                    placeholder="Follows the service category"
+                    </div>
 
-                    [(value)]="entity.SubCategoryCode"
+                    <app-toggle-switch
+                        label="Items"
+                        onText="Allowed"
+                        offText="Not allowed"
+                        [(value)]="entity.ItemCreationAllowed"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                    [readonly]="true"
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                    [required]="true">
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-list-check"></i><span>Services and labour items sit under it</span></li>
+                        <li><i class="fas fa-book"></i><span>Its income sub group holds the service ledgers</span></li>
+                    </ul>
 
-                </app-textbox>
+                </div>
 
+            </aside>
 
-                <!-- Sub Category Name :
-                     Brand Services        : "<Type> - <Brand>", built automatically
-                     Differential Services : typed -->
-
-                <app-textbox
-
-                    label="Sub Category Name"
-
-                    [placeholder]="namePlaceholder"
-
-                    [(value)]="entity.SubCategoryName"
-
-                    (valueChange)="onSubCategoryNameChange()"
-
-                    [readonly]="!isDifferentialServices"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 INCOME ACCOUNT SUB GROUP
-            ============================================== -->
-
-            <app-form-section
-
-                title="Income Account Sub Group"
-
-                icon="fas fa-sack-dollar">
-
-
-                <!-- Income Class (from the category's group) -->
-
-                <app-textbox
-
-                    label="Account Class"
-
-                    placeholder="Follows the service category"
-
-                    [(value)]="incomeClassDisplay"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- The category's Income Group -->
-
-                <app-textbox
-
-                    label="Income Group"
-
-                    placeholder="Follows the service category"
-
-                    [(value)]="incomeGroupDisplay"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Income Sub Group Code : SUB-ccc-ggg-sss -->
-
-                <app-textbox
-
-                    label="Income Sub Group Code"
-
-                    placeholder="Follows the service category"
-
-                    [(value)]="entity.IncomeSubGroupCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 ACCOUNT SUB GROUP NAME
-                 Same as the Sub Category Name; renamed with it.
-            ============================================== -->
-
-            <app-form-section
-
-                title="Account Sub Group Name"
-
-                icon="fas fa-folder-tree">
-
-
-                <!-- Income Sub Group Name -->
-
-                <app-textbox
-
-                    label="Income Sub Group Name"
-
-                    placeholder="Follows the sub category name"
-
-                    [(value)]="entity.IncomeSubGroupName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Category Type of the selected category -->
-
-                <app-textbox
-
-                    label="Category Type"
-
-                    placeholder="Follows the service category"
-
-                    [(value)]="categoryTypeDisplay"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Item Creation Allowed (service items under it) -->
-
-                <app-dropdown
-
-                    label="Item Creation Allowed"
-
-                    [items]="itemCreationItems"
-
-                    [(value)]="entity.ItemCreationAllowed"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 

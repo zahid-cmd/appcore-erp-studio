@@ -7,6 +7,8 @@
 
     <app-page-header
 
+        art="parts"
+
         icon="fas fa-list-ol"
 
         [title]="pageTitle"
@@ -51,15 +53,19 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
@@ -69,306 +75,233 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-list-ol"></i>
+                            <span>Basic Information</span>
+                            <small>A brand labour operation</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+
+                            <app-search-dropdown
+                                label="Service Sub Category"
+                                [items]="subCategoryItems"
+                                [(value)]="entity.ServiceSubCategoryId"
+                                (valueChange)="onSubCategoryChange($event)"
+                                [disabled]="isViewMode || isSaving || isSubCategoryLocked"
+                                [required]="true">
+                            </app-search-dropdown>
+
+                            <app-textbox
+                                label="Brand"
+                                placeholder="Follows the sub category"
+                                [value]="brandDisplay"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Labor Code"
+                                placeholder="Follows the sub category"
+                                [(value)]="entity.LaborCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-dropdown
+                                label="Section"
+                                [items]="sectionItems"
+                                [(value)]="entity.Section"
+                                (valueChange)="onValueChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-dropdown>
+
+                            <app-textbox
+                                label="Operation Name"
+                                placeholder="e.g. Valve Clearance Adjustment"
+                                [(value)]="entity.OperationName"
+                                (valueChange)="onNameSourceChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
+
+                    </section>
+
+                </div>
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'rate'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-stopwatch"></i>
+                            <span>Rate & Time</span>
+                            <small>Standard time and service charge</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+
+                            <app-textbox
+                                label="Applies To"
+                                placeholder="e.g. 100-125cc, a model, or All Models"
+                                [(value)]="entity.AppliesTo"
+                                (valueChange)="onNameSourceChange()"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
 
-            [columns]="4">
+                            <app-textbox
+                                label="Standard Time (Minutes)"
+                                placeholder="e.g. 45"
+                                [value]="standardMinutesText"
+                                (valueChange)="onStandardMinutesChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Service Charge"
+                                placeholder="e.g. 650.00"
+                                [value]="serviceChargeText"
+                                (valueChange)="onServiceChargeChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
 
+                            <app-textbox
+                                label="Service Name"
+                                placeholder="Follows operation, applies to and brand"
+                                [(value)]="entity.ServiceName"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
+                        </div>
 
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-            ============================================== -->
+                    </section>
 
-            <app-form-section
 
-                title="Basic Information"
+                    <section class="ws-card">
 
-                icon="fas fa-list-ol">
+                        <header class="ws-card-head">
+                            <i class="fas fa-sack-dollar"></i>
+                            <span>Income Ledger</span>
+                            <small>Made on save under the sub category</small>
+                        </header>
 
+                        <div class="ws-grid ws-cols-2">
 
-                <!-- Labor Chart sub category of a brand; locked once saved -->
+                            <app-textbox
+                                label="Income Ledger Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.IncomeLedgerCode"
+                                [readonly]="true"
+                                [required]="true">
+                            </app-textbox>
 
-                <app-search-dropdown
+                            <app-textbox
+                                label="Income Ledger Name"
+                                placeholder="Follows the service name"
+                                [(value)]="entity.IncomeLedgerName"
+                                [readonly]="true">
+                            </app-textbox>
 
-                    label="Service Sub Category"
+                        </div>
 
-                    [items]="subCategoryItems"
+                    </section>
 
-                    [(value)]="entity.ServiceSubCategoryId"
+                </div>
 
-                    (valueChange)="onSubCategoryChange($event)"
+            </div>
 
-                    [disabled]="isViewMode || isSaving || isSubCategoryLocked"
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                    [required]="true">
+            <aside class="ws-panel">
 
-                </app-search-dropdown>
+                <div class="ws-hero">
 
+                    <app-workspace-art theme="parts"></app-workspace-art>
 
-                <app-textbox
+                    <div class="ws-identity">
 
-                    label="Brand"
+                        <b [class.ws-new]="!(entity.OperationName)">{{ entity.OperationName || 'New labour operation' }}</b>
 
-                    placeholder="Follows the sub category"
+                        <div class="ws-chips">
 
-                    [value]="brandDisplay"
+                            @if (entity.LaborCode)
+                            {
+                                <span
+                                    class="ws-chip" data-tone="info">{{ entity.LaborCode }}</span>
+                            }
 
-                    [readonly]="true">
+                            @if (entity.Section)
+                            {
+                                <span
+                                    class="ws-chip">{{ entity.Section }}</span>
+                            }
 
-                </app-textbox>
+                        </div>
 
+                    </div>
 
-                <!-- Labor Code : BLC-ccc-sss-nnnnn (central code generator) -->
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                <app-textbox
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-screwdriver-wrench"></i><span>Picked on job cards by the workshop</span></li>
+                        <li><i class="fas fa-book"></i><span>Its income ledger takes the service charge</span></li>
+                    </ul>
 
-                    label="Labor Code"
+                </div>
 
-                    placeholder="Follows the sub category"
+            </aside>
 
-                    [(value)]="entity.LaborCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Section (fixed list) -->
-
-                <app-dropdown
-
-                    label="Section"
-
-                    [items]="sectionItems"
-
-                    [(value)]="entity.Section"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Operation Name -->
-
-                <app-textbox
-
-                    label="Operation Name"
-
-                    placeholder="e.g. Valve Clearance Adjustment"
-
-                    [(value)]="entity.OperationName"
-
-                    (valueChange)="onNameSourceChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 RATE & TIME
-            ============================================== -->
-
-            <app-form-section
-
-                title="Rate & Time"
-
-                icon="fas fa-stopwatch">
-
-
-                <!-- Applies To : a model or a CC range -->
-
-                <app-textbox
-
-                    label="Applies To"
-
-                    placeholder="e.g. 100-125cc, a model, or All Models"
-
-                    [(value)]="entity.AppliesTo"
-
-                    (valueChange)="onNameSourceChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Standard Time (Minutes) -->
-
-                <app-textbox
-
-                    label="Standard Time (Minutes)"
-
-                    placeholder="e.g. 45"
-
-                    [value]="standardMinutesText"
-
-                    (valueChange)="onStandardMinutesChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Service Charge (fixed per operation) -->
-
-                <app-textbox
-
-                    label="Service Charge"
-
-                    placeholder="e.g. 650.00"
-
-                    [value]="serviceChargeText"
-
-                    (valueChange)="onServiceChargeChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Service Name : "<Operation> (<Applies To>) - <Brand>" -->
-
-                <app-textbox
-
-                    label="Service Name"
-
-                    placeholder="Follows operation, applies to and brand"
-
-                    [(value)]="entity.ServiceName"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 INCOME LEDGER
-            ============================================== -->
-
-            <app-form-section
-
-                title="Income Ledger"
-
-                icon="fas fa-sack-dollar">
-
-
-                <!-- Income Ledger : GLR-ccc-ggg-sss-nnnnn under the sub category's
-                     account sub group (created on save) -->
-
-                <app-textbox
-
-                    label="Income Ledger Code"
-
-                    placeholder="Auto generated"
-
-                    [(value)]="entity.IncomeLedgerCode"
-
-                    [readonly]="true"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Income Ledger Name"
-
-                    placeholder="Follows the service name"
-
-                    [(value)]="entity.IncomeLedgerName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Status -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <!-- Remarks -->
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 

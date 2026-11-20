@@ -7,6 +7,8 @@
 
     <app-page-header
 
+        art="card"
+
         icon="fas fa-id-card"
 
         [title]="pageTitle"
@@ -51,15 +53,19 @@
 
     <app-page-toolbar>
 
-        <app-control-tabs
-
+        <app-step-tabs
             pageToolbarLeft
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-tabs>
 
-            [tabs]="tabs"
-
-            [(selectedTab)]="selectedTab">
-
-        </app-control-tabs>
+        <app-step-nav
+            pageToolbarRight
+            [steps]="formSteps"
+            [current]="selectedTab"
+            (currentChange)="onTabChange($event)">
+        </app-step-nav>
 
     </app-page-toolbar>
 
@@ -69,275 +75,220 @@
          SECTION 03 : PAGE CANVAS
     ====================================================== -->
 
-    <app-page-canvas>
+    <app-page-canvas
+        [config]="formConfig">
 
-        <app-form-grid
-
+        <div
             canvasBody
+            class="ws-body appcore-scrollbar">
+
+            <!-- ================= LEFT : the fields ================= -->
+
+            <div class="ws-steps">
+
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'general'">
+
+                    <section class="ws-card">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-id-card"></i>
+                            <span>Basic Information</span>
+                            <small>A complimentary service for card members</small>
+                        </header>
+
+                        <div class="ws-grid ws-cols-2">
+
+                            <app-textbox
+                                label="Membership Card"
+                                placeholder="From Membership Cards"
+                                [value]="cardDisplay"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Service Sub Category"
+                                placeholder="Membership Services sub category"
+                                [value]="subCategoryDisplay"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Service Code"
+                                placeholder="Auto generated"
+                                [(value)]="entity.ServiceCode"
+                                [readonly]="true">
+                            </app-textbox>
+
+                            <app-textbox
+                                label="Service Name"
+                                placeholder="Follows the sub category and card"
+                                [(value)]="entity.DisplayName"
+                                [readonly]="true">
+                            </app-textbox>
+
+                        </div>
+
+                    </section>
+
+                    <section class="ws-card ws-notes">
+
+                        <header class="ws-card-head">
+                            <i class="fas fa-note-sticky"></i>
+                            <span>Remarks</span>
+                        </header>
+
+                        <app-note-pad
+                            placeholder="Anything the team should know"
+                            note="Only for your team, never printed"
+                            [maxLength]="500"
+                            [(value)]="entity.Remarks"
+                            (valueChange)="onValueChange()"
+                            [disabled]="isViewMode || isSaving">
+                        </app-note-pad>
 
-            [columns]="4">
+                    </section>
 
+                </div>
 
+                <div
+                    class="ws-step"
+                    [class.ws-step-off]="selectedTab !== 'value'">
 
-            <!-- =============================================
-                 SECTION 01
-                 BASIC INFORMATION
-                 Created by Membership Cards (read only)
-            ============================================== -->
+                    <section class="ws-card">
 
-            <app-form-section
+                        <header class="ws-card-head">
+                            <i class="fas fa-gift"></i>
+                            <span>Service Value & Income Ledger</span>
+                            <small>The value and its income ledger</small>
+                        </header>
 
-                title="Basic Information"
+                        <div class="ws-grid ws-cols-2">
 
-                icon="fas fa-id-card">
+                            <app-textbox
+                                label="Service Value"
+                                placeholder="e.g. 300.00"
+                                [value]="serviceValueText"
+                                (valueChange)="onServiceValueChange($event)"
+                                [disabled]="isViewMode || isSaving"
+                                [required]="true">
+                            </app-textbox>
 
+                            <app-textbox
+                                label="Readiness"
+                                placeholder="Pending"
+                                [value]="readinessDisplay"
+                                [readonly]="true">
+                            </app-textbox>
 
-                <!-- Membership Card : the card that created this row -->
+                            <app-textbox
+                                label="Income Ledger Code"
+                                placeholder="Created with the card"
+                                [(value)]="entity.IncomeLedgerCode"
+                                [readonly]="true">
+                            </app-textbox>
 
-                <app-textbox
+                            <app-textbox
+                                label="Income Ledger Name"
+                                placeholder="Sub group name - card name"
+                                [(value)]="entity.IncomeLedgerName"
+                                [readonly]="true">
+                            </app-textbox>
 
-                    label="Membership Card"
+                        </div>
 
-                    placeholder="From Membership Cards"
+                    </section>
 
-                    [value]="cardDisplay"
 
-                    [readonly]="true">
+                    <section class="ws-card">
 
-                </app-textbox>
+                        <header class="ws-card-head">
+                            <i class="fas fa-receipt"></i>
+                            <span>Expense Ledger</span>
+                            <small>Where the free service cost is booked</small>
+                        </header>
 
+                        <div class="ws-grid ws-cols-2">
 
-                <app-textbox
+                            <app-textbox
+                                label="Expense Sub Group"
+                                placeholder="SUB-004-002-001"
+                                [value]="expenseSubGroupDisplay"
+                                [readonly]="true">
+                            </app-textbox>
 
-                    label="Service Sub Category"
+                            <app-textbox
+                                label="Expense Ledger Code"
+                                placeholder="Created with the card"
+                                [(value)]="entity.ExpenseLedgerCode"
+                                [readonly]="true">
+                            </app-textbox>
 
-                    placeholder="Membership Services sub category"
+                            <app-textbox
+                                label="Expense Ledger Name"
+                                placeholder="Sub group name - card name"
+                                [(value)]="entity.ExpenseLedgerName"
+                                [readonly]="true">
+                            </app-textbox>
 
-                    [value]="subCategoryDisplay"
+                        </div>
 
-                    [readonly]="true">
+                    </section>
 
-                </app-textbox>
+                </div>
 
+            </div>
 
-                <!-- Service Code : MSC-ccc-sss-nnnnn (central code generator) -->
+            <!-- ================= RIGHT : the workspace ================= -->
 
-                <app-textbox
+            <aside class="ws-panel">
 
-                    label="Service Code"
+                <div class="ws-hero">
 
-                    placeholder="Auto generated"
+                    <app-workspace-art theme="card"></app-workspace-art>
 
-                    [(value)]="entity.ServiceCode"
+                    <div class="ws-identity">
 
-                    [readonly]="true">
+                        <b [class.ws-new]="!(entity.DisplayName)">{{ entity.DisplayName || 'New membership service' }}</b>
 
-                </app-textbox>
+                        <div class="ws-chips">
 
+                            @if (entity.ServiceCode)
+                            {
+                                <span
+                                    class="ws-chip" data-tone="info">{{ entity.ServiceCode }}</span>
+                            }
 
-                <!-- Display Name : "<Service Name> - <Card Name>" -->
+                            @if (cardDisplay)
+                            {
+                                <span
+                                    class="ws-chip">{{ cardDisplay }}</span>
+                            }
 
-                <app-textbox
+                        </div>
 
-                    label="Service Name"
+                    </div>
 
-                    placeholder="Follows the sub category and card"
+                    <app-toggle-switch
+                        label="Status"
+                        onText="Active"
+                        offText="Inactive"
+                        [(value)]="entity.IsActive"
+                        (valueChange)="onValueChange()"
+                        [disabled]="isViewMode || isSaving">
+                    </app-toggle-switch>
 
-                    [(value)]="entity.DisplayName"
+                    <ul class="ws-uses">
+                        <li><i class="fas fa-id-card"></i><span>Given free to members of the card</span></li>
+                        <li><i class="fas fa-book"></i><span>Its value is booked to income and expense</span></li>
+                    </ul>
 
-                    [readonly]="true">
+                </div>
 
-                </app-textbox>
+            </aside>
 
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 02
-                 SERVICE VALUE & INCOME LEDGER
-                 Billed on the invoice at the Service Value
-            ============================================== -->
-
-            <app-form-section
-
-                title="Service Value & Income Ledger"
-
-                icon="fas fa-gift">
-
-
-                <!-- Service Value : the only value set on this page -->
-
-                <app-textbox
-
-                    label="Service Value"
-
-                    placeholder="e.g. 300.00"
-
-                    [value]="serviceValueText"
-
-                    (valueChange)="onServiceValueChange($event)"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-textbox>
-
-
-                <!-- Readiness : Pending until a Service Value is saved -->
-
-                <app-textbox
-
-                    label="Readiness"
-
-                    placeholder="Pending"
-
-                    [value]="readinessDisplay"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <!-- Income Ledger : under SUB-007-005-001, created with the card -->
-
-                <app-textbox
-
-                    label="Income Ledger Code"
-
-                    placeholder="Created with the card"
-
-                    [(value)]="entity.IncomeLedgerCode"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Income Ledger Name"
-
-                    placeholder="Sub group name - card name"
-
-                    [(value)]="entity.IncomeLedgerName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 03
-                 EXPENSE LEDGER (the same amount discounted)
-                 Under SUB-004-002-001, created with the card
-            ============================================== -->
-
-            <app-form-section
-
-                title="Expense Ledger"
-
-                icon="fas fa-receipt">
-
-
-                <app-textbox
-
-                    label="Expense Sub Group"
-
-                    placeholder="SUB-004-002-001"
-
-                    [value]="expenseSubGroupDisplay"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Expense Ledger Code"
-
-                    placeholder="Created with the card"
-
-                    [(value)]="entity.ExpenseLedgerCode"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-
-                <app-textbox
-
-                    label="Expense Ledger Name"
-
-                    placeholder="Sub group name - card name"
-
-                    [(value)]="entity.ExpenseLedgerName"
-
-                    [readonly]="true">
-
-                </app-textbox>
-
-            </app-form-section>
-
-
-
-            <!-- =============================================
-                 SECTION 04
-                 STATUS & CONTROL
-            ============================================== -->
-
-            <app-form-section
-
-                title="Status & Control"
-
-                icon="fas fa-toggle-on">
-
-
-                <!-- Status : cannot be active while the card is inactive -->
-
-                <app-dropdown
-
-                    label="Status"
-
-                    [items]="statusItems"
-
-                    [(value)]="entity.IsActive"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving"
-
-                    [required]="true">
-
-                </app-dropdown>
-
-
-                <app-textarea
-
-                    label="Remarks"
-
-                    placeholder="Enter remarks"
-
-                    [rows]="4"
-
-                    [(value)]="entity.Remarks"
-
-                    (valueChange)="onValueChange()"
-
-                    [disabled]="isViewMode || isSaving">
-
-                </app-textarea>
-
-            </app-form-section>
-
-
-
-        </app-form-grid>
+        </div>
 
     </app-page-canvas>
 

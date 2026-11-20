@@ -35,6 +35,11 @@ set "CON_ROOT=%ROOT%\console-app"
 set "CON_OLD=%ROOT%\console"
 set "DATA1=C:\ProgramData\AppCore"
 set "DATA2=C:\ProgramData\AppCoreERP"
+rem the private key of the sealed database logins (the ERP gives
+rem this file NO inherited rights, so a right on the folder does
+rem not reach it : found 2026-11-21, Moto Corner said "not active")
+set "KEYS=%DATA1%\keys"
+set "KEYFILE=%KEYS%\tenant-credentials.pem"
 
 rem SYSTEM and Administrators by number (any Windows language)
 set "SID_SYSTEM=*S-1-5-18"
@@ -110,7 +115,17 @@ if exist "%ROOT%\shared"   icacls "%ROOT%\shared"   /grant "%ACC%":(OI)(CI)RX /T
 if exist "%ROOT%\current"  icacls "%ROOT%\current"  /grant "%ACC%":(RX) /L /C /Q >nul 2>&1
 icacls "%DATA1%" /grant "%ACC%":(OI)(CI)M /T /C /Q >nul
 icacls "%DATA2%" /grant "%ACC%":(OI)(CI)M /T /C /Q >nul
+if exist "%KEYS%\*.pem" icacls "%KEYS%\*.pem" /grant "%ACC%":(M) /C /Q >nul
 
+rem  the key must be open to the account BEFORE the switch
+if not exist "%KEYFILE%" goto erpswitch
+icacls "%KEYFILE%" | findstr /i /c:"%ERP_SVC%" >nul
+if not errorlevel 1 goto erpswitch
+echo   %ACC% could not be given the key file %KEYFILE%
+echo   Clients with their own database login would say "not active". Nothing was changed.
+exit /b 1
+
+:erpswitch
 call :switch
 exit /b %errorlevel%
 

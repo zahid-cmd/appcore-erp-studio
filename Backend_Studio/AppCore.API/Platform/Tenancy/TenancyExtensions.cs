@@ -194,7 +194,16 @@ public sealed class TenantResolutionMiddleware
 
         if (lookup.Tenant is not TenantInfo info)
         {
-            _log.LogInformation("Tenancy : {Host} refused : {Problem}", host, lookup.Problem);
+            // an unknown address : a quiet line. a registered company that cannot open
+            // (login, key, status) : a warning, so it is in the Windows Event Viewer
+            if ((lookup.Problem ?? string.Empty).Contains("not registered", StringComparison.OrdinalIgnoreCase))
+            {
+                _log.LogInformation("Tenancy : {Host} refused : {Problem}", host, lookup.Problem);
+            }
+            else
+            {
+                _log.LogWarning("Tenancy : {Host} refused : {Problem}", host, lookup.Problem);
+            }
 
             await Refuse(context, HttpStatusCode.NotFound, "This address is not active. Please check the address, or contact AppCore Technologies.");
             return;
