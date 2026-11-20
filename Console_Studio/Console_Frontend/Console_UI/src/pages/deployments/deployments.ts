@@ -22,7 +22,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth.service';
-import { DeployRun, DeployState, DevAgentService, LiveServer } from '../../core/dev-agent.service';
+import { DeployRun, DeployState, DevAgentService, LiveServer, ServerSecurityInfo } from '../../core/dev-agent.service';
 import { PageCanvas } from '../../ui/page-canvas';
 import { PageHeader } from '../../ui/page-header';
 import { Pagination, pageSlice } from '../../ui/pagination';
@@ -77,6 +77,16 @@ interface Row extends DeployRun
         .sv-err { color: var(--ac-red); font-size: 13px; }
         .cf { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; background: var(--ac-amber-soft); color: var(--ac-amber); font-weight: 600; line-height: 1.5; }
         .cf i { margin-top: 3px; }
+
+        /* server security pop-up */
+        .sec { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+        .sec-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+        .sec-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .sec-btns .ac-btn { justify-content: center; }
+        .sec-list { max-height: 84px; margin: 0; padding: 8px 10px; border: 1px solid var(--ac-border-2); border-radius: 10px; font-family: var(--ac-mono-font); font-size: 11px; line-height: 1.6; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .sec-log { flex: none; min-height: 0; max-height: 120px; }
+        .sec-note { color: var(--ac-muted); font-size: 12px; line-height: 1.5; }
+        @media (max-width: 900px) { .sec { grid-template-columns: minmax(0, 1fr); } }
         @media (max-width: 1100px) { .dt-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     `],
     template: `
@@ -90,6 +100,10 @@ interface Row extends DeployRun
                     <button class="ac-btn" type="button" (click)="closeRun()" title="Back to the list (Esc)"><i class="fas fa-arrow-left"></i> Back to list</button>
                 }
                 <button class="ac-btn" type="button" (click)="serverOpen.set(true)"><i class="fas fa-server"></i> Live server</button>
+                @if (isOwner)
+                {
+                <button class="ac-btn" type="button" (click)="openSecurity()"><i class="fas fa-shield-halved"></i> Server security</button>
+                }
                 @if (mayDeploy)
                 {
                 <button class="ac-btn ac-btn-primary" type="button" [disabled]="busy() || !server()" (click)="confirming.set(true)"
@@ -263,6 +277,100 @@ interface Row extends DeployRun
             </div>
         }
 
+        <!-- ============ server security (Owner) ============ -->
+        @if (secOpen())
+        {
+            <div class="ac-backdrop">
+                <div class="ac-modal" style="max-width:880px">
+                    <div class="ac-modal-head">
+                        <i class="fas fa-shield-halved"></i>
+                        <h3>Server security</h3>
+                        <button class="ac-icon-btn" type="button" (click)="closeSecurity()"><i class="fas fa-xmark"></i></button>
+                    </div>
+                    <div class="ac-modal-body">
+                        @if (secAsk(); as ask)
+                        {
+                            <p class="ac-sub" style="line-height:1.6"><b>{{ ask.title }}</b></p>
+                            <div class="cf"><i class="fas fa-triangle-exclamation"></i><span>{{ ask.text }}</span></div>
+                        }
+                        @else if (sec(); as sc)
+                        {
+                            <div class="sec">
+                                <div class="sec-col">
+                                    <span class="ac-section-label">Services and folders</span>
+                                    <div class="sv-kv">
+                                        @for (sv of sc.services; track sv.name)
+                                        {
+                                            <span>{{ sv.name }}</span><b>{{ sv.account }}</b>
+                                        }
+                                        <span>{{ sc.folder }}</span><b>{{ sc.foldersLocked === null ? 'not known' : sc.foldersLocked ? 'closed to other Windows users' : 'open (as installed)' }}</b>
+                                    </div>
+                                    @if (!sc.scriptFound) { <p class="sv-err">secure-services.cmd is not on the server : install the Deploy Agent again.</p> }
+                                    <div class="sec-btns">
+                                        <button class="ac-btn" type="button" [disabled]="secBusy() || !sc.scriptFound" (click)="askStep('console')">1. Console account</button>
+                                        <button class="ac-btn" type="button" [disabled]="secBusy() || !sc.scriptFound" (click)="askStep('erp')">2. ERP account</button>
+                                        <button class="ac-btn" type="button" [disabled]="secBusy() || !sc.scriptFound" (click)="askStep('lock')">3. Lock folders</button>
+                                        <button class="ac-btn" type="button" [disabled]="secBusy() || !sc.scriptFound" (click)="askStep('back')"><i class="fas fa-rotate-left"></i> Put everything back</button>
+                                    </div>
+                                    <p class="sec-note">One step at a time, at a quiet hour. After each step sign in to the live site and try it.</p>
+                                </div>
+                                <div class="sec-col">
+                                    <span class="ac-section-label">ERP : work with no company</span>
+                                    @if (!sc.noCompany.fileFound)
+                                    {
+                                        <p class="sec-note">The live ERP has not written its list yet. It starts with the next ERP deployment.</p>
+                                    }
+                                    <div class="sv-kv">
+                                        <span>In use</span><b>{{ sc.noCompany.inUse || 'not known' }}{{ sc.noCompany.setByAgent ? ' (set here : ' + sc.noCompany.setByAgent + ')' : '' }}</b>
+                                        <span>Clean days</span><b>{{ sc.noCompany.cleanDays ?? '-' }} of {{ sc.noCompany.needDays }}</b>
+                                        <span>Asked, last 7 days</span><b>{{ sc.noCompany.last7Days }}</b>
+                                        <span>By itself</span><b>{{ sc.noCompany.auto ? 'yes : Refuse after ' + sc.noCompany.needDays + ' clean days, at ' + sc.noCompany.autoHour + ':00 server time' : 'no' }}</b>
+                                    </div>
+                                    @if (sc.noCompany.note) { <p class="sec-note">{{ sc.noCompany.note }}</p> }
+                                    @if (sc.noCompany.callers.length)
+                                    {
+                                        <pre class="sec-list ac-scroll">{{ callersText(sc) }}</pre>
+                                    }
+                                    <div class="sec-btns">
+                                        <button class="ac-btn" type="button" [disabled]="secBusy()" (click)="askMode('Refuse')">Refuse from now</button>
+                                        <button class="ac-btn" type="button" [disabled]="secBusy()" (click)="askMode('Warn')">Back to Warn</button>
+                                        @if (!sc.noCompany.auto)
+                                        {
+                                            <button class="ac-btn" type="button" [disabled]="secBusy()" (click)="askMode('Auto')" style="grid-column:1 / -1">Let the agent switch by itself</button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            @if (sc.lastJob; as job)
+                            {
+                                <div class="dt-step" [class.good]="job.status === 'succeeded'" [class.bad]="job.status === 'failed'" [class.warn]="job.status === 'rolledback'">
+                                    @if (job.status === 'running') { <i class="fas fa-spinner fa-spin"></i> }
+                                    <span>{{ job.kind === 'security' ? 'Step ' + job.release : 'NoCompany ' + job.release }} : {{ job.step }}</span>
+                                </div>
+                                <pre class="dt-log sec-log ac-scroll">{{ job.log.join('\n') }}</pre>
+                            }
+                        }
+                        @else if (secError()) { <p class="sv-err">{{ secError() }}</p> }
+                        @else { <p class="ac-sub">Asking the server ...</p> }
+                    </div>
+                    <div class="ac-modal-foot">
+                        @if (secAsk(); as ask)
+                        {
+                            <span style="flex:1"></span>
+                            <button class="ac-btn" type="button" (click)="secAsk.set(null)">Cancel</button>
+                            <button class="ac-btn ac-btn-primary" type="button" (click)="runSecurity(ask)"><i class="fas fa-check"></i> Yes, do it</button>
+                        }
+                        @else
+                        {
+                            <button class="ac-btn" type="button" (click)="loadSecurity()"><i class="fas fa-rotate"></i> Refresh</button>
+                            <span style="flex:1"></span>
+                            <button class="ac-btn" type="button" (click)="closeSecurity()">Close</button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
         <!-- ============ live server ============ -->
         @if (serverOpen())
         {
@@ -350,6 +458,22 @@ export class DeploymentsPage implements OnInit
     {
         return this.auth.hasRole('OWNER', 'DEVELOPER');
     }
+
+    // Server security : the Owner only (the dev agent checks it again)
+    get isOwner(): boolean
+    {
+        return this.auth.hasRole('OWNER');
+    }
+
+    readonly secOpen = signal(false);
+    readonly sec = signal<ServerSecurityInfo | null>(null);
+    readonly secError = signal<string | null>(null);
+    readonly secAsk = signal<{ title: string; text: string; url: string; body: Record<string, string> } | null>(null);
+
+    private secTimer: ReturnType<typeof setInterval> | null = null;
+
+    // a step is running on the server, or a deployment here
+    readonly secBusy = computed(() => this.busy() || this.sec()?.busy === true || this.sec()?.lastJob?.status === 'running');
 
     readonly state = signal<DeployState | null>(null);
     readonly history = signal<DeployRun[]>([]);
@@ -443,7 +567,7 @@ export class DeploymentsPage implements OnInit
 
     constructor()
     {
-        inject(DestroyRef).onDestroy(() => this.stopPolling());
+        inject(DestroyRef).onDestroy(() => { this.stopPolling(); this.stopSecurity(); });
 
         effect(() =>
         {
@@ -455,7 +579,7 @@ export class DeploymentsPage implements OnInit
 
     onEscape(): void
     {
-        if (this.selected() && !this.confirming() && !this.serverOpen())
+        if (this.selected() && !this.confirming() && !this.serverOpen() && !this.secOpen())
         {
             this.closeRun();
         }
@@ -638,6 +762,128 @@ export class DeploymentsPage implements OnInit
         {
             this.server.set(null);
             this.serverError.set((e as Error).message);
+        }
+    }
+
+    //-----------------------------------------------------------
+    // Server security
+    //-----------------------------------------------------------
+
+    async openSecurity(): Promise<void>
+    {
+        this.secAsk.set(null);
+        this.secOpen.set(true);
+
+        await this.loadSecurity();
+
+        if (this.secBusy())
+        {
+            this.watchSecurity();
+        }
+    }
+
+    closeSecurity(): void
+    {
+        this.secOpen.set(false);
+        this.secAsk.set(null);
+        this.stopSecurity();
+    }
+
+    async loadSecurity(): Promise<void>
+    {
+        try
+        {
+            this.sec.set(await this.agent.call<ServerSecurityInfo>('GET', '/deploy/security'));
+            this.secError.set(null);
+        }
+        catch (e)
+        {
+            // while a service restarts the last answer stays on screen
+            if (!this.sec())
+            {
+                this.secError.set((e as Error).message);
+            }
+        }
+    }
+
+    callersText(sc: ServerSecurityInfo): string
+    {
+        return sc.noCompany.callers
+            .map(c => `${String(c.last).slice(0, 16).replace('T', ' ')} UTC  x${c.count}  ${c.caller}`)
+            .join('\n');
+    }
+
+    askStep(step: 'console' | 'erp' | 'lock' | 'back'): void
+    {
+        const text: Record<string, [string, string]> =
+        {
+            console: ['Run the live Console under its own Windows account?', 'The live Console and website restart (up to a minute). If the Console does not answer afterwards, the step is undone by itself.'],
+            erp: ['Run the live ERP under its own Windows account?', 'The live ERP restarts for every client (up to a minute). If it does not answer afterwards, the step is undone by itself.'],
+            lock: ['Close the AppCore folders to other Windows users?', 'Both live services restart. If one does not answer afterwards, the folders are opened again by itself. Do the two account steps first.'],
+            back: ['Put everything back as it was installed?', 'Both live services restart and run as LocalSystem again; the folders are open as before.']
+        };
+
+        this.secAsk.set({ title: text[step][0], text: text[step][1], url: '/deploy/security', body: { step } });
+    }
+
+    askMode(mode: 'Refuse' | 'Warn' | 'Auto'): void
+    {
+        const asked = this.sec()?.noCompany.last7Days ?? 0;
+
+        const text: Record<string, [string, string]> =
+        {
+            Refuse: ['Refuse work with no company from now?', (asked ? `In the last 7 days ${asked} piece(s) of code asked with no company : they will get an error. ` : '') + 'The live ERP restarts for every client (about 15 seconds). If it does not answer, the setting is put back by itself.'],
+            Warn: ['Go back to Warn?', 'The live ERP restarts for every client (about 15 seconds). The agent will not switch to Refuse by itself again until you ask.'],
+            Auto: ['Let the agent switch to Refuse by itself?', 'Nothing restarts now. After the clean days, at the quiet hour of the server, the agent sets Refuse and restarts the ERP.']
+        };
+
+        this.secAsk.set({ title: text[mode][0], text: text[mode][1], url: '/deploy/no-company', body: { mode } });
+    }
+
+    async runSecurity(ask: { url: string; body: Record<string, string> }): Promise<void>
+    {
+        this.secAsk.set(null);
+
+        try
+        {
+            await this.agent.call('POST', ask.url, ask.body);
+
+            await this.loadSecurity();
+
+            this.watchSecurity();
+        }
+        catch (e)
+        {
+            this.toast.error((e as Error).message);
+        }
+    }
+
+    private watchSecurity(): void
+    {
+        this.stopSecurity();
+
+        this.secTimer = setInterval(async () =>
+        {
+            await this.loadSecurity();
+
+            if (!this.secBusy())
+            {
+                this.stopSecurity();
+
+                const job = this.sec()?.lastJob;
+
+                if (job?.status === 'succeeded') { this.toast.success(job.step); }
+                else if (job) { this.toast.error(job.step); }
+            }
+        }, 2500);
+    }
+
+    private stopSecurity(): void
+    {
+        if (this.secTimer)
+        {
+            clearInterval(this.secTimer);
+            this.secTimer = null;
         }
     }
 

@@ -26,6 +26,7 @@
   <ItemGroup>
     <None Update="install-agent.cmd" CopyToPublishDirectory="PreserveNewest" />
     <None Update="README.md" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="secure-services.cmd" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

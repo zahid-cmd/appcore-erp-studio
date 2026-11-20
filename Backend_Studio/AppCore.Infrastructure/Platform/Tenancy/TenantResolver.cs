@@ -141,7 +141,7 @@ public sealed class TenantResolver
             throw;
         }
 
-        int seconds = lookup.Found ? Math.Max(5, _options.CacheSeconds) : 15;
+        int seconds = lookup.Found ? _options.CacheSecondsInUse : 15;
 
         _cache[key] = (lookup, DateTime.UtcNow.AddSeconds(seconds));
 
@@ -185,7 +185,7 @@ public sealed class TenantResolver
             ? new TenantLookup(null, $"Company {tenantCode} has no web address.")
             : await ResolveAsync(host, ct);
 
-        _cache[key] = (lookup, DateTime.UtcNow.AddSeconds(lookup.Found ? Math.Max(5, _options.CacheSeconds) : 15));
+        _cache[key] = (lookup, DateTime.UtcNow.AddSeconds(lookup.Found ? _options.CacheSecondsInUse : 15));
 
         return lookup;
     }
@@ -376,7 +376,7 @@ public sealed class TenantResolver
             RememberLimits(database!, limits);
         }
 
-        _defaultLimits = (limits, DateTime.UtcNow.AddSeconds(found ? Math.Max(5, _options.CacheSeconds) : 15));
+        _defaultLimits = (limits, DateTime.UtcNow.AddSeconds(found ? _options.CacheSecondsInUse : 15));
 
         return limits;
     }

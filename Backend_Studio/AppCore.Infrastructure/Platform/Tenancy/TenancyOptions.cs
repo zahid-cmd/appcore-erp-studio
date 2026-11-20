@@ -6,7 +6,7 @@
 //     "Mode": "Off",                    // Off (default) | Host
 //     "LocalHostTenant": "MOTOZONE",    // company for http://localhost
 //                                       // (Deploy Agent health checks)
-//     "CacheSeconds": 15,               // optional (default 15)
+//     "CacheSeconds": 15,               // optional (default 15, 5 to 15)
 //     "NoCompany": "Warn",              // optional : Warn (default) | Refuse
 //                                       // Mode Host, work with no company
 //     "MapFile": "",                    // optional : last known map
@@ -63,6 +63,11 @@ public sealed class TenancyOptions
     // this time. 15 since 2026-11-20 (was 60, review B6) : one small
     // read of AppCore_Control per address every 15 seconds.
     public int CacheSeconds { get; set; } = 15;
+
+    // What the ERP really uses : never under 5, never over 15
+    // seconds (2026-11-21). An old settings file that still says
+    // 60 no longer keeps a suspended client working for a minute.
+    public int CacheSecondsInUse => Math.Clamp(CacheSeconds, 5, 15);
 
     // Last known map of addresses -> companies (no passwords), used
     // when AppCore_Control cannot be reached. Empty =

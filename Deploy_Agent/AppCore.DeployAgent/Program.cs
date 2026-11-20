@@ -10,6 +10,11 @@
 //                                 -> starts a deployment job
 //   POST /agent/rollback          switch back to a release
 //   GET  /agent/jobs/{id}         live progress of a job
+//   GET  /agent/security          service accounts, folders, the
+//   POST /agent/security          ERP's "no company" list; one
+//   POST /agent/no-company        step of secure-services.cmd;
+//                                 NoCompany Refuse / Warn / Auto
+//                                 (ServerSecurity.cs, 2026-11-21)
 //
 // Two applications (?app=, form field "app"; default erp) :
 //   erp     : AppCore ERP     C:\AppCore\            service AppCoreERP
@@ -24,7 +29,11 @@
 //   current            junction -> the live release
 //   shared\            files copied into every release
 //                      (appsettings.Production.json ...)
-//   backups\           database backups (pg_dump)
+//   backups\           database backups (pg_dump). An ERP
+//                      deployment backs up EVERY client database
+//                      (2026-11-21) : the list comes from
+//                      AppCore_Control; the newest KeepBackups
+//                      (10) are kept per database
 //   incoming\          uploaded packages (deleted after use)
 //   logs\              one log file per job
 //===============================================================
@@ -69,6 +78,8 @@ builder.Services.Configure<FormOptions>(
 
 builder.Services.AddSingleton(settings);
 builder.Services.AddSingleton(new Deployers(settings));
+builder.Services.AddSingleton<ServerSecurity>();
+builder.Services.AddHostedService<NoCompanyAuto>();
 
 var app =
     builder.Build();
@@ -223,6 +234,36 @@ app.MapPost(
         return Results.Ok(new { jobId = job.Id });
     });
 
+//---------------------------------------------------------------
+// Server security (ServerSecurity.cs)
+//---------------------------------------------------------------
+
+app.MapGet(
+    "/agent/security",
+    async (ServerSecurity security) => Results.Ok(await security.StatusAsync()));
+
+app.MapPost(
+    "/agent/security",
+    (SecurityRequest body, ServerSecurity security) =>
+    {
+        var started = security.StartStep(body.Step, body.By);
+
+        return started.Error is null
+            ? Results.Ok(new { jobId = started.Job?.Id })
+            : Results.Json(new { message = started.Error }, statusCode: started.Code);
+    });
+
+app.MapPost(
+    "/agent/no-company",
+    (NoCompanyRequest body, ServerSecurity security) =>
+    {
+        var started = security.StartNoCompany(body.Mode, body.By);
+
+        return started.Error is null
+            ? Results.Ok(new { jobId = started.Job?.Id })
+            : Results.Json(new { message = started.Error }, statusCode: started.Code);
+    });
+
 app.Run();
 
 
@@ -274,7 +315,25 @@ public sealed class AgentSettings
 
     public bool BackupBeforeDeploy { get; set; } = true;
 
+    // An ERP deployment also backs up every client database this
+    // ERP serves (tenants in AppCore_Control that are not Cancelled
+    // and whose database is on this PostgreSQL). false = only
+    // Agent:Database:Name, as before 2026-11-21.
+    public bool BackupClientDatabases { get; set; } = true;
+
     public string PgDumpPath { get; set; } = @"C:\Program Files\PostgreSQL\18\bin\pg_dump.exe";
+
+    // Tenancy:NoCompany of the ERP (ServerSecurity.cs) : the file
+    // the ERP keeps, and Refuse set by the agent itself after
+    // NoCompanyCleanDays with nothing in it, at NoCompanyAutoHour
+    // (and the hour after) of the server's clock.
+    public string NoCompanyFile { get; set; } = @"C:\ProgramData\AppCore\no-company.json";
+
+    public bool NoCompanyAuto { get; set; } = true;
+
+    public int NoCompanyCleanDays { get; set; } = 7;
+
+    public int NoCompanyAutoHour { get; set; } = 3;
 
     public DatabaseSettings Database { get; set; } = new();
 
@@ -331,6 +390,10 @@ public sealed class AppProfile
 
     public DatabaseSettings Database { get; init; } = new();
 
+    // the control database that lists the client databases to back
+    // up with this application (the ERP); null = only Database
+    public string? ClientDatabasesFrom { get; init; }
+
     public string? SeedSharedFrom { get; init; }
 }
 
@@ -356,7 +419,8 @@ public sealed class Deployers
             AppUrls = s.AppUrls,
             HealthUrl = s.HealthUrl,
             BackupBeforeDeploy = s.BackupBeforeDeploy,
-            Database = s.Database
+            Database = s.Database,
+            ClientDatabasesFrom = s.BackupClientDatabases ? s.Console.DatabaseName : null
         });
 
         if (s.Console.Enabled)
@@ -577,6 +641,41 @@ public sealed class Deployer
         _jobs.TryGetValue(id, out var job) ? job : null;
 
     //-----------------------------------------------------------
+    // For ServerSecurity.cs : a job of its own on this application
+    //-----------------------------------------------------------
+
+    public string ServiceName => _app.ServiceName;
+
+    // null = a deployment or another job is running
+    public AgentJob? TryBeginJob(string kind, string label)
+    {
+        try
+        {
+            return BeginJob(kind, label);
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    // busy without a job of its own (the other application waits)
+    public bool TryHold() =>
+        Interlocked.CompareExchange(ref _busy, 1, 0) == 0;
+
+    public void EndJob() =>
+        Volatile.Write(ref _busy, 0);
+
+    public async Task<bool> RestartAndCheckAsync(AgentJob job)
+    {
+        await StopServiceAsync();
+
+        await StartServiceAsync();
+
+        return await IsHealthyAsync(job);
+    }
+
+    //-----------------------------------------------------------
     // Health
     //-----------------------------------------------------------
 
@@ -739,9 +838,26 @@ public sealed class Deployer
             {
                 job.Progress(5, "Backing up the database");
 
-                job.BackupFile = await BackupDatabaseAsync(job);
+                // every client database of this application; the
+                // one from the settings first
+                List<string> databases = await DatabasesToBackUpAsync(job);
 
-                job.Log("Backup saved: " + job.BackupFile);
+                for (int i = 0; i < databases.Count; i++)
+                {
+                    if (databases.Count > 1)
+                    {
+                        job.Progress(5 + (25 * i / databases.Count), $"Backing up database {i + 1} of {databases.Count} : {databases[i]}");
+                    }
+
+                    string file = await BackupDatabaseAsync(job, databases[i]);
+
+                    if (i == 0)
+                    {
+                        job.BackupFile = file;
+                    }
+
+                    job.Log("Backup saved: " + file);
+                }
             }
 
             // 2. Unpack into a temporary folder
@@ -1097,7 +1213,7 @@ public sealed class Deployer
     // Database backup (pg_dump, custom format)
     //-----------------------------------------------------------
 
-    private async Task<string> BackupDatabaseAsync(AgentJob job)
+    private async Task<string> BackupDatabaseAsync(AgentJob job, string database)
     {
         if (!File.Exists(_settings.PgDumpPath))
         {
@@ -1110,11 +1226,11 @@ public sealed class Deployer
         var file =
             Path.Combine(
                 BackupsFolder,
-                $"{db.Name}_{job.Release}_{DateTime.Now:yyyyMMdd_HHmmss}.dump");
+                $"{database}_{job.Release}_{DateTime.Now:yyyyMMdd_HHmmss}.dump");
 
         var result = await RunAsync(
             _settings.PgDumpPath,
-            new[] { "-h", db.Host, "-p", db.Port.ToString(), "-U", db.Username, "-F", "c", "-f", file, db.Name },
+            new[] { "-h", db.Host, "-p", db.Port.ToString(), "-U", db.Username, "-F", "c", "-f", file, database },
             new Dictionary<string, string> { ["PGPASSWORD"] = db.Password },
             TimeSpan.FromMinutes(30));
 
@@ -1122,11 +1238,79 @@ public sealed class Deployer
         {
             TryDelete(file);
 
-            throw new InvalidOperationException("Database backup failed, nothing was changed: " + result.Output);
+            throw new InvalidOperationException($"The backup of database {database} failed, nothing was changed: " + result.Output);
         }
 
         return file;
     }
+
+    // The databases one deployment backs up : the one from the
+    // settings, then (ERP) every client database this PostgreSQL
+    // holds, as listed in AppCore_Control (2026-11-21). The list
+    // cannot be read : the deployment stops, nothing is changed.
+    private async Task<List<string>> DatabasesToBackUpAsync(AgentJob job)
+    {
+        var db = _app.Database;
+
+        List<string> names = new() { db.Name };
+
+        if (string.IsNullOrWhiteSpace(_app.ClientDatabasesFrom))
+        {
+            return names;
+        }
+
+        var psql = Path.Combine(Path.GetDirectoryName(_settings.PgDumpPath) ?? string.Empty, "psql.exe");
+
+        if (!File.Exists(psql))
+        {
+            throw new InvalidOperationException(
+                $"psql was not found at {psql} (needed to list the client databases). Nothing was changed. "
+                + "To deploy with only the one database backed up, set Agent:BackupClientDatabases to false.");
+        }
+
+        const string sql =
+            "SELECT DISTINCT t.\"DatabaseName\" FROM public.\"Tenants\" t "
+            + "WHERE t.\"DatabaseName\" IS NOT NULL AND t.\"DatabaseName\" <> '' AND t.\"Status\" <> 'Cancelled' "
+            + "AND EXISTS (SELECT 1 FROM pg_database d WHERE d.datname = t.\"DatabaseName\") "
+            + "ORDER BY 1";
+
+        var result = await RunAsync(
+            psql,
+            new[] { "-h", db.Host, "-p", db.Port.ToString(), "-U", db.Username, "-d", _app.ClientDatabasesFrom, "-X", "-A", "-t", "-v", "ON_ERROR_STOP=1", "-c", sql },
+            new Dictionary<string, string> { ["PGPASSWORD"] = db.Password },
+            TimeSpan.FromMinutes(2));
+
+        if (result.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"The list of client databases could not be read from {_app.ClientDatabasesFrom}, nothing was changed: {result.Output} "
+                + "(To deploy with only the one database backed up, set Agent:BackupClientDatabases to false.)");
+        }
+
+        foreach (var line in result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!DatabaseNamePattern.IsMatch(line))
+            {
+                job.Log("Not backed up (unusual database name): " + line);
+
+                continue;
+            }
+
+            if (!names.Contains(line, StringComparer.OrdinalIgnoreCase))
+            {
+                names.Add(line);
+            }
+        }
+
+        job.Log($"Databases to back up ({names.Count}): " + string.Join(", ", names));
+
+        return names;
+    }
+
+    private static readonly Regex DatabaseNamePattern = new("^[A-Za-z0-9_]{1,63}$");
+
+    // <database>_<release>_<yyyyMMdd>_<HHmmss>.dump
+    private static readonly Regex BackupFilePattern = new(@"^(?<db>.+)_R-\d+_\d{8}_\d{6}\.dump$");
 
     //-----------------------------------------------------------
     // Clean up: keep the newest releases / backups
@@ -1150,10 +1334,14 @@ public sealed class Deployer
             try { dir.Delete(true); } catch { }
         }
 
+        // the newest KeepBackups of EACH database (2026-11-21 :
+        // one deployment now makes one file per client database)
         var oldBackups = new DirectoryInfo(BackupsFolder)
             .GetFiles("*.dump")
-            .OrderByDescending(file => file.CreationTimeUtc)
-            .Skip(Math.Max(1, _settings.KeepBackups));
+            .GroupBy(file => BackupFilePattern.Match(file.Name) is { Success: true } m ? m.Groups["db"].Value.ToLowerInvariant() : string.Empty)
+            .SelectMany(group => group
+                .OrderByDescending(file => file.CreationTimeUtc)
+                .Skip(Math.Max(1, _settings.KeepBackups)));
 
         foreach (var file in oldBackups)
         {
@@ -1227,7 +1415,7 @@ public sealed class Deployer
         }
     }
 
-    private static async Task<(int ExitCode, string Output)> RunAsync(
+    internal static async Task<(int ExitCode, string Output)> RunAsync(
         string file,
         string[] arguments,
         Dictionary<string, string>? environment,

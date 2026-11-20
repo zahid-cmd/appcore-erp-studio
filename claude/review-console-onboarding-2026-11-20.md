@@ -183,6 +183,37 @@ Proposed:
 4. Planned products stay on the form : owner decision of 2026-11-13 (04_Four_Products.sql, "the website takes enquiries for all four"). No change.
 5. No SQL, no Console screen change. Two visitors sending the same name in the very same second can still both get through; the staff see it when registering (the address must be unique there).
 
+
+## 3l. Design: the deploy backup covers every client database (built 2026-11-21 in the Deploy Agent; owner chose BK-a (b) 10 per database; needs the agent published and installed again; not run on the server)
+
+Found 2026-11-21 in the log of ERP deploy R-0038: the Deploy Agent backs up ONE database before an ERP deploy (`Agent:Database:Name`, default AppCoreERP_Studio; `BackupDatabaseAsync` in `Deploy_Agent\AppCore.DeployAgent\Program.cs`). The other client databases the same ERP serves (Tenancy Mode Host) are not in it. `CleanUp` keeps the newest 10 dump files in all.
+
+Proposed:
+1. Before an ERP deploy the agent asks AppCore_Control (same PostgreSQL, same login it already has) for the databases of every tenant that is not Cancelled, adds the one from its settings, and backs up each of them (pg_dump, as today). One line in the deploy log per database.
+2. One backup fails, or AppCore_Control cannot be read : the deploy stops, nothing is changed (as today for the one database).
+3. Old backups : decision BK-a. Today "newest 10 files" would mean only 2 deploys with 4 databases. (a) Recommended: the newest 5 per database. (b) The newest 10 per database (more disk).
+4. Switch back does not put a database back (as today); the dumps are for restoring by hand.
+5. Console deploys are unchanged (they already back up AppCore_Control). No SQL, no screen change. Needs the agent published and installed on the server again.
+Each deploy takes longer by the time of the extra dumps.
+
+
+## 3m. Design: server security steps and the NoCompany switch from the Console (built 2026-11-21; owner chose SEC-a (b) the agent switches by itself; a pop-up, not a card; dry-tested on a scratch agent only, NOT run on the server)
+
+Why: two leftovers need the owner to sit at the live server (run `secure-services.cmd`; read the ERP log for a week, then edit the live settings file). The Deploy Agent is already on that server with full rights, and the Deployments page already talks to it.
+
+Facts found: the agent has only health / releases / jobs / deployments / rollback endpoints. The live ERP is a Windows service (`AddWindowsService`), so its warning lines go to the Windows Event Viewer, not to a file; "look in the log" is awkward today.
+
+Proposed:
+1. Deployments page, new card "Server security" (Owner only). Shows what `secure-services.cmd status` says : the account of each service and whether the folders are locked.
+2. Four buttons, one step at a time, each with a confirm box : Console account, ERP account, Lock folders, Put everything back. The agent runs the same `secure-services.cmd` that is already written (its health check and automatic switch-back stay). The output is shown on the page and kept in the agent log. Refused while a deploy is running.
+3. NoCompany : the ERP also keeps a small file beside the tenant map (`no-company.json` : which code asked, how many times, last time; no client data). The card shows "Work with no company in the last 7 days : N" and the list.
+4. Button "Refuse from now" (Owner only, confirm box), offered when the count is 0 for 7 days; with a count above 0 it warns first. The agent sets `Tenancy__NoCompany=Refuse` on the AppCoreERP service (service environment, the standard .NET way) and restarts the ERP with its usual health check; unhealthy : it takes the setting away and restarts again. Button "Back to Warn" undoes it. The live settings file is never opened or edited.
+5. Decision SEC-a, the Refuse switch : (a) Recommended: the owner presses the button. (b) The agent switches by itself after 7 clean days.
+
+Changes: Deploy Agent (2 endpoints + the script gets a no-question mode), dev agent `console-agent.js` (pass-through with the same Owner check as deploys), Console UI Deployments page (one card), ERP `NoCompanyGuard.cs` (the small file). No SQL. Needs: agent published and installed again, one ERP deploy, dev agent restart.
+
+Risk said plainly: if a step goes wrong in a way the automatic undo does not catch, the owner must still sign in to the server by hand. Do the steps at a quiet hour.
+
 ## 4. Smaller
 
 - [ ] Every tenant is forced to Trial + 30 days by Create database, also a purchase; nothing acts on the trial end date.

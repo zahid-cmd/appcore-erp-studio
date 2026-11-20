@@ -91,6 +91,32 @@ export interface LiveServer
     releases: { release: string; commit: string; deployedBy: string; createdAt: string; isCurrent: boolean }[];
 }
 
+// Server security (Deploy Agent, GET /agent/security)
+export interface ServerSecurityInfo
+{
+    scriptFound: boolean;
+    services: { name: string; account: string }[];
+    folder: string;
+    foldersLocked: boolean | null;
+    busy: boolean;
+    lastJob: { id: string; kind: string; release: string; status: string; step: string; log: string[] } | null;
+    noCompany:
+    {
+        fileFound: boolean;
+        inUse: string;
+        setByAgent: string;
+        since: string | null;
+        seen: string | null;
+        cleanDays: number | null;
+        needDays: number;
+        last7Days: number;
+        callers: { caller: string; count: number; first: string; last: string }[];
+        auto: boolean;
+        autoHour: number;
+        note: string;
+    };
+}
+
 // the Console sign-in of this tab (AuthService keeps it there)
 function staffToken(): string | null
 {

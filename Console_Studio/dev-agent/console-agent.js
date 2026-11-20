@@ -1115,7 +1115,7 @@ function readBody(req)
 // The staff user behind the page's call (header X-Staff-Token, the
 // Console sign-in). Asked from the Console API, never taken from
 // the page : { name } when Owner / Developer, else { status, error }.
-async function deployStaff(req)
+async function deployStaff(req, roles = DEPLOY_ROLES, refusal = 'Only the Owner or a Developer may deploy, switch back or change the server connection.')
 {
     const token = String(req.headers['x-staff-token'] || '');
 
@@ -1143,13 +1143,19 @@ async function deployStaff(req)
     const me = await r.json().catch(() => ({}));
     const role = String(me.RoleCode ?? me.roleCode ?? '');
 
-    if (!DEPLOY_ROLES.includes(role))
+    if (!roles.includes(role))
     {
-        return { status: 403, error: 'Only the Owner or a Developer may deploy, switch back or change the server connection.' };
+        return { status: 403, error: refusal };
     }
 
     return { name: String(me.FullName ?? me.fullName ?? me.LoginId ?? me.loginId ?? 'Console').slice(0, 60) };
 }
+
+// an agent from before 2026-11-21 does not know Server security
+const OLD_AGENT = e =>
+    /answered 404/.test(e?.message ?? '')
+        ? 'The Deploy Agent on the live server is older than this page. Publish it again (publish-agent.cmd) and install it on the server.'
+        : (e?.message ?? String(e));
 
 async function handleDeploy(req, res, origin, url)
 {
@@ -1218,6 +1224,52 @@ async function handleDeploy(req, res, origin, url)
         catch (e)
         {
             return send(res, origin, 502, { error: e?.message ?? String(e) });
+        }
+    }
+
+    // Server security (2026-11-21) : service accounts, folder lock
+    // and the ERP's NoCompany setting, done by the Deploy Agent on
+    // the live server. Looking : as the Live server box. Changing :
+    // the Owner only.
+    if (req.method === 'GET' && url === '/deploy/security')
+    {
+        try
+        {
+            return send(res, origin, 200, await agentCall('GET', '/agent/security'));
+        }
+        catch (e)
+        {
+            return send(res, origin, 502, { error: OLD_AGENT(e) });
+        }
+    }
+
+    if (req.method === 'POST' && (url === '/deploy/security' || url === '/deploy/no-company'))
+    {
+        const staff = await deployStaff(req, ['OWNER'], 'Only the Owner may change the server security.');
+
+        if (staff.error)
+        {
+            return send(res, origin, staff.status, { error: staff.error });
+        }
+
+        if (deploy.busy)
+        {
+            return send(res, origin, 409, { error: 'A deployment is running. Try again when it has finished.' });
+        }
+
+        const body = await readBody(req);
+
+        try
+        {
+            const answer = url === '/deploy/security'
+                ? await agentCall('POST', '/agent/security', { step: String(body.step || ''), by: staff.name })
+                : await agentCall('POST', '/agent/no-company', { mode: String(body.mode || ''), by: staff.name });
+
+            return send(res, origin, 200, answer ?? {});
+        }
+        catch (e)
+        {
+            return send(res, origin, 502, { error: OLD_AGENT(e) });
         }
     }
 
