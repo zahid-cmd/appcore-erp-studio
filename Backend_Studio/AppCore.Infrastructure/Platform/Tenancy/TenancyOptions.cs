@@ -31,8 +31,17 @@
 //     "Control": "Host=...;Database=AppCore_Control;Username=...;Password=..."
 // }
 //
-// Passwords live only in the server's appsettings.json, never in
-// AppCore_Control.
+// Passwords : in the server's appsettings.json (older clients),
+// or in AppCore_Control SEALED with this server's public key
+// (Tenants.DbPasswordSealed, 2026-11-20) : only this server can
+// open them (TenantCredentialSeal). For sealed logins the address
+// of the database server comes from "ServerAddresses" :
+//
+//     "ServerAddresses": {
+//         "PG-TW-01": { "Host": "localhost", "Port": 5433 }
+//     },
+//     "CredentialKeyFile": "..."        // optional; default
+//         %ProgramData%\AppCore\keys\tenant-credentials.pem
 //
 //===============================================================
 
@@ -57,6 +66,13 @@ public sealed class TenancyOptions
     public Dictionary<string, TenancyCredential> Credentials { get; set; } =
         new(StringComparer.OrdinalIgnoreCase);
 
+    // DatabaseServers.CredentialKey -> how THIS server reaches it
+    // (sealed logins only)
+    public Dictionary<string, TenancyServerAddress> ServerAddresses { get; set; } =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    public string? CredentialKeyFile { get; set; }
+
     public bool IsHostMode =>
         string.Equals(Mode, "Host", StringComparison.OrdinalIgnoreCase);
 }
@@ -69,6 +85,14 @@ public sealed class TenancyCredential
     public string Password { get; set; } = string.Empty;
 
     // optional : overrides DatabaseServers.Host / Port
+    public string? Host { get; set; }
+
+    public int? Port { get; set; }
+}
+
+
+public sealed class TenancyServerAddress
+{
     public string? Host { get; set; }
 
     public int? Port { get; set; }

@@ -47,11 +47,19 @@ namespace AppCore.Infrastructure.Repositories.Settings.GeneralSettings;
 //
 // Who may do what (looked up by CODE from Effective Access) :
 //
-//   Manage Configurations (ACT-0006) on the System
-//   Configurations page (SUB-003-001-005) = admin :
+//   Manage Configurations (ACT-0006) on the all-modules System
+//   Configurations page (Infrastructure Control, AppCore staff)
+//   = admin of everything :
 //     sees and changes every switch, adds / edits / deletes
 //     switches, approves or rejects requests. A critical change
 //     applies at once with a reason.
+//
+//   Manage Configurations (ACT-0006) on a module's Configuration
+//   page (2026-11-20, per-module admin) = admin of that module :
+//     sees and changes every switch of the module (module, menu
+//     and page switches), approves or rejects its requests. A
+//     critical change applies at once with a reason. Does NOT
+//     add / edit / delete switches.
 //
 //   Change Configuration (ACT-0007) on a page (submenu) :
 //     sees and changes only that page's switches (ScopeType
@@ -82,8 +90,15 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
     private const string ChangeActivityCode =
         "ACT-0007";
 
-    private const string ConfigurationPageCode =
-        "SUB-003-001-005";
+    // Pages that carry Manage Configurations, found by ROUTE KEY
+    // (their codes change when a page moves) :
+    //   system-configurations : the all-modules page (AppCore staff)
+    //   configuration         : a module's own Configuration page
+    private const string AllModulesPageRouteKey =
+        "system-configurations";
+
+    private const string ModulePageRouteKey =
+        "configuration";
 
     // Scope types
     private const string ScopeModule = "Module";
@@ -193,18 +208,35 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
 
     private sealed class ConfigurationAccess
     {
+        // Admin of everything (all-modules page)
         public bool CanManage { get; init; }
+
+        // Admin of these modules (their Configuration page)
+        public HashSet<long> ManageModuleIds { get; init; } =
+            new();
 
         public HashSet<string> ChangeSubmenuCodes { get; init; } =
             new(StringComparer.OrdinalIgnoreCase);
 
+        public bool HasManage =>
+            CanManage || ManageModuleIds.Count > 0;
+
         public bool HasAny =>
-            CanManage || ChangeSubmenuCodes.Count > 0;
+            HasManage || ChangeSubmenuCodes.Count > 0;
+
+        // Admin of this switch's module
+        public bool Manages(
+            SystemConfigurationsEntity entity)
+        {
+            return CanManage
+                   ||
+                   ManageModuleIds.Contains(entity.NavigationModuleId);
+        }
 
         public bool CanChange(
             SystemConfigurationsEntity entity)
         {
-            if (CanManage)
+            if (Manages(entity))
             {
                 return true;
             }
@@ -264,32 +296,59 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
         long? changeId =
             activities.FirstOrDefault(x => x.Code == ChangeActivityCode)?.Id;
 
-        long? configurationPageId =
-            await _context
-                .Set<NavigationSubmenuEntity>()
-                .AsNoTracking()
-                .Where
-                (
-                    x =>
-                        !x.IsDeleted
-                        &&
-                        x.Code == ConfigurationPageCode
-                )
-                .Select(x => (long?)x.Id)
-                .FirstOrDefaultAsync();
+        //=======================================================
+        // Manage Configurations : on the all-modules page =
+        // everything; on a module's Configuration page = module
+        //=======================================================
 
         bool canManage =
+            false;
+
+        HashSet<long> manageModuleIds =
+            new();
+
+        List<long> manageSubmenuIds =
             manageId.HasValue
-            &&
-            configurationPageId.HasValue
-            &&
-            rows.Any
-            (
-                x =>
-                    x.MasterActivityId == manageId.Value
-                    &&
-                    x.SubMenuId == configurationPageId.Value
-            );
+                ? rows
+                    .Where(x => x.MasterActivityId == manageId.Value)
+                    .Select(x => x.SubMenuId)
+                    .Distinct()
+                    .ToList()
+                : new List<long>();
+
+        if (manageSubmenuIds.Count > 0)
+        {
+            var managePages =
+                await
+                (
+                    from s in _context.Set<NavigationSubmenuEntity>().AsNoTracking()
+
+                    join me in _context.Set<NavigationMenuEntity>().AsNoTracking()
+                        on s.NavigationMenuId equals me.Id
+
+                    where !s.IsDeleted
+                          &&
+                          manageSubmenuIds.Contains(s.Id)
+
+                    select new { s.RouteKey, me.NavigationModuleId }
+                )
+                .ToListAsync();
+
+            foreach (var page in managePages)
+            {
+                string routeKey =
+                    (page.RouteKey ?? string.Empty).Trim().ToLowerInvariant();
+
+                if (routeKey == AllModulesPageRouteKey)
+                {
+                    canManage = true;
+                }
+                else if (routeKey == ModulePageRouteKey)
+                {
+                    manageModuleIds.Add(page.NavigationModuleId);
+                }
+            }
+        }
 
         HashSet<string> changeCodes =
             new(StringComparer.OrdinalIgnoreCase);
@@ -334,6 +393,9 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             CanManage =
                 canManage,
 
+            ManageModuleIds =
+                manageModuleIds,
+
             ChangeSubmenuCodes =
                 changeCodes
         };
@@ -356,10 +418,46 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
         if (!access.CanManage)
         {
             throw new UnauthorizedAccessException(
-                "Only users with 'Manage Configurations' on the System Configurations page can do this.");
+                "Only users with 'Manage Configurations' on the all-modules System Configurations page can do this.");
         }
 
         return access;
+    }
+
+
+    //===========================================================
+    // Ensure Admin of at least one module (approvals)
+    //===========================================================
+
+    private async Task<ConfigurationAccess>
+        EnsureCanDecideAsync
+        (
+            long userId
+        )
+    {
+        ConfigurationAccess access =
+            await GetAccessAsync(userId);
+
+        if (!access.HasManage)
+        {
+            throw new UnauthorizedAccessException(
+                "Only users with 'Manage Configurations' on a module's Configuration page can do this.");
+        }
+
+        return access;
+    }
+
+    private static void EnsureDecides
+    (
+        ConfigurationAccess access,
+        SystemConfigurationsEntity? entity
+    )
+    {
+        if (entity != null && !access.Manages(entity))
+        {
+            throw new UnauthorizedAccessException(
+                "You do not manage the configurations of this module.");
+        }
     }
 
 
@@ -876,7 +974,10 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             new SystemConfigurationWorkspaceDto
             {
                 CanManage =
-                    access.CanManage
+                    access.CanManage,
+
+                ManageModuleIds =
+                    access.ManageModuleIds.ToList()
             };
 
         //=======================================================
@@ -960,7 +1061,8 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             access.CanManage
                 ? submenus
                 : submenus
-                    .Where(x => access.ChangeSubmenuCodes.Contains(x.Code))
+                    .Where(x => access.ChangeSubmenuCodes.Contains(x.Code)
+                                || access.ManageModuleIds.Contains(x.NavigationModuleId))
                     .ToList();
 
         //=======================================================
@@ -976,14 +1078,42 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
         // Pending count : all (admin) / this user's own
         //=======================================================
 
-        workspace.PendingCount =
-            access.CanManage
-                ? await _context
+        if (access.CanManage)
+        {
+            workspace.PendingCount =
+                await _context
                     .Set<SystemConfigurationRequestsEntity>()
-                    .CountAsync(x => x.Status == StatusPending)
-                : await _context
+                    .CountAsync(x => x.Status == StatusPending);
+        }
+        else if (access.ManageModuleIds.Count > 0)
+        {
+            // module admin : the requests of its modules + own
+            List<long> pendingModuleIds =
+                access.ManageModuleIds.ToList();
+
+            workspace.PendingCount =
+                await
+                (
+                    from r in _context.Set<SystemConfigurationRequestsEntity>().AsNoTracking()
+
+                    join x in _context.Set<SystemConfigurationsEntity>().AsNoTracking()
+                        on r.SystemConfigurationId equals x.SystemConfigurationId
+
+                    where r.Status == StatusPending
+                          &&
+                          (r.RequestedBy == userId || pendingModuleIds.Contains(x.NavigationModuleId))
+
+                    select r.SystemConfigurationRequestId
+                )
+                .CountAsync();
+        }
+        else
+        {
+            workspace.PendingCount =
+                await _context
                     .Set<SystemConfigurationRequestsEntity>()
                     .CountAsync(x => x.Status == StatusPending && x.RequestedBy == userId);
+        }
 
         //=======================================================
         // Recent changes of the switches this user can see
@@ -1057,11 +1187,15 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             return new HashSet<long>();
         }
 
+        List<long> visibleModuleIds =
+            access.ManageModuleIds.ToList();
+
         List<SystemConfigurationsEntity> rows =
             await _context
                 .Set<SystemConfigurationsEntity>()
                 .AsNoTracking()
-                .Where(x => x.ScopeType == ScopeSubmenu && x.NavigationSubmenuCode != null)
+                .Where(x => (x.ScopeType == ScopeSubmenu && x.NavigationSubmenuCode != null)
+                            || visibleModuleIds.Contains(x.NavigationModuleId))
                 .ToListAsync();
 
         return rows
@@ -1314,7 +1448,7 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             }
 
             bool asRequest =
-                entity.IsCritical && !access.CanManage;
+                entity.IsCritical && !access.Manages(entity);
 
             string newValue =
                 NormalizeSwitchValue(
@@ -1556,7 +1690,14 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             long userId
         )
     {
-        await EnsureCanManageAsync(userId);
+        ConfigurationAccess access =
+            await EnsureCanDecideAsync(userId);
+
+        bool manageAll =
+            access.CanManage;
+
+        List<long> manageModuleIds =
+            access.ManageModuleIds.ToList();
 
         var rows =
             await
@@ -1570,6 +1711,8 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                     on x.NavigationModuleId equals m.Id
 
                 where r.Status == StatusPending
+                      &&
+                      (manageAll || manageModuleIds.Contains(x.NavigationModuleId))
 
                 orderby r.RequestedDate
 
@@ -1590,6 +1733,7 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
                         ConfigurationCode = x.Request.ConfigurationCode,
                         ConfigurationName = x.Switch.ConfigurationName,
                         ModuleName = x.ModuleName ?? string.Empty,
+                        NavigationModuleId = x.Switch.NavigationModuleId,
                         SubmenuName =
                             x.Switch.NavigationSubmenuCode != null && submenuNames.TryGetValue(x.Switch.NavigationSubmenuCode, out string? page)
                                 ? page
@@ -1665,7 +1809,8 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             string userName
         )
     {
-        await EnsureCanManageAsync(userId);
+        ConfigurationAccess decider =
+            await EnsureCanDecideAsync(userId);
 
         string cleanNote =
             NormalizeReason(note);
@@ -1683,6 +1828,9 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             await _context
                 .Set<SystemConfigurationsEntity>()
                 .FirstOrDefaultAsync(x => x.SystemConfigurationId == request.SystemConfigurationId);
+
+        // only the admin of the switch's module decides
+        EnsureDecides(decider, entity);
 
         DateTime now =
             DateTime.UtcNow;
@@ -1839,7 +1987,8 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             string userName
         )
     {
-        await EnsureCanManageAsync(userId);
+        ConfigurationAccess decider =
+            await EnsureCanDecideAsync(userId);
 
         string cleanNote =
             NormalizeReason(note);
@@ -1851,6 +2000,9 @@ public class SystemConfigurationsRepository : ISystemConfigurationsRepository
             await _context
                 .Set<SystemConfigurationsEntity>()
                 .FirstOrDefaultAsync(x => x.SystemConfigurationId == request.SystemConfigurationId);
+
+        // only the admin of the switch's module decides
+        EnsureDecides(decider, entity);
 
         DateTime now =
             DateTime.UtcNow;

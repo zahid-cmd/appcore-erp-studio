@@ -2302,8 +2302,8 @@ implements OnInit, OnDestroy
 
         const listRoute =
         [
-            '/settings',
-            'general-settings',
+            '/infrastructure-control',
+            'navigation-management',
             'system-configurations',
             'list'
         ];

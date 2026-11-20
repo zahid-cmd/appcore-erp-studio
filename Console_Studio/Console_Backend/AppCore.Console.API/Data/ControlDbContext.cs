@@ -33,6 +33,7 @@ public class ControlDbContext : DbContext
     public DbSet<AuditLogEntry> AuditLog => Set<AuditLogEntry>();
     public DbSet<SiteRequest> SiteRequests => Set<SiteRequest>();
     public DbSet<SiteSetting> SiteSettings => Set<SiteSetting>();
+    public DbSet<PlatformKey> PlatformKeys => Set<PlatformKey>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -138,6 +139,12 @@ public class ControlDbContext : DbContext
         {
             e.ToTable("SiteSettings");
             e.HasKey(x => x.SettingKey);
+        });
+
+        b.Entity<PlatformKey>(e =>
+        {
+            e.ToTable("PlatformKeys");
+            e.HasKey(x => x.KeyName);
         });
 
         b.Entity<AuditLogEntry>(e =>

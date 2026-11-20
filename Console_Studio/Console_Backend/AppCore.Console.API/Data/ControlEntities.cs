@@ -115,6 +115,11 @@ public class Tenant
     // the client database's own login : key into the ERP server's
     // Tenancy:Credentials (06_Multi_Product_Databases.sql)
     public string? CredentialKey { get; set; }
+    // sealed login (11_Sealed_Tenant_Logins.sql, 2026-11-20) : the
+    // password encrypted with the ERP server's public key; only the
+    // ERP server can open it
+    public string? DbUsername { get; set; }
+    public string? DbPasswordSealed { get; set; }
     public string? Remarks { get; set; }
     public DateTime CreatedDate { get; set; }
     public long? CreatedBy { get; set; }
@@ -256,5 +261,15 @@ public class TenantBrand
     public bool IsEnabled { get; set; } = true;
     public string? PackVersion { get; set; }
     public DateTime? InstalledDate { get; set; }
+    public DateTime CreatedDate { get; set; }
+}
+
+
+// public keys only (11_Sealed_Tenant_Logins.sql)
+public class PlatformKey
+{
+    public string KeyName { get; set; } = string.Empty;
+    public string PublicKeyPem { get; set; } = string.Empty;
+    public string Remarks { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; }
 }

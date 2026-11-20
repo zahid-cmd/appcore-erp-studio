@@ -9,8 +9,10 @@
 //                            -> DatabaseServers (host, port, key)
 //
 // The login for the company's database comes from this server's
-// appsettings (Tenancy:Credentials:<CredentialKey>), never from
-// AppCore_Control. Each company has its own login (2026-11-19) :
+// appsettings (Tenancy:Credentials:<CredentialKey>), or else from
+// AppCore_Control sealed with this server's public key
+// (Tenants.DbUsername / DbPasswordSealed, 2026-11-20; opened by
+// TenantCredentialSeal, never written anywhere in clear). Each company has its own login (2026-11-19) :
 // Tenants.CredentialKey, else the server's CredentialKey. Answers
 // are cached for Tenancy:CacheSeconds (an unknown address for 15
 // seconds), so the Control database is asked about once a minute
@@ -64,6 +66,8 @@ public sealed class TenantResolver
 
     private readonly string _mapFile;
 
+    private readonly TenantCredentialSeal _seal;
+
 
     public TenantResolver(TenancyOptions options, IConfiguration configuration)
     {
@@ -73,6 +77,22 @@ public sealed class TenantResolver
         _mapFile = string.IsNullOrWhiteSpace(options.MapFile)
             ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "AppCore", "tenant-map.json")
             : options.MapFile;
+
+        _seal = new TenantCredentialSeal(options.CredentialKeyFile);
+
+        if (options.IsHostMode)
+        {
+            try
+            {
+                // makes the key pair on the first start (public half
+                // for 12_Tenant_Credential_Public_Key.sql)
+                _seal.EnsureKey();
+            }
+            catch (Exception)
+            {
+                // sealed logins report the problem when used
+            }
+        }
 
         ReadMapFile();
     }
@@ -351,7 +371,10 @@ public sealed class TenantResolver
                (to_jsonb(t) ->> 'MaxCompanies')::int AS "MaxCompanies",
                (to_jsonb(t) ->> 'MaxBranches')::int AS "MaxBranches",
                (to_jsonb(t) ->> 'MaxUsers')::int AS "MaxUsers",
-               COALESCE(to_jsonb(t) ->> 'DisabledModules', '') AS "DisabledModules"
+               COALESCE(to_jsonb(t) ->> 'DisabledModules', '') AS "DisabledModules",
+               to_jsonb(t) ->> 'DbUsername' AS "DbUsername",
+               to_jsonb(t) ->> 'DbPasswordSealed' AS "DbPasswordSealed",
+               s."CredentialKey" AS "ServerKey"
         FROM public."TenantDomains" d
         JOIN public."Tenants" t ON t."TenantId" = d."TenantId"
         LEFT JOIN public."DatabaseServers" s ON s."DatabaseServerId" = t."DatabaseServerId"
@@ -392,7 +415,10 @@ public sealed class TenantResolver
             MaxCompanies = r.IsDBNull(8) ? 1 : Math.Max(1, r.GetInt32(8)),
             MaxBranches = r.IsDBNull(9) ? null : r.GetInt32(9),
             MaxUsers = r.IsDBNull(10) ? null : r.GetInt32(10),
-            DisabledModules = r.IsDBNull(11) ? string.Empty : r.GetString(11)
+            DisabledModules = r.IsDBNull(11) ? string.Empty : r.GetString(11),
+            DbUsername = r.IsDBNull(12) ? null : r.GetString(12),
+            DbPasswordSealed = r.IsDBNull(13) ? null : r.GetString(13),
+            ServerKey = r.IsDBNull(14) ? null : r.GetString(14)
         };
 
         Remember(row);
@@ -425,14 +451,57 @@ public sealed class TenantResolver
             return new TenantLookup(null, $"This company is {status.ToLowerInvariant()}.");
         }
 
-        if (string.IsNullOrWhiteSpace(database) || string.IsNullOrWhiteSpace(serverHost) || string.IsNullOrWhiteSpace(credentialKey))
+        bool sealedLogin =
+            !string.IsNullOrWhiteSpace(row.DbUsername) && !string.IsNullOrWhiteSpace(row.DbPasswordSealed);
+
+        if (string.IsNullOrWhiteSpace(database) || string.IsNullOrWhiteSpace(serverHost)
+            || (string.IsNullOrWhiteSpace(credentialKey) && !sealedLogin))
         {
             return new TenantLookup(null, "This company has no database yet.");
         }
 
-        if (!_options.Credentials.TryGetValue(credentialKey, out TenancyCredential? login) || string.IsNullOrWhiteSpace(login.Username))
+        // 1. this server's appsettings (older clients)
+        // 2. the sealed login from AppCore_Control (2026-11-20)
+        TenancyCredential? login = null;
+
+        if (!string.IsNullOrWhiteSpace(credentialKey)
+            && _options.Credentials.TryGetValue(credentialKey, out TenancyCredential? fromSettings)
+            && !string.IsNullOrWhiteSpace(fromSettings.Username))
         {
-            return new TenantLookup(null, $"Tenancy:Credentials:{credentialKey} is not set on this server.");
+            login = fromSettings;
+        }
+        else if (sealedLogin)
+        {
+            string password;
+
+            try
+            {
+                password = _seal.Open(row.DbPasswordSealed!);
+            }
+            catch (Exception)
+            {
+                return new TenantLookup(null, "The company's sealed database login cannot be opened on this server (key file missing or changed).");
+            }
+
+            TenancyServerAddress? address = null;
+
+            if (!string.IsNullOrWhiteSpace(row.ServerKey))
+            {
+                _options.ServerAddresses.TryGetValue(row.ServerKey, out address);
+            }
+
+            login = new TenancyCredential
+            {
+                Username = row.DbUsername!,
+                Password = password,
+                Host = address?.Host,
+                Port = address?.Port
+            };
+        }
+
+        if (login is null)
+        {
+            return new TenantLookup(null, $"Tenancy:Credentials:{credentialKey} is not set on this server, and the company has no sealed login.");
         }
 
         // start from DefaultConnection so its options (timeouts ...) carry over
@@ -460,7 +529,7 @@ public sealed class TenantResolver
 
 
     //===========================================================
-    // Last known map (file; no passwords)
+    // Last known map (file; no clear passwords : sealed ones only)
     //===========================================================
 
     public sealed class TenantRow
@@ -477,6 +546,10 @@ public sealed class TenantResolver
         public int? MaxBranches { get; set; }
         public int? MaxUsers { get; set; }
         public string DisabledModules { get; set; } = string.Empty;
+        // sealed login (encrypted : only this server can open it)
+        public string? DbUsername { get; set; }
+        public string? DbPasswordSealed { get; set; }
+        public string? ServerKey { get; set; }
     }
 
     private static readonly JsonSerializerOptions MapJson = new() { WriteIndented = true };

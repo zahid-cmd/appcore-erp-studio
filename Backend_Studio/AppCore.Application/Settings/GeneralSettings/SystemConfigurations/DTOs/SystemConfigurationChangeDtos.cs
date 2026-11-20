@@ -68,6 +68,8 @@ public class SystemConfigurationRequestDto
 
     public string ModuleName { get; set; } = string.Empty;
 
+    public long NavigationModuleId { get; set; }
+
     public string SubmenuName { get; set; } = string.Empty;
 
     public string ValueUnit { get; set; } = string.Empty;

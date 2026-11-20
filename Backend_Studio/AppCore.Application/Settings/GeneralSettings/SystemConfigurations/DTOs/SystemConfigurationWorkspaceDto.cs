@@ -24,6 +24,10 @@ public class SystemConfigurationWorkspaceDto
 {
     public bool CanManage { get; set; }
 
+    // Modules this user is the admin of ("Manage Configurations"
+    // on the module's Configuration page). CanManage = all.
+    public List<long> ManageModuleIds { get; set; } = new();
+
     public int PendingCount { get; set; }
 
     public List<ConfigurationModuleDto> Modules { get; set; } = new();

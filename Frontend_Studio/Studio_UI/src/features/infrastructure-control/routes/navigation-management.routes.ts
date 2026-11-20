@@ -389,6 +389,32 @@ export const navigationManagementRoutes:
     },
 
     //=========================================================
+    // System Configurations : every module's switches on one
+    // screen, and the only place to add / edit / delete a
+    // switch (AppCore staff). Moved from Settings > General
+    // Settings 2026-11-20; the page files stay in
+    // features\settings\general-settings.
+    //=========================================================
+
+    {
+        path:'system-configurations',
+
+        data:
+        {
+            breadcrumb:'System Configurations'
+        },
+
+        loadChildren:() =>
+            import(
+                '../../settings/general-settings/routes/system-configurations.routes'
+            )
+            .then(
+                m =>
+                    m.SystemConfigurationsRoutes
+            )
+    },
+
+    //=========================================================
     // Default
     //=========================================================
 

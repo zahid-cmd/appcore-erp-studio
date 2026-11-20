@@ -196,7 +196,7 @@ import { ToastService } from '../../ui/toast';
                             <span>Financial year</span><b>{{ fyStart() === 1 ? 'From January' : 'From July' }}</b>
                         </div>
 
-                        <div class="td-once-warn">Takes about a minute. Two passwords are shown once at the end : keep that window open until you copy them.</div>
+                        <div class="td-once-warn">Takes about a minute. The admin password is shown once at the end : keep that window open until you copy it.</div>
 
                         <div class="td-confirm-actions">
                             <button class="ac-btn" type="button" (click)="confirmOpen.set(false)">Cancel</button>
@@ -215,7 +215,7 @@ import { ToastService } from '../../ui/toast';
                     <div class="td-once-box">
                         <h3><i class="fas fa-circle-check"></i> {{ r.DatabaseName }} is ready</h3>
                         <div class="td-once-warn">
-                            <b>Shown only now.</b> Copy both passwords before closing : the Console does not keep them.
+                            <b>Shown only now.</b> Copy {{ r.SettingsSnippet ? 'both' : 'the admin password' }} before closing : the Console does not keep {{ r.SettingsSnippet ? 'them' : 'it' }}.
                         </div>
 
                         <div class="td-secret"><span>ERP login</span><code>{{ r.AdminUser }}</code><span></span></div>
@@ -225,16 +225,26 @@ import { ToastService } from '../../ui/toast';
                         </div>
                         <div class="ac-sub">Give these to the client's administrator. Financial year : {{ r.FinancialYear }}.</div>
 
-                        <div class="td-secret">
-                            <span>ERP server setting</span><code>{{ r.SettingsSnippet }}</code>
-                            <button class="ac-btn" type="button" (click)="copy(r.SettingsSnippet)"><i class="fas fa-copy"></i></button>
-                        </div>
-                        <div class="ac-sub">
-                            Paste this line inside <b>"Tenancy" : "Credentials"</b> of the ERP server's appsettings.json
-                            (database login {{ r.LoginName }}, key {{ r.CredentialKey }}), then restart the ERP.
-                        </div>
+                        @if (r.SettingsSnippet)
+                        {
+                            <div class="td-secret">
+                                <span>ERP server setting</span><code>{{ r.SettingsSnippet }}</code>
+                                <button class="ac-btn" type="button" (click)="copy(r.SettingsSnippet!)"><i class="fas fa-copy"></i></button>
+                            </div>
+                            <div class="ac-sub">
+                                Paste this line inside <b>"Tenancy" : "Credentials"</b> of the ERP server's appsettings.json
+                                (database login {{ r.LoginName }}, key {{ r.CredentialKey }}), then redeploy the ERP.
+                            </div>
+                        }
+                        @else
+                        {
+                            <div class="ac-sub">
+                                <i class="fas fa-lock"></i> Database login {{ r.LoginName }} is stored sealed : the ERP opens it itself.
+                                Nothing to paste, no redeploy. The address works within a minute.
+                            </div>
+                        }
 
-                        <button class="ac-btn ac-btn-primary" type="button" (click)="closeCreated()">I have copied both</button>
+                        <button class="ac-btn ac-btn-primary" type="button" (click)="closeCreated()">{{ r.SettingsSnippet ? 'I have copied both' : 'I have copied it' }}</button>
                     </div>
                 </div>
             }

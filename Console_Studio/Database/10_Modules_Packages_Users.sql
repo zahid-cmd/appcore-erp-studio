@@ -81,9 +81,9 @@ CREATE TEMP TABLE tmp_modules (code text, name text, core boolean, ord int, pkg 
 INSERT INTO tmp_modules VALUES
     ('security-permission',        'Security & Permission',      true,   1, 'STARTER'),
     ('settings',                   'Settings',                   true,   2, 'STARTER'),
-    ('accounts-finance',           'Accounts & Finance',         false,  3, 'STARTER'),
+    ('accounts-finance',           'Accounts & Finance',         true,   3, 'STARTER'),
     ('procurement',                'Procurement',                false,  4, 'STARTER'),
-    ('inventory-management',       'Inventory Management',       false,  5, 'STARTER'),
+    ('inventory-management',       'Inventory Management',       true,   5, 'STARTER'),
     ('sales-operations',           'Sales Operations',           false,  6, 'STARTER'),
     ('service-operations',         'Service Operations',         false,  7, 'STARTER'),
     ('accessories-operations',     'Accessories Operations',     false,  8, 'STARTER'),

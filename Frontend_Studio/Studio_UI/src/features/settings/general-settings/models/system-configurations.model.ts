@@ -234,6 +234,9 @@ export interface ConfigurationWorkspace
 {
     CanManage: boolean;
 
+    // Modules this user is the admin of (CanManage = all)
+    ManageModuleIds?: number[];
+
     PendingCount: number;
 
     Modules: ConfigurationModuleInfo[];
@@ -284,6 +287,8 @@ export interface ConfigurationRequest
     ConfigurationName: string;
 
     ModuleName: string;
+
+    NavigationModuleId?: number;
 
     SubmenuName: string;
 

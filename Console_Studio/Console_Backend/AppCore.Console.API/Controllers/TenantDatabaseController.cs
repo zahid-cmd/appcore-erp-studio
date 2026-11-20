@@ -13,9 +13,13 @@
 //     3. company details (from the customer), the current financial
 //        year, the admin's first password (ERP format PBKDF2)
 //     4. Control : server, database, login key, status Trial
-//     Answers ONCE with the admin password and the login password
-//     (the owner puts the login into the ERP server's appsettings :
-//     Tenancy:Credentials:<key>). Nothing of the passwords is kept.
+//     Answers ONCE with the admin password.
+//     The login's password is SEALED with the ERP server's public
+//     key (PlatformKeys 'tenant-credentials', 2026-11-20) and kept
+//     in Tenants.DbPasswordSealed : the ERP opens it, nothing to
+//     paste, no redeploy. Without that key (12_... not run yet) the
+//     old way : the login line is shown once for the ERP server's
+//     appsettings (Tenancy:Credentials:<key>).
 //
 // The server admin login comes from THIS Console's appsettings :
 //
@@ -202,6 +206,27 @@ public partial class TenantDatabaseController : ControllerBase
         string loginPassword = RandomText(32, "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789");
         string adminPassword = RandomText(12, "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789");
 
+        // the ERP server's public key (null : old way, line to paste)
+        string? publicKey =
+            await _db.PlatformKeys
+                .Where(x => x.KeyName == "tenant-credentials")
+                .Select(x => x.PublicKeyPem)
+                .FirstOrDefaultAsync();
+
+        string? sealedPassword = null;
+
+        if (!string.IsNullOrWhiteSpace(publicKey))
+        {
+            try
+            {
+                sealedPassword = Seal(publicKey, loginPassword);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"The ERP server's public key in PlatformKeys cannot be used ({ex.Message}). Run 12_Tenant_Credential_Public_Key.sql again with the key from skyhost." });
+            }
+        }
+
         string adminConnection = ServerConnection(server, "postgres");
 
         bool roleMade = false, databaseMade = false;
@@ -362,6 +387,8 @@ public partial class TenantDatabaseController : ControllerBase
             tenant.DatabaseServerId = server.DatabaseServerId;
             tenant.DatabaseName = database;
             tenant.CredentialKey = plan.CredentialKey;
+            tenant.DbUsername = sealedPassword is null ? null : login;
+            tenant.DbPasswordSealed = sealedPassword;
             tenant.SchemaVersion = template.SchemaVersion;
             tenant.Status = "Trial";
             tenant.TrialEndsOn ??= DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30);
@@ -381,7 +408,7 @@ public partial class TenantDatabaseController : ControllerBase
             }
 
             _audit.Add("Tenant.CreateDatabase", "Tenant", tenant.TenantCode, tenant.TenantId,
-                $"{database} on {server.ServerCode} from {template.DatabaseName} {template.SchemaVersion}; login {login}; {fyName}");
+                $"{database} on {server.ServerCode} from {template.DatabaseName} {template.SchemaVersion}; login {login} ({(sealedPassword is null ? "for appsettings" : "sealed")}); {fyName}");
 
             await _db.SaveChangesAsync();
 
@@ -391,12 +418,16 @@ public partial class TenantDatabaseController : ControllerBase
                 Server = server.ServerCode,
                 LoginName = login,
                 plan.CredentialKey,
-                LoginPassword = loginPassword,
+                // sealed : the ERP opens it itself, nothing is shown
+                Sealed = sealedPassword is not null,
+                LoginPassword = sealedPassword is null ? loginPassword : null,
                 AdminUser = "admin",
                 AdminPassword = adminPassword,
                 FinancialYear = fyName,
-                // for the ERP server's appsettings.json (Tenancy:Credentials)
-                SettingsSnippet = $"\"{plan.CredentialKey}\": {{ \"Username\": \"{login}\", \"Password\": \"{loginPassword}\" }}"
+                // only without the key : for the ERP server's appsettings.json (Tenancy:Credentials)
+                SettingsSnippet = sealedPassword is null
+                    ? $"\"{plan.CredentialKey}\": {{ \"Username\": \"{login}\", \"Password\": \"{loginPassword}\", \"Host\": \"localhost\", \"Port\": {server.Port} }}"
+                    : null
             });
         }
         catch (Exception ex)
@@ -468,6 +499,16 @@ public partial class TenantDatabaseController : ControllerBase
         }
 
         return new string(chars);
+    }
+
+    // RSA OAEP SHA-256 with the ERP server's public key; the ERP's
+    // TenantCredentialSeal opens it (same prefix)
+    private static string Seal(string publicKeyPem, string password)
+    {
+        using RSA rsa = RSA.Create();
+        rsa.ImportFromPem(publicKeyPem.Trim());
+        byte[] data = rsa.Encrypt(System.Text.Encoding.UTF8.GetBytes(password), RSAEncryptionPadding.OaepSHA256);
+        return "rsa-oaep-256:" + Convert.ToBase64String(data);
     }
 
     // The ERP's format (AuthenticationService.HashPassword) :

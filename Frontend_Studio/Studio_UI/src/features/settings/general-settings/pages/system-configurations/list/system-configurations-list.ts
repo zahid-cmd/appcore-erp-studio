@@ -690,16 +690,45 @@ implements OnInit
     // Getters
     //===========================================================
 
+    // Admin of everything (all-modules page, AppCore staff) :
+    // also adds / edits / deletes switches.
     get canManage():
         boolean
     {
         return !!this.workspace?.CanManage;
     }
 
-    get hasAccess():
+    // Admin of one module ("Manage Configurations" on the
+    // module's Configuration page) : changes every switch of the
+    // module and approves its requests.
+    managesModule
+    (
+        moduleId:
+            number
+    ):
         boolean
     {
         return this.canManage
+               ||
+               (this.workspace?.ManageModuleIds ?? []).includes(moduleId);
+    }
+
+    // Admin of what this page shows : the locked module, or (on
+    // the all-modules page) at least one module.
+    get isAdminHere():
+        boolean
+    {
+        return this.isModuleLocked
+            ? this.managesModule(this.lockedModuleId)
+            : this.canManage
+              ||
+              (this.workspace?.ManageModuleIds ?? []).length > 0;
+    }
+
+    get hasAccess():
+        boolean
+    {
+        return this.isAdminHere
                ||
                (this.workspace?.Switches.length ?? 0) > 0;
     }
@@ -774,8 +803,8 @@ implements OnInit
             this.isModuleLocked
         )
         {
-            return this.canManage
-                ? 'The switches of this module : turn its features on or off'
+            return this.isAdminHere
+                ? 'You manage this module\'s switches and approvals'
                 : 'You can change the switches of your pages in this module · critical ones need approval';
         }
 
@@ -848,7 +877,7 @@ implements OnInit
         ControlTab[]
     {
         const key =
-            `${this.canManage}|${this.pendingCount}`;
+            `${this.isAdminHere}|${this.pendingCount}`;
 
         if
         (
@@ -866,7 +895,7 @@ implements OnInit
 
         if
         (
-            this.canManage
+            this.isAdminHere
         )
         {
             tabs.push(
@@ -1037,7 +1066,7 @@ implements OnInit
 
                     if
                     (
-                        !workspace.CanManage
+                        !this.isAdminHere
                         &&
                         this.view === 'pending'
                     )
@@ -1730,7 +1759,7 @@ implements OnInit
                             fromText: this.stateText(item, item.IsEnabled, item.Value),
                             toText: this.stateText(item, change.IsEnabled, change.Value),
                             isCritical: item.IsCritical,
-                            goesForApproval: item.IsCritical && !this.canManage
+                            goesForApproval: item.IsCritical && !this.managesModule(item.NavigationModuleId)
                         };
                     }
                 );
@@ -2430,7 +2459,7 @@ implements OnInit
     {
         if
         (
-            !this.canManage
+            !this.isAdminHere
         )
         {
             return;
@@ -2450,7 +2479,13 @@ implements OnInit
                 ):
                     void =>
                 {
-                    this.requests = requests;
+                    // a module's page shows that module's requests
+                    this.requests =
+                        this.isModuleLocked
+                            ? requests.filter(
+                                x =>
+                                    x.NavigationModuleId === this.lockedModuleId)
+                            : requests;
                     this.requestsLoading = false;
                     this.cdr.markForCheck();
                     this.cdr.detectChanges();
@@ -2651,7 +2686,7 @@ implements OnInit
         }
 
         void this.router.navigate(
-            ['/settings/general-settings/system-configurations/add'],
+            ['/infrastructure-control/navigation-management/system-configurations/add'],
             {
                 queryParams:
                     this.selectedModuleId > 0
@@ -2669,7 +2704,7 @@ implements OnInit
         void
     {
         void this.router.navigate(
-            ['/settings/general-settings/system-configurations/edit', card.item.PublicId]
+            ['/infrastructure-control/navigation-management/system-configurations/edit', card.item.PublicId]
         );
     }
 

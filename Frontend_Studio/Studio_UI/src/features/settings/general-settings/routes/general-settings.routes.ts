@@ -4,6 +4,12 @@ import
 }
 from '@angular/router';
 
+import
+{
+    moved
+}
+from '../../../../shared/utils/moved-route';
+
 //===========================================================
 // MNU-003-001 Routes
 //===========================================================
@@ -158,31 +164,16 @@ Routes =
 
                 // AUTO-END : SUB-003-001-006
 
-            // AUTO-BEGIN : SUB-003-001-005
+            //===========================================================
+            // System Configurations (all modules) moved to
+            // Infrastructure Control > Navigation Management
+            // (2026-11-20, SettingsCleanup_ModuleAdmin.sql) : AppCore
+            // staff only. A client works on each module's own
+            // Configuration page. Never run Submenu Sync for
+            // SUB-003-001-005 : it would bring the old block back.
+            //===========================================================
 
-                //===========================================================
-                // System Configurations
-                //===========================================================
-
-                {
-                    path:'system-configurations',
-
-                    data:
-                    {
-                        breadcrumb:'System Configurations'
-                    },
-
-                    loadChildren:() =>
-                        import(
-                            './system-configurations.routes'
-                        )
-                        .then(
-                            m =>
-                                m.SystemConfigurationsRoutes
-                        )
-                },
-
-                // AUTO-END : SUB-003-001-005
+            moved('system-configurations', '/infrastructure-control/navigation-management/system-configurations'),
 
             // AUTO-BEGIN : SUB-003-001-007
 

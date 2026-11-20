@@ -140,11 +140,13 @@ export interface TenantDatabaseResult
     Server: string;
     LoginName: string;
     CredentialKey: string;
-    LoginPassword: string;
+    LoginPassword: string | null;
     AdminUser: string;
     AdminPassword: string;
     FinancialYear: string;
-    SettingsSnippet: string;
+    // null when the login was sealed into AppCore_Control (2026-11-20)
+    SettingsSnippet: string | null;
+    Sealed?: boolean;
 }
 
 export interface TenantSave

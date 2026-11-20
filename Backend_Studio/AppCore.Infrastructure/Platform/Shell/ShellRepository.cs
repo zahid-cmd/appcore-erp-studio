@@ -58,7 +58,7 @@ public class ShellRepository : IShellRepository
         30;
 
     private const string ConfigurationsRoute =
-        "/settings/general-settings/system-configurations/list";
+        "/infrastructure-control/navigation-management/system-configurations/list";
 
     private const string CheckReconciliationRoute =
         "/accounts-finance/accounts-reconciliation/check-reconciliations/list";
@@ -421,6 +421,31 @@ public class ShellRepository : IShellRepository
             return new List<ShellNotificationDto>();
         }
 
+        // each module's own Configuration page (2026-11-20)
+        Dictionary<long, string> pageByModule =
+            (
+                await
+                (
+                    from s in _context.NavigationSubmenus.AsNoTracking()
+
+                    join me in _context.NavigationMenus.AsNoTracking()
+                        on s.NavigationMenuId equals me.Id
+
+                    where !s.IsDeleted
+                          &&
+                          !me.IsDeleted
+                          &&
+                          s.RouteKey == "configuration"
+                          &&
+                          s.Route != null
+
+                    select new { me.NavigationModuleId, s.Route }
+                )
+                .ToListAsync()
+            )
+            .GroupBy(x => x.NavigationModuleId)
+            .ToDictionary(g => g.Key, g => g.First().Route!);
+
         return requests
             .Where(x => x.RequestedBy != userId)
             .Select(x => new ShellNotificationDto
@@ -429,7 +454,10 @@ public class ShellRepository : IShellRepository
                 Kind = "approval",
                 Title = "Configuration change waiting for approval",
                 Detail = $"{x.ConfigurationName} · requested by {x.RequestedByName}",
-                Route = ConfigurationsRoute,
+                Route =
+                    pageByModule.TryGetValue(x.NavigationModuleId, out string? page)
+                        ? page
+                        : ConfigurationsRoute,
                 Date = x.RequestedDate
             })
             .ToList();

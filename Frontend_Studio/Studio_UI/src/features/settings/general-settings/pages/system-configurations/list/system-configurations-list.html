@@ -951,7 +951,7 @@
                                 <div class="sc-stat sc-stat-pending sc-stat-wide">
                                     <i class="fas fa-hourglass-half"></i>
                                     <b>{{ pendingCount }}</b>
-                                    <span>{{ canManage ? 'Waiting for your approval' : 'Waiting for approval' }}</span>
+                                    <span>{{ isAdminHere ? 'Waiting for your approval' : 'Waiting for approval' }}</span>
                                 </div>
                             }
                         </div>
@@ -1029,7 +1029,7 @@
                 </div>
 
                 <p class="sc-modal-note">
-                    @if (canManage)
+                    @if (isAdminHere)
                     {
                         These apply as soon as you click Apply. Critical switches need a reason, saved in the history.
                     }

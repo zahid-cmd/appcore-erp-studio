@@ -128,7 +128,7 @@ interface LedgerChoice
 // System Configurations page (switches are changed there)
 const SYSTEM_CONFIGURATIONS_ROUTE:
     string =
-    '/settings/general-settings/system-configurations';
+    '/accounts-finance/accounts-setup/configuration';
 
 const REASON_MIN_LENGTH:
     number =
